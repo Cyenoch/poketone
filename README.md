@@ -6,7 +6,7 @@
 
 > **English**: poketone is a free, non-commercial, low-poly 3D Pokémon survivor-like fan game. You play as the Pokémon itself, solo or in 2–4 player co-op, in the browser or as a native macOS app. Built with TypeScript, React and Three.js on Bun. Docs are in Chinese. This is an unofficial fan project, not affiliated with Nintendo, Game Freak, Creatures or The Pokémon Company; see [License and rights](#许可与权利).
 
-**在线游玩：** <https://poketone.bingzi.dev>（桌面浏览器或横屏手机，需要 WebGL 2）
+**在线游玩：** [国内入口](https://poketone.xiaoshuiguai.cn) · [国际入口](https://poketone.bingzi.dev)（桌面浏览器或横屏手机，需要 WebGL 2）
 
 没有商城、广告和账号，以后也不会有。
 
