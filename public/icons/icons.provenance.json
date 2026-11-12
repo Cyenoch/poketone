@@ -1,0 +1,30 @@
+{
+  "selected": "2026-11-07",
+  "name": "小火龙 · 火焰旋涡",
+  "approval": "User accepted the recommended Charmander icon in this session.",
+  "source": "assets/icons/concepts/2026-11-07/characters/charmander.png",
+  "tool": "Magpie generate_image",
+  "model": "openrouter/google/gemini-nano-banana-2.1",
+  "rights": "AI-generated artwork depicting Pokémon third-party IP. No rights clearance or official affiliation is asserted.",
+  "outputs": [
+    { "path": "public/icons/icon-180.png", "size": 180, "purpose": "Apple touch icon" },
+    { "path": "public/icons/icon-192.png", "size": 192, "purpose": "PWA any" },
+    { "path": "public/icons/icon-512.png", "size": 512, "purpose": "PWA any" },
+    { "path": "public/favicon.ico", "sizes": [16, 32, 48], "purpose": "Browser favicon" }
+  ],
+  "commands": [
+    "for size in 180 192 512; do sips -z \"$size\" \"$size\" assets/icons/concepts/2026-11-07/characters/charmander.png --out \"public/icons/icon-$size.png\"; done",
+    "magick assets/icons/concepts/2026-11-07/characters/charmander.png -define icon:auto-resize=48,32,16 public/favicon.ico"
+  ],
+  "validation": {
+    "performed": [
+      "Native-size visual inspection at 180, 64, 32 and 16px",
+      "Output dimensions and reference paths checked"
+    ],
+    "limitations": [
+      "At 16px the orange silhouette remains visible but facial detail is limited",
+      "No physical-device installation or platform mask inspection",
+      "No native application bundle icon configured"
+    ]
+  }
+}

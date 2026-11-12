@@ -1,0 +1,73 @@
+diff --git a/src/renderers/WebGLRenderer.d.ts b/src/renderers/WebGLRenderer.d.ts
+--- a/src/renderers/WebGLRenderer.d.ts
++++ b/src/renderers/WebGLRenderer.d.ts
+@@ -25,18 +25,23 @@
+ import { WebGLRenderTarget } from "./WebGLRenderTarget.js";
+ import { WebXRManager } from "./webxr/WebXRManager.js";
+ 
++/** The rendering API also supports an external context without a DOM canvas. */
++export type WebGLContext = Omit<WebGL2RenderingContext, "canvas"> & {
++    readonly canvas: WebGL2RenderingContext["canvas"] | null;
++};
++
+ export interface WebGLRendererParameters extends WebGLCapabilitiesParameters {
+     /**
+-     * A Canvas where the renderer draws its output.
+-     */
+-    canvas?: HTMLCanvasElement | OffscreenCanvas | undefined;
++     * Omit to create a canvas. Null requires an external WebGL2 context; the host owns buffer resizing.
++     */
++    canvas?: HTMLCanvasElement | OffscreenCanvas | null | undefined;
+ 
+     /**
+      * A WebGL Rendering Context.
+      * (https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext)
+      * Default is null
+      */
+-    context?: WebGLRenderingContext | undefined;
++    context?: WebGLContext | undefined;
+ 
+     /**
+      * default is false.
+@@ -150,11 +155,11 @@
+     constructor(parameters?: WebGLRendererParameters);
+ 
+     /**
+-     * A Canvas where the renderer draws its output.
++     * Omit to create a canvas. Null requires an external WebGL2 context; the host owns buffer resizing.
+      * This is automatically created by the renderer in the constructor (if not provided already); you just need to add it to your page.
+      * @default document.createElementNS( 'http://www.w3.org/1999/xhtml', 'canvas' )
+      */
+-    domElement: HTMLCanvasElement;
++    domElement: HTMLCanvasElement | OffscreenCanvas | null;
+ 
+     /**
+      * Defines whether the renderer should automatically clear its output before rendering.
+@@ -245,7 +250,7 @@
+     /**
+      * Return the WebGL context.
+      */
+-    getContext(): WebGLRenderingContext | WebGL2RenderingContext;
++    getContext(): WebGLContext;
+     getContextAttributes(): WebGLContextAttributes;
+     forceContextLoss(): void;
+     forceContextRestore(): void;
+@@ -336,6 +341,18 @@
+     clearStencil(): void;
+ 
+     setNodesHandler(nodesHandler: NodesHandler): void;
++
++    /** Retain compiled variants and custom shader IDs; invalidated on context loss or disposal. */
++    createProgramRetention(): {
++        retain(material: Material): void;
++        dispose(): void;
++    };
++
++    /** External (canvas: null) hosts only. Marks loss; does not destroy the context. */
++    notifyContextLost(): void;
++
++    /** Restore the original external context. Replacement contexts require a new renderer. */
++    restoreContext(context: WebGLContext): void;
+ 
+     dispose(): void;
+ 

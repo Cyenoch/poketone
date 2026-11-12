@@ -1,0 +1,222 @@
+{
+  "_purpose": "20 additional non-player forest species. User approved generation and game integration on 2026-11-05, total credit budget 1000. JSON is accepted by the Tripo YAML batch reader.",
+  "_estimate": {
+    "checked": "2026-11-05",
+    "perModelCredits": 30,
+    "totalCredits": 600,
+    "source": "tripo make --dry-run --json, explicit tripo-v3.1 with smart_low_poly and face_limit=1000",
+    "paidStepsPerJob": ["POST /v3/generation/text-to-model"],
+    "localProcessing": "assets/prepare-game-models.py: ~900 triangles, 512px base-color textures; no rigging or paid conversion",
+    "approvedBudgetCredits": 1000
+  },
+  "concurrency": 3,
+  "defaults": {
+    "model": "tripo-v3.1",
+    "params": {
+      "smart_low_poly": true,
+      "face_limit": 1000
+    }
+  },
+  "jobs": [
+    {
+      "name": "poketone-metapod",
+      "input": "Metapod Pokemon, green crescent shaped chrysalis with angular segmented shell, pointed back ridge, narrow sleepy eyes, upright, no arms or legs. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/metapod/generation",
+      "_gameplay": {
+        "name": "铁甲蛹",
+        "arrivalSeconds": 45,
+        "role": "Harden: temporary 45% direct-hit damage reduction"
+      }
+    },
+    {
+      "name": "poketone-kakuna",
+      "input": "Kakuna Pokemon, golden yellow upright pupa, angular cocoon shell, small triangular black eyes, pointed lower body, no wings. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/kakuna/generation",
+      "_gameplay": {
+        "name": "铁壳蛹",
+        "arrivalSeconds": 75,
+        "role": "Harden plus poisonous contact"
+      }
+    },
+    {
+      "name": "poketone-nidoran-f",
+      "input": "Nidoran female Pokemon, small light blue quadruped rabbit monster, darker blue spots, large ears, short forehead horn, red eyes, four short sturdy legs. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/nidoran-f/generation",
+      "_gameplay": {
+        "name": "尼多兰",
+        "arrivalSeconds": 105,
+        "role": "telegraphed aimed poison sting plus poisonous contact"
+      }
+    },
+    {
+      "name": "poketone-nidoran-m",
+      "input": "Nidoran male Pokemon, small purple quadruped rabbit monster, darker purple spots, large upright ears, prominent forehead horn, red eyes, jagged back spines, four short sturdy legs. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/nidoran-m/generation",
+      "_gameplay": {
+        "name": "尼多朗",
+        "arrivalSeconds": 135,
+        "role": "telegraphed aimed poison sting plus poisonous contact"
+      }
+    },
+    {
+      "name": "poketone-voltorb",
+      "input": "Voltorb Pokemon, perfectly round red upper hemisphere and white lower hemisphere, thin equatorial seam, two angry eyes in the red half, no mouth, no limbs, no button. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/voltorb/generation",
+      "_gameplay": {
+        "name": "霹雳电球",
+        "arrivalSeconds": 165,
+        "role": "telegraphed radial discharge"
+      }
+    },
+    {
+      "name": "poketone-vulpix",
+      "input": "Vulpix Pokemon, small orange fox on four short legs, cream chest, curled orange forehead tuft, six distinct curled orange tails fanned behind the body, large pointed ears. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/vulpix/generation",
+      "_gameplay": {
+        "name": "六尾",
+        "arrivalSeconds": 195,
+        "role": "telegraphed aimed ember"
+      }
+    },
+    {
+      "name": "poketone-growlithe",
+      "input": "Growlithe Pokemon, chunky orange puppy standing on four legs, bold black stripes, cream fluffy mane and forehead tuft, curled cream tail, rounded muzzle, alert ears. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/growlithe/generation",
+      "_gameplay": {
+        "name": "卡蒂狗",
+        "arrivalSeconds": 225,
+        "role": "telegraphed flame charge"
+      }
+    },
+    {
+      "name": "poketone-butterfree",
+      "input": "Butterfree Pokemon, small purple butterfly body, two large white wings with bold black outlines and black veins spread to the sides, red compound eyes, two black antennae, small blue feet, hovering pose. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/butterfree/generation",
+      "_gameplay": {
+        "name": "巴大蝶",
+        "arrivalSeconds": 255,
+        "role": "flying stun spore caster"
+      }
+    },
+    {
+      "name": "poketone-beedrill",
+      "input": "Beedrill Pokemon, yellow and black striped bee abdomen with pointed stinger, yellow thorax, red eyes, two large white cone shaped lance forearms, two translucent pale wings, hovering pose. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/beedrill/generation",
+      "_gameplay": {
+        "name": "大针蜂",
+        "arrivalSeconds": 285,
+        "role": "flying dive, poisonous contact"
+      }
+    },
+    {
+      "name": "poketone-raticate",
+      "input": "Raticate Pokemon, stout brown rat, cream belly and muzzle, two large white front incisors, rounded ears, long thin tail, short hind legs and small forepaws, low chunky body. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/raticate/generation",
+      "_gameplay": {
+        "name": "拉达",
+        "arrivalSeconds": 300,
+        "role": "heavy contact chaser"
+      }
+    },
+    {
+      "name": "poketone-pidgeotto",
+      "input": "Pidgeotto Pokemon, medium brown bird with cream chest, red feather crest, dark eye markings, red and yellow tail feathers, short beak, wings spread in hovering flight. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/pidgeotto/generation",
+      "_gameplay": {
+        "name": "比比鸟",
+        "arrivalSeconds": 315,
+        "role": "flying dive"
+      }
+    },
+    {
+      "name": "poketone-gloom",
+      "input": "Gloom Pokemon, squat dark blue plant body, closed sleepy eyes, tiny pale drool drop at mouth, four large reddish brown spotted flower bulbs on head, orange leaves beneath the bulbs, short arms and two feet. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/gloom/generation",
+      "_gameplay": {
+        "name": "臭臭花",
+        "arrivalSeconds": 345,
+        "role": "acid lob caster"
+      }
+    },
+    {
+      "name": "poketone-arbok",
+      "input": "Arbok Pokemon, purple cobra with wide flared hood and large red yellow black eye pattern on the front of the hood, small narrow head above hood, pale lavender gray segmented underside, long coiled snake tail, no limbs. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/arbok/generation",
+      "_gameplay": {
+        "name": "阿柏怪",
+        "arrivalSeconds": 375,
+        "role": "acid lob caster"
+      }
+    },
+    {
+      "name": "poketone-parasect",
+      "input": "Parasect Pokemon, orange crab insect with two large front claws, six short legs, white pupil-less eyes, one huge red mushroom cap with large pale yellow spots attached directly across the back, no tall stalk. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/parasect/generation",
+      "_gameplay": {
+        "name": "派拉斯特",
+        "arrivalSeconds": 390,
+        "role": "stun spore caster"
+      }
+    },
+    {
+      "name": "poketone-venomoth",
+      "input": "Venomoth Pokemon, pale lavender moth with wide lavender wings, darker purple segmented body, three short head antennae, large blue eyes, small legs, hovering pose, clear moth silhouette. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/venomoth/generation",
+      "_gameplay": {
+        "name": "摩鲁蛾",
+        "arrivalSeconds": 405,
+        "role": "weaving flying psybeam caster"
+      }
+    },
+    {
+      "name": "poketone-fearow",
+      "input": "Fearow Pokemon, long necked brown bird, long narrow pointed tan beak, red spiky crest, cream ruff, broad brown wings spread horizontally in flight, short tail and tucked talons. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/fearow/generation",
+      "_gameplay": {
+        "name": "大嘴雀",
+        "arrivalSeconds": 420,
+        "role": "fast flying dive"
+      }
+    },
+    {
+      "name": "poketone-vileplume",
+      "input": "Vileplume Pokemon, squat dark blue round body, red eyes, small arms and two feet, enormous flat five petaled red flower with white spots sitting directly on the head, central orange hole, no flower stalk. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/vileplume/generation",
+      "_gameplay": {
+        "name": "霸王花",
+        "arrivalSeconds": 435,
+        "role": "stun spore caster"
+      }
+    },
+    {
+      "name": "poketone-graveler",
+      "input": "Graveler Pokemon, round rough gray boulder body, four distinct muscular stone arms, two short stone legs, angular rock brow, stern eyes, wide mouth, craggy low poly silhouette. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/graveler/generation",
+      "_gameplay": {
+        "name": "隆隆石",
+        "arrivalSeconds": 465,
+        "role": "armored telegraphed roll"
+      }
+    },
+    {
+      "name": "poketone-electrode",
+      "input": "Electrode Pokemon, round sphere with white upper hemisphere and red lower hemisphere, thin equatorial seam, two narrow eyes and wide mischievous black grin on the white upper half, no limbs, no button. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/electrode/generation",
+      "_gameplay": {
+        "name": "顽皮雷弹",
+        "arrivalSeconds": 480,
+        "role": "interruptible self-destruct; no kill, loot or capture from self-destruction"
+      }
+    },
+    {
+      "name": "poketone-golem",
+      "input": "Golem Pokemon, large round spherical body of interlocking dark gray polygonal rock plates, small brown reptilian head protruding from the front, two thick brown clawed arms and two short brown clawed legs, no tail spikes. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+      "out": "assets/enemies/golem/generation",
+      "_gameplay": {
+        "name": "隆隆岩",
+        "arrivalSeconds": 495,
+        "role": "heavy armored telegraphed roll"
+      }
+    }
+  ]
+}

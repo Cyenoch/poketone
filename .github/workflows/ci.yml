@@ -1,0 +1,262 @@
+name: CI and deploy
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # UI font base set (docs/fonts-paging-design.md): generated, not committed, keyed by
+  # public/fonts/gpu/core/manifest.json's `base`. Its own job, so a slow cold build (about 40 min on a
+  # 2-vCPU runner) is cached even when verify later fails. A key with a `fonts-base-<key>` release
+  # asset (`base.tar` of base/<key>/, built locally by `bun run fonts:base`) is downloaded instead.
+  fonts:
+    name: UI font base set
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    outputs:
+      key: ${{ steps.key.outputs.key }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/fonts
+            public/fonts
+      - name: Base set key
+        id: key
+        run: echo "key=$(jq -r .base public/fonts/gpu/core/manifest.json)" >> "$GITHUB_OUTPUT"
+      - name: Cached base set
+        id: cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: public/fonts/gpu/base/${{ steps.key.outputs.key }}
+          key: ui-font-base-${{ steps.key.outputs.key }}
+      - name: Prebuilt base set
+        id: prebuilt
+        if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KEY: ${{ steps.key.outputs.key }}
+        run: |
+          if gh release download "fonts-base-$KEY" --repo "$GITHUB_REPOSITORY" --pattern base.tar --dir "$RUNNER_TEMP"; then
+            mkdir -p public/fonts/gpu/base
+            tar -xf "$RUNNER_TEMP/base.tar" -C public/fonts/gpu/base
+            test -f "public/fonts/gpu/base/$KEY/manifest.json"
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.cache.outputs.cache-hit != 'true' && steps.prebuilt.outputs.found != 'true'
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - if: steps.cache.outputs.cache-hit != 'true' && steps.prebuilt.outputs.found != 'true'
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - name: Restore msdf-atlas-gen
+        id: msdf
+        if: steps.cache.outputs.cache-hit != 'true' && steps.prebuilt.outputs.found != 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache/msdf-atlas-gen
+          key: msdf-atlas-gen-${{ runner.os }}-${{ hashFiles('scripts/fonts/install-msdf-atlas-gen.sh') }}
+      - name: Build the base set
+        if: steps.cache.outputs.cache-hit != 'true' && steps.prebuilt.outputs.found != 'true'
+        env:
+          MSDF_HIT: ${{ steps.msdf.outputs.cache-hit }}
+          KEY: ${{ steps.key.outputs.key }}
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libfreetype-dev libpng-dev libtinyxml2-dev
+          if [ "$MSDF_HIT" != "true" ]; then sh scripts/fonts/install-msdf-atlas-gen.sh; fi
+          export PATH="$PWD/.cache/msdf-atlas-gen/bin:$PATH"
+          bun run fonts:base
+          test -f "public/fonts/gpu/base/$KEY/manifest.json"
+
+  verify:
+    name: Verify
+    needs: fonts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+      - run: bun install --frozen-lockfile
+      - name: Select scoped checks
+        id: scope
+        run: bun scripts/ci-scope.mjs
+      - name: OpenSpec
+        run: bun run spec:check
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Lint
+        run: bun run lint
+      - name: Format
+        run: bun run format:check
+      # scripts/ui-fonts-build.test.mjs runs the font builders (uv + msdf-atlas-gen).
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - name: Restore msdf-atlas-gen
+        id: msdf
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache/msdf-atlas-gen
+          key: msdf-atlas-gen-${{ runner.os }}-${{ hashFiles('scripts/fonts/install-msdf-atlas-gen.sh') }}
+      - name: msdf-atlas-gen
+        env:
+          MSDF_HIT: ${{ steps.msdf.outputs.cache-hit }}
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libfreetype-dev libpng-dev libtinyxml2-dev
+          if [ "$MSDF_HIT" != "true" ]; then sh scripts/fonts/install-msdf-atlas-gen.sh; fi
+          echo "$PWD/.cache/msdf-atlas-gen/bin" >> "$GITHUB_PATH"
+      - name: Restore UI font base set
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: public/fonts/gpu/base/${{ needs.fonts.outputs.key }}
+          key: ui-font-base-${{ needs.fonts.outputs.key }}
+          fail-on-cache-miss: true
+      - name: Simulation tests
+        if: steps.scope.outputs.sim == 'true'
+        run: bun run test:sim
+      - name: View tests
+        if: steps.scope.outputs.view == 'true'
+        run: bun test --timeout=0 ./scripts/view.test.mjs ./scripts/ultimate-fire-vfx.test.mjs
+      - name: UI tests
+        run: bun run test:ui
+      - name: Deterministic replays
+        if: steps.scope.outputs.golden == 'true'
+        run: bun run golden
+      - name: Production build
+        run: bun scripts/web-build.mjs
+      - name: Build tooling tests
+        run: bun run test:build
+      - name: Deployment tests
+        run: bun test ./scripts/deploy.test.mjs ./deploy/harbor.test.mjs
+      - name: Multiplayer tests
+        run: bun run test:network
+      - name: Harbor bundle
+        run: bun build services/harbor/server.ts --target=bun --outfile=deploy/.harbor/server.js
+      - name: Save verified build
+        if: github.repository == 'Cyenoch/poketone' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: dist/
+          # GLB, WebP and audio assets are already compressed.
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 1
+      - name: Save verified Harbor
+        if: github.repository == 'Cyenoch/poketone' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: harbor
+          path: deploy/.harbor/server.js
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish web and Harbor images
+    if: github.repository == 'Cyenoch/poketone' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: deploy
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist/
+      - name: Image name
+        id: image
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          echo "name=ghcr.io/${REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          echo "bun_version=$(jq -r '.packageManager | sub("^bun@"; "")' package.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: harbor
+          path: deploy/.harbor/
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Log in to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        run: printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username "$GHCR_USER" --password-stdin
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: deploy/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.image.outputs.name }}:${{ github.sha }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+      - name: Publish Harbor
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: deploy/Harbor.Dockerfile
+          build-args: BUN_VERSION=${{ steps.image.outputs.bun_version }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.image.outputs.name }}-harbor:${{ github.sha }}
+          cache-from: type=gha,scope=harbor
+          cache-to: type=gha,scope=harbor,mode=max
+      - name: Log out of GHCR
+        if: always()
+        run: docker logout ghcr.io
+
+  deploy:
+    name: Deploy production
+    if: github.repository == 'Cyenoch/poketone' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    environment:
+      name: production
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: deploy
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - name: Deploy verified web and Harbor and wait for Coolify
+        env:
+          COOLIFY_URL: ${{ vars.COOLIFY_URL }}
+          COOLIFY_WEB_UUID: ${{ vars.COOLIFY_WEB_UUID }}
+          COOLIFY_HARBOR_UUID: ${{ vars.COOLIFY_HARBOR_UUID }}
+          HARBOR_UPSTREAM: ${{ vars.HARBOR_UPSTREAM }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_IMAGE: ${{ needs.publish.outputs.image }}
+          COOLIFY_IMAGE_TAG: ${{ github.sha }}
+        run: bun deploy/coolify-deploy.mjs

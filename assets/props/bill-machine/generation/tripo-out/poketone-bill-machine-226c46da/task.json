@@ -1,0 +1,30 @@
+{
+  "task_id": "226c46da-ec9e-4df9-86e5-1b279c706456",
+  "type": "text_to_model",
+  "status": "success",
+  "input": {
+    "pbr": true,
+    "prompt": "Bill's teleporter machine from Pokemon: two large rounded capsule pods with glass domes standing side by side, joined by a thick cable tube, with a small control console with buttons and a screen between them, white and teal metal, facing forward. Classic low-polygon video-game asset, economical silhouette geometry, simple clean diffuse color regions, few broad forms, no tiny surface details, not realistic, not crystalline faceted, not plush. Full body isolated, no pedestal, no scenery, no text.",
+    "texture": true,
+    "export_uv": true,
+    "face_limit": 1200,
+    "model_version": "v3.1-20260211",
+    "smart_low_poly": true,
+    "geometry_quality": "standard",
+    "texture_alignment": "geometry"
+  },
+  "output_fields": [
+    "model_url",
+    "rendered_image_url",
+    "generated_image_url"
+  ],
+  "credits_consumed": 30,
+  "created_at": "2026-11-04T14:40:07.850104Z",
+  "completed_at": "2026-11-04T14:42:56.304067Z",
+  "files": [
+    "model.glb",
+    "rendered_image.webp",
+    "generated_image.jpeg",
+    "preview.png"
+  ]
+}

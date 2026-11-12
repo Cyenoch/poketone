@@ -1,0 +1,25 @@
+diff --git a/lib/webgl2-context.mjs b/lib/webgl2-context.mjs
+index 327730733ff22b15d17b52c69f7491ecacc5ddb5..ececcea2a2d94a7d07f08c53b4173ddff422b3ca 100644
+--- a/lib/webgl2-context.mjs
++++ b/lib/webgl2-context.mjs
+@@ -1295,7 +1295,7 @@ export class WebGL2RenderingContext {
+       if (nativeExts.has('GL_OES_texture_float_linear')) exts.push('OES_texture_float_linear')
+       if (nativeExts.has('GL_EXT_color_buffer_half_float')) exts.push('EXT_color_buffer_half_float')
+       if (nativeExts.has('GL_EXT_texture_filter_anisotropic')) exts.push('EXT_texture_filter_anisotropic')
+-      if (nativeExts.has('GL_EXT_disjoint_timer_query')) exts.push('EXT_disjoint_timer_query_webgl2')
++      // Do not advertise timer queries until the WebGL extension object and 64-bit results exist.
+     } catch (e) {}
+     return exts
+   }
+diff --git a/index.mjs b/index.mjs
+--- a/index.mjs
++++ b/index.mjs
+@@ -64,7 +64,7 @@
+ 
+   const ctx = new WebGL2RenderingContext(gl, width, height, opts)
+   initDrawingBuffer(ctx)
+-  const canvas = createMockCanvas(width, height, ctx)
++  const canvas = opts.canvas === false ? null : createMockCanvas(width, height, ctx)
+   ctx.canvas = canvas
+ 
+   const result = { canvas, gl: ctx, ctxId: id }

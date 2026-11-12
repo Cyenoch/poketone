@@ -1,0 +1,48 @@
+--- a/src/javascript/events/index.js
++++ b/src/javascript/events/index.js
+@@ -102,19 +102,16 @@
+ 					window._visible = false
+ 					window._minimized = true
+ 					window._maximized = false
+-					window._fullscreen = false
+ 				} break
+ 				case 'maximize': {
+ 					window._visible = true
+ 					window._minimized = false
+ 					window._maximized = true
+-					window._fullscreen = false
+ 				} break
+ 				case 'restore': {
+ 					window._visible = true
+ 					window._minimized = false
+ 					window._maximized = false
+-					window._fullscreen = false
+ 				} break
+ 
+ 				case 'focus': {
+--- a/src/javascript/video/window.js
++++ b/src/javascript/video/window.js
+@@ -327,7 +327,6 @@
+ 		this._visible = false
+ 		this._minimized = true
+ 		this._maximized = false
+-		this._fullscreen = false
+ 	}
+ 
+ 	get maximized () { return this._maximized }
+@@ -338,7 +337,6 @@
+ 		this._visible = true
+ 		this._minimized = false
+ 		this._maximized = true
+-		this._fullscreen = false
+ 	}
+ 
+ 	restore () {
+@@ -348,7 +346,6 @@
+ 		this._visible = true
+ 		this._minimized = false
+ 		this._maximized = false
+-		this._fullscreen = false
+ 	}
+ 
+ 	get focused () { return Globals.windows.focused === this }

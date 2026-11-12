@@ -1,0 +1,9 @@
+[install]
+exact = true
+linker = "isolated"
+# 12 hours, in seconds.
+minimumReleaseAge = 43200
+
+[run]
+# Scripts and package bins (oxlint, oxfmt, tsc) run on bun, not Node.
+bun = true

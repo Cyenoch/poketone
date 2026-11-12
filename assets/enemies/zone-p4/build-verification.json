@@ -1,0 +1,111 @@
+{
+  "command": "bun run assets:game grimer jigglypuff kadabra wigglytuff jynx muk mr-mime golbat alakazam gengar seel shellder slowpoke vaporeon dratini snorlax dewgong cloyster lapras",
+  "lock": "/tmp/poketone-assets.lock",
+  "blenderPythonTraceback": false,
+  "unchangedFromVisuallyCheckedGlbs": true,
+  "records": [
+    {
+      "name": "grimer",
+      "source": "enemies/grimer/generation/tripo-out/tripo-out/grimer-mv-bf7649f1/model.glb",
+      "output": "public/models/enemies/grimer.glb",
+      "trianglesBefore": 1890,
+      "trianglesAfter": 1300,
+      "texture": 512,
+      "clips": [],
+      "bytes": 104444
+    },
+    {
+      "name": "jigglypuff",
+      "source": "enemies/jigglypuff/generation/tripo-out/tripo-out/jigglypuff-mv-0504a011/model.glb",
+      "output": "public/models/enemies/jigglypuff.glb",
+      "trianglesBefore": 1502,
+      "trianglesAfter": 900,
+      "texture": 512,
+      "clips": [],
+      "bytes": 67032
+    },
+    {
+      "name": "kadabra",
+      "source": "enemies/kadabra/generation/tripo-out/tripo-out/kadabra-mv-6625aa4f/model.glb",
+      "output": "public/models/enemies/kadabra.glb",
+      "trianglesBefore": 2367,
+      "trianglesAfter": 2287,
+      "texture": 512,
+      "clips": [],
+      "bytes": 187044
+    },
+    {
+      "name": "wigglytuff",
+      "source": "enemies/wigglytuff/generation/tripo-out/tripo-out/wigglytuff-mv-b55568c6/model.glb",
+      "output": "public/models/enemies/wigglytuff.glb",
+      "trianglesBefore": 1392,
+      "trianglesAfter": 899,
+      "texture": 512,
+      "clips": [],
+      "bytes": 68976
+    },
+    {
+      "name": "jynx",
+      "source": "enemies/jynx/generation/face-redraw/tripo-out/tripo-out/jynx-face-redraw-mv-c7ee59a6/model.glb",
+      "output": "public/models/enemies/jynx.glb",
+      "trianglesBefore": 1857,
+      "trianglesAfter": 1300,
+      "texture": 512,
+      "clips": [],
+      "bytes": 123600
+    },
+    {
+      "name": "muk",
+      "source": "enemies/muk/generation/tripo-out/tripo-out/muk-mv-635985be/model.glb",
+      "output": "public/models/enemies/muk.glb",
+      "trianglesBefore": 2896,
+      "trianglesAfter": 2896,
+      "texture": 1024,
+      "clips": [],
+      "bytes": 211300
+    },
+    {
+      "name": "mr-mime",
+      "source": "enemies/mr-mime/generation/tripo-out/tripo-out/mr-mime-mv-b969d391/model.glb",
+      "output": "public/models/enemies/mr-mime.glb",
+      "trianglesBefore": 3208,
+      "trianglesAfter": 3208,
+      "texture": 1024,
+      "clips": [],
+      "bytes": 315676
+    },
+    {
+      "name": "golbat",
+      "source": "enemies/golbat/generation/tripo-out/tripo-out/golbat-mv-96338bb1/model.glb",
+      "output": "public/models/enemies/golbat.glb",
+      "trianglesBefore": 1928,
+      "trianglesAfter": 1928,
+      "texture": 1024,
+      "clips": [],
+      "bytes": 172944
+    },
+    {
+      "name": "alakazam",
+      "source": "enemies/alakazam/generation/tripo-out/tripo-out/alakazam-mv-f345b383/model.glb",
+      "output": "public/models/enemies/alakazam.glb",
+      "trianglesBefore": 2774,
+      "trianglesAfter": 2774,
+      "texture": 1024,
+      "clips": [],
+      "bytes": 277956
+    },
+    {
+      "name": "gengar",
+      "source": "enemies/gengar/generation/tripo-out/tripo-out/gengar-mv-895e4eba/model.glb",
+      "output": "public/models/enemies/gengar.glb",
+      "trianglesBefore": 2324,
+      "trianglesAfter": 2324,
+      "texture": 1024,
+      "clips": [],
+      "bytes": 155124
+    }
+  ],
+  "latestBuildCommand": "bun run assets:game jynx",
+  "latestRebuiltIds": ["jynx"],
+  "latestBuildNote": "Only Jynx rebuilt under the mkdir lock after its one authorized replacement. Other records retain their prior verified builds."
+}

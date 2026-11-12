@@ -1,0 +1,117 @@
+{
+  "models": [
+    {
+      "id": "grimer",
+      "status": "ready",
+      "sha256": "1df3c76e4a76121a429b5b79d34b043d4387c1beab0876bb1addd541d553bc73",
+      "bytes": 104444,
+      "triangles": 1300,
+      "textureSize": 512,
+      "meshCount": 1,
+      "materialCount": 1,
+      "static": true
+    },
+    {
+      "id": "jigglypuff",
+      "status": "ready",
+      "sha256": "4ed2b1928548be11ee4709a90a70c5d01b0ecc7a048903ac004f53193e4cf878",
+      "bytes": 67032,
+      "triangles": 900,
+      "textureSize": 512,
+      "meshCount": 1,
+      "materialCount": 1,
+      "static": true
+    },
+    {
+      "id": "kadabra",
+      "status": "ready",
+      "sha256": "561cb3dd2ddaff9401d745c2f880db194a3f5f054abbf03632de5c84c0701204",
+      "bytes": 187044,
+      "triangles": 2287,
+      "textureSize": 512,
+      "meshCount": 1,
+      "materialCount": 1,
+      "static": true
+    },
+    {
+      "id": "wigglytuff",
+      "status": "ready",
+      "sha256": "b201b37254f203bc982b07baa3c46cf4d5f9c319fc5e1ed681b19fa9b1495b49",
+      "bytes": 68976,
+      "triangles": 899,
+      "textureSize": 512,
+      "meshCount": 1,
+      "materialCount": 1,
+      "static": true
+    },
+    {
+      "id": "jynx",
+      "status": "ready",
+      "sha256": "6481c783ba060be31e1dbbf4838e291e13479d33d670fb0109c96d7418bbb02f",
+      "bytes": 123600,
+      "triangles": 1300,
+      "textureSize": 512,
+      "meshCount": 1,
+      "materialCount": 1,
+      "static": true
+    },
+    {
+      "id": "muk",
+      "status": "ready",
+      "sha256": "6d77c1d0b18bafa1c65e45797874464bf70b6cd8b409309c9718b970772d73f1",
+      "bytes": 211300,
+      "triangles": 2896,
+      "textureSize": 1024,
+      "meshCount": 1,
+      "materialCount": 1,
+      "static": true
+    },
+    {
+      "id": "mr-mime",
+      "status": "ready",
+      "sha256": "d4c9af8dd300dcf71f87904eb8723d783bea4862200f7a7147ff13a8b47cbc14",
+      "bytes": 315676,
+      "triangles": 3208,
+      "textureSize": 1024,
+      "meshCount": 1,
+      "materialCount": 1,
+      "static": true
+    },
+    {
+      "id": "golbat",
+      "status": "ready",
+      "sha256": "690ab5a886752426a8741757252bbe2bb00984ea0a811366a48da170872673ba",
+      "bytes": 172944,
+      "triangles": 1928,
+      "textureSize": 1024,
+      "meshCount": 1,
+      "materialCount": 1,
+      "static": true
+    },
+    {
+      "id": "alakazam",
+      "status": "ready",
+      "sha256": "27a488c93d0973e4636d48ad8dbffb25f9eb9f86da45b4d83a5a459693119dbc",
+      "bytes": 277956,
+      "triangles": 2774,
+      "textureSize": 1024,
+      "meshCount": 1,
+      "materialCount": 1,
+      "static": true
+    },
+    {
+      "id": "gengar",
+      "status": "ready",
+      "sha256": "a6b0ce1e39fe3f931b0f5006f5c2e3efe3eadde88a64db962ed59cee593181c4",
+      "bytes": 155124,
+      "triangles": 2324,
+      "textureSize": 1024,
+      "meshCount": 1,
+      "materialCount": 1,
+      "static": true
+    }
+  ],
+  "totalBytes": 1684096,
+  "totalTriangles": 19816,
+  "scope": "GLB structure, embedded textures, file hashes and 6 saved Blender views per model. All ten current models passed visual QA; original failed Jynx is archived and recorded in provenance rejected."
+}

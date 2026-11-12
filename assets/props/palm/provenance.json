@@ -1,0 +1,10 @@
+{
+  "source": "assets/props/build-props.py: build_palm (seed 23)",
+  "method": "Hand-built Blender mesh: bowed ringed trunk, eight folded fronds, three coconuts, vertex colors",
+  "sourceModel": "assets/props/palm/blender/model.glb",
+  "releaseModel": "public/models/props/palm.glb",
+  "releaseCommand": "bun run assets:game palm",
+  "triangles": 976,
+  "bytes": 33536,
+  "externalAssets": []
+}

@@ -1,0 +1,33 @@
+{
+  "assets": [
+    "moves/*.webp (16)",
+    "items/*.webp (12)",
+    "items/tm-case.webp, moves/{floral-beam,fire-whirl,hydro-spiral,ball-storm}.webp (5; the sheet's pendulum cell was replaced by stations/hypno.webp below)",
+    "stations/{hypno,bill}.webp (2, 2026-11-06)",
+    "items/*.webp (60, 2026-11-06: item expansion, sheets items-sheet-2…6; 52 for Batch 1, the last 8 of sheet 6 for Batch 2)",
+    "items/*.webp (47, 2026-11-06: item Batches 2–3, sheets items-sheet-7…10; the last cell of sheet 10, an alternate rare candy, is not used)",
+    "stardust.webp (1, 2026-11-06: 星星沙子 carry-out currency icon, replaces coin.webp; cell 3 of a 2×2 sheet, cells 1/2/4 unused: plain star, star + two sparkles, star + three sand grains)"
+  ],
+  "generator": "Magpie Image, model ash/gpt-image-2.5-sunburst",
+  "createdAt": "2026-11-04",
+  "sources": [
+    "assets/icons/source/moves-sheet.png",
+    "assets/icons/source/items-sheet.png",
+    "assets/icons/source/fusion-sheet.png",
+    "assets/icons/source/stations-sheet.png",
+    "assets/icons/source/items-sheet-2.png",
+    "assets/icons/source/items-sheet-3.png",
+    "assets/icons/source/items-sheet-4.png",
+    "assets/icons/source/items-sheet-5.png",
+    "assets/icons/source/items-sheet-6.png",
+    "assets/icons/source/items-sheet-7.png",
+    "assets/icons/source/items-sheet-8.png",
+    "assets/icons/source/items-sheet-9.png",
+    "assets/icons/source/items-sheet-10.png",
+    "2×2 star-dust sheet, 1261×1247 RGBA (not checked in)"
+  ],
+  "prompts": "docs/ART-PROMPTS.md (icon sheet template + style block)",
+  "processing": "python3 assets/icons/slice-sheet.py: even grid split, border flood-fill background removal, trim, 128 px WebP; fusion sheet sliced with flood-fill tolerance 75 (floral-beam and the pendulum at 110) to drop its glow halo; stations sheet (2×2, cells: hypno, unused alt, bill, unused alt) sliced with the default tolerance 38; item sheets 2–10 (1448×1086 RGBA) composited onto #f5f1e8, then sliced 4×3 with the default tolerance 38; stardust sheet (2×2, prompt: a chunky four-point sparkle star, pale pink #ffe1f4 body with rose #e98cc0 shade, matching the in-world pickup colour in src/run/view/vfx.ts) composited onto #f5f1e8, then slice-sheet.py <flat.png> 2 2 (default tolerance 38), only cell 3 taken",
+  "rights": "Generated for a noncommercial Pokémon fan project; character and item concepts belong to their rights holders. No official artwork used as input.",
+  "updatedAt": "2026-11-06"
+}

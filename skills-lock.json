@@ -1,0 +1,373 @@
+{
+  "version": 1,
+  "skills": {
+    "ai-behavior-trees-utility-ai": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/disciplines/ai-behavior-trees-utility-ai/SKILL.md",
+      "computedHash": "6def2e176fd65f1fde63efee7f6ef5d226a1068e74336587e2205fbaf151c6c9"
+    },
+    "audio-design": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/disciplines/audio-design/SKILL.md",
+      "computedHash": "dd4b1f676486c3bdc3c9a6ab77c0e37135263fbe6ed6c0fd1c456d8dc20f9a00"
+    },
+    "camera-systems": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/disciplines/camera-systems/SKILL.md",
+      "computedHash": "9d5ae7ff7f72ed682dd0da6718af55b8415f0f4dab775803a30f09cf0077d4af"
+    },
+    "create-game-assets": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/disciplines/create-game-assets/SKILL.md",
+      "computedHash": "4531191945f6a6f64c280f8468f916aba42459c4e2f090b199b4edfe78474576"
+    },
+    "create-github-action-workflow-specification": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/create-github-action-workflow-specification/SKILL.md",
+      "computedHash": "527e6c77d921d58a9d0059aa95d0d14b441d2166f9c20518263048a56ca8fbbb"
+    },
+    "dialogue-systems": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/disciplines/dialogue-systems/SKILL.md",
+      "computedHash": "80457ad5f7bae449b7604e1298bfa10654048a384c40809c26f085f65c245497"
+    },
+    "game-ai": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/disciplines/game-ai/SKILL.md",
+      "computedHash": "c6120a671e8c39cd93b4fec6599761b289452fad6608031ea604dbbbb114a99c"
+    },
+    "game-feel": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/disciplines/game-feel/SKILL.md",
+      "computedHash": "190f588bf95cd2b06b737465a29deaf82b20f185248bad827d1c3135d8953a99"
+    },
+    "game-ui-ux": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/disciplines/game-ui-ux/SKILL.md",
+      "computedHash": "8a2d29f6b8abdb8dff0eb628bdd010badc46054d6cbb8d3adc14dfe719dd4127"
+    },
+    "github-actions-efficiency": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/github-actions-efficiency/SKILL.md",
+      "computedHash": "92628da7f3eb2ae5625168f31587712a3cd77ac9ba5a23ffc24e86fd12c4408c"
+    },
+    "github-actions-hardening": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/github-actions-hardening/SKILL.md",
+      "computedHash": "10e35ff70fcf42e09295ffad0ac3203e4d6b6f74557cc3fa1654112b89e0eea2"
+    },
+    "impeccable": {
+      "source": "pbakaus/impeccable",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/impeccable/SKILL.md",
+      "computedHash": "43cbaccaaa6d60becd67d63577da8f7053cb5f0262c772e892f15e7242cada21"
+    },
+    "input-systems": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/disciplines/input-systems/SKILL.md",
+      "computedHash": "2d5a6b633eddb8ce1b5cf384947a86079a2ec58c3c388e9d89a04ff9cf7cd131"
+    },
+    "level-design": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/disciplines/level-design/SKILL.md",
+      "computedHash": "7a3ba2c00be7443025f38e94389858992f0bc021a1bf563cb23576a0f5535d00"
+    },
+    "performance-optimization": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/disciplines/performance-optimization/SKILL.md",
+      "computedHash": "a17ae684600d8f3a26c0f6af310870b158e1b5b883458bbdc9ea201b9bb60835"
+    },
+    "physics-tuning": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/disciplines/physics-tuning/SKILL.md",
+      "computedHash": "7f5eaad7b37357830f326dc59dd050ae6257acf13582a4862e1a25adcca2d867"
+    },
+    "procedural-gen": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/disciplines/procedural-gen/SKILL.md",
+      "computedHash": "0550872cdaf686362b64cb39f9ff6eec33325f4afb4d659dc373c2ad4f866929"
+    },
+    "roguelike": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/genres/roguelike/SKILL.md",
+      "computedHash": "c25acb2dd9a20cd1a2f618bdf4452fba85b2b07b653e0380fa2ff06ec6c8665c"
+    },
+    "router": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "router/SKILL.md",
+      "computedHash": "7bd2c2d3bb558a6a993df2f6bac4729debe3f7b4c4a6f0589811614f631af72b"
+    },
+    "rpg": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/genres/rpg/SKILL.md",
+      "computedHash": "aeba08be43c066f346e3fa6ba99959c94a473725540dfe689d2578011f82793d"
+    },
+    "save-systems": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/disciplines/save-systems/SKILL.md",
+      "computedHash": "f893265ad69b54d1123dd53d89548031fd411b664a4c9a5b1d45a23f54636fd8"
+    },
+    "scenario-blender-animation": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-animation/SKILL.md",
+      "computedHash": "e18a80a8b5604e05a0179a95b9899b50741c887f197a18101a1dab49e282b37c"
+    },
+    "scenario-blender-expert": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-expert/SKILL.md",
+      "computedHash": "15eb7fc41262282ca06130035616c427d57ec2552cb69ef9bfcc6cbb3c489dfa"
+    },
+    "scenario-blender-export": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-export/SKILL.md",
+      "computedHash": "1dd6831d05078d117f719bc2c578ab35955b18b56e9836afd2db7db499efb71e"
+    },
+    "scenario-blender-geometry-nodes": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-geometry-nodes/SKILL.md",
+      "computedHash": "95850f8388e975d9db20fee9df22f5ed319f9906b752b2b9863d449199de809f"
+    },
+    "scenario-blender-lighting-rendering": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-lighting-rendering/SKILL.md",
+      "computedHash": "6ca8fcfe3ad70c4833d724235afc0a9a11ee5a6aadfca75d5b24787e5df07188"
+    },
+    "scenario-blender-retopology": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-retopology/SKILL.md",
+      "computedHash": "0a4f97e8d4c8067f6bd8904a49860b279cc762ab199bdd434ba9b7b5972a2768"
+    },
+    "scenario-blender-rigging": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-rigging/SKILL.md",
+      "computedHash": "624a12ae572dc57dd76e1e1c08f08f76b96a10ae878c44ed310448790678163f"
+    },
+    "scenario-blender-sculpting": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-sculpting/SKILL.md",
+      "computedHash": "bf5d6227264276210df07079e381ebfcec3d49c21a2f956f6fad878194799422"
+    },
+    "scenario-blender-texturing-shading": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-texturing-shading/SKILL.md",
+      "computedHash": "ee4437262431cd98dcee1f61849dc34599fbf8361ddcb44f81730919a28ca637"
+    },
+    "scenario-blender-uv-baking": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-uv-baking/SKILL.md",
+      "computedHash": "1fb42f73b8d521de805e7c033e1ebdbd5a9d16388aedcd4bf4c6260171abf5df"
+    },
+    "shader-programming": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/disciplines/shader-programming/SKILL.md",
+      "computedHash": "07fd9fd1ac34f951da3a82da21ace5234a53f035c688a1667a12233d65405c70"
+    },
+    "threejs-animation": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/threejs-animation/SKILL.md",
+      "computedHash": "52acf24ba76b47b094e5734622947fcc85deebf2469bb5c8ef77a1f1dcfc3e5c"
+    },
+    "threejs-asset-pipeline": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/threejs-asset-pipeline/SKILL.md",
+      "computedHash": "be5c2bbda841382229d99182f88e94eba8974474bd065b994e881bb9cc2058d8"
+    },
+    "threejs-fundamentals": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/threejs-fundamentals/SKILL.md",
+      "computedHash": "c0293a5eaf5168cdbeb1e9bfc5d5b7aa24396f604a8695b26a72d833c2352108"
+    },
+    "threejs-geometry": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/threejs-geometry/SKILL.md",
+      "computedHash": "cae4d8f02ffe449edbc33a2a9ba79020dcb415e7c187d48ed8ffc166207d2e77"
+    },
+    "threejs-gltf-loading": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-engines/threejs-gltf-loading/SKILL.md",
+      "computedHash": "d7c919e1772658309f1e4fb46e3062f4bcf9c4ec23b319c3be5c81c1c48ffcb7"
+    },
+    "threejs-interaction": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/threejs-interaction/SKILL.md",
+      "computedHash": "3a9d60c473947217f2bd9fbdfb12084e55ae2f240aa6fc718f61c55a73d6fb34"
+    },
+    "threejs-lighting": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/threejs-lighting/SKILL.md",
+      "computedHash": "231a7aec3b2d6aa061026397b5453b22518ac9391eb0f31164bfd06dd4bcacd6"
+    },
+    "threejs-loaders": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/threejs-loaders/SKILL.md",
+      "computedHash": "f43a0994b7bead131c51361ff347ea7b2db48ec64994a8ee263171c692beac88"
+    },
+    "threejs-materials": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/threejs-materials/SKILL.md",
+      "computedHash": "8dbeb3cc26e0825e0bb6857bcdab04d997a31d8a2d685d850cdfce98df4c875d"
+    },
+    "threejs-materials-lighting": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-engines/threejs-materials-lighting/SKILL.md",
+      "computedHash": "11a186d7abd4ef1db695739002a691a3d2d8e2f6edcd6285e5e8d4ef428e3095"
+    },
+    "threejs-performance": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/threejs-performance/SKILL.md",
+      "computedHash": "5aa6eb8103c8f882f86a48c65245f1e8f1c48e83abc888e0d7a37833e7d9188b"
+    },
+    "threejs-postprocessing": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/threejs-postprocessing/SKILL.md",
+      "computedHash": "21ba7ee7155d7ad8643bafc0a832d29bf87a37b24acd5e4201a0b7c01470ab09"
+    },
+    "threejs-react-three-fiber": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/threejs-react-three-fiber/SKILL.md",
+      "computedHash": "c584eb40814c9dba186a555adb9fa4acba84f4c40d47fd5b30fc90415f8ca53a"
+    },
+    "threejs-scene-setup": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-engines/threejs-scene-setup/SKILL.md",
+      "computedHash": "0a288dc24bae17ffaf9b569d6d6984136b1ca24f2e8c410a9bc3364d079a0130"
+    },
+    "threejs-shaders": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/threejs-shaders/SKILL.md",
+      "computedHash": "af0a4cdfc80390b30a898bb5a3fe30e4f61b304776a9aebbdb7451b0fc1c2c0f"
+    },
+    "threejs-textures": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/threejs-textures/SKILL.md",
+      "computedHash": "73544dc3606b38270ddd909d57fd8a5df8291c3bae432417cf3f797ab1ca1fd3"
+    },
+    "scenario-blender-animation": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-animation/SKILL.md",
+      "computedHash": "e18a80a8b5604e05a0179a95b9899b50741c887f197a18101a1dab49e282b37c"
+    },
+    "scenario-blender-expert": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-expert/SKILL.md",
+      "computedHash": "15eb7fc41262282ca06130035616c427d57ec2552cb69ef9bfcc6cbb3c489dfa"
+    },
+    "scenario-blender-export": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-export/SKILL.md",
+      "computedHash": "1dd6831d05078d117f719bc2c578ab35955b18b56e9836afd2db7db499efb71e"
+    },
+    "scenario-blender-geometry-nodes": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-geometry-nodes/SKILL.md",
+      "computedHash": "95850f8388e975d9db20fee9df22f5ed319f9906b752b2b9863d449199de809f"
+    },
+    "scenario-blender-lighting-rendering": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-lighting-rendering/SKILL.md",
+      "computedHash": "6ca8fcfe3ad70c4833d724235afc0a9a11ee5a6aadfca75d5b24787e5df07188"
+    },
+    "scenario-blender-retopology": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-retopology/SKILL.md",
+      "computedHash": "0a4f97e8d4c8067f6bd8904a49860b279cc762ab199bdd434ba9b7b5972a2768"
+    },
+    "scenario-blender-rigging": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-rigging/SKILL.md",
+      "computedHash": "624a12ae572dc57dd76e1e1c08f08f76b96a10ae878c44ed310448790678163f"
+    },
+    "scenario-blender-sculpting": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-sculpting/SKILL.md",
+      "computedHash": "bf5d6227264276210df07079e381ebfcec3d49c21a2f956f6fad878194799422"
+    },
+    "scenario-blender-texturing-shading": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-texturing-shading/SKILL.md",
+      "computedHash": "ee4437262431cd98dcee1f61849dc34599fbf8361ddcb44f81730919a28ca637"
+    },
+    "scenario-blender-uv-baking": {
+      "source": "scenario-labs/skills",
+      "ref": "e7e19d5f7cf14f3b84a16a261dfb6f77724bd637",
+      "sourceType": "github",
+      "skillPath": "skills/dcc/blender/scenario-blender-uv-baking/SKILL.md",
+      "computedHash": "1fb42f73b8d521de805e7c033e1ebdbd5a9d16388aedcd4bf4c6260171abf5df"
+    }
+  }
+}

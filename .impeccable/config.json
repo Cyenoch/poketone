@@ -1,0 +1,33 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "createdAt": "2026-11-04T09:31:31.468Z",
+        "reason": "Agent: docs/GAME-FEEL.md specifies an overshoot pop for damage numbers; this curve is used only by .run-number__pop"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/game/scenes/createStage.ts",
+          "src/run/view/createRunView.ts",
+          "src/run/view/debugOverlay.ts",
+          "src/run/view/vfx.ts"
+        ],
+        "createdAt": "2026-11-04T09:31:31.511Z",
+        "reason": "Agent: these are Three.js material colors for the 3D scene (MeshBasic/Lambert/Standard), not DOM UI; DESIGN.md's palette governs DOM UI"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": ["src/screens/run-station.css"],
+        "createdAt": "2026-11-05T03:33:19.998Z",
+        "reason": "agent triage: .run-machine__glass has a uniform 2px border; the inset bottom shadow is the pod's metal base in Bill's machine, not a one-side accent"
+      }
+    ]
+  }
+}

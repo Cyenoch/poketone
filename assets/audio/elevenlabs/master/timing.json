@@ -1,0 +1,372 @@
+{
+  "berry.flac": {
+    "lenMs": 391,
+    "hitMs": 0,
+    "peakMs": 251
+  },
+  "boss.flac": {
+    "lenMs": 727,
+    "hitMs": 0,
+    "peakMs": 95
+  },
+  "candy-1.flac": {
+    "lenMs": 180,
+    "hitMs": 0,
+    "peakMs": 10
+  },
+  "candy-2.flac": {
+    "lenMs": 180,
+    "hitMs": 0,
+    "peakMs": 10
+  },
+  "candy-3.flac": {
+    "lenMs": 180,
+    "hitMs": 0,
+    "peakMs": 0
+  },
+  "capture.flac": {
+    "lenMs": 526,
+    "hitMs": 0,
+    "peakMs": 226
+  },
+  "cast-electric-1.flac": {
+    "lenMs": 722,
+    "hitMs": 175,
+    "peakMs": 346
+  },
+  "cast-electric-2.flac": {
+    "lenMs": 722,
+    "hitMs": 5,
+    "peakMs": 431
+  },
+  "cast-fire-1.flac": {
+    "lenMs": 481,
+    "hitMs": 10,
+    "peakMs": 50
+  },
+  "cast-fire-2.flac": {
+    "lenMs": 546,
+    "hitMs": 110,
+    "peakMs": 200
+  },
+  "cast-grass-1.flac": {
+    "lenMs": 321,
+    "hitMs": 70,
+    "peakMs": 75
+  },
+  "cast-grass-2.flac": {
+    "lenMs": 656,
+    "hitMs": 185,
+    "peakMs": 220
+  },
+  "cast-water-1.flac": {
+    "lenMs": 486,
+    "hitMs": 5,
+    "peakMs": 40
+  },
+  "cast-water-2.flac": {
+    "lenMs": 466,
+    "hitMs": 65,
+    "peakMs": 90
+  },
+  "chest.flac": {
+    "lenMs": 1143,
+    "hitMs": 361,
+    "peakMs": 672
+  },
+  "crit-1.flac": {
+    "lenMs": 90,
+    "hitMs": 25,
+    "peakMs": 25
+  },
+  "crit-2.flac": {
+    "lenMs": 175,
+    "hitMs": 0,
+    "peakMs": 0
+  },
+  "crit-3.flac": {
+    "lenMs": 90,
+    "hitMs": 5,
+    "peakMs": 10
+  },
+  "danger-1.flac": {
+    "lenMs": 346,
+    "hitMs": 0,
+    "peakMs": 30
+  },
+  "danger-2.flac": {
+    "lenMs": 426,
+    "hitMs": 20,
+    "peakMs": 125
+  },
+  "danger-3.flac": {
+    "lenMs": 331,
+    "hitMs": 30,
+    "peakMs": 135
+  },
+  "dash-1.flac": {
+    "lenMs": 135,
+    "hitMs": 20,
+    "peakMs": 35
+  },
+  "dash-2.flac": {
+    "lenMs": 125,
+    "hitMs": 35,
+    "peakMs": 40
+  },
+  "dash-3.flac": {
+    "lenMs": 220,
+    "hitMs": 30,
+    "peakMs": 50
+  },
+  "elite-kill.flac": {
+    "lenMs": 692,
+    "hitMs": 0,
+    "peakMs": 45
+  },
+  "enemy-heal.flac": {
+    "lenMs": 546,
+    "hitMs": 90,
+    "peakMs": 175
+  },
+  "evolve-1.flac": {
+    "lenMs": 1819,
+    "hitMs": 331,
+    "peakMs": 596
+  },
+  "evolve-2.flac": {
+    "lenMs": 1518,
+    "hitMs": 426,
+    "peakMs": 581
+  },
+  "freeze-1.flac": {
+    "lenMs": 331,
+    "hitMs": 0,
+    "peakMs": 100
+  },
+  "freeze-2.flac": {
+    "lenMs": 276,
+    "hitMs": 20,
+    "peakMs": 90
+  },
+  "hit-1.flac": {
+    "lenMs": 220,
+    "hitMs": 0,
+    "peakMs": 20
+  },
+  "hit-2.flac": {
+    "lenMs": 155,
+    "hitMs": 0,
+    "peakMs": 10
+  },
+  "hit-3.flac": {
+    "lenMs": 220,
+    "hitMs": 5,
+    "peakMs": 10
+  },
+  "hit-electric-1.flac": {
+    "lenMs": 100,
+    "hitMs": 20,
+    "peakMs": 20
+  },
+  "hit-electric-2.flac": {
+    "lenMs": 160,
+    "hitMs": 0,
+    "peakMs": 10
+  },
+  "hit-electric-3.flac": {
+    "lenMs": 160,
+    "hitMs": 30,
+    "peakMs": 30
+  },
+  "hit-fire-1.flac": {
+    "lenMs": 160,
+    "hitMs": 15,
+    "peakMs": 20
+  },
+  "hit-fire-2.flac": {
+    "lenMs": 160,
+    "hitMs": 5,
+    "peakMs": 10
+  },
+  "hit-fire-3.flac": {
+    "lenMs": 160,
+    "hitMs": 0,
+    "peakMs": 0
+  },
+  "hit-grass-1.flac": {
+    "lenMs": 160,
+    "hitMs": 0,
+    "peakMs": 25
+  },
+  "hit-grass-2.flac": {
+    "lenMs": 160,
+    "hitMs": 0,
+    "peakMs": 5
+  },
+  "hit-grass-3.flac": {
+    "lenMs": 160,
+    "hitMs": 50,
+    "peakMs": 65
+  },
+  "hit-water-1.flac": {
+    "lenMs": 160,
+    "hitMs": 0,
+    "peakMs": 0
+  },
+  "hit-water-2.flac": {
+    "lenMs": 160,
+    "hitMs": 0,
+    "peakMs": 0
+  },
+  "hit-water-3.flac": {
+    "lenMs": 160,
+    "hitMs": 0,
+    "peakMs": 0
+  },
+  "hurt-1.flac": {
+    "lenMs": 231,
+    "hitMs": 30,
+    "peakMs": 30
+  },
+  "hurt-2.flac": {
+    "lenMs": 546,
+    "hitMs": 0,
+    "peakMs": 15
+  },
+  "kill-1.flac": {
+    "lenMs": 220,
+    "hitMs": 20,
+    "peakMs": 20
+  },
+  "kill-2.flac": {
+    "lenMs": 220,
+    "hitMs": 10,
+    "peakMs": 15
+  },
+  "kill-3.flac": {
+    "lenMs": 220,
+    "hitMs": 65,
+    "peakMs": 65
+  },
+  "level-1.flac": {
+    "lenMs": 661,
+    "hitMs": 0,
+    "peakMs": 411
+  },
+  "level-2.flac": {
+    "lenMs": 747,
+    "hitMs": 0,
+    "peakMs": 45
+  },
+  "reaction-1.flac": {
+    "lenMs": 611,
+    "hitMs": 0,
+    "peakMs": 5
+  },
+  "reaction-2.flac": {
+    "lenMs": 800,
+    "hitMs": 0,
+    "peakMs": 25
+  },
+  "revive-1.flac": {
+    "lenMs": 1158,
+    "hitMs": 0,
+    "peakMs": 10
+  },
+  "revive-2.flac": {
+    "lenMs": 967,
+    "hitMs": 0,
+    "peakMs": 5
+  },
+  "sting-defeat.flac": {
+    "lenMs": 1333,
+    "hitMs": 70,
+    "peakMs": 200
+  },
+  "sting-victory.flac": {
+    "lenMs": 1664,
+    "hitMs": 5,
+    "peakMs": 646
+  },
+  "tell-1.flac": {
+    "lenMs": 120,
+    "hitMs": 30,
+    "peakMs": 35
+  },
+  "tell-2.flac": {
+    "lenMs": 150,
+    "hitMs": 70,
+    "peakMs": 75
+  },
+  "tell-3.flac": {
+    "lenMs": 200,
+    "hitMs": 80,
+    "peakMs": 85
+  },
+  "tell-4.flac": {
+    "lenMs": 180,
+    "hitMs": 55,
+    "peakMs": 70
+  },
+  "tell-danger-1.flac": {
+    "lenMs": 145,
+    "hitMs": 30,
+    "peakMs": 30
+  },
+  "tell-danger-2.flac": {
+    "lenMs": 135,
+    "hitMs": 20,
+    "peakMs": 20
+  },
+  "tell-danger-3.flac": {
+    "lenMs": 190,
+    "hitMs": 25,
+    "peakMs": 30
+  },
+  "ui-back.flac": {
+    "lenMs": 411,
+    "hitMs": 0,
+    "peakMs": 5
+  },
+  "ui-confirm.flac": {
+    "lenMs": 381,
+    "hitMs": 15,
+    "peakMs": 20
+  },
+  "ui-denied.flac": {
+    "lenMs": 351,
+    "hitMs": 0,
+    "peakMs": 5
+  },
+  "ui-move-1.flac": {
+    "lenMs": 90,
+    "hitMs": 20,
+    "peakMs": 25
+  },
+  "ui-move-2.flac": {
+    "lenMs": 95,
+    "hitMs": 30,
+    "peakMs": 30
+  },
+  "ui-move-3.flac": {
+    "lenMs": 65,
+    "hitMs": 15,
+    "peakMs": 20
+  },
+  "ui-start.flac": {
+    "lenMs": 1057,
+    "hitMs": 371,
+    "peakMs": 687
+  },
+  "ui-transition.flac": {
+    "lenMs": 541,
+    "hitMs": 311,
+    "peakMs": 351
+  },
+  "ult.flac": {
+    "lenMs": 952,
+    "hitMs": 0,
+    "peakMs": 45
+  }
+}

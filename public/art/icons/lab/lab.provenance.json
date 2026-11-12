@@ -1,0 +1,11 @@
+{
+  "assets": [
+    "dmg, hp, armor, regen, crit, atkspd, area, ult, spd, xp, gold, magnet, luck, slot-move, slot-vit, choice4, reroll, skip, banish, revive, research, party, archive, bag (.webp, 24)"
+  ],
+  "generator": "Magpie Image, model ash/gpt-image-2.5-sunburst",
+  "createdAt": "2026-11-05",
+  "sources": ["assets/icons/source/lab-sheet.png"],
+  "prompts": "docs/ART-PROMPTS.md (icon sheet template + style block; 2026-11-05 研究所图标表), with assets/icons/source/moves-sheet.png as the style reference",
+  "processing": "Sheet came back RGBA with clean alpha but coloured glow in the transparent pixels: composited onto #f5f1e8 first, then python3 assets/icons/slice-sheet.py <flat.png> 6 4 (default flood-fill tolerance 38), 128 px WebP",
+  "rights": "Generated for a noncommercial Pokémon fan project. No official artwork used as input."
+}

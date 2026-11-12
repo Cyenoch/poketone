@@ -1,0 +1,9 @@
+{
+  "asset": "ground-grass.jpg",
+  "generator": "Magpie Image, model ash/gpt-image-2.5-sunburst",
+  "createdAt": "2026-11-04",
+  "source": "assets/textures/source/ground-grass.png (1024 px)",
+  "prompts": "docs/ART-PROMPTS.md (ground texture template)",
+  "processing": "sips: 512 px JPEG quality 82; since 2026-11-04 the meadow (clover & flower) layer, settled (saturation + tint) in the terrain shader",
+  "rights": "Generated for a noncommercial fan project."
+}

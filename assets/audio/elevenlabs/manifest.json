@@ -1,0 +1,1366 @@
+{
+  "tool": "ElevenLabs MCP creative flow (docs/AUDIO.md)",
+  "flow": "Ak3RbtQLnUYWennQTQkg",
+  "generatedAt": "2026-11-05",
+  "rights": "Generated with ElevenLabs for a noncommercial fan project; the ElevenLabs plan terms govern reuse.",
+  "assets": {
+    "hit": {
+      "kind": "sfx",
+      "tier": "small",
+      "frequent": true,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "UCUCLsA2IKoKjFThEuTm",
+      "prompt": "Very short soft cartoon impact, a dull woody thwack with a tiny bright click, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-hit-1.mp3",
+          "generationId": "I5TMAwhek55uJON2AbC2"
+        },
+        {
+          "file": "sfx-hit-4.mp3",
+          "generationId": "insbWN62U42Bx8sbyXRt"
+        },
+        {
+          "file": "sfx-hit-5.mp3",
+          "generationId": "oYrEbccFTTEcOLPWlVlM"
+        }
+      ],
+      "pick": ["sfx-hit-4.mp3", "sfx-hit-5.mp3", "sfx-hit-1.mp3"],
+      "ship": "hit",
+      "note": "sfx-hit-8 (88% tonal at 1.6 kHz, a ding at four to nine hits a second) was dropped."
+    },
+    "kill": {
+      "kind": "sfx",
+      "tier": "medium",
+      "frequent": true,
+      "maxMs": 220,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "NRQ84sItKKJewF24mWCi",
+      "prompt": "Tiny bubble pop with a soft quick downward blip, very short, light and cute, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-kill-1.mp3",
+          "generationId": "Xe5KS0os6U8m0asCwunh"
+        },
+        {
+          "file": "sfx-kill-3.mp3",
+          "generationId": "J3GD9cIKwguoW09s2dKd"
+        },
+        {
+          "file": "sfx-kill-4.mp3",
+          "generationId": "f4Dr9xXVphu1ISRvL9ln"
+        }
+      ],
+      "pick": ["sfx-kill-1.mp3", "sfx-kill-3.mp3", "sfx-kill-4.mp3"],
+      "ship": "kill"
+    },
+    "candy": {
+      "kind": "sfx",
+      "tier": "small",
+      "frequent": true,
+      "maxMs": 180,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "VoUiFx5FGeq7qutdvOAu",
+      "prompt": "Single clean glassy kalimba plink, bright and sweet, very short, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-candy-1.mp3",
+          "generationId": "5qVWdtDCQEDJE2JkHJCu"
+        },
+        {
+          "file": "sfx-candy-2.mp3",
+          "generationId": "AIq83yaujvIl5S0FXzXK"
+        },
+        {
+          "file": "sfx-candy-4.mp3",
+          "generationId": "XrO1yq6Cl4D9XVtxy6JF"
+        }
+      ],
+      "pick": ["sfx-candy-2.mp3", "sfx-candy-1.mp3", "sfx-candy-4.mp3"],
+      "ship": "candy",
+      "note": "Not shipped: takes 5-12 are damped pops/ticks generated as a quieter alternative; the pickup sound was judged fine as it is."
+    },
+    "dash": {
+      "kind": "sfx",
+      "tier": "small",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "LGtRknboW7akV8zZkuok",
+      "prompt": "Quick soft air whoosh, light and fast, short, no wind rumble, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-dash-1.mp3",
+          "generationId": "MXKJCtko4spnEmi8p6g0"
+        },
+        {
+          "file": "sfx-dash-2.mp3",
+          "generationId": "HaJ8X8athzlwdYFkzwSE"
+        },
+        {
+          "file": "sfx-dash-4.mp3",
+          "generationId": "yJw9sYwifRK3uKJFWd0b"
+        }
+      ],
+      "pick": ["sfx-dash-4.mp3", "sfx-dash-1.mp3", "sfx-dash-2.mp3"],
+      "ship": "dash"
+    },
+    "crit": {
+      "kind": "sfx",
+      "tier": "small",
+      "maxMs": 200,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "BkEmI0BVuPSK82N3Xr87",
+      "prompt": "Sharp bright metallic tick-snap with a tiny sparkle on top, very short and crisp, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-crit-12.mp3",
+          "generationId": "l6OhIk9OBdeWyI7q8fZB",
+          "prompt": "Single heavy dull thump with a short rounded snap on top, one firm impact, mid-range, damped with no ring, no bell and no metallic tone, audible on a small speaker, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-crit-13.mp3",
+          "generationId": "91OGQRHZuWqNiKkVC2AR",
+          "prompt": "Single heavy dull thump with a short rounded snap on top, one firm impact, mid-range, damped with no ring, no bell and no metallic tone, audible on a small speaker, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-crit-18.mp3",
+          "generationId": "TJyCnq792ehXKxB5pZl9",
+          "prompt": "Single firm punchy body slap, rounded and muted, a deeper and heavier impact than a normal hit, short, no ring, no bell tone, no sparkle, audible on a small speaker, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-crit-13.mp3", "sfx-crit-18.mp3", "sfx-crit-12.mp3"],
+      "ship": "crit",
+      "note": "Dull thump-and-crack takes (tonal share 4-13%). The earlier bell-ping takes (crit-8/9: pure tones at 1.6 and 2.5 kHz, 300 ms) read as ding-ding-ding on every crit. Mastered at the hit level (small tier) and played on the bed bus: a crit is a heavier hit, not a cue.",
+      "frequent": true
+    },
+    "hurt": {
+      "kind": "sfx",
+      "tier": "medium",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.6,
+        "prompt_influence": 0.5
+      },
+      "node": "eQoufNzBmxGLEayCUX2j",
+      "prompt": "Short dull body thump with a quick descending wobble, soft and muffled, dry close-mic, no reverb, no music, no scream, no voice",
+      "takes": [
+        {
+          "file": "sfx-hurt-5.mp3",
+          "generationId": "3QgQifosAwYNUPq8WaEV",
+          "prompt": "Short muffled body hit: a soft mid-range knock with a quick descending wobble, audible on a small speaker, dry close-mic, no reverb, no music, no scream, no voice"
+        },
+        {
+          "file": "sfx-hurt-6.mp3",
+          "generationId": "e8LlUkAlXM7ZK2mL7Tsa",
+          "prompt": "Short muffled body hit: a soft mid-range knock with a quick descending wobble, audible on a small speaker, dry close-mic, no reverb, no music, no scream, no voice"
+        }
+      ],
+      "pick": ["sfx-hurt-6.mp3", "sfx-hurt-5.mp3"],
+      "ship": "hurt"
+    },
+    "ui-move": {
+      "kind": "sfx",
+      "tier": "ui",
+      "frequent": true,
+      "maxMs": 160,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "hjWKxUQduKO3FEvEQ8MT",
+      "prompt": "Tiny soft wooden tick, very short and quiet, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-ui-move-2.mp3",
+          "generationId": "7r8cNrhUruC7Kd2pIEQn"
+        },
+        {
+          "file": "sfx-ui-move-3.mp3",
+          "generationId": "SEaDET9tL7lbUERpatc8"
+        },
+        {
+          "file": "sfx-ui-move-4.mp3",
+          "generationId": "4bSVbmQkHN0nDjE7POvi"
+        }
+      ],
+      "pick": ["sfx-ui-move-2.mp3", "sfx-ui-move-3.mp3", "sfx-ui-move-4.mp3"],
+      "ship": "ui-move"
+    },
+    "reaction": {
+      "kind": "sfx",
+      "tier": "medium",
+      "maxMs": 800,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.8,
+        "prompt_influence": 0.5
+      },
+      "node": "qvKrNnJFBZpPmooT65uB",
+      "prompt": "Quick rising magical zap shimmer, sparkly electric fizz, short, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-reaction-2.mp3",
+          "generationId": "qSW7MgK4zR5pl6DW4hfg"
+        },
+        {
+          "file": "sfx-reaction-3.mp3",
+          "generationId": "GLPF0HdmYeb4AJGWskhL"
+        }
+      ],
+      "pick": ["sfx-reaction-3.mp3", "sfx-reaction-2.mp3"],
+      "ship": "reaction"
+    },
+    "berry": {
+      "kind": "sfx",
+      "tier": "medium",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.6,
+        "prompt_influence": 0.5
+      },
+      "node": "HqVFvzXnRHwZgWcdAgE9",
+      "prompt": "Two quick rising round marimba notes, warm and cheerful, short, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-berry-2.mp3",
+          "generationId": "U2rgLsB1SfMTO19SOmDX"
+        }
+      ],
+      "pick": ["sfx-berry-2.mp3"],
+      "ship": "berry"
+    },
+    "elite-kill": {
+      "kind": "sfx",
+      "tier": "large",
+      "maxMs": 1200,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1.2,
+        "prompt_influence": 0.5
+      },
+      "node": "wO5MTqORg5msBeM98meM",
+      "prompt": "Heavy deep thump boom with a short low rumble tail, punchy, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-elite-kill-5.mp3",
+          "generationId": "coVXLSSzreCY7ahiUNeI",
+          "prompt": "Heavy punchy impact with a mid-range crack on top and a short deep rumble tail, audible on a small speaker, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-elite-kill-5.mp3"],
+      "ship": "elite-kill"
+    },
+    "chest": {
+      "kind": "sfx",
+      "tier": "large",
+      "maxMs": 1500,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1.5,
+        "prompt_influence": 0.5
+      },
+      "node": "Ghdd12XXTamZJmr35wSs",
+      "prompt": "Treasure chest opening: soft wooden latch click followed by a glittering rising chime, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-chest-2.mp3",
+          "generationId": "Fgzeq4V1VHGgwNegrnWZ"
+        }
+      ],
+      "pick": ["sfx-chest-2.mp3"],
+      "ship": "chest"
+    },
+    "level": {
+      "kind": "sfx",
+      "tier": "medium",
+      "maxMs": 1200,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1.2,
+        "prompt_influence": 0.5
+      },
+      "node": "UETddOV5lu573bMTq0nv",
+      "prompt": "Bright cheerful rising four-note arpeggio on marimba and glockenspiel, level-up chime, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-level-1.mp3",
+          "generationId": "VWcPKoHVptOQAcMkrgTB"
+        },
+        {
+          "file": "sfx-level-2.mp3",
+          "generationId": "GKobxjOFGEHQNKzub5Aa"
+        }
+      ],
+      "pick": ["sfx-level-1.mp3", "sfx-level-2.mp3"],
+      "ship": "level"
+    },
+    "boss": {
+      "kind": "sfx",
+      "tier": "large",
+      "maxMs": 1500,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1.5,
+        "prompt_influence": 0.5
+      },
+      "node": "HQ3JpjF1vkN4cee1Uz3v",
+      "prompt": "Deep low brass horn hit with an ominous short swell, warning, ends cleanly, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-boss-2.mp3",
+          "generationId": "Sm6BU9w0MD6dTm5lqLF8"
+        }
+      ],
+      "pick": ["sfx-boss-2.mp3"],
+      "ship": "boss"
+    },
+    "danger": {
+      "kind": "sfx",
+      "tier": "medium",
+      "maxMs": 800,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.8,
+        "prompt_influence": 0.5
+      },
+      "node": "owLaefJDxwmDueYAWInt",
+      "prompt": "Two quick urgent alarm beeps, clear mid-pitch, clean tone, short, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-danger-15.mp3",
+          "generationId": "tiwZlPfl0dWwFfyWe8fi",
+          "prompt": "Two short muted brass stabs, tense and ominous like a warning in a fantasy adventure game, rounded and mid-range, audible on a phone speaker, no siren, no beep, no alarm, no sparkle, ends cleanly, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-danger-16.mp3",
+          "generationId": "yfpGocHWNMTXxgkXvVwm",
+          "prompt": "Two short muted brass stabs, tense and ominous like a warning in a fantasy adventure game, rounded and mid-range, audible on a phone speaker, no siren, no beep, no alarm, no sparkle, ends cleanly, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-danger-18.mp3",
+          "generationId": "Lgvswe1dpVOhHJthbDj3",
+          "prompt": "Two short muted brass stabs, tense and ominous like a warning in a fantasy adventure game, rounded and mid-range, audible on a phone speaker, no siren, no beep, no alarm, no sparkle, ends cleanly, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-danger-16.mp3", "sfx-danger-15.mp3", "sfx-danger-18.mp3"],
+      "ship": "danger",
+      "note": "Muted brass stabs (mid-range, 0% above 4 kHz). The first danger cue was a pure 1.8-2 kHz alarm beep, 700+ ms long and at the loudest tier, which sounded like a smoke alarm in a creature-collecting game. Drum-based candidates (danger-3..14) came out as sub-300 Hz thumps a phone speaker cannot play."
+    },
+    "evolve": {
+      "kind": "sfx",
+      "tier": "large",
+      "maxMs": 2500,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 2.5,
+        "prompt_influence": 0.5
+      },
+      "node": "P1mDPv58ukWYEC9MwQbs",
+      "prompt": "Magical transformation: rising shimmering whoosh into a bright powerful chord burst, ends cleanly, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-evolve-1.mp3",
+          "generationId": "njfQ9Pvjqj2TSLqIeBR0"
+        },
+        {
+          "file": "sfx-evolve-2.mp3",
+          "generationId": "RYmcA6yNDdQ4VooBYGE1"
+        }
+      ],
+      "pick": ["sfx-evolve-1.mp3", "sfx-evolve-2.mp3"],
+      "ship": "evolve"
+    },
+    "ult": {
+      "kind": "sfx",
+      "tier": "large",
+      "maxMs": 1800,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1.8,
+        "prompt_influence": 0.5
+      },
+      "node": "doE9z4Qt4rEe6ngl9dug",
+      "prompt": "Powerful energy release: deep boom with a rising swoosh and bright crackle, ends sharply, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-ult-2.mp3",
+          "generationId": "0dk8xugXr9DbQ0MXI7YX"
+        }
+      ],
+      "pick": ["sfx-ult-2.mp3"],
+      "ship": "ult"
+    },
+    "revive": {
+      "kind": "sfx",
+      "tier": "medium",
+      "maxMs": 1500,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1.5,
+        "prompt_influence": 0.5
+      },
+      "node": "W9Q6Z4GNpjJaEAw2RcLZ",
+      "prompt": "Warm soft glowing chime swell with a gentle healing sparkle, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-revive-4.mp3",
+          "generationId": "utBZ3vazVvD1w3zmud1R",
+          "prompt": "Warm soft glowing chime swell with rounded low-mid bell tones, gentle and calm, no high-pitched sparkle, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-revive-5.mp3",
+          "generationId": "v6FjmOtHi6ypciphb0vQ",
+          "prompt": "Warm soft glowing chime swell with rounded low-mid bell tones, gentle and calm, no high-pitched sparkle, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-revive-4.mp3", "sfx-revive-5.mp3"],
+      "ship": "revive"
+    },
+    "capture": {
+      "kind": "sfx",
+      "tier": "medium",
+      "maxMs": 800,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.8,
+        "prompt_influence": 0.5
+      },
+      "node": "CKNCcKAY7O9dVyZO37oQ",
+      "prompt": "Short bright ascending twinkle with a soft pop, friendly, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-capture-1.mp3",
+          "generationId": "ymRvXLwDiCTljDEyWJgB"
+        }
+      ],
+      "pick": ["sfx-capture-1.mp3"],
+      "ship": "capture"
+    },
+    "cast-fire": {
+      "kind": "sfx",
+      "tier": "medium",
+      "maxMs": 800,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.8,
+        "prompt_influence": 0.5
+      },
+      "node": "6Eknk7Rdn007kQu50sc8",
+      "prompt": "Soft fire whoosh burst with warm crackle, short, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-cast-fire-1.mp3",
+          "generationId": "LZe4WCyq0J7hOtmm6ss6"
+        },
+        {
+          "file": "sfx-cast-fire-2.mp3",
+          "generationId": "Dm0qOaPByIAdWDCyRAiw"
+        }
+      ],
+      "pick": ["sfx-cast-fire-2.mp3", "sfx-cast-fire-1.mp3"],
+      "ship": "cast-fire"
+    },
+    "cast-water": {
+      "kind": "sfx",
+      "tier": "medium",
+      "maxMs": 800,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.8,
+        "prompt_influence": 0.5
+      },
+      "node": "GgAuDzYPe1WNz4mvAw8i",
+      "prompt": "Short light bubbly water splash burst, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-cast-water-1.mp3",
+          "generationId": "20t0gkAAAc7u9saoH1uJ"
+        },
+        {
+          "file": "sfx-cast-water-2.mp3",
+          "generationId": "tNfJHsEuOq0zEgAgJ6FB"
+        }
+      ],
+      "pick": ["sfx-cast-water-1.mp3", "sfx-cast-water-2.mp3"],
+      "ship": "cast-water"
+    },
+    "cast-grass": {
+      "kind": "sfx",
+      "tier": "medium",
+      "maxMs": 800,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.8,
+        "prompt_influence": 0.5
+      },
+      "node": "fxnE5HOD2rOXneetlkz3",
+      "prompt": "Quick rustle of leaves with a light whip swish, short, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-cast-grass-1.mp3",
+          "generationId": "Vamu9YNhBMakKGupR0xO"
+        },
+        {
+          "file": "sfx-cast-grass-2.mp3",
+          "generationId": "AIq1OZQuIfYinKF3sIFh"
+        }
+      ],
+      "pick": ["sfx-cast-grass-1.mp3", "sfx-cast-grass-2.mp3"],
+      "ship": "cast-grass"
+    },
+    "cast-electric": {
+      "kind": "sfx",
+      "tier": "medium",
+      "maxMs": 800,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.8,
+        "prompt_influence": 0.5
+      },
+      "node": "ko6milMA42NdxGn6Qel0",
+      "prompt": "Short snappy bright electric zap crackle, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-cast-electric-3.mp3",
+          "generationId": "2L7UsBeLI3bPLmwnFszT",
+          "prompt": "Soft low electric buzz zap, muted rounded crackle, warm and dull, no high-pitched squeal, short, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-cast-electric-4.mp3",
+          "generationId": "aIkqWABDuCnvLqC2Kn1U",
+          "prompt": "Soft low electric buzz zap, muted rounded crackle, warm and dull, no high-pitched squeal, short, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-cast-electric-3.mp3", "sfx-cast-electric-4.mp3"],
+      "ship": "cast-electric"
+    },
+    "ui-confirm": {
+      "kind": "sfx",
+      "tier": "ui",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "5sdH6roa0hDfvqfSCQFa",
+      "prompt": "Bright friendly two-note marimba confirm blip, short and clean, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-ui-confirm-1.mp3",
+          "generationId": "w5jybCZA6lqth0OBntof"
+        }
+      ],
+      "pick": ["sfx-ui-confirm-1.mp3"],
+      "ship": "ui-confirm"
+    },
+    "ui-back": {
+      "kind": "sfx",
+      "tier": "ui",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "zG76wA7zzK3P8iP9EDOu",
+      "prompt": "Soft single lower marimba blip, short and gentle, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-ui-back-1.mp3",
+          "generationId": "GyJPMI65IN10HfrJe7u8"
+        }
+      ],
+      "pick": ["sfx-ui-back-1.mp3"],
+      "ship": "ui-back"
+    },
+    "ui-denied": {
+      "kind": "sfx",
+      "tier": "ui",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "ElWlTx5WIhR6GXOitYS5",
+      "prompt": "Short soft dull low blip, polite error, not harsh, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-ui-denied-2.mp3",
+          "generationId": "qTNMgJFSjbrfOdtp8hG4"
+        }
+      ],
+      "pick": ["sfx-ui-denied-2.mp3"],
+      "ship": "ui-denied"
+    },
+    "ui-start": {
+      "kind": "sfx",
+      "tier": "ui",
+      "maxMs": 1500,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1.5,
+        "prompt_influence": 0.5
+      },
+      "node": "SY0YJWKfhFid1SLtsHrP",
+      "prompt": "Energetic bright airy whoosh with an ascending marimba flourish, adventure start, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-ui-start-5.mp3",
+          "generationId": "nxmIwVb5hJKETlWikFlB",
+          "prompt": "Airy whoosh rising upward for about one second and ending in a bright ascending marimba flourish, sustained from start to finish, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-ui-start-5.mp3"],
+      "ship": "ui-start"
+    },
+    "ui-transition": {
+      "kind": "sfx",
+      "tier": "ui",
+      "maxMs": 800,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.8,
+        "prompt_influence": 0.5
+      },
+      "node": "sXzYWufs7iR58LkUpvYE",
+      "prompt": "Smooth light air sweep swoosh, soft and short, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-ui-transition-1.mp3",
+          "generationId": "uOHzu40RHp58kRYPXVmf"
+        }
+      ],
+      "pick": ["sfx-ui-transition-1.mp3"],
+      "ship": "ui-transition"
+    },
+    "music-menu": {
+      "kind": "loop",
+      "bpm": 110,
+      "startSec": 0,
+      "loopBars": 31,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 75,
+        "instrumental": true
+      },
+      "node": "TUrLHgpxHFP249aMc14o",
+      "prompt": "Instrumental video game title theme, bright sunny coastal adventure in G major at 110 BPM. Warm plucked acoustic guitar and marimba carry a catchy, singable melody, with a light flute countermelody, upright bass pluck and soft hand percussion. Relaxed bouncy groove, friendly and inviting but not childish. Clean dry production with gentle space, steady energy throughout, no big build, no fade-out, no vocals.",
+      "takes": [
+        {
+          "file": "music-menu-1.mp3",
+          "generationId": "ycYS3O54X5Ud9Jf4DlKq"
+        }
+      ],
+      "pick": ["music-menu-1.mp3"],
+      "note": "Same palette and prompt style as the rejected forest track; unaudited, expect the same problem. To be redone."
+    },
+    "music-run-forest": {
+      "kind": "loop",
+      "bpm": 128,
+      "startSec": 0,
+      "loopBars": 63,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 120,
+        "instrumental": true
+      },
+      "node": "wtOqSCxa5lYKu9vr0Kca",
+      "prompt": "Instrumental video game exploration loop for a lush forest survival run, in G major at 128 BPM. Driving but light groove: staccato plucked strings and marimba ostinato, tight upright bass, shaker and woodblock percussion, with bright flute and kalimba accents. Playful tension, steady constant energy, no dramatic swells. Sparse mid-range leaves room for sound effects. Clean dry production, no vocals, no big finale, no fade-out.",
+      "takes": [
+        {
+          "file": "music-run-forest-1.mp3",
+          "generationId": "pCplLo0oG0JApDJKk3ao"
+        }
+      ],
+      "pick": ["music-run-forest-1.mp3"],
+      "note": "Rejected by listening: repetitive plucked ostinato ('叮咚叮咚'). Replace; see docs/AUDIO.md."
+    },
+    "music-run-boss": {
+      "kind": "loop",
+      "bpm": 128,
+      "startSec": 15,
+      "loopBars": 39,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 90,
+        "instrumental": true
+      },
+      "node": "l1hfLGjx4thtoEIi1ZRB",
+      "prompt": "Instrumental video game boss battle loop, in E minor at 128 BPM. Urgent driving rhythm: taiko-style toms and tight woodblock, staccato pizzicato low strings ostinato, punchy brass stabs used sparingly, with a bright marimba counter-melody that keeps it adventurous rather than grim. Constant high energy, no long breakdowns, no fade-out, clean dry production, no vocals.",
+      "takes": [
+        {
+          "file": "music-run-boss-1.mp3",
+          "generationId": "dddmDNodBgGdKEbdUfB3"
+        }
+      ],
+      "pick": ["music-run-boss-1.mp3"],
+      "note": "Same palette and prompt style as the rejected forest track; unaudited, expect the same problem. To be redone."
+    },
+    "music-run-forest-A": {
+      "kind": "loop",
+      "bpm": 124,
+      "startSec": 0,
+      "loopBars": 30,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 60,
+        "instrumental": true
+      },
+      "node": "fevodisdVnaLaeuhMq4B",
+      "prompt": "Instrumental upbeat acoustic folk-pop adventure for a video game exploration level, G major, 124 BPM. Start with just strummed acoustic guitar with a soft kick and shaker groove for four bars, then bring in a warm upright bass, then at about 0:08 a fiddle plays a catchy, singable lead melody in long flowing phrases. Around 0:25 a contrasting bridge adds accordion and handclaps with a lifting chord change, then at 0:38 the main melody returns with a full band and a bouncy drum kit backbeat, and the music settles back to the opening acoustic guitar groove by the end so it can loop. Warm, organic, bright, clean production, no vocals, no marimba, no glockenspiel, no repetitive plucked ostinato.",
+      "takes": [
+        {
+          "file": "music-run-forest-A-1.mp3",
+          "generationId": "s5k68YxDBlWHHY1oIQzi"
+        }
+      ],
+      "pick": ["music-run-forest-A-1.mp3"],
+      "note": "Rejected by listening: does not sound like a roguelike in-run track (folk is adventure / relaxed)."
+    },
+    "music-run-forest-B": {
+      "kind": "loop",
+      "bpm": 126,
+      "startSec": 0,
+      "loopBars": 30,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 60,
+        "instrumental": true
+      },
+      "node": "hbyMEci1QNrRdTvqM49G",
+      "prompt": "Instrumental bright adventure overworld theme for a video game, G major, 126 BPM, played by a lively live band with strings. Start with just a driving drum kit and electric bass for two bars, then bring in bright electric piano chords and rhythm guitar, then at about 0:08 a lead flute and violins play a soaring, catchy melody. Around 0:25 drop to a lighter bridge with just piano, bass and soft strings building back up, then at 0:38 the full band returns with brass hits and the big melody, and the music returns to the opening groove at the end so it can loop. Energetic but friendly, melodic, clean modern production, no vocals, no marimba, no glockenspiel, no repetitive plucked ostinato.",
+      "takes": [
+        {
+          "file": "music-run-forest-B-1.mp3",
+          "generationId": "T2zg9ZQwngrFrGHtZ0Ep"
+        }
+      ],
+      "pick": ["music-run-forest-B-1.mp3"],
+      "note": "Rejected by listening: does not sound like a roguelike in-run track (light band is adventure / relaxed)."
+    },
+    "music-run-C": {
+      "kind": "loop",
+      "bpm": 112,
+      "startSec": 0,
+      "loopBars": 20,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 45,
+        "instrumental": true
+      },
+      "node": "FtbDAU2GN28SJxlTHBfK",
+      "prompt": "Instrumental mid-tempo driving synth-rock soundtrack for a survival action roguelike game, D Dorian, 112 BPM. Focused and determined with steady forward momentum and restrained tension, not frantic and not relaxed. Start with just a pulsing analog synth bass and a tight kick and snare groove for four bars, then bring in a muted rhythm guitar playing steady eighth notes, then at about 0:12 a simple memorable synth lead motif enters, played sparsely with space between phrases. Around 0:30 a pre-chorus lifts with rising strings and open hi-hats, then at 0:40 the motif returns with the full band and slightly more intensity but no big climax, and by the end it settles back to the opening bass and drums pulse so it can loop. Punchy modern production, uncluttered mid-range, no vocals, no marimba, no glockenspiel, no repetitive plucked ostinato.",
+      "takes": [
+        {
+          "file": "music-run-C-1.mp3",
+          "generationId": "BH38GmJRS00V3HPuwkXS"
+        }
+      ],
+      "pick": ["music-run-C-1.mp3"],
+      "note": "Rejected by listening: too battle-hype and lacks the Pokemon route feel. See docs/AUDIO.md."
+    },
+    "music-run-D": {
+      "kind": "loop",
+      "bpm": 116,
+      "startSec": 0,
+      "loopBars": 19,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 45,
+        "instrumental": true
+      },
+      "node": "gg6Q7rryhWI2KlLQcvtq",
+      "prompt": "Instrumental resolute action-adventure soundtrack for a survival roguelike game, E minor, 116 BPM, hybrid of orchestra and electronics. Determined and steady with controlled tension, not frantic and not relaxed. Start with just deep taiko-style drums and an electronic sub bass pulse for four bars, then bring in low strings playing a driving rhythmic figure, then at about 0:12 French horns play a restrained heroic motif with space between phrases. Around 0:30 add rising violins and snare rolls building mild anticipation, then at 0:40 the horn motif returns with the full ensemble at slightly higher intensity but no big climax, and it settles back to the opening drums and sub bass pulse by the end so it can loop. Clean cinematic production, uncluttered mid-range, no choir, no vocals, no marimba, no glockenspiel, no repetitive plucked ostinato.",
+      "takes": [
+        {
+          "file": "music-run-D-1.mp3",
+          "generationId": "7GxM7WtGsG6NvEVm5JzD"
+        }
+      ],
+      "pick": ["music-run-D-1.mp3"],
+      "note": "Rejected by listening: too battle-hype and lacks the Pokemon route feel. See docs/AUDIO.md."
+    },
+    "music-run-E": {
+      "kind": "loop",
+      "bpm": 120,
+      "startSec": 0,
+      "loopBars": 21,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 45,
+        "instrumental": true
+      },
+      "node": "Z4DFKELRGSeH1AFAwv9U",
+      "prompt": "Instrumental upbeat retro-modern arcade rock soundtrack for a survival roguelike game, A minor, 120 BPM, blending crunchy 8-bit style square-wave synths with live drums and a driving bass guitar. Energetic and determined with controlled tension, not frantic and not relaxed. Start with just live drums and bass guitar for four bars, then bring in a pulsing square-wave arpeggio, then at about 0:12 a punchy chiptune lead plays a simple catchy hook with space between phrases. Around 0:30 a contrasting section lifts the chords with power chord guitar, then at 0:40 the hook returns with everything playing at slightly higher intensity but no big climax, and it settles back to the opening drums and bass groove by the end so it can loop. Polished, not childish, uncluttered mid-range, no vocals, no marimba, no glockenspiel.",
+      "takes": [
+        {
+          "file": "music-run-E-1.mp3",
+          "generationId": "IJlNjjwBNcVcU8FpTwH9"
+        }
+      ],
+      "pick": ["music-run-E-1.mp3"],
+      "note": "Rejected by listening: too battle-hype and lacks the Pokemon route feel. See docs/AUDIO.md."
+    },
+    "music-run-F": {
+      "kind": "loop",
+      "bpm": 124,
+      "startSec": 0,
+      "loopBars": 22,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 45,
+        "instrumental": true
+      },
+      "node": "IINLzw6nZ2pFeM1Kv6qt",
+      "prompt": "Instrumental bright adventure route theme for a monster-collecting video game, G major, 124 BPM, in the style of a cheerful JRPG overworld with a lively live band. Curious, adventurous and optimistic with a thread of gentle suspense, lively but not intense, not a battle track. Start with just a bouncy syncopated bass guitar and light drums with a tambourine for four bars, then bring in bright staccato string chords, then at about 0:10 a flute and trumpet play a catchy, singable hook of four bars with playful leaps, answered by violins. Around 0:28 a contrasting bridge turns briefly to E minor with a rising string line and a little tension, then at 0:38 the hook returns with the full band and brass, and it settles back to the opening bass and drums groove by the end so it can loop. Warm, polished, clean production, no distorted guitars, no taiko, no vocals, no marimba, no repetitive plucked ostinato.",
+      "takes": [
+        {
+          "file": "music-run-F-1.mp3",
+          "generationId": "7QJuFYK3RxYVmJjBDDq5"
+        }
+      ],
+      "pick": ["music-run-F-1.mp3"]
+    },
+    "music-run-G": {
+      "kind": "loop",
+      "bpm": 120,
+      "startSec": 0,
+      "loopBars": 21,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 45,
+        "instrumental": true
+      },
+      "node": "qCKthXjPoIp7txNKKP2d",
+      "prompt": "Instrumental orchestral adventure theme for exploring a wild grassland in a monster-collecting video game, D major, 120 BPM. Sense of wonder and curiosity with a thread of suspense, lively but not intense, not a battle track. Start with just soft snare taps and warm cellos and basses in a bouncy rhythm for four bars, then bring in clarinet and bassoon playing a playful countermelody, then at about 0:10 a solo oboe and French horn play a memorable, singable hook with gentle leaps, answered by flutes. Around 0:28 a contrasting bridge shifts to B minor with rising strings and timpani swells building mild suspense, then at 0:38 the hook returns with the full orchestra and bright trumpets, and it settles back to the opening snare, cello and bass groove by the end so it can loop. Warm, polished cinematic production, no choir, no vocals, no heavy percussion, no marimba, no repetitive plucked ostinato.",
+      "takes": [
+        {
+          "file": "music-run-G-1.mp3",
+          "generationId": "X4pu8rrFk7ibFrSmJxHg"
+        }
+      ],
+      "pick": ["music-run-G-1.mp3"]
+    },
+    "music-run-H": {
+      "kind": "loop",
+      "bpm": 126,
+      "startSec": 0,
+      "loopBars": 22,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 45,
+        "instrumental": true
+      },
+      "node": "tx09ePANXA3XWoKTYYVd",
+      "prompt": "Instrumental upbeat synth-pop adventure route theme for a monster-collecting video game, C major, 126 BPM, blending bright synth brass and warm analog pads with a bouncy slap-style bass and a crisp light drum kit. Playful, curious and optimistic with a thread of mild suspense, lively but not intense, not a battle track. Start with just the bouncy bass and a crisp drum groove with finger snaps for four bars, then bring in warm synth pads and a pulsing soft synth arpeggio, then at about 0:10 a bright synth-flute lead plays a catchy, singable four-bar hook with playful leaps, answered by synth strings. Around 0:28 a contrasting bridge dips to A minor with a rising pad and a short build of mild tension, then at 0:38 the hook returns with synth brass stabs and the full groove, and it settles back to the opening bass and drums by the end so it can loop. Polished clean modern production, no distorted guitars, no vocals, no marimba, no glockenspiel.",
+      "takes": [
+        {
+          "file": "music-run-H-1.mp3",
+          "generationId": "DNHv59JysrawEL6zxR8C"
+        }
+      ],
+      "pick": ["music-run-H-1.mp3"]
+    },
+    "sting-victory": {
+      "kind": "sfx",
+      "tier": "large",
+      "maxMs": 2500,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 2.5,
+        "prompt_influence": 0.5
+      },
+      "node": "DJpRWMzdp0nvaPgPVh9r",
+      "prompt": "Short triumphant fanfare sting: a bright brass hit with a quick rising two-note phrase and a ringing major chord that fades out, starts immediately with no lead-in, dry close-mic, no reverb, no voice",
+      "takes": [
+        {
+          "file": "sting-victory-2.mp3",
+          "generationId": "zOaCopVm19uT1kKdnOod"
+        }
+      ],
+      "pick": ["sting-victory-2.mp3"],
+      "note": "Sound-effects-engine ending sting (the music-engine alternative was dropped).",
+      "ship": "victory"
+    },
+    "sting-defeat": {
+      "kind": "sfx",
+      "tier": "large",
+      "maxMs": 2500,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 2.5,
+        "prompt_influence": 0.5
+      },
+      "node": "dkMEZjbnpCOpyqiFcZgQ",
+      "prompt": "Short defeat sting: a low brass note falling by a half step into a soft minor chord that fades out, starts immediately with no lead-in, somber but not tragic, dry close-mic, no reverb, no voice",
+      "takes": [
+        {
+          "file": "sting-defeat-3.mp3",
+          "generationId": "fekzf6W1mF3pwTHsWLo5"
+        }
+      ],
+      "pick": ["sting-defeat-3.mp3"],
+      "note": "Sound-effects-engine ending sting (the music-engine alternative was dropped).",
+      "ship": "defeat"
+    },
+    "music-run-F-long": {
+      "kind": "loop",
+      "bpm": 124,
+      "startSec": 0,
+      "loopBars": 47,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 96,
+        "instrumental": true
+      },
+      "node": "XaQqe6hrfNfUKTIuwz3s",
+      "prompt": "Instrumental bright adventure route theme for a monster-collecting video game, G major, 124 BPM, in the style of a cheerful JRPG overworld with a lively live band. Curious, adventurous and optimistic with a thread of gentle suspense, lively but not intense, not a battle track. Start with just a bouncy syncopated bass guitar and light drums with a tambourine for four bars, then bring in bright staccato string chords, then at about 0:10 a flute and trumpet play a catchy, singable hook of four bars with playful leaps, answered by violins. Around 0:28 a contrasting bridge turns briefly to E minor with a rising string line and a little tension, then at 0:38 the hook returns with the full band and brass. At about 0:55 the music thins to bass, light drums and a soft electric piano with a new gentle second melody on clarinet, then at 1:12 the hook returns once more with a new countermelody on strings and brass, and it settles back to the opening bass and drums groove by the end so it can loop. Warm, polished, clean production, no distorted guitars, no taiko, no vocals, no marimba, no repetitive plucked ostinato.",
+      "takes": [
+        {
+          "file": "music-run-F-long-1.mp3",
+          "generationId": "xLMoulmI6DDKOPQEQv8S"
+        },
+        {
+          "file": "music-run-F-long-2.mp3",
+          "generationId": "Gr2FlEp6ZRhBKKl9CHrl"
+        }
+      ],
+      "pick": ["music-run-F-long-1.mp3", "music-run-F-long-2.mp3"],
+      "note": "Full-length in-run track in the chosen F direction. Take 1 fades out from ~93 s, take 2 plays to the end; the loop point avoids both.",
+      "ship": "run-1"
+    },
+    "music-boss-F": {
+      "kind": "loop",
+      "bpm": 124,
+      "startSec": 0,
+      "loopBars": 29,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 60,
+        "instrumental": true
+      },
+      "node": "4eJ9LDw2LC4FkOBnSKWw",
+      "prompt": "Instrumental tense adventure encounter theme for a monster-collecting video game, E minor, 124 BPM, played by the same lively live band with strings and brass as a cheerful JRPG overworld, but darker and more urgent. Determined and a little ominous, intense but not frantic, not a hard rock battle track. Start with just a syncopated bass guitar and snare with a tambourine for four bars, then bring in tense staccato string chords, then at about 0:10 trumpet and flute play a short driving four-bar minor-key hook with a rising leap, answered by low strings. Around 0:28 a bridge builds with rising violins and snare rolls for suspense, then at 0:38 the hook returns with the full band and loud brass stabs, and it settles back to the opening bass and snare groove by the end so it can loop. Polished clean production, no distorted guitars, no taiko, no vocals, no marimba, no repetitive plucked ostinato.",
+      "takes": [
+        {
+          "file": "music-boss-F-1.mp3",
+          "generationId": "PGZHpeiDFviefNRs6ARh"
+        }
+      ],
+      "pick": ["music-boss-F-1.mp3"],
+      "note": "Boss and guardian track in the F direction. Replaces music-run-boss.",
+      "ship": "boss"
+    },
+    "music-menu-F": {
+      "kind": "loop",
+      "bpm": 100,
+      "startSec": 0,
+      "loopBars": 25,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 70,
+        "instrumental": true
+      },
+      "node": "XSBrRnH8JZ231tVvncK1",
+      "prompt": "Instrumental warm welcoming title screen theme for a monster-collecting video game, G major, 100 BPM, in the style of a cheerful JRPG with a live band and orchestra. Hopeful, bright and adventurous, calm but with a sense of a journey about to begin. Start with just soft strummed acoustic guitar and a gentle string pad for four bars, then at about 0:10 a flute plays a warm, singable main melody with gentle leaps, joined by a light bass and soft brushed drums, then at 0:30 the melody is taken by a trumpet and violins with fuller strings and a lifted chord change, and it returns to the opening guitar and pad by the end so it can loop. Polished, clean, warm production, no vocals, no marimba, no glockenspiel, no repetitive plucked ostinato.",
+      "takes": [
+        {
+          "file": "music-menu-F-1.mp3",
+          "generationId": "LAiJI6lcRK3fM5CD1Qa9"
+        }
+      ],
+      "pick": ["music-menu-F-1.mp3"],
+      "note": "Menu track in the F direction; fades out from ~63 s, the loop point avoids it. Replaces music-menu.",
+      "ship": "menu"
+    },
+    "music-run-F2": {
+      "kind": "loop",
+      "bpm": 120,
+      "startSec": 0,
+      "loopBars": 44,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 96,
+        "instrumental": true
+      },
+      "node": "hk6comlsGQqxZcaCnlJg",
+      "prompt": "Instrumental bright adventure route theme for a monster-collecting video game, D major, 120 BPM, in the style of a cheerful JRPG overworld with a lively live band, strings and brass. Curious, adventurous and optimistic with a thread of gentle suspense, lively but not intense, not a battle track. Start with just a bouncy syncopated bass guitar walking up and down, light drums with snare taps and a tambourine for four bars, then bring in warm staccato string chords on the off-beats, then at about 0:10 a solo trumpet plays a new catchy, singable hook of four bars that climbs with a playful upward leap and lands on a long held note, answered by a flute echoing its last phrase. Around 0:28 a contrasting bridge turns briefly to B minor with sustained cellos, a rising violin line and a little tension, then at 0:38 the hook returns on flute and violins together with the full band and warm horns. At about 0:55 the music thins to bass, light drums and soft sustained strings with a gentle second melody on clarinet, then at 1:12 the hook returns once more on trumpet with a new flowing countermelody on violins, and it settles back to the opening bass and drums groove by the end so it can loop. Warm, polished, clean production, no distorted guitars, no taiko, no rock drums, no vocals, no marimba, no glockenspiel, no repetitive plucked ostinato.",
+      "takes": [
+        {
+          "file": "music-run-F2-1.mp3",
+          "generationId": "Fs5gXqT9HhJ21wwlRHB0"
+        },
+        {
+          "file": "music-run-F2-2.mp3",
+          "generationId": "eV7DdIvtff5t7rUHykKn"
+        },
+        {
+          "file": "music-run-F2-3.mp3",
+          "generationId": "uW4CgBkcMAzjbBcgCtRx"
+        }
+      ],
+      "pick": ["music-run-F2-3.mp3", "music-run-F2-2.mp3"],
+      "note": "Rejected by listening (2026-11-07): drifts away from the Pokemon route feel (other keys and tempi, minor bridges, a quiet thin-out section, extra instruments). Replaced by the next entry. Second in-run track of the 3-track rotation (F direction, D major 120 BPM). Picked by numbers, not by ear: take 3 has the clearest development (LRA 6.1, the thinned section near 0:55), take 2 is the alternate. No take fades out.",
+      "spend": {
+        "credits": 4319.04,
+        "date": "2026-11-07"
+      }
+    },
+    "music-run-F3": {
+      "kind": "loop",
+      "bpm": 126,
+      "startSec": 0,
+      "loopBars": 44,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 96,
+        "instrumental": true
+      },
+      "node": "CmbAjma6J4neV68qSASu",
+      "prompt": "Instrumental bright adventure route theme for a monster-collecting video game, A major, 126 BPM, in the style of a cheerful JRPG overworld with a lively live band, strings and brass. Curious, adventurous and optimistic with a thread of gentle suspense, lively but not intense, not a battle track. Start with just a bouncy syncopated bass guitar with skipping rhythms, light drums with hi-hat and finger snaps for four bars, then bring in short bright string chords and soft horn swells, then at about 0:10 violins and flute together play a new catchy, singable hook of four bars that starts with a quick skipping figure and falls back in a smiling stepwise line, answered by a muted trumpet. Around 0:28 a contrasting bridge turns briefly to F sharp minor with tremolo strings, a low clarinet and a little mysterious tension, then at 0:38 the hook returns on trumpet with the full band and brass. At about 0:55 the music thins to bass, light drums and a soft electric piano with a gentle second melody on oboe, then at 1:12 the hook returns once more on flute and violins with a new countermelody on horns, and it settles back to the opening bass and drums groove by the end so it can loop. Warm, polished, clean production, no distorted guitars, no taiko, no rock drums, no vocals, no marimba, no glockenspiel, no repetitive plucked ostinato.",
+      "takes": [
+        {
+          "file": "music-run-F3-1.mp3",
+          "generationId": "iYyK3aNXf5cNffQRL48C"
+        },
+        {
+          "file": "music-run-F3-2.mp3",
+          "generationId": "Mt5JOBHbLM1IUdvUNBNV"
+        },
+        {
+          "file": "music-run-F3-3.mp3",
+          "generationId": "fnaemiUvpfcmjQlEdKwC"
+        }
+      ],
+      "pick": ["music-run-F3-3.mp3", "music-run-F3-2.mp3"],
+      "note": "Rejected by listening (2026-11-07): drifts away from the Pokemon route feel (other keys and tempi, minor bridges, a quiet thin-out section, extra instruments). Replaced by the next entry. Third in-run track of the 3-track rotation (F direction, A major 126 BPM). Picked by numbers, not by ear: take 3 has the clearest development (LRA 7.3, the thinned section near 0:55) and fades out from ~91 s, take 2 is the alternate (fades from ~92 s); the 44-bar loop ends before both. Take 1 came out 92 s.",
+      "spend": {
+        "credits": 4319.04,
+        "date": "2026-11-07"
+      }
+    },
+    "music-run-F2b": {
+      "kind": "loop",
+      "bpm": 124,
+      "startSec": 0,
+      "loopBars": 47,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 96,
+        "instrumental": true
+      },
+      "node": "jO2GsCL6i0ahtseoHvsm",
+      "prompt": "Instrumental bright adventure route theme for a monster-collecting video game, G major, 124 BPM, in the style of a cheerful JRPG overworld with a lively live band, like walking a sunny route through tall grass in a wild area. Curious, adventurous and optimistic with a thread of gentle suspense, lively but not intense, not a battle track. Start with just a bouncy syncopated bass guitar and light drums with a tambourine for four bars, then bring in bright staccato string chords, then at about 0:10 a flute and trumpet play a catchy, singable hook of four bars that rises in two quick hopping steps and answers itself with a playful falling phrase, answered by violins. Around 0:28 a short, light bridge lifts to a hopeful chord change with a rising string line and a touch of gentle suspense, staying bright and full, then at 0:38 the hook returns with the full band and brass. At about 0:55 the violins take the hook while the flute adds a cheerful answering line over the same bouncy groove, then at 1:12 the hook returns once more on flute and trumpet with the full band, and it settles back to the opening bass and drums groove by the end so it can loop. Warm, polished, clean production, no distorted guitars, no taiko, no vocals, no marimba, no repetitive plucked ostinato.",
+      "takes": [
+        {
+          "file": "music-run-F2b-1.mp3",
+          "generationId": "7gfCpUBuYVNaUBszbAQS"
+        }
+      ],
+      "pick": ["music-run-F2b-1.mp3"],
+      "note": "Second in-run track of the rotation, redone close to the music-run-F anchor (same key, tempo, instruments and mood; only the hook differs; light bridge, no quiet drop). One take, as the user asked. Fades out from ~93 s; the loop ends before it.",
+      "spend": {
+        "credits": 1439.68,
+        "date": "2026-11-07"
+      },
+      "ship": "run-2"
+    },
+    "music-run-F3b": {
+      "kind": "loop",
+      "bpm": 124,
+      "startSec": 0,
+      "loopBars": 47,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 96,
+        "instrumental": true
+      },
+      "node": "hAbYwd5PZeg9i56CP0Z2",
+      "prompt": "Instrumental bright adventure route theme for a monster-collecting video game, G major, 124 BPM, in the style of a cheerful JRPG overworld with a lively live band, like setting out across a breezy wild area full of creatures to discover. Curious, adventurous and optimistic with a thread of gentle suspense, lively but not intense, not a battle track. Start with just a bouncy syncopated bass guitar and light drums with a tambourine for four bars, then bring in bright staccato string chords, then at about 0:10 a flute and trumpet play a catchy, singable hook of four bars that starts with a bouncy repeated-note pickup and makes one long hopeful upward leap before skipping back down, answered by violins. Around 0:28 a short, light bridge lifts to a hopeful chord change with a rising string line and a touch of gentle suspense, staying bright and full, then at 0:38 the hook returns with the full band and brass. At about 0:55 the trumpet takes the hook while the violins add a light answering line over the same bouncy groove, then at 1:12 the hook returns once more on flute and trumpet with the full band, and it settles back to the opening bass and drums groove by the end so it can loop. Warm, polished, clean production, no distorted guitars, no taiko, no vocals, no marimba, no repetitive plucked ostinato.",
+      "takes": [
+        {
+          "file": "music-run-F3b-1.mp3",
+          "generationId": "8fNQHv8uWD3ACir2K4FD"
+        }
+      ],
+      "pick": ["music-run-F3b-1.mp3"],
+      "note": "Third in-run track of the rotation, redone close to the music-run-F anchor (same key, tempo, instruments and mood; only the hook differs; light bridge, no quiet drop). One take, as the user asked. Fades out from ~93 s; the loop ends before it.",
+      "spend": {
+        "credits": 1439.68,
+        "date": "2026-11-07"
+      },
+      "ship": "run-3"
+    },
+    "tell": {
+      "kind": "sfx",
+      "tier": "small",
+      "frequent": true,
+      "maxMs": 200,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "Sg3V0l0LmO7DhMGUzv2Q",
+      "prompt": "Single short soft round chime ping, mid-high pitch, clear and gentle, quick decay, very short, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-tell-5.mp3",
+          "generationId": "iJU51HjW9rVyxguHO6XS",
+          "prompt": "Short soft airy swish with a dull wooden tick at the very start, muted and rounded, no ring, no bell, no pitched tone, mid-range audible on a small speaker, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-tell-13.mp3",
+          "generationId": "oA9IXjKdo3RHEqmklVgz",
+          "prompt": "Short soft airy swish with a dull wooden tick at the very start, muted and rounded, no ring, no bell, no pitched tone, mid-range audible on a small speaker, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-tell-14.mp3",
+          "generationId": "5ATXNcBWhg2ELGJnLU6P",
+          "prompt": "Short soft airy swish with a dull wooden tick at the very start, muted and rounded, no ring, no bell, no pitched tone, mid-range audible on a small speaker, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-tell-15.mp3",
+          "generationId": "VELmljgfeLFIicnUDXYC",
+          "prompt": "Short soft airy swish with a dull wooden tick at the very start, muted and rounded, no ring, no bell, no pitched tone, mid-range audible on a small speaker, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-tell-5.mp3", "sfx-tell-14.mp3", "sfx-tell-13.mp3", "sfx-tell-15.mp3"],
+      "note": "Blue enemy wind-up tell. Dull wooden ticks (tonal share 17-36%) replaced the pure 1-1.7 kHz tones, which rang like a bell at up to 5 tells a second.",
+      "ship": "tell"
+    },
+    "tell-danger": {
+      "kind": "sfx",
+      "tier": "medium",
+      "maxMs": 800,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.8,
+        "prompt_influence": 0.5
+      },
+      "node": "KSbiT4p87e9Sd6woz4FV",
+      "prompt": "Two quick firm short mid-pitch beeps in a row, urgent but not shrill, with a very soft low thump just before the first beep, audible on a small speaker, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-tell-danger-13.mp3",
+          "generationId": "3R9bqGVzxKpJ41jycfOa",
+          "prompt": "Two quick urgent taps on a hollow wooden barrel, dull and punchy, the second slightly harder than the first, short, mid-range audible on a small speaker, no ring, no bell, no beep, no pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-tell-danger-14.mp3",
+          "generationId": "zykQTzagC1nPGABgNhrE",
+          "prompt": "Two quick urgent taps on a hollow wooden barrel, dull and punchy, the second slightly harder than the first, short, mid-range audible on a small speaker, no ring, no bell, no beep, no pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-tell-danger-16.mp3",
+          "generationId": "5kAy9XcpAL04JpE4rDjE",
+          "prompt": "Two quick urgent taps on a hollow wooden barrel, dull and punchy, the second slightly harder than the first, short, mid-range audible on a small speaker, no ring, no bell, no beep, no pitched tone, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-tell-danger-13.mp3", "sfx-tell-danger-14.mp3", "sfx-tell-danger-16.mp3"],
+      "note": "Red enemy wind-up tell: must differ from the blue tell in rhythm and register, and from the `danger` banner. Dull double taps on a wooden barrel (tonal share 11-22%) replaced two pure beeps at 1 kHz and 400 Hz, which were as loud as a boss cue (large tier).",
+      "ship": "tell-danger",
+      "frequent": true
+    },
+    "enemy-heal": {
+      "kind": "sfx",
+      "tier": "small",
+      "maxMs": 700,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.7,
+        "prompt_influence": 0.5
+      },
+      "node": "IN0g3x4IDrRLhProRhFn",
+      "prompt": "Soft warm breathy whoosh that swells up gently for about half a second, like a puff of air through soft cloth with a faint airy rustle at the end, rounded and calm, no bell, no chime, no pitched tone, mid-range audible on a small speaker, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-enemy-heal-1.mp3",
+          "generationId": "SQdWgA8tnGCX1yiXe0Kk"
+        }
+      ],
+      "pick": ["sfx-enemy-heal-1.mp3"],
+      "ship": "enemy-heal",
+      "spend": {
+        "credits": 2.3,
+        "date": "2026-11-07"
+      },
+      "note": "Healer pulse (forest zone 3, Clefairy): a soft breath, not a tell or a chime, so a heal never reads as an attack or a pickup. One take, as the user asked."
+    },
+    "hit-fire": {
+      "kind": "sfx",
+      "tier": "small",
+      "frequent": true,
+      "maxMs": 160,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "Ia2wbYcICa3pN51ZzVf7",
+      "prompt": "Single short soft fiery whoomp impact, a quick muffled puff of flame hitting a body, dull and rounded, mid-range audible on a small speaker, no crackle hiss, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-hit-fire-2.mp3",
+          "generationId": "bvfQl4BZDf8GzdBPQRqB",
+          "prompt": "Single short soft fiery whoomp impact, a quick muffled puff of flame hitting a body, dull and rounded, mid-range audible on a small speaker, no crackle hiss, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-hit-fire-3.mp3",
+          "generationId": "kAKpWiDaMn8J40zllhVN",
+          "prompt": "Single short soft fiery whoomp impact, a quick muffled puff of flame hitting a body, dull and rounded, mid-range audible on a small speaker, no crackle hiss, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-hit-fire-4.mp3",
+          "generationId": "gNk6nEUDVz6fIve0kKNm",
+          "prompt": "Single short soft fiery whoomp impact, a quick muffled puff of flame hitting a body, dull and rounded, mid-range audible on a small speaker, no crackle hiss, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-hit-fire-3.mp3", "sfx-hit-fire-4.mp3", "sfx-hit-fire-2.mp3"],
+      "ship": "hit-fire",
+      "note": "Hit of a move of this element (the hit event carries the element); other elements use the plain `hit`."
+    },
+    "hit-water": {
+      "kind": "sfx",
+      "tier": "small",
+      "frequent": true,
+      "maxMs": 160,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "iwfjlr0u4KX4VhFq0Nlq",
+      "prompt": "Single short wet splash slap hitting a body, quick and soft, rounded, mid-range audible on a small speaker, no long drip tail, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-hit-water-6.mp3",
+          "generationId": "GmouWcQGeewXYstfPTq1",
+          "prompt": "Single short muffled water slap, like a thick wet cloth hitting a body, dull and low-mid, quick, no hiss, no spray, no drips, no ring, no pitched tone, audible on a small speaker, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-hit-water-7.mp3",
+          "generationId": "r8T2h44MnvRgcSwR66tR",
+          "prompt": "Single short muffled water slap, like a thick wet cloth hitting a body, dull and low-mid, quick, no hiss, no spray, no drips, no ring, no pitched tone, audible on a small speaker, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-hit-water-8.mp3",
+          "generationId": "9gpN26KHMhp7dcyU4wVK",
+          "prompt": "Single short muffled water slap, like a thick wet cloth hitting a body, dull and low-mid, quick, no hiss, no spray, no drips, no ring, no pitched tone, audible on a small speaker, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-hit-water-6.mp3", "sfx-hit-water-7.mp3", "sfx-hit-water-8.mp3"],
+      "ship": "hit-water",
+      "note": "Hit of a move of this element (the hit event carries the element); other elements use the plain `hit`."
+    },
+    "hit-grass": {
+      "kind": "sfx",
+      "tier": "small",
+      "frequent": true,
+      "maxMs": 160,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "kCGs0nkQgBdRMB64CUzU",
+      "prompt": "Single short leafy whip thwack, a quick swish of leaves slapping a body, dull and soft, mid-range audible on a small speaker, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-hit-grass-1.mp3",
+          "generationId": "bCDyZO2BF8PPHkL2TJKl",
+          "prompt": "Single short leafy whip thwack, a quick swish of leaves slapping a body, dull and soft, mid-range audible on a small speaker, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-hit-grass-2.mp3",
+          "generationId": "VodQls4eKg9PHcJxMy6C",
+          "prompt": "Single short leafy whip thwack, a quick swish of leaves slapping a body, dull and soft, mid-range audible on a small speaker, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-hit-grass-4.mp3",
+          "generationId": "XcWHBb3hMDbO32XoSaZm",
+          "prompt": "Single short leafy whip thwack, a quick swish of leaves slapping a body, dull and soft, mid-range audible on a small speaker, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-hit-grass-1.mp3", "sfx-hit-grass-2.mp3", "sfx-hit-grass-4.mp3"],
+      "ship": "hit-grass",
+      "note": "Hit of a move of this element (the hit event carries the element); other elements use the plain `hit`."
+    },
+    "hit-electric": {
+      "kind": "sfx",
+      "tier": "small",
+      "frequent": true,
+      "maxMs": 160,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "zzTGRMoqE24WGf0uyDmf",
+      "prompt": "Single short muffled electric pop with a soft dull thud, quick and rounded, no buzz tail, no zap, no sparkle, no high-pitched crackle, no pitched tone, mid-range audible on a small speaker, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-hit-electric-6.mp3",
+          "generationId": "WO1wnSI86Os0d3ZWJ0P0",
+          "prompt": "Single short dull static snap, like a muffled spark hitting thick cloth, a quick soft crack with a small thud, no buzz, no hum, no ring, no pitched tone, no sparkle, mid-range audible on a small speaker, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-hit-electric-7.mp3",
+          "generationId": "BRDW5ajxUm8hUBGfIHom",
+          "prompt": "Single short dull static snap, like a muffled spark hitting thick cloth, a quick soft crack with a small thud, no buzz, no hum, no ring, no pitched tone, no sparkle, mid-range audible on a small speaker, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-hit-electric-12.mp3",
+          "generationId": "uOMdT6ni2EPbpeyI816m",
+          "prompt": "Single short dull static snap, like a muffled spark hitting thick cloth, a quick soft crack with a small thud, no buzz, no hum, no ring, no pitched tone, no sparkle, mid-range audible on a small speaker, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-hit-electric-6.mp3", "sfx-hit-electric-7.mp3", "sfx-hit-electric-12.mp3"],
+      "ship": "hit-electric",
+      "note": "Hit of a move of this element (the hit event carries the element); other elements use the plain `hit`."
+    },
+    "freeze": {
+      "kind": "sfx",
+      "tier": "small",
+      "maxMs": 450,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "cRSgx6q03iMCtFr9HWng",
+      "prompt": "Short soft crunch of packed snow and thin ice closing around something, one muffled crackle, mid-range, rounded and damped, no ring, no bell, no chime, no sparkle, audible on a small speaker, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-freeze-1.mp3",
+          "generationId": "1Tweh4gxDvQuBLHONmhp"
+        },
+        {
+          "file": "sfx-freeze-3.mp3",
+          "generationId": "ONdvfgUTXypsVJw0vIdG"
+        }
+      ],
+      "pick": ["sfx-freeze-3.mp3", "sfx-freeze-1.mp3"],
+      "ship": "freeze"
+    }
+  }
+}

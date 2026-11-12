@@ -1,0 +1,64 @@
+{
+  "podium.webp": {
+    "asset": "public/art/lobby/podium.webp",
+    "generator": "Magpie Image / ash/gpt-image-2.5-sunburst, background transparent, 1536x1024, quality high",
+    "generationId": "image-96027-3",
+    "createdAt": "2026-11-06",
+    "purpose": "Lobby hero podium: the stone plinth the selected starter stands on; neutral grey so the type ring and aura are drawn over it in the shader. Original generated prop; no official Pokémon assets or endorsed affiliation.",
+    "transform": "magick podium-source.png -trim +repage -resize 1200x podium-1200.png; magick podium-1200.png -quality 90 -define webp:alpha-quality=100 podium-1200.webp",
+    "geometry": "1200x406; top-face (feet) centre at 50% x, 33% y of the image; inner carved ring ≈ 72% x 15% of the width",
+    "prompt": "A single game prop on a fully transparent background: a round stone display podium for a character-select screen, seen from about 18 degrees above, so its flat circular top reads as a wide ellipse about 3.3 times wider than tall. Low-poly faceted grey-blue granite with soft cel-shaded planes, a clean flat top face with a slightly lighter, smooth inner disc and a thin carved groove ring near its rim, the side band made of chunky cut stone blocks with a few tufts of green grass and two tiny white daisies at its base on one side. A subtle carved Poké Ball circle emblem centred on the front of the side band. Neutral cool grey colours so a coloured light can be tinted onto the top later; no glow, no coloured light, no character on it. Bright clean cartoon game art for a low-poly Pokémon-style adventure, matching a sunlit painted coastal meadow, soft daylight from upper left. No text, no letters, no frame, no cast shadow on the ground beyond a soft contact shade directly under it."
+  },
+  "backdrop.webp": {
+    "asset": "public/art/lobby/backdrop.webp",
+    "generator": "Magpie Image / openrouter/google/gemini-nano-banana-2.1, 16:9 (1376x768), n=2, take 1",
+    "generationId": "not reported (the call returned the files directly)",
+    "createdAt": "2026-11-06",
+    "references": [
+      "backdrop-guide.png (hand-made flat colour-blocking layout: horizon 42%, calm clearing lower-left for the podium; Pokémon Center, Mart and Lapras at 48-58% x, the band that stays visible between the partner and the decision column at both 1280x800 and 844x390; Pidgey flock in the upper-left sky)",
+      "backdrop-style-ref.jpg (previous nano banana 2.1 take, style and palette only)"
+    ],
+    "purpose": "Lobby backdrop replacing coastal-journey.webp on the lobby: a Pokémon-world starting route (tall grass with an Oddish and a Caterpie, a dirt route to a Pokémon Center and Poké Mart by the sea, lighthouse, a Lapras, a Pidgey flock). Original generated scene for a noncommercial fan project; no official artwork used as input; no text.",
+    "layout": "Cover-fit, centred. Visible source rect at 1280x800: x 5.3-94.7%, full height; at 844x390: full width, y 8.6-91.4%. Quiet: top 12% (top bar), lower-left clearing (podium), upper-left sky apart from the Pidgey. Landmarks at source x 48-58%, which maps to the gap between the partner and the right column at both sizes.",
+    "transform": "Topaz 2x (above) -> magick content.png -quality 90 -define webp:method=6 backdrop.webp (2752x1536, about 270 KB)",
+    "prompt": "Paint a finished wide background for a Pokémon fan game's start lobby. The FIRST reference is a flat colour-blocking layout: follow its composition exactly (positions and sizes of the sky, sea, horizon, far shore, buildings, Lapras, path, meadow, cliffs, cloud, birds and tall grass). The SECOND reference is the painting style, light and palette: painterly anime, bright sunny day, saturated greens, soft blue sky. Content, block by block: the pale-green oval lower left is a flat calm meadow clearing with almost no detail. The dark-green shapes on the left and along the bottom are clumps of classic Pokémon tall grass with pointed blades; a small Oddish and a Caterpie peek out of the left tall grass where the yellow dots are. The tan strip is a dirt route path running up to the far shore. On the far shore, clearly readable even when small: a Pokémon Center (white walls, bright red roof, a Poké Ball emblem above the glass entrance) with a small Poké Mart (white walls, blue roof) beside it, a few small red and blue roofed houses to their right, and a white lighthouse with a red top. The dark shape on the sea just left of the path is a Lapras swimming toward the shore, clearly recognisable (long neck, shell). The brown marks in the sky are a flock of five Pidgey flying. Right side: green hills, rounded trees and a big soft cumulus cloud, gentle and low-contrast. Keep the upper-left sky plain apart from the Pidgey. No people, no text, letters, numbers or signage writing, no UI, frame, flat colour blocks or vignette.",
+    "rights": "Generated for a noncommercial Pokémon fan project; character designs belong to their rights holders; no endorsed affiliation.",
+    "upscale": {
+      "tool": "ElevenLabs Creative / topaz-image-upscale-v2 (Topaz Image Upscale, non-generative), model CGI, upscale_factor 2, crop_to_fill false, enhance_faces false; prompt (content hint only): \"painted anime landscape background, seaside town and meadow\"",
+      "generationId": "sfGQ9CT8EaMpiBHika8C",
+      "input": "backdrop-source.jpg (1376x768)",
+      "output": "2752x1536 PNG",
+      "check": "Compared at 2x DPR in the 1280x800 lobby comp and at 2x pixel crops against a Lanczos 2x of the source: sharper outlines, no added or changed detail on the Pokémon Center, Mart, houses, Lapras, Oddish or Caterpie."
+    }
+  },
+  "card-lab.webp": {
+    "asset": "public/art/lobby/card-lab.webp",
+    "cell": "left",
+    "generator": "Magpie Image / openrouter/google/gemini-nano-banana-2.1, 16:9 sheet (1376x768), one generation for both cards",
+    "generationId": "not reported (the call returned the file directly)",
+    "createdAt": "2026-11-06",
+    "references": [
+      "public/art/icons/lab/research.webp",
+      "public/art/icons/crests/water.webp (line weight and shading only)"
+    ],
+    "purpose": "研究所 card illustration: flask, microscope, notebook; drawn in the docs/ART-PROMPTS.md icon style (navy outline, cel shading).",
+    "transform": "python3 -I cut-cards.py cards-sheet-source.jpg <out> 320 (flood-fill background cut from the cell border, as assets/icons/slice-sheet.py, trimmed, centred, 320 px); magick <png> -quality 90 -define webp:alpha-quality=100 <webp>",
+    "prompt": "A sprite sheet of 2 game illustrations arranged side by side in two equal square cells separated by a wide uniform gap, each illustration centred in its cell on a plain flat warm off-white (#f5f1e8) background, matching the line weight and shading of the reference icons. Left cell: a Pokémon research lab set piece, a round-bottom glass flask with glowing teal liquid and bubbles standing in front of a small brass microscope and an open notebook, slightly three-quarter view. Right cell: a red handheld Pokédex-style encyclopedia device, opened like a flip phone, a round blue lens light at the top corner, a small glowing screen and a few buttons, slightly three-quarter view. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject.",
+    "rights": "Generated for a noncommercial Pokémon fan project; no official artwork used as input."
+  },
+  "card-codex.webp": {
+    "asset": "public/art/lobby/card-codex.webp",
+    "cell": "right",
+    "generator": "Magpie Image / openrouter/google/gemini-nano-banana-2.1, 16:9 sheet (1376x768), one generation for both cards",
+    "generationId": "not reported (the call returned the file directly)",
+    "createdAt": "2026-11-06",
+    "references": [
+      "public/art/icons/lab/research.webp",
+      "public/art/icons/crests/water.webp (line weight and shading only)"
+    ],
+    "purpose": "图鉴 card illustration: red flip-open Pokédex-style device; drawn in the docs/ART-PROMPTS.md icon style (navy outline, cel shading).",
+    "transform": "python3 -I cut-cards.py cards-sheet-source.jpg <out> 320 (flood-fill background cut from the cell border, as assets/icons/slice-sheet.py, trimmed, centred, 320 px); magick <png> -quality 90 -define webp:alpha-quality=100 <webp>",
+    "prompt": "A sprite sheet of 2 game illustrations arranged side by side in two equal square cells separated by a wide uniform gap, each illustration centred in its cell on a plain flat warm off-white (#f5f1e8) background, matching the line weight and shading of the reference icons. Left cell: a Pokémon research lab set piece, a round-bottom glass flask with glowing teal liquid and bubbles standing in front of a small brass microscope and an open notebook, slightly three-quarter view. Right cell: a red handheld Pokédex-style encyclopedia device, opened like a flip phone, a round blue lens light at the top corner, a small glowing screen and a few buttons, slightly three-quarter view. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject.",
+    "rights": "Generated for a noncommercial Pokémon fan project; no official artwork used as input."
+  }
+}

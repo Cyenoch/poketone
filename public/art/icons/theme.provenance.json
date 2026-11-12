@@ -1,0 +1,12 @@
+{
+  "assets": [
+    "ultimates/{bulbasaur,charmander,squirtle,pikachu}.webp",
+    "crests/{fire,grass,water,electric}.webp"
+  ],
+  "generator": "Magpie Image, model ash/gpt-image-2.5-sunburst",
+  "createdAt": "2026-11-05",
+  "sources": "One 3×3 icon sheet, 1254 px, with assets/icons/source/moves-sheet.png as the style reference (sheet not checked in)",
+  "prompts": "docs/ART-PROMPTS.md (icon sheet template + style block; 2026-11-05 主题图标表)",
+  "processing": "Sheet came back with transparent, noisy cell backgrounds: composited onto #f5f1e8 first, then python3 assets/icons/slice-sheet.py <flat.png> 3 3 (default flood-fill tolerance 38), 128 px WebP",
+  "rights": "Generated for a noncommercial Pokémon fan project. No official artwork used as input."
+}

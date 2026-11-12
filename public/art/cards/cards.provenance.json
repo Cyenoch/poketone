@@ -1,0 +1,17 @@
+{
+  "assets": [
+    "fire.webp",
+    "water.webp",
+    "grass.webp",
+    "electric.webp",
+    "normal.webp",
+    "item.webp",
+    "train.webp"
+  ],
+  "generator": "Magpie Image, model ash/gpt-image-2.5-sunburst",
+  "createdAt": "2026-11-05",
+  "sources": "1024 px PNG per card, one generation each (not checked in)",
+  "prompts": "docs/ART-PROMPTS.md (card background template)",
+  "processing": "Lanczos to 512 px, blended toward the card face colour (keep share of art: fire 0.80, water 1.00, grass 0.80, electric 1.00, normal 1.00, item 0.50, train 0.55) until every pixel is >= 4.8:1 against ink #142f50; WebP quality 86",
+  "rights": "Generated for a noncommercial Pokémon fan project. No official artwork used as input."
+}

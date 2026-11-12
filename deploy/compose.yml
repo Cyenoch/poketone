@@ -1,0 +1,18 @@
+services:
+  web:
+    image: ${POKETONE_IMAGE:?Set POKETONE_IMAGE}:${POKETONE_TAG:?Set POKETONE_TAG}
+    restart: unless-stopped
+    expose:
+      - "8080"
+    depends_on:
+      harbor:
+        condition: service_healthy
+
+  harbor:
+    image: ${POKETONE_IMAGE:?Set POKETONE_IMAGE}-harbor:${POKETONE_TAG:?Set POKETONE_TAG}
+    restart: unless-stopped
+    expose:
+      - "8787"
+    environment:
+      ICE_SERVERS: ${ICE_SERVERS:-[]}
+    stop_grace_period: 15s

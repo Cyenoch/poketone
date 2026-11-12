@@ -1,0 +1,40 @@
+schema: spec-driven
+
+context: |
+  Language: zh-CN
+  All artifacts must be written in zh-CN.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+  poketone 是免费、非商业的低模宝可梦幸存者游戏，不做账号、商店、广告或付费解锁。
+  Bun 管理依赖、构建和脚本；TypeScript 纯模拟，Three/WebGL 画面和共享 GPU UI，
+  React 仅负责 Web 启动边界，SDL 提供原生平台服务。依赖版本以 package.json 为准。
+  本仓库所有 OpenSpec 命令用 bun run spec 调用锁定版本；官方工作流示例中的 openspec 同样替换，不依赖全局 CLI。
+  先读 AGENTS.md、docs/README.md 和目标能力的 openspec/specs/*/spec.md；实际待办用 bun run spec:list 查询。
+  架构/命令在 CLAUDE.md，产品方向在 PRODUCT.md，视觉规范在 DESIGN.md。
+  每项信息只有一个维护来源：行为在主规范，设计/任务在change，操作方法在手册，日期证据在QA。入口只引用，不复制；已承接旧计划删除，不留双份正文。
+  已有用户授权按上下文继续；非明确要求不创建分支，保留其他人的改动。
+  最小完整实现，复用现有设施；不新增兼容 shim、旧接口转发或双实现。
+  UI 保真迁移；不新增正常可见 DOM UI；不支持 reduced-motion。
+  纯模拟固定步长、种子随机；画面只读。行为不变时 golden 不得重录。
+  正式设置只含声音、开发者模式与 UI 缩放；无震动或 reduced-motion 兼容字段。仅接受当前存档格式，不迁移旧导出或 native 旧路径；拒绝时保留原数据。
+rules:
+  proposal:
+    - 说明用户需求、范围和非目标；New Capabilities 与 Modified Capabilities 使用已有能力边界。
+    - 区分已确认需求、源码现状和待决定事项；已有 change 能覆盖同一目的时先更新它。
+  specs:
+    - 写可观察行为、失败结果及 WHEN/THEN 场景，不复制实现清单或易漂移的数值表。
+    - MODIFIED 必须保留整个原 requirement 及未改变的场景；新增能力写有实义的 Purpose。
+  design:
+    - 引用相关设计/运行手册、源码与历史证据；解释实际取舍，不重复粘贴整篇旧文档。
+    - 明确共享边界和已知缺口；不能把探针、夹具、手机 viewport 当成真实设备验收。
+  tasks:
+    - 使用编号复选框；每项对应可交付结果，未实际完成/验证的保持未勾选。
+    - 验证与风险相称；列出要更新的规范、手册与 QA 证据，不为每句规范新写一个测试。
+operations:
+  apply:
+    guidance:
+      - 按用户授权实施；纯说明修正和不改契约的小修不强制新建 change。
+      - 先跑相关检查；涉及 UI/宿主时按项目视觉和生命周期要求验收。
+  archive:
+    guidance:
+      - 区分 artifacts 齐全与实施完成；未完成的验收不能勾选或归档冒充完成。
+      - 同步 delta 后更新唯一来源及相关导航链接，保留 QA 的日期与测试局限，不维护平行状态表。

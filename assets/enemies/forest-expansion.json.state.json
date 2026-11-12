@@ -1,0 +1,244 @@
+{
+  "jobs": {
+    "poketone-metapod": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "847a197d-ec97-4f19-94a2-a367de1128d5",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "847a197d-ec97-4f19-94a2-a367de1128d5",
+      "output_dir": "assets/enemies/metapod/generation/tripo-out/poketone-metapod-847a197d"
+    },
+    "poketone-kakuna": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "82df3cc8-a72d-419e-993f-e74ef9a37ec7",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "82df3cc8-a72d-419e-993f-e74ef9a37ec7",
+      "output_dir": "assets/enemies/kakuna/generation/tripo-out/poketone-kakuna-82df3cc8"
+    },
+    "poketone-nidoran-f": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "d8698bc4-ed31-4cf3-a7f7-91a0e10c30e1",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "d8698bc4-ed31-4cf3-a7f7-91a0e10c30e1",
+      "output_dir": "assets/enemies/nidoran-f/generation/tripo-out/poketone-nidoran-f-d8698bc4"
+    },
+    "poketone-nidoran-m": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "0f9cc909-e2fe-4d0f-a53e-212eeca6d851",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "0f9cc909-e2fe-4d0f-a53e-212eeca6d851",
+      "output_dir": "assets/enemies/nidoran-m/generation/tripo-out/poketone-nidoran-m-0f9cc909"
+    },
+    "poketone-voltorb": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "14456671-81a6-49b8-81bf-053052737929",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "14456671-81a6-49b8-81bf-053052737929",
+      "output_dir": "assets/enemies/voltorb/generation/tripo-out/poketone-voltorb-14456671"
+    },
+    "poketone-vulpix": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "2668f0c5-ebba-4fc3-991f-0c33cb67f999",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "2668f0c5-ebba-4fc3-991f-0c33cb67f999",
+      "output_dir": "assets/enemies/vulpix/generation/tripo-out/poketone-vulpix-2668f0c5"
+    },
+    "poketone-growlithe": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "a2d54e6e-5503-4bbf-a121-09a83bc70c0c",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "a2d54e6e-5503-4bbf-a121-09a83bc70c0c",
+      "output_dir": "assets/enemies/growlithe/generation/tripo-out/poketone-growlithe-a2d54e6e"
+    },
+    "poketone-butterfree": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "07dba174-fed8-4cdc-97eb-b7ca291b3a6c",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "07dba174-fed8-4cdc-97eb-b7ca291b3a6c",
+      "output_dir": "assets/enemies/butterfree/generation/tripo-out/poketone-butterfree-07dba174"
+    },
+    "poketone-beedrill": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "35ac11ba-0c0e-4fd0-8a3d-c2c492dd41df",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "35ac11ba-0c0e-4fd0-8a3d-c2c492dd41df",
+      "output_dir": "assets/enemies/beedrill/generation/tripo-out/poketone-beedrill-35ac11ba"
+    },
+    "poketone-raticate": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "4d75c04c-1fc6-453b-9beb-8d397364314e",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "4d75c04c-1fc6-453b-9beb-8d397364314e",
+      "output_dir": "assets/enemies/raticate/generation/tripo-out/poketone-raticate-4d75c04c"
+    },
+    "poketone-pidgeotto": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "41fe6c70-e0c3-41d3-b801-0116544dc5b6",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "41fe6c70-e0c3-41d3-b801-0116544dc5b6",
+      "output_dir": "assets/enemies/pidgeotto/generation/tripo-out/poketone-pidgeotto-41fe6c70"
+    },
+    "poketone-gloom": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "47db2050-8480-4aa5-bf08-87f29e496a06",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "47db2050-8480-4aa5-bf08-87f29e496a06",
+      "output_dir": "assets/enemies/gloom/generation/tripo-out/poketone-gloom-47db2050"
+    },
+    "poketone-arbok": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "0b7e481b-c020-43b9-9f8d-880d3f1243ce",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "0b7e481b-c020-43b9-9f8d-880d3f1243ce",
+      "output_dir": "assets/enemies/arbok/generation/tripo-out/poketone-arbok-0b7e481b"
+    },
+    "poketone-parasect": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "0e21c7a2-29a0-4f82-8d9c-6b8194133896",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "0e21c7a2-29a0-4f82-8d9c-6b8194133896",
+      "output_dir": "assets/enemies/parasect/generation/tripo-out/poketone-parasect-0e21c7a2"
+    },
+    "poketone-venomoth": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "bd63fe92-485a-4321-8e62-49193f6d294a",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "bd63fe92-485a-4321-8e62-49193f6d294a",
+      "output_dir": "assets/enemies/venomoth/generation/tripo-out/poketone-venomoth-bd63fe92"
+    },
+    "poketone-fearow": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "addc0889-67c6-4676-b621-6211bed73ed2",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "addc0889-67c6-4676-b621-6211bed73ed2",
+      "output_dir": "assets/enemies/fearow/generation/tripo-out/poketone-fearow-addc0889"
+    },
+    "poketone-vileplume": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "b64a8c9e-64f7-4ca8-8f87-647c5d22a33d",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "b64a8c9e-64f7-4ca8-8f87-647c5d22a33d",
+      "output_dir": "assets/enemies/vileplume/generation/tripo-out/poketone-vileplume-b64a8c9e"
+    },
+    "poketone-graveler": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "2e63e5f0-9af8-4dcf-a312-0cf185e072b8",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "2e63e5f0-9af8-4dcf-a312-0cf185e072b8",
+      "output_dir": "assets/enemies/graveler/generation/tripo-out/poketone-graveler-2e63e5f0"
+    },
+    "poketone-electrode": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "9d31dabc-aa99-46a7-8e4c-ae66835bba6c",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "9d31dabc-aa99-46a7-8e4c-ae66835bba6c",
+      "output_dir": "assets/enemies/electrode/generation/tripo-out/poketone-electrode-9d31dabc"
+    },
+    "poketone-golem": {
+      "status": "success",
+      "attempts": 1,
+      "tasks": [
+        {
+          "task_id": "bfdd4123-1a74-43ee-ab79-1a4f2a841ac3",
+          "type": "text_to_model"
+        }
+      ],
+      "task_id": "bfdd4123-1a74-43ee-ab79-1a4f2a841ac3",
+      "output_dir": "assets/enemies/golem/generation/tripo-out/poketone-golem-bfdd4123"
+    }
+  }
+}

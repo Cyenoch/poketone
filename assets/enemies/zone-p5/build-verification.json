@@ -1,0 +1,98 @@
+{
+  "command": "bun run assets:game grimer jigglypuff kadabra wigglytuff jynx muk mr-mime golbat alakazam gengar seel shellder slowpoke vaporeon dratini snorlax dewgong cloyster lapras",
+  "lock": "/tmp/poketone-assets.lock",
+  "blenderPythonTraceback": false,
+  "unchangedFromVisuallyCheckedGlbs": true,
+  "records": [
+    {
+      "name": "seel",
+      "source": "enemies/seel/generation/tripo-out/tripo-out/seel-mv-7c631f5d/model.glb",
+      "output": "public/models/enemies/seel.glb",
+      "trianglesBefore": 1694,
+      "trianglesAfter": 1300,
+      "texture": 512,
+      "clips": [],
+      "bytes": 96356
+    },
+    {
+      "name": "shellder",
+      "source": "enemies/shellder/generation/tripo-out/tripo-out/shellder-mv-7cff8c69/model.glb",
+      "output": "public/models/enemies/shellder.glb",
+      "trianglesBefore": 1688,
+      "trianglesAfter": 1300,
+      "texture": 512,
+      "clips": [],
+      "bytes": 107672
+    },
+    {
+      "name": "slowpoke",
+      "source": "enemies/slowpoke/generation/tripo-out/tripo-out/slowpoke-mv-779d5657/model.glb",
+      "output": "public/models/enemies/slowpoke.glb",
+      "trianglesBefore": 1494,
+      "trianglesAfter": 1300,
+      "texture": 512,
+      "clips": [],
+      "bytes": 89544
+    },
+    {
+      "name": "vaporeon",
+      "source": "enemies/vaporeon/generation/tripo-out/tripo-out/vaporeon-mv-ed68917f/model.glb",
+      "output": "public/models/enemies/vaporeon.glb",
+      "trianglesBefore": 2162,
+      "trianglesAfter": 1300,
+      "texture": 512,
+      "clips": [],
+      "bytes": 135960
+    },
+    {
+      "name": "dratini",
+      "source": "enemies/dratini/generation/tripo-out/tripo-out/dratini-mv-5086d979/model.glb",
+      "output": "public/models/enemies/dratini.glb",
+      "trianglesBefore": 1278,
+      "trianglesAfter": 900,
+      "texture": 512,
+      "clips": [],
+      "bytes": 74800
+    },
+    {
+      "name": "snorlax",
+      "source": "enemies/snorlax/generation/tripo-out/tripo-out/snorlax-mv-0ea44502/model.glb",
+      "output": "public/models/enemies/snorlax.glb",
+      "trianglesBefore": 1534,
+      "trianglesAfter": 900,
+      "texture": 512,
+      "clips": [],
+      "bytes": 85216
+    },
+    {
+      "name": "dewgong",
+      "source": "enemies/dewgong/generation/tripo-out/tripo-out/dewgong-mv-10164862/model.glb",
+      "output": "public/models/enemies/dewgong.glb",
+      "trianglesBefore": 2166,
+      "trianglesAfter": 2166,
+      "texture": 1024,
+      "clips": [],
+      "bytes": 166796
+    },
+    {
+      "name": "cloyster",
+      "source": "enemies/cloyster/generation/tripo-out/tripo-out/cloyster-mv-cddd93d7/model.glb",
+      "output": "public/models/enemies/cloyster.glb",
+      "trianglesBefore": 3046,
+      "trianglesAfter": 3046,
+      "texture": 1024,
+      "clips": [],
+      "bytes": 272536
+    },
+    {
+      "name": "lapras",
+      "source": "enemies/lapras/generation/tripo-out/tripo-out/lapras-mv-da0706f4/model.glb",
+      "output": "public/models/enemies/lapras.glb",
+      "trianglesBefore": 2642,
+      "trianglesAfter": 2642,
+      "texture": 1024,
+      "clips": [],
+      "bytes": 233352
+    }
+  ]
+}

@@ -1,0 +1,396 @@
+{
+  "sfx": {
+    "hit": {
+      "files": [
+        "sfx/hit-1.flac",
+        "sfx/hit-2.flac",
+        "sfx/hit-3.flac"
+      ],
+      "hitMs": [
+        0,
+        0,
+        5
+      ]
+    },
+    "kill": {
+      "files": [
+        "sfx/kill-1.flac",
+        "sfx/kill-2.flac",
+        "sfx/kill-3.flac"
+      ],
+      "hitMs": [
+        20,
+        10,
+        65
+      ]
+    },
+    "candy": {
+      "files": [
+        "sfx/candy-1.flac",
+        "sfx/candy-2.flac",
+        "sfx/candy-3.flac"
+      ],
+      "hitMs": [
+        0,
+        0,
+        0
+      ]
+    },
+    "dash": {
+      "files": [
+        "sfx/dash-1.flac",
+        "sfx/dash-2.flac",
+        "sfx/dash-3.flac"
+      ],
+      "hitMs": [
+        20,
+        35,
+        30
+      ]
+    },
+    "crit": {
+      "files": [
+        "sfx/crit-1.flac",
+        "sfx/crit-2.flac",
+        "sfx/crit-3.flac"
+      ],
+      "hitMs": [
+        25,
+        0,
+        5
+      ]
+    },
+    "hurt": {
+      "files": [
+        "sfx/hurt-1.flac",
+        "sfx/hurt-2.flac"
+      ],
+      "hitMs": [
+        30,
+        0
+      ]
+    },
+    "ui-move": {
+      "files": [
+        "sfx/ui-move-1.flac",
+        "sfx/ui-move-2.flac",
+        "sfx/ui-move-3.flac"
+      ],
+      "hitMs": [
+        20,
+        30,
+        15
+      ]
+    },
+    "reaction": {
+      "files": [
+        "sfx/reaction-1.flac",
+        "sfx/reaction-2.flac"
+      ],
+      "hitMs": [
+        0,
+        0
+      ]
+    },
+    "berry": {
+      "files": [
+        "sfx/berry.flac"
+      ],
+      "hitMs": [
+        0
+      ]
+    },
+    "elite-kill": {
+      "files": [
+        "sfx/elite-kill.flac"
+      ],
+      "hitMs": [
+        0
+      ]
+    },
+    "chest": {
+      "files": [
+        "sfx/chest.flac"
+      ],
+      "hitMs": [
+        361
+      ]
+    },
+    "level": {
+      "files": [
+        "sfx/level-1.flac",
+        "sfx/level-2.flac"
+      ],
+      "hitMs": [
+        0,
+        0
+      ]
+    },
+    "boss": {
+      "files": [
+        "sfx/boss.flac"
+      ],
+      "hitMs": [
+        0
+      ]
+    },
+    "danger": {
+      "files": [
+        "sfx/danger-1.flac",
+        "sfx/danger-2.flac",
+        "sfx/danger-3.flac"
+      ],
+      "hitMs": [
+        0,
+        20,
+        30
+      ]
+    },
+    "evolve": {
+      "files": [
+        "sfx/evolve-1.flac",
+        "sfx/evolve-2.flac"
+      ],
+      "hitMs": [
+        331,
+        426
+      ]
+    },
+    "ult": {
+      "files": [
+        "sfx/ult.flac"
+      ],
+      "hitMs": [
+        0
+      ]
+    },
+    "revive": {
+      "files": [
+        "sfx/revive-1.flac",
+        "sfx/revive-2.flac"
+      ],
+      "hitMs": [
+        0,
+        0
+      ]
+    },
+    "capture": {
+      "files": [
+        "sfx/capture.flac"
+      ],
+      "hitMs": [
+        0
+      ]
+    },
+    "cast-fire": {
+      "files": [
+        "sfx/cast-fire-1.flac",
+        "sfx/cast-fire-2.flac"
+      ],
+      "hitMs": [
+        10,
+        110
+      ]
+    },
+    "cast-water": {
+      "files": [
+        "sfx/cast-water-1.flac",
+        "sfx/cast-water-2.flac"
+      ],
+      "hitMs": [
+        5,
+        65
+      ]
+    },
+    "cast-grass": {
+      "files": [
+        "sfx/cast-grass-1.flac",
+        "sfx/cast-grass-2.flac"
+      ],
+      "hitMs": [
+        70,
+        185
+      ]
+    },
+    "cast-electric": {
+      "files": [
+        "sfx/cast-electric-1.flac",
+        "sfx/cast-electric-2.flac"
+      ],
+      "hitMs": [
+        175,
+        5
+      ]
+    },
+    "ui-confirm": {
+      "files": [
+        "sfx/ui-confirm.flac"
+      ],
+      "hitMs": [
+        15
+      ]
+    },
+    "ui-back": {
+      "files": [
+        "sfx/ui-back.flac"
+      ],
+      "hitMs": [
+        0
+      ]
+    },
+    "ui-denied": {
+      "files": [
+        "sfx/ui-denied.flac"
+      ],
+      "hitMs": [
+        0
+      ]
+    },
+    "ui-start": {
+      "files": [
+        "sfx/ui-start.flac"
+      ],
+      "hitMs": [
+        371
+      ]
+    },
+    "ui-transition": {
+      "files": [
+        "sfx/ui-transition.flac"
+      ],
+      "hitMs": [
+        311
+      ]
+    },
+    "victory": {
+      "files": [
+        "sfx/victory.flac"
+      ],
+      "hitMs": [
+        5
+      ]
+    },
+    "defeat": {
+      "files": [
+        "sfx/defeat.flac"
+      ],
+      "hitMs": [
+        70
+      ]
+    },
+    "tell": {
+      "files": [
+        "sfx/tell-1.flac",
+        "sfx/tell-2.flac",
+        "sfx/tell-3.flac",
+        "sfx/tell-4.flac"
+      ],
+      "hitMs": [
+        30,
+        70,
+        80,
+        55
+      ]
+    },
+    "tell-danger": {
+      "files": [
+        "sfx/tell-danger-1.flac",
+        "sfx/tell-danger-2.flac",
+        "sfx/tell-danger-3.flac"
+      ],
+      "hitMs": [
+        30,
+        20,
+        25
+      ]
+    },
+    "enemy-heal": {
+      "files": [
+        "sfx/enemy-heal.flac"
+      ],
+      "hitMs": [
+        90
+      ]
+    },
+    "hit-fire": {
+      "files": [
+        "sfx/hit-fire-1.flac",
+        "sfx/hit-fire-2.flac",
+        "sfx/hit-fire-3.flac"
+      ],
+      "hitMs": [
+        15,
+        5,
+        0
+      ]
+    },
+    "hit-water": {
+      "files": [
+        "sfx/hit-water-1.flac",
+        "sfx/hit-water-2.flac",
+        "sfx/hit-water-3.flac"
+      ],
+      "hitMs": [
+        0,
+        0,
+        0
+      ]
+    },
+    "hit-grass": {
+      "files": [
+        "sfx/hit-grass-1.flac",
+        "sfx/hit-grass-2.flac",
+        "sfx/hit-grass-3.flac"
+      ],
+      "hitMs": [
+        0,
+        0,
+        50
+      ]
+    },
+    "hit-electric": {
+      "files": [
+        "sfx/hit-electric-1.flac",
+        "sfx/hit-electric-2.flac",
+        "sfx/hit-electric-3.flac"
+      ],
+      "hitMs": [
+        20,
+        0,
+        30
+      ]
+    },
+    "freeze": {
+      "files": [
+        "sfx/freeze-1.flac",
+        "sfx/freeze-2.flac"
+      ],
+      "hitMs": [
+        0,
+        20
+      ]
+    }
+  },
+  "music": {
+    "run-1": {
+      "file": "music/run-1.m4a",
+      "bpm": 124
+    },
+    "boss": {
+      "file": "music/boss.m4a",
+      "bpm": 124
+    },
+    "menu": {
+      "file": "music/menu.m4a",
+      "bpm": 100
+    },
+    "run-2": {
+      "file": "music/run-2.m4a",
+      "bpm": 124
+    },
+    "run-3": {
+      "file": "music/run-3.m4a",
+      "bpm": 124
+    }
+  }
+}

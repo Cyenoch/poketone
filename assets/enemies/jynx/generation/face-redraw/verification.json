@@ -1,0 +1,19 @@
+{
+  "status": "accepted",
+  "taskId": "c7ee59a6-efa5-45f2-970d-24a6624b1a4e",
+  "credits": 40,
+  "sheetReview": "passed before submission",
+  "rawFaceReview": "passed",
+  "shippingFaceReview": "passed",
+  "views": ["front", "left", "back", "right", "game", "top"],
+  "facingYaw": -1.5707963267948966,
+  "buildCommand": "bun run assets:game jynx",
+  "assetLock": "/tmp/poketone-assets.lock",
+  "sha256": "6481c783ba060be31e1dbbf4838e291e13479d33d670fb0109c96d7418bbb02f",
+  "bytes": 123600,
+  "triangles": 1300,
+  "textureSize": 512,
+  "meshCount": 1,
+  "materialCount": 1,
+  "static": true
+}

@@ -1,0 +1,10 @@
+{
+  "asset": "ground-earth-cliff.jpg",
+  "generator": "Magpie Image, model ash/gpt-image-2.5-sunburst",
+  "createdAt": "2026-11-04",
+  "source": "assets/textures/source/ground-earth-cliff.png (1254 px)",
+  "prompts": "docs/ART-PROMPTS.md (ground texture template; see 生成记录)",
+  "processing": "sips: 512 px JPEG quality 82; settled (saturation + tint) in the terrain shader",
+  "use": "side-on earth strata on sheer unwalkable banks",
+  "rights": "Generated for a noncommercial fan project."
+}

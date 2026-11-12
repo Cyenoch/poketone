@@ -1,0 +1,10 @@
+{
+  "assets": ["charmeleon", "charizard", "ivysaur", "venusaur", "wartortle", "blastoise", "raichu"],
+  "generator": "three.js WebGLRenderer render of public/models/<form>.glb in rest pose via run/view/assets.ts loadFormModel (facing +Z), headless Chrome",
+  "createdAt": "2026-11-05",
+  "camera": "PerspectiveCamera 28 deg, slightly right of centre, about 10 deg above; hemisphere + ambient + key light; transparent background",
+  "processing": "trim to alpha bounds, fit 304 px, centre on 320x320, WebP q86",
+  "purpose": "Evolution-chain portraits; the four base starters now use starters.provenance.json.",
+  "rerendered": "2026-11-06: pikachu and raichu from their regenerated models (the old pikachu portrait showed the old model's blue eyes)",
+  "rights": "Rendered from the project's own Tripo models of a noncommercial Pokemon fan project; character designs belong to their rights holders."
+}

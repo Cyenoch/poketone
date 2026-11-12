@@ -1,0 +1,53 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+.DS_Store
+*.log
+.env
+.env.*
+!.env.example
+
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.local
+.claude/settings.local.json
+
+# impeccable-ignore-start
+# Shared config, design metadata, surface briefs and critique stay tracked.
+**/.impeccable/config.local.json
+**/.impeccable/hook.cache.json
+**/.impeccable/hook.pending.json
+**/.impeccable/*.png
+**/.impeccable/review/
+**/.impeccable/questions/
+**/.impeccable/live/server.json
+**/.impeccable/live/sessions/
+**/.impeccable/live/previews/
+**/.impeccable/live/annotations/
+**/.impeccable/live/cache/
+**/.impeccable/live/manual-edit-apply-transaction.json
+**/.impeccable/live/manual-edit-events.jsonl
+**/.impeccable/live/manual-edit-evidence/
+**/.impeccable/live/pending-manual-edits.json
+**/.impeccable/live/deferred-svelte-component-accepts.json
+**/.impeccable/live/*.png
+# impeccable-ignore-end
+
+
+# Local tool configs hold API tokens; never commit them.
+/.mcp.json
+/.codex/config.toml
+
+# Generated UI font base set and its source-font cache (pnpm fonts:base; scripts/fonts/build-base.py)
+/.cache/
+/public/fonts/gpu/base/
+
+__pycache__/
+
+# Local-only reference snapshot of another game and its tooling; never published.
+/references/
+/scripts/*pokebonk*
+/.tripo/

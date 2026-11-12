@@ -1,0 +1,14 @@
+{
+  "model": "openrouter/google/gemini-nano-banana-2.1",
+  "reference": "assets/enemies/jynx/generation/artwork.png",
+  "layout": "2x2: front/back, right/left; strict orthographic profiles",
+  "splitter": ".agents/skills/skill-model/scripts/split-sheet.py",
+  "splitterDarkThreshold": 245,
+  "sheetReview": "Passed before Tripo submission: both white eyes and pink lips visible in front; one eye and protruding lip profile visible on each exact side; correct hair-only back, no face on back; pale hair crown fully preserved after automatic splitting.",
+  "inputs": {
+    "v-back.png": "9d81b96b4eb07a2e607ffdb89064d431c674385801428df225df7e0b17926113",
+    "v-right.png": "dde9f34ad9566c0f94ea0910738c8708f710e2c3deb2e280231221b941fca071",
+    "v-front.png": "acd527b984e1606e00e8da57eba928b06da8d10afcfde52137efaf998bda151d",
+    "v-left.png": "2bdfea74bd322ee728c30b3e79dcca85cd27862fdb36addb1e82addff8f1a53c"
+  }
+}

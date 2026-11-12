@@ -1,0 +1,104 @@
+{
+  "generator": "bun scripts/bake-ground-maps.mjs",
+  "author": "poketone procedural material study",
+  "license": "Project-authored; no external source assets",
+  "size": 256,
+  "packing": "detail RG = tangent normal XY, B = relief, A = grain; NoColorSpace. albedo = sRGB",
+  "files": [
+    {
+      "file": "grass-detail.png",
+      "bytes": 212008,
+      "sha256": "76f5ae1eb4db102b83eef77d651e123c8aea488d4e4bbb62e13be5748db5e5f0"
+    },
+    {
+      "file": "soil-albedo.png",
+      "bytes": 25705,
+      "sha256": "d834fa5007f73b2d61fc2a68ccc1708dd880c74781fad04458630c0ebb0ffcde"
+    },
+    {
+      "file": "soil-detail.png",
+      "bytes": 217822,
+      "sha256": "259288906bfcc785e39ae114c31c075e08b57bf7673151e75436e89538d0105d"
+    },
+    {
+      "file": "sand-albedo.png",
+      "bytes": 25816,
+      "sha256": "3b21de85e9fe15b84915b4fcc3eb36e630e1e4f99875ee531815bbebbd00fc7c"
+    },
+    {
+      "file": "sand-detail.png",
+      "bytes": 224228,
+      "sha256": "27d472ec1a92fd3f599f407f0128847ca5524cd042f792886822e9122acb66d9"
+    },
+    {
+      "file": "sandstone-albedo.png",
+      "bytes": 29147,
+      "sha256": "9a394b79df70b1404ce34bc890e5a62ced6975715630970d622b12d900eec802"
+    },
+    {
+      "file": "sandstone-detail.png",
+      "bytes": 216404,
+      "sha256": "95fcf586b87ea1665f7ea09361a905e203bd08dac98501e4f0ed8912d95bc3f7"
+    },
+    {
+      "file": "rock-albedo.png",
+      "bytes": 26957,
+      "sha256": "5673f796bb9029e0f1f3e7804f6851eae2882612587839b5c7a139772bda96d3"
+    },
+    {
+      "file": "rock-detail.png",
+      "bytes": 222358,
+      "sha256": "45ea52cb168d8564041bd8fb0245cd93b3ea027a6372be56507cefc647cbb2d9"
+    },
+    {
+      "file": "snow-albedo.png",
+      "bytes": 27298,
+      "sha256": "b33bd401e04bc5018295fc2e46d649e567c1cf31decf6d623887e08d59d18ba8"
+    },
+    {
+      "file": "snow-detail.png",
+      "bytes": 216371,
+      "sha256": "f4199fe2f870ba9792080314dd8a020507ccbfb75060f0c9febac280377c49d1"
+    },
+    {
+      "file": "ice-albedo.png",
+      "bytes": 27244,
+      "sha256": "c703e635beb30f7d05ab63bbe5607519f8ab96e02ea8e75908ea05486e1ff99d"
+    },
+    {
+      "file": "ice-detail.png",
+      "bytes": 197453,
+      "sha256": "19ee4623a0fd00ec0294640a68db8cc1301f9b55c3cb6a26c74074f92fccd4e2"
+    },
+    {
+      "file": "basalt-albedo.png",
+      "bytes": 21138,
+      "sha256": "66a9bff792e47a6b0aad971e4d862a8148fd29879e9b203f2f26bc7b770caea0"
+    },
+    {
+      "file": "basalt-detail.png",
+      "bytes": 236098,
+      "sha256": "9615b41faef3800d419b86eaba20f182df8f763d3c59e360fcd557da87ecd113"
+    },
+    {
+      "file": "ash-albedo.png",
+      "bytes": 19313,
+      "sha256": "14c4ae2a74a498f9cc75302bc76b09b9b5e546702ca074d51d7ebc04ce134339"
+    },
+    {
+      "file": "ash-detail.png",
+      "bytes": 208368,
+      "sha256": "e08c0eb3588ded42d3fb80699be6c7a655b19481f12c9d873cb46989df99754e"
+    },
+    {
+      "file": "stone-albedo.png",
+      "bytes": 23713,
+      "sha256": "b5fff8e59ff39495c8705cde34ee0bfb9b974a52cdf013a5166d46928536ebd4"
+    },
+    {
+      "file": "stone-detail.png",
+      "bytes": 215109,
+      "sha256": "754e26ae935d58dc36fb07c1a3bd21c884c2fcab34f879bdc28f563919955d72"
+    }
+  ]
+}

@@ -1,0 +1,535 @@
+{
+  "generator": "assets/props/build-map-props.py",
+  "publisher": "bun run assets:game",
+  "tripoCredits": 0,
+  "assets": [
+    {
+      "name": "forest-rock-1",
+      "path": "public/models/props/forest-rock-1.glb",
+      "triangles": 240,
+      "bytes": 28492,
+      "sha256": "8a152d7b3704eee24d7039524c1e2509158674f5ae24b74a6657183e9ae6cdf9",
+      "source": "assets/props/forest-rock-1/provenance.json"
+    },
+    {
+      "name": "forest-rock-2",
+      "path": "public/models/props/forest-rock-2.glb",
+      "triangles": 240,
+      "bytes": 28496,
+      "sha256": "9aeee190c7ae70e85b2ddc4716c003fa8c5674ae386ad2036b5d2447197b9949",
+      "source": "assets/props/forest-rock-2/provenance.json"
+    },
+    {
+      "name": "forest-rock-3",
+      "path": "public/models/props/forest-rock-3.glb",
+      "triangles": 240,
+      "bytes": 28496,
+      "sha256": "268b373181fbc40bb3ec18d6ffcfc0a754951ca8401a346c9e339e2f62df12bc",
+      "source": "assets/props/forest-rock-3/provenance.json"
+    },
+    {
+      "name": "forest-landmark",
+      "path": "public/models/props/forest-landmark.glb",
+      "triangles": 1176,
+      "bytes": 132624,
+      "sha256": "51b8eff203e301d95136946016e8649a12a58615062f81a6338c0454744c5dea",
+      "source": "assets/props/forest-landmark/provenance.json"
+    },
+    {
+      "name": "forest-station",
+      "path": "public/models/props/forest-station.glb",
+      "triangles": 72,
+      "bytes": 5860,
+      "sha256": "084b31e31e0e90d6def7ba62eeaf2d02633ef00cba999767f1ffe2d6c98d0790",
+      "source": "assets/props/forest-station/provenance.json"
+    },
+    {
+      "name": "desert-rock-1",
+      "path": "public/models/props/desert-rock-1.glb",
+      "triangles": 160,
+      "bytes": 19376,
+      "sha256": "afb17989ef2d4673c1454ef3f34029f4444d833ad0fa512a0a730839007a7fad",
+      "source": "assets/props/desert-rock-1/provenance.json"
+    },
+    {
+      "name": "desert-rock-2",
+      "path": "public/models/props/desert-rock-2.glb",
+      "triangles": 84,
+      "bytes": 6816,
+      "sha256": "5020f0dcb218d2de44a3b8b4efcaf3c0f1cd5409cc88fdf41c6e36b0686ac093",
+      "source": "assets/props/desert-rock-2/provenance.json"
+    },
+    {
+      "name": "desert-rock-3",
+      "path": "public/models/props/desert-rock-3.glb",
+      "triangles": 100,
+      "bytes": 8208,
+      "sha256": "a7d497c1380b09af9ca34df0bc47ebf4089a7e57831a45632c8fe0982ca67842",
+      "source": "assets/props/desert-rock-3/provenance.json"
+    },
+    {
+      "name": "desert-landmark",
+      "path": "public/models/props/desert-landmark.glb",
+      "triangles": 124,
+      "bytes": 9660,
+      "sha256": "a4ffb6381645d6137da45dfaf6c3afa7b53b810f8b618b46037c082b2f0dac6a",
+      "source": "assets/props/desert-landmark/provenance.json"
+    },
+    {
+      "name": "desert-station",
+      "path": "public/models/props/desert-station.glb",
+      "triangles": 72,
+      "bytes": 5860,
+      "sha256": "62a9ab028694abf514498ef2ec283c4ea56be69e5e98f94a725498997e466f6a",
+      "source": "assets/props/desert-station/provenance.json"
+    },
+    {
+      "name": "coast-rock-1",
+      "path": "public/models/props/coast-rock-1.glb",
+      "triangles": 160,
+      "bytes": 19372,
+      "sha256": "d97f6706a36015e03dba47764880dcf0b5749d885e978cce73cfd44addd2d077",
+      "source": "assets/props/coast-rock-1/provenance.json"
+    },
+    {
+      "name": "coast-rock-2",
+      "path": "public/models/props/coast-rock-2.glb",
+      "triangles": 160,
+      "bytes": 19372,
+      "sha256": "d25373c2eafc70aea67ccd8b07ff3de2b49d4a309150b67ffb7ac6965eab37a2",
+      "source": "assets/props/coast-rock-2/provenance.json"
+    },
+    {
+      "name": "coast-rock-3",
+      "path": "public/models/props/coast-rock-3.glb",
+      "triangles": 160,
+      "bytes": 19372,
+      "sha256": "11cc5f2a313c675b293ccc806401e9349782c0753b7d9ab9167a74f511797382",
+      "source": "assets/props/coast-rock-3/provenance.json"
+    },
+    {
+      "name": "coast-landmark",
+      "path": "public/models/props/coast-landmark.glb",
+      "triangles": 160,
+      "bytes": 12304,
+      "sha256": "e8fa6ca880ae1d791d6d2f73e44e5d1dcf7626ed1ae4782f652cbde6f28e7ed7",
+      "source": "assets/props/coast-landmark/provenance.json"
+    },
+    {
+      "name": "coast-station",
+      "path": "public/models/props/coast-station.glb",
+      "triangles": 72,
+      "bytes": 5856,
+      "sha256": "8792b63bfa96b78741394cb70da3d3bb58900958c5e210633b08074227c3c64b",
+      "source": "assets/props/coast-station/provenance.json"
+    },
+    {
+      "name": "glacier-rock-1",
+      "path": "public/models/props/glacier-rock-1.glb",
+      "triangles": 160,
+      "bytes": 19380,
+      "sha256": "505db7f0f3dde541999b31d370c779527ac2d99fd696460c0394c33709a483cf",
+      "source": "assets/props/glacier-rock-1/provenance.json"
+    },
+    {
+      "name": "glacier-rock-2",
+      "path": "public/models/props/glacier-rock-2.glb",
+      "triangles": 160,
+      "bytes": 19380,
+      "sha256": "a99d2c4eab416738493964f338b9584a3acec20b457181c3bc513efd2fefac1a",
+      "source": "assets/props/glacier-rock-2/provenance.json"
+    },
+    {
+      "name": "glacier-rock-3",
+      "path": "public/models/props/glacier-rock-3.glb",
+      "triangles": 160,
+      "bytes": 19380,
+      "sha256": "63ace1de244d78aae1329060db736a9f68b1afedb3d8ff7785b51a67543bd055",
+      "source": "assets/props/glacier-rock-3/provenance.json"
+    },
+    {
+      "name": "glacier-landmark",
+      "path": "public/models/props/glacier-landmark.glb",
+      "triangles": 92,
+      "bytes": 7812,
+      "sha256": "1119442be3420c3d3f62ec9d232ca8bfac775a9de39886f12ee9c33db519f5e8",
+      "source": "assets/props/glacier-landmark/provenance.json"
+    },
+    {
+      "name": "glacier-station",
+      "path": "public/models/props/glacier-station.glb",
+      "triangles": 72,
+      "bytes": 5864,
+      "sha256": "f0b0977149169b7d1c3184ae14ecff6190ffc1ac34882bada1bfacfe00fe34ed",
+      "source": "assets/props/glacier-station/provenance.json"
+    },
+    {
+      "name": "volcano-rock-1",
+      "path": "public/models/props/volcano-rock-1.glb",
+      "triangles": 60,
+      "bytes": 5384,
+      "sha256": "eb984d40a3e0669fb2bc620bec75a9af778d2ce041f22ddfcdebe96c701b284f",
+      "source": "assets/props/volcano-rock-1/provenance.json"
+    },
+    {
+      "name": "volcano-rock-2",
+      "path": "public/models/props/volcano-rock-2.glb",
+      "triangles": 60,
+      "bytes": 5384,
+      "sha256": "6bb6d86ec2e5fc0d052f05ebb90cccdc3a2e2442644c381668b37e07b8339b4a",
+      "source": "assets/props/volcano-rock-2/provenance.json"
+    },
+    {
+      "name": "volcano-rock-3",
+      "path": "public/models/props/volcano-rock-3.glb",
+      "triangles": 60,
+      "bytes": 5384,
+      "sha256": "9d90d3429a30177e05e3b39a0de1a7e85b9b083b1d69f8ba362f77a4721294fa",
+      "source": "assets/props/volcano-rock-3/provenance.json"
+    },
+    {
+      "name": "volcano-landmark",
+      "path": "public/models/props/volcano-landmark.glb",
+      "triangles": 220,
+      "bytes": 16288,
+      "sha256": "adb02ae9db9e9587fd5d3a4a63b0f644e953182f12a19cdafcaa12733a15d87f",
+      "source": "assets/props/volcano-landmark/provenance.json"
+    },
+    {
+      "name": "volcano-station",
+      "path": "public/models/props/volcano-station.glb",
+      "triangles": 72,
+      "bytes": 5864,
+      "sha256": "90e848b90cfa811352ff13b9c22f7605099250a25652d5db5c2878b1f85776e7",
+      "source": "assets/props/volcano-station/provenance.json"
+    },
+    {
+      "name": "tower-rock-1",
+      "path": "public/models/props/tower-rock-1.glb",
+      "triangles": 160,
+      "bytes": 19372,
+      "sha256": "7978ef136fea49a554863c008eed35a376a31ae1ed627ba7ed660fa47cfb2c77",
+      "source": "assets/props/tower-rock-1/provenance.json"
+    },
+    {
+      "name": "tower-rock-2",
+      "path": "public/models/props/tower-rock-2.glb",
+      "triangles": 160,
+      "bytes": 19372,
+      "sha256": "555cbe3c820657da59f13e97a0e1bf741276423e686f7e510848722ebd50b850",
+      "source": "assets/props/tower-rock-2/provenance.json"
+    },
+    {
+      "name": "tower-rock-3",
+      "path": "public/models/props/tower-rock-3.glb",
+      "triangles": 160,
+      "bytes": 19372,
+      "sha256": "f97c6bbb7d700960203d1642d3a8598d68ec72cf4c5fa926db51eb3111213f4c",
+      "source": "assets/props/tower-rock-3/provenance.json"
+    },
+    {
+      "name": "tower-landmark",
+      "path": "public/models/props/tower-landmark.glb",
+      "triangles": 140,
+      "bytes": 12776,
+      "sha256": "2f9a6e04569760656a26ea9a6f6f09b6a28f366399f7e0e7b5e6b04422e2d72d",
+      "source": "assets/props/tower-landmark/provenance.json"
+    },
+    {
+      "name": "tower-station",
+      "path": "public/models/props/tower-station.glb",
+      "triangles": 72,
+      "bytes": 5856,
+      "sha256": "404a2be7b621fff11b66b0eca7c7e75cffd6af3a391c96863d851b5c84de6c44",
+      "source": "assets/props/tower-station/provenance.json"
+    },
+    {
+      "name": "forest-mushroom-1",
+      "path": "public/models/props/forest-mushroom-1.glb",
+      "triangles": 48,
+      "bytes": 4460,
+      "sha256": "423fac36a94ac21309b51543fe9e6bbe80a13f13cab6ca31e045fe53525cac02",
+      "source": "assets/props/forest-mushroom-1/provenance.json"
+    },
+    {
+      "name": "forest-mushroom-2",
+      "path": "public/models/props/forest-mushroom-2.glb",
+      "triangles": 48,
+      "bytes": 4460,
+      "sha256": "4d011f8594f0a3bc21b6e70b5d179e8386566124c120a458e86361ac6d7d94ce",
+      "source": "assets/props/forest-mushroom-2/provenance.json"
+    },
+    {
+      "name": "forest-mushroom-3",
+      "path": "public/models/props/forest-mushroom-3.glb",
+      "triangles": 48,
+      "bytes": 4460,
+      "sha256": "6b5c5c9b046c8547d05f36dcd73ba503b45744ce4da5e1ae137c95323b72ad99",
+      "source": "assets/props/forest-mushroom-3/provenance.json"
+    },
+    {
+      "name": "forest-leaves",
+      "path": "public/models/props/forest-leaves.glb",
+      "triangles": 160,
+      "bytes": 19380,
+      "sha256": "982c3be16f48daf47e99cbb7a8453cd29d69bc91b68730460012f77ce604480e",
+      "source": "assets/props/forest-leaves/provenance.json"
+    },
+    {
+      "name": "forest-log",
+      "path": "public/models/props/forest-log.glb",
+      "triangles": 68,
+      "bytes": 6036,
+      "sha256": "2e04c8e68fe0ccacce73cc3ce79ffb73e5dab1ef18603ddb0b6116ba6c582eb7",
+      "source": "assets/props/forest-log/provenance.json"
+    },
+    {
+      "name": "forest-bush",
+      "path": "public/models/props/forest-bush.glb",
+      "triangles": 560,
+      "bytes": 64980,
+      "sha256": "6f871c23a0382ceb464517b21c082fc749ced80477761a1e08f3a0bf015c3a4f",
+      "source": "assets/props/forest-bush/provenance.json"
+    },
+    {
+      "name": "desert-dry-bush",
+      "path": "public/models/props/desert-dry-bush.glb",
+      "triangles": 280,
+      "bytes": 21656,
+      "sha256": "baf25eae2acac529936424ab9fa9c319d5a29add867b77b6ba6f3faf52828c98",
+      "source": "assets/props/desert-dry-bush/provenance.json"
+    },
+    {
+      "name": "desert-tumbleweed",
+      "path": "public/models/props/desert-tumbleweed.glb",
+      "triangles": 420,
+      "bytes": 32004,
+      "sha256": "4e2900927baf396b5785ba75d45593c456a8c9f1369f15fbe04694cc788ed5b9",
+      "source": "assets/props/desert-tumbleweed/provenance.json"
+    },
+    {
+      "name": "coast-driftwood",
+      "path": "public/models/props/coast-driftwood.glb",
+      "triangles": 68,
+      "bytes": 6048,
+      "sha256": "8531b116871c74b95b87e02678a7390ea65eadcd1064a31e6cb49070c59d43a9",
+      "source": "assets/props/coast-driftwood/provenance.json"
+    },
+    {
+      "name": "desert-cactus",
+      "path": "public/models/props/desert-cactus.glb",
+      "triangles": 56,
+      "bytes": 5792,
+      "sha256": "ce4c776df9075c0b4aab82cf3577ef553697c5d4989bfb804079e2fb0e9140f0",
+      "source": "assets/props/desert-cactus/provenance.json"
+    },
+    {
+      "name": "desert-pebbles",
+      "path": "public/models/props/desert-pebbles.glb",
+      "triangles": 400,
+      "bytes": 46752,
+      "sha256": "2448b33a38e80c91d54f71a1b1bdf47ddedce5231017c00f95bf391c96b07205",
+      "source": "assets/props/desert-pebbles/provenance.json"
+    },
+    {
+      "name": "tower-rubble",
+      "path": "public/models/props/tower-rubble.glb",
+      "triangles": 400,
+      "bytes": 46744,
+      "sha256": "bc204da7b60071cde7ceb8b5552b45bff4fc3fb829829cd0e7ab5de12f5a8f00",
+      "source": "assets/props/tower-rubble/provenance.json"
+    },
+    {
+      "name": "glacier-snowdrift",
+      "path": "public/models/props/glacier-snowdrift.glb",
+      "triangles": 400,
+      "bytes": 46764,
+      "sha256": "336b33e1b505e935764282cb72fb2cc5181d54c587a52917ffe2747ad083e5cf",
+      "source": "assets/props/glacier-snowdrift/provenance.json"
+    },
+    {
+      "name": "desert-ribs",
+      "path": "public/models/props/desert-ribs.glb",
+      "triangles": 340,
+      "bytes": 27692,
+      "sha256": "5a188530167c3f9f1e9cf0d54edf702fa98d3b9604a627c734c5f23485defb78",
+      "source": "assets/props/desert-ribs/provenance.json"
+    },
+    {
+      "name": "desert-skull",
+      "path": "public/models/props/desert-skull.glb",
+      "triangles": 120,
+      "bytes": 14816,
+      "sha256": "53a307d04f4a47502d33c3316692405e26914470b113f7fcbbebe47520eb83c4",
+      "source": "assets/props/desert-skull/provenance.json"
+    },
+    {
+      "name": "coast-shrub-1",
+      "path": "public/models/props/coast-shrub-1.glb",
+      "triangles": 800,
+      "bytes": 92344,
+      "sha256": "e7776e095ead827525085e208706d004479675c0a5232417362afc54b5bcaa6f",
+      "source": "assets/props/coast-shrub-1/provenance.json"
+    },
+    {
+      "name": "coast-shrub-2",
+      "path": "public/models/props/coast-shrub-2.glb",
+      "triangles": 800,
+      "bytes": 92344,
+      "sha256": "f9cc10a2c310a94ec4b5e92471ac131a0bfa5fef39b6637786eeae6291cb38c1",
+      "source": "assets/props/coast-shrub-2/provenance.json"
+    },
+    {
+      "name": "coast-shell",
+      "path": "public/models/props/coast-shell.glb",
+      "triangles": 120,
+      "bytes": 10492,
+      "sha256": "1b3e837a5d6912825ac7061cf1b23b1a6c90f47487aded0cc5850358294a9451",
+      "source": "assets/props/coast-shell/provenance.json"
+    },
+    {
+      "name": "coast-seagrass",
+      "path": "public/models/props/coast-seagrass.glb",
+      "triangles": 560,
+      "bytes": 64988,
+      "sha256": "84bbbba9282346ed9fb280fca7ca3e7f2308b71a8f9d13a7301aaa4aeed8aeda",
+      "source": "assets/props/coast-seagrass/provenance.json"
+    },
+    {
+      "name": "glacier-frost-shrub",
+      "path": "public/models/props/glacier-frost-shrub.glb",
+      "triangles": 280,
+      "bytes": 21556,
+      "sha256": "bf29e48ecf0a6cf50d5f913d8b2726474fe8219ac90d27d6dac6ed73163d69c2",
+      "source": "assets/props/glacier-frost-shrub/provenance.json"
+    },
+    {
+      "name": "glacier-icicles-1",
+      "path": "public/models/props/glacier-icicles-1.glb",
+      "triangles": 120,
+      "bytes": 10868,
+      "sha256": "3bca6e408a5fe92d402ff29b5e566a00fa622f082a9d5188c5a129a35c0d9c13",
+      "source": "assets/props/glacier-icicles-1/provenance.json"
+    },
+    {
+      "name": "glacier-icicles-2",
+      "path": "public/models/props/glacier-icicles-2.glb",
+      "triangles": 144,
+      "bytes": 12812,
+      "sha256": "e74d1057a30a967b6bab767c2f29a4f203eb28290ee299e9e93215d3807a6218",
+      "source": "assets/props/glacier-icicles-2/provenance.json"
+    },
+    {
+      "name": "glacier-crystals",
+      "path": "public/models/props/glacier-crystals.glb",
+      "triangles": 96,
+      "bytes": 8920,
+      "sha256": "2bb2779c17dd60ce73cd358a5c5982f760cfcea4b20b4b113531531f49858ebd",
+      "source": "assets/props/glacier-crystals/provenance.json"
+    },
+    {
+      "name": "volcano-dead-tree-1",
+      "path": "public/models/props/volcano-dead-tree-1.glb",
+      "triangles": 100,
+      "bytes": 8340,
+      "sha256": "7cc4105d4f2c79aecd7879a8cf26d602697f936741de3452c67fe11dbf165aa9",
+      "source": "assets/props/volcano-dead-tree-1/provenance.json"
+    },
+    {
+      "name": "volcano-dead-tree-2",
+      "path": "public/models/props/volcano-dead-tree-2.glb",
+      "triangles": 100,
+      "bytes": 8340,
+      "sha256": "523f52a7978468cd16b522fd520504b7b48e24d4a4ff906bac0eb7ebfac9d8ab",
+      "source": "assets/props/volcano-dead-tree-2/provenance.json"
+    },
+    {
+      "name": "volcano-obsidian",
+      "path": "public/models/props/volcano-obsidian.glb",
+      "triangles": 96,
+      "bytes": 8920,
+      "sha256": "1c8925588436f111b6a67a88476f7d3eecb9cd42154bf5b66c555e3125e2d5fc",
+      "source": "assets/props/volcano-obsidian/provenance.json"
+    },
+    {
+      "name": "volcano-sulphur",
+      "path": "public/models/props/volcano-sulphur.glb",
+      "triangles": 96,
+      "bytes": 8916,
+      "sha256": "8b4d3df8777801deed61ff4c44b2608720b7781523042b891842fdaf457f89cf",
+      "source": "assets/props/volcano-sulphur/provenance.json"
+    },
+    {
+      "name": "volcano-vent",
+      "path": "public/models/props/volcano-vent.glb",
+      "triangles": 56,
+      "bytes": 4924,
+      "sha256": "2a86cd2ecb2a6624e2f7951c6a46dbce3f356cfd4c12286485e87aaad8f8bd6d",
+      "source": "assets/props/volcano-vent/provenance.json"
+    },
+    {
+      "name": "tower-candles",
+      "path": "public/models/props/tower-candles.glb",
+      "triangles": 232,
+      "bytes": 19808,
+      "sha256": "86bcc9ade44e7cc0c2b7e660daaff68bdd41be0fc0777f163ee00ec9c669e460",
+      "source": "assets/props/tower-candles/provenance.json"
+    },
+    {
+      "name": "tower-candles-out",
+      "path": "public/models/props/tower-candles-out.glb",
+      "triangles": 172,
+      "bytes": 12980,
+      "sha256": "a2fe75154ee020664f39d67328e81441036c35d2f5a9d8327d590410f9a98b2d",
+      "source": "assets/props/tower-candles-out/provenance.json"
+    },
+    {
+      "name": "tower-column",
+      "path": "public/models/props/tower-column.glb",
+      "triangles": 180,
+      "bytes": 13012,
+      "sha256": "6b4e59deb4528edf245c95576a9ac7fd25c46ae06c9ecf54d22cf46790839fa5",
+      "source": "assets/props/tower-column/provenance.json"
+    },
+    {
+      "name": "tower-tomb-1",
+      "path": "public/models/props/tower-tomb-1.glb",
+      "triangles": 56,
+      "bytes": 6220,
+      "sha256": "b77e5e02e9bb985303a928671765c717ffbc8b1e95bb7d9e1ca76a5131ea47f9",
+      "source": "assets/props/tower-tomb-1/provenance.json"
+    },
+    {
+      "name": "tower-tomb-2",
+      "path": "public/models/props/tower-tomb-2.glb",
+      "triangles": 48,
+      "bytes": 4872,
+      "sha256": "da4b7c2729870b49fd1604f58791a79464ccb4b68c9a66bd827b9c880686a6b2",
+      "source": "assets/props/tower-tomb-2/provenance.json"
+    },
+    {
+      "name": "tower-tomb-3",
+      "path": "public/models/props/tower-tomb-3.glb",
+      "triangles": 48,
+      "bytes": 4872,
+      "sha256": "25f482368511a33cfd0df67e52acbddf490026c0d6b8bcc1bf58bae15d8d4935",
+      "source": "assets/props/tower-tomb-3/provenance.json"
+    },
+    {
+      "name": "tower-petals",
+      "path": "public/models/props/tower-petals.glb",
+      "triangles": 160,
+      "bytes": 19376,
+      "sha256": "ea34aeb400a0eaf66404a29282e8a72e7e92e1d09f098b0457be5dd14fbd7b2b",
+      "source": "assets/props/tower-petals/provenance.json"
+    },
+    {
+      "name": "tower-incense",
+      "path": "public/models/props/tower-incense.glb",
+      "triangles": 96,
+      "bytes": 7808,
+      "sha256": "4dc278ce4271a5271ea5ddaac3172d90382a49541d1bacdc62411fc42f566a2c",
+      "source": "assets/props/tower-incense/provenance.json"
+    }
+  ]
+}

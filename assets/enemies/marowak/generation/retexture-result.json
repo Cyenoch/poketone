@@ -1,0 +1,23 @@
+{
+  "task_id": "dc285482-c777-4349-916f-01cfc582c2ee",
+  "type": "texture_model",
+  "status": "success",
+  "credits_consumed": 10,
+  "output_dir": "retexture/tripo-out/tripo-out/marowak-retex-texture-dc285482",
+  "files": ["model.glb", "rendered_image.webp", "preview.png"],
+  "model_file": "retexture/tripo-out/tripo-out/marowak-retex-texture-dc285482/model.glb",
+  "preview": "retexture/tripo-out/tripo-out/marowak-retex-texture-dc285482/preview.png",
+  "chain": [
+    {
+      "task_id": "dc285482-c777-4349-916f-01cfc582c2ee",
+      "type": "texture_model",
+      "status": "success",
+      "credits_consumed": 10,
+      "output_dir": "retexture/tripo-out/tripo-out/marowak-retex-texture-dc285482",
+      "files": ["model.glb", "rendered_image.webp", "preview.png"],
+      "model_file": "retexture/tripo-out/tripo-out/marowak-retex-texture-dc285482/model.glb",
+      "preview": "retexture/tripo-out/tripo-out/marowak-retex-texture-dc285482/preview.png"
+    }
+  ],
+  "source_task_id": "1e8e8a7f-3b1d-4f5b-91a4-88a87a2b6819"
+}

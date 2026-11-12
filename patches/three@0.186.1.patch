@@ -1,0 +1,685 @@
+diff --git a/build/three.module.js b/build/three.module.js
+--- a/build/three.module.js
++++ b/build/three.module.js
+@@ -37,7 +37,7 @@
+ 
+ 		stop: function () {
+ 
+-			if ( context !== null ) context.cancelAnimationFrame( requestId );
++			if ( isAnimating === true && context !== null ) context.cancelAnimationFrame( requestId );
+ 
+ 			isAnimating = false;
+ 
+@@ -7242,6 +7242,29 @@
+ 
+ 	}
+ 
++	retain( material, retainedStages ) {
++
++		for ( const stage of this.materialCache.get( material ) ?? [] ) {
++
++			if ( retainedStages.has( stage ) ) continue;
++			retainedStages.add( stage );
++			stage.usedTimes ++;
++
++		}
++
++	}
++
++	release( retainedStages ) {
++
++		for ( const stage of retainedStages ) {
++
++			if ( -- stage.usedTimes === 0 ) this.shaderCache.delete( stage.code );
++
++		}
++		retainedStages.clear();
++
++	}
++
+ 	getVertexShaderStage( material ) {
+ 
+ 		return this._getShaderStage( material.vertexShader );
+@@ -7318,6 +7341,7 @@
+ 
+ 	const _programLayers = new Layers();
+ 	const _customShaders = new WebGLShaderCache();
++	const retentions = new Set();
+ 	const _activeChannels = new Set();
+ 	const programs = [];
+ 	const programsMap = new Map();
+@@ -7972,8 +7996,55 @@
+ 
+ 	}
+ 
++	function createRetention() {
++
++		const retainedPrograms = new Set();
++		const retainedStages = new Set();
++		let disposed = false;
++		const retention = {
++			retain( material, materialPrograms ) {
++
++				if ( disposed ) throw new Error( 'THREE.WebGLRenderer: Program retention has been disposed or invalidated.' );
++				for ( const program of materialPrograms?.values() ?? [] ) {
++
++					if ( retainedPrograms.has( program ) ) continue;
++					retainedPrograms.add( program );
++					program.usedTimes ++;
++
++				}
++				_customShaders.retain( material, retainedStages );
++
++			},
++			dispose( contextLost = false ) {
++
++				if ( disposed ) return;
++				disposed = true;
++				for ( const program of retainedPrograms ) {
++
++					if ( contextLost ) program.usedTimes --;
++					else releaseProgram( program );
++
++				}
++				retainedPrograms.clear();
++				_customShaders.release( retainedStages );
++				retentions.delete( retention );
++
++			}
++		};
++		retentions.add( retention );
++		return retention;
++
++	}
++
++	function releaseRetentions( contextLost = false ) {
++
++		for ( const retention of retentions ) retention.dispose( contextLost );
++
++	}
++
+ 	function dispose() {
+ 
++		releaseRetentions();
+ 		_customShaders.dispose();
+ 
+ 	}
+@@ -7985,6 +8056,8 @@
+ 		acquireProgram: acquireProgram,
+ 		releaseProgram: releaseProgram,
+ 		releaseShaderCache: releaseShaderCache,
++		createRetention: createRetention,
++		releaseRetentions: releaseRetentions,
+ 		// Exposed for resource monitoring & error feedback via renderer.info:
+ 		programs: programs,
+ 		dispose: dispose
+@@ -10906,8 +10979,8 @@
+ 
+ 		gl.lineWidth( 1 );
+ 
+-		gl.scissor( 0, 0, gl.canvas.width, gl.canvas.height );
+-		gl.viewport( 0, 0, gl.canvas.width, gl.canvas.height );
++		gl.scissor( 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight );
++		gl.viewport( 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight );
+ 
+ 		gl.pixelStorei( gl.PACK_ALIGNMENT, 4 );
+ 		gl.pixelStorei( gl.UNPACK_ALIGNMENT, 4 );
+@@ -10957,8 +11030,8 @@
+ 		currentPolygonOffsetFactor = null;
+ 		currentPolygonOffsetUnits = null;
+ 
+-		currentScissor.set( 0, 0, gl.canvas.width, gl.canvas.height );
+-		currentViewport.set( 0, 0, gl.canvas.width, gl.canvas.height );
++		currentScissor.set( 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight );
++		currentViewport.set( 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight );
+ 
+ 		colorBuffer.reset();
+ 		depthBuffer.reset();
+@@ -16121,6 +16194,12 @@
+ 			outputBufferType = UnsignedByteType,
+ 		} = parameters;
+ 
++		if ( canvas === null && context === null ) {
++
++			throw new Error( 'THREE.WebGLRenderer: canvas: null requires an external WebGL2 context.' );
++
++		}
++
+ 		/**
+ 		 * This flag can be used for type testing.
+ 		 *
+@@ -16191,7 +16270,7 @@
+ 		 * document.body.appendChild( renderer.domElement );
+ 		 * ```
+ 		 *
+-		 * @type {HTMLCanvasElement|OffscreenCanvas}
++		 * @type {HTMLCanvasElement|OffscreenCanvas|null}
+ 		 */
+ 		this.domElement = canvas;
+ 
+@@ -16364,8 +16443,8 @@
+ 
+ 		//
+ 
+-		let _width = canvas.width;
+-		let _height = canvas.height;
++		let _width = canvas === null ? context.drawingBufferWidth : canvas.width;
++		let _height = canvas === null ? context.drawingBufferHeight : canvas.height;
+ 
+ 		let _pixelRatio = 1;
+ 		let _opaqueSort = null;
+@@ -16434,12 +16513,12 @@
+ 			};
+ 
+ 			// OffscreenCanvas does not have setAttribute, see #22811
+-			if ( 'setAttribute' in canvas ) canvas.setAttribute( 'data-engine', `three.js r${REVISION}` );
++			if ( canvas !== null && 'setAttribute' in canvas ) canvas.setAttribute( 'data-engine', `three.js r${REVISION}` );
+ 
+ 			// event listeners must be registered before WebGL context is created, see #12753
+-			canvas.addEventListener( 'webglcontextlost', onContextLost, false );
+-			canvas.addEventListener( 'webglcontextrestored', onContextRestore, false );
+-			canvas.addEventListener( 'webglcontextcreationerror', onContextCreationError, false );
++			canvas?.addEventListener( 'webglcontextlost', onContextLost, false );
++			canvas?.addEventListener( 'webglcontextrestored', onContextRestore, false );
++			canvas?.addEventListener( 'webglcontextcreationerror', onContextCreationError, false );
+ 
+ 			if ( _gl === null ) {
+ 
+@@ -16467,9 +16546,9 @@
+ 
+ 		} catch ( e ) {
+ 
+-			canvas.removeEventListener( 'webglcontextlost', onContextLost, false );
+-			canvas.removeEventListener( 'webglcontextrestored', onContextRestore, false );
+-			canvas.removeEventListener( 'webglcontextcreationerror', onContextCreationError, false );
++			canvas?.removeEventListener( 'webglcontextlost', onContextLost, false );
++			canvas?.removeEventListener( 'webglcontextrestored', onContextRestore, false );
++			canvas?.removeEventListener( 'webglcontextcreationerror', onContextCreationError, false );
+ 
+ 			error( 'WebGLRenderer: ' + e.message );
+ 			throw e;
+@@ -16601,7 +16680,7 @@
+ 
+ 		if ( _outputBufferType !== UnsignedByteType ) {
+ 
+-			output = new WebGLOutput( _outputBufferType, canvas.width, canvas.height, antialias, depth, stencil );
++			output = new WebGLOutput( _outputBufferType, _width, _height, antialias, depth, stencil );
+ 
+ 		}
+ 
+@@ -16717,10 +16796,14 @@
+ 			_width = width;
+ 			_height = height;
+ 
+-			canvas.width = Math.floor( width * _pixelRatio );
+-			canvas.height = Math.floor( height * _pixelRatio );
+-
+-			if ( updateStyle === true ) {
++			if ( canvas !== null ) {
++
++				canvas.width = Math.floor( width * _pixelRatio );
++				canvas.height = Math.floor( height * _pixelRatio );
++
++			}
++
++			if ( canvas !== null && updateStyle === true ) {
+ 
+ 				canvas.style.width = width + 'px';
+ 				canvas.style.height = height + 'px';
+@@ -16729,7 +16812,7 @@
+ 
+ 			if ( output !== null ) {
+ 
+-				output.setSize( canvas.width, canvas.height );
++				output.setSize( Math.floor( width * _pixelRatio ), Math.floor( height * _pixelRatio ) );
+ 
+ 			}
+ 
+@@ -16769,8 +16852,12 @@
+ 
+ 			_pixelRatio = pixelRatio;
+ 
+-			canvas.width = Math.floor( width * pixelRatio );
+-			canvas.height = Math.floor( height * pixelRatio );
++			if ( canvas !== null ) {
++
++				canvas.width = Math.floor( width * pixelRatio );
++				canvas.height = Math.floor( height * pixelRatio );
++
++			}
+ 
+ 			this.setViewport( 0, 0, width, height );
+ 
+@@ -17122,9 +17209,9 @@
+ 		 */
+ 		this.dispose = function () {
+ 
+-			canvas.removeEventListener( 'webglcontextlost', onContextLost, false );
+-			canvas.removeEventListener( 'webglcontextrestored', onContextRestore, false );
+-			canvas.removeEventListener( 'webglcontextcreationerror', onContextCreationError, false );
++			canvas?.removeEventListener( 'webglcontextlost', onContextLost, false );
++			canvas?.removeEventListener( 'webglcontextrestored', onContextRestore, false );
++			canvas?.removeEventListener( 'webglcontextcreationerror', onContextCreationError, false );
+ 
+ 			background.dispose();
+ 			renderLists.dispose();
+@@ -17145,15 +17232,65 @@
+ 
+ 		};
+ 
++		/**
++		 * Retains compiled program variants, including custom shader cache IDs, until disposal.
++		 * Call retain(material) after rendering/compiling. Repeated retains are deduplicated.
++		 * The handle is invalidated by context loss or renderer disposal; create a new one after restore.
++		 * @return {{retain: function(Material): void, dispose: function(): void}}
++		 */
++		this.createProgramRetention = function () {
++
++			const cache = programCache;
++			const materialProperties = properties;
++			const retention = cache.createRetention();
++			return {
++				retain: material => retention.retain( material, materialProperties.get( material ).programs ),
++				dispose: () => retention.dispose()
++			};
++
++		};
++
++		/** Marks an externally owned context lost without synthesizing a DOM event. */
++		this.notifyContextLost = function () {
++
++			if ( canvas !== null ) throw new Error( 'THREE.WebGLRenderer: Canvas context loss is driven by canvas events.' );
++			loseContext();
++
++		};
++
++		/**
++		 * Rebuilds managers after the same external context has actually been restored.
++		 * The host must release resident uploads before restore, as with browser context loss.
++		 * Replacement contexts require a new renderer: XR and resource listeners capture their context.
++		 * @param {WebGL2RenderingContext} restoredContext - The restored original context.
++		 */
++		this.restoreContext = function ( restoredContext ) {
++
++			if ( canvas !== null ) throw new Error( 'THREE.WebGLRenderer: Canvas context restore is driven by canvas events.' );
++			if ( restoredContext !== _gl ) throw new Error( 'THREE.WebGLRenderer: A replacement context requires a new renderer.' );
++			if ( ! _isContextLost ) throw new Error( 'THREE.WebGLRenderer: The external context was not marked lost.' );
++			if ( _gl.isContextLost() ) throw new Error( 'THREE.WebGLRenderer: The external context is still lost.' );
++			onContextRestore();
++
++		};
++
+ 		// Events
+ 
++		function loseContext() {
++
++			if ( _isContextLost ) return;
++			_isContextLost = true;
++			programCache.releaseRetentions( true );
++
++		}
++
+ 		function onContextLost( event ) {
+ 
+ 			event.preventDefault();
+ 
+ 			log( 'WebGLRenderer: Context Lost.' );
+ 
+-			_isContextLost = true;
++			loseContext();
+ 
+ 		}
+ 
+diff --git a/src/renderers/WebGLRenderer.js b/src/renderers/WebGLRenderer.js
+--- a/src/renderers/WebGLRenderer.js
++++ b/src/renderers/WebGLRenderer.js
+@@ -84,6 +84,12 @@
+ 			outputBufferType = UnsignedByteType,
+ 		} = parameters;
+ 
++		if ( canvas === null && context === null ) {
++
++			throw new Error( 'THREE.WebGLRenderer: canvas: null requires an external WebGL2 context.' );
++
++		}
++
+ 		/**
+ 		 * This flag can be used for type testing.
+ 		 *
+@@ -154,7 +160,7 @@
+ 		 * document.body.appendChild( renderer.domElement );
+ 		 * ```
+ 		 *
+-		 * @type {HTMLCanvasElement|OffscreenCanvas}
++		 * @type {HTMLCanvasElement|OffscreenCanvas|null}
+ 		 */
+ 		this.domElement = canvas;
+ 
+@@ -327,8 +333,8 @@
+ 
+ 		//
+ 
+-		let _width = canvas.width;
+-		let _height = canvas.height;
++		let _width = canvas === null ? context.drawingBufferWidth : canvas.width;
++		let _height = canvas === null ? context.drawingBufferHeight : canvas.height;
+ 
+ 		let _pixelRatio = 1;
+ 		let _opaqueSort = null;
+@@ -397,12 +403,12 @@
+ 			};
+ 
+ 			// OffscreenCanvas does not have setAttribute, see #22811
+-			if ( 'setAttribute' in canvas ) canvas.setAttribute( 'data-engine', `three.js r${REVISION}` );
++			if ( canvas !== null && 'setAttribute' in canvas ) canvas.setAttribute( 'data-engine', `three.js r${REVISION}` );
+ 
+ 			// event listeners must be registered before WebGL context is created, see #12753
+-			canvas.addEventListener( 'webglcontextlost', onContextLost, false );
+-			canvas.addEventListener( 'webglcontextrestored', onContextRestore, false );
+-			canvas.addEventListener( 'webglcontextcreationerror', onContextCreationError, false );
++			canvas?.addEventListener( 'webglcontextlost', onContextLost, false );
++			canvas?.addEventListener( 'webglcontextrestored', onContextRestore, false );
++			canvas?.addEventListener( 'webglcontextcreationerror', onContextCreationError, false );
+ 
+ 			if ( _gl === null ) {
+ 
+@@ -430,9 +436,9 @@
+ 
+ 		} catch ( e ) {
+ 
+-			canvas.removeEventListener( 'webglcontextlost', onContextLost, false );
+-			canvas.removeEventListener( 'webglcontextrestored', onContextRestore, false );
+-			canvas.removeEventListener( 'webglcontextcreationerror', onContextCreationError, false );
++			canvas?.removeEventListener( 'webglcontextlost', onContextLost, false );
++			canvas?.removeEventListener( 'webglcontextrestored', onContextRestore, false );
++			canvas?.removeEventListener( 'webglcontextcreationerror', onContextCreationError, false );
+ 
+ 			error( 'WebGLRenderer: ' + e.message );
+ 			throw e;
+@@ -564,7 +570,7 @@
+ 
+ 		if ( _outputBufferType !== UnsignedByteType ) {
+ 
+-			output = new WebGLOutput( _outputBufferType, canvas.width, canvas.height, antialias, depth, stencil );
++			output = new WebGLOutput( _outputBufferType, _width, _height, antialias, depth, stencil );
+ 
+ 		}
+ 
+@@ -680,10 +686,14 @@
+ 			_width = width;
+ 			_height = height;
+ 
+-			canvas.width = Math.floor( width * _pixelRatio );
+-			canvas.height = Math.floor( height * _pixelRatio );
+-
+-			if ( updateStyle === true ) {
++			if ( canvas !== null ) {
++
++				canvas.width = Math.floor( width * _pixelRatio );
++				canvas.height = Math.floor( height * _pixelRatio );
++
++			}
++
++			if ( canvas !== null && updateStyle === true ) {
+ 
+ 				canvas.style.width = width + 'px';
+ 				canvas.style.height = height + 'px';
+@@ -692,7 +702,7 @@
+ 
+ 			if ( output !== null ) {
+ 
+-				output.setSize( canvas.width, canvas.height );
++				output.setSize( Math.floor( width * _pixelRatio ), Math.floor( height * _pixelRatio ) );
+ 
+ 			}
+ 
+@@ -732,8 +742,12 @@
+ 
+ 			_pixelRatio = pixelRatio;
+ 
+-			canvas.width = Math.floor( width * pixelRatio );
+-			canvas.height = Math.floor( height * pixelRatio );
++			if ( canvas !== null ) {
++
++				canvas.width = Math.floor( width * pixelRatio );
++				canvas.height = Math.floor( height * pixelRatio );
++
++			}
+ 
+ 			this.setViewport( 0, 0, width, height );
+ 
+@@ -1085,9 +1099,9 @@
+ 		 */
+ 		this.dispose = function () {
+ 
+-			canvas.removeEventListener( 'webglcontextlost', onContextLost, false );
+-			canvas.removeEventListener( 'webglcontextrestored', onContextRestore, false );
+-			canvas.removeEventListener( 'webglcontextcreationerror', onContextCreationError, false );
++			canvas?.removeEventListener( 'webglcontextlost', onContextLost, false );
++			canvas?.removeEventListener( 'webglcontextrestored', onContextRestore, false );
++			canvas?.removeEventListener( 'webglcontextcreationerror', onContextCreationError, false );
+ 
+ 			background.dispose();
+ 			renderLists.dispose();
+@@ -1108,15 +1122,65 @@
+ 
+ 		};
+ 
++		/**
++		 * Retains compiled program variants, including custom shader cache IDs, until disposal.
++		 * Call retain(material) after rendering/compiling. Repeated retains are deduplicated.
++		 * The handle is invalidated by context loss or renderer disposal; create a new one after restore.
++		 * @return {{retain: function(Material): void, dispose: function(): void}}
++		 */
++		this.createProgramRetention = function () {
++
++			const cache = programCache;
++			const materialProperties = properties;
++			const retention = cache.createRetention();
++			return {
++				retain: material => retention.retain( material, materialProperties.get( material ).programs ),
++				dispose: () => retention.dispose()
++			};
++
++		};
++
++		/** Marks an externally owned context lost without synthesizing a DOM event. */
++		this.notifyContextLost = function () {
++
++			if ( canvas !== null ) throw new Error( 'THREE.WebGLRenderer: Canvas context loss is driven by canvas events.' );
++			loseContext();
++
++		};
++
++		/**
++		 * Rebuilds managers after the same external context has actually been restored.
++		 * The host must release resident uploads before restore, as with browser context loss.
++		 * Replacement contexts require a new renderer: XR and resource listeners capture their context.
++		 * @param {WebGL2RenderingContext} restoredContext - The restored original context.
++		 */
++		this.restoreContext = function ( restoredContext ) {
++
++			if ( canvas !== null ) throw new Error( 'THREE.WebGLRenderer: Canvas context restore is driven by canvas events.' );
++			if ( restoredContext !== _gl ) throw new Error( 'THREE.WebGLRenderer: A replacement context requires a new renderer.' );
++			if ( ! _isContextLost ) throw new Error( 'THREE.WebGLRenderer: The external context was not marked lost.' );
++			if ( _gl.isContextLost() ) throw new Error( 'THREE.WebGLRenderer: The external context is still lost.' );
++			onContextRestore();
++
++		};
++
+ 		// Events
+ 
++		function loseContext() {
++
++			if ( _isContextLost ) return;
++			_isContextLost = true;
++			programCache.releaseRetentions( true );
++
++		}
++
+ 		function onContextLost( event ) {
+ 
+ 			event.preventDefault();
+ 
+ 			log( 'WebGLRenderer: Context Lost.' );
+ 
+-			_isContextLost = true;
++			loseContext();
+ 
+ 		}
+ 
+@@ -3685,7 +3749,7 @@
+  * WebGLRenderer options.
+  *
+  * @typedef {Object} WebGLRenderer~Options
+- * @property {HTMLCanvasElement|OffscreenCanvas} [canvas=null] - A canvas element where the renderer draws its output. If not passed in here, a new canvas element will be created by the renderer.
++ * @property {HTMLCanvasElement|OffscreenCanvas|null} [canvas] - Omit to create a canvas. Pass null with an external context for host-owned rendering; the host resizes the drawing buffer and drives frames.
+  * @property {WebGL2RenderingContext} [context=null] - Can be used to attach an existing rendering context to this renderer.
+  * @property {('highp'|'mediump'|'lowp')} [precision='highp'] - The default shader precision. Uses `highp` if supported by the device.
+  * @property {boolean} [alpha=false] - Controls the default clear alpha value. When set to`true`, the value is `0`. Otherwise it's `1`.
+diff --git a/src/renderers/webgl/WebGLAnimation.js b/src/renderers/webgl/WebGLAnimation.js
+--- a/src/renderers/webgl/WebGLAnimation.js
++++ b/src/renderers/webgl/WebGLAnimation.js
+@@ -29,7 +29,7 @@
+ 
+ 		stop: function () {
+ 
+-			if ( context !== null ) context.cancelAnimationFrame( requestId );
++			if ( isAnimating === true && context !== null ) context.cancelAnimationFrame( requestId );
+ 
+ 			isAnimating = false;
+ 
+diff --git a/src/renderers/webgl/WebGLPrograms.js b/src/renderers/webgl/WebGLPrograms.js
+--- a/src/renderers/webgl/WebGLPrograms.js
++++ b/src/renderers/webgl/WebGLPrograms.js
+@@ -17,6 +17,7 @@
+ 
+ 	const _programLayers = new Layers();
+ 	const _customShaders = new WebGLShaderCache();
++	const retentions = new Set();
+ 	const _activeChannels = new Set();
+ 	const programs = [];
+ 	const programsMap = new Map();
+@@ -671,8 +672,55 @@
+ 
+ 	}
+ 
++	function createRetention() {
++
++		const retainedPrograms = new Set();
++		const retainedStages = new Set();
++		let disposed = false;
++		const retention = {
++			retain( material, materialPrograms ) {
++
++				if ( disposed ) throw new Error( 'THREE.WebGLRenderer: Program retention has been disposed or invalidated.' );
++				for ( const program of materialPrograms?.values() ?? [] ) {
++
++					if ( retainedPrograms.has( program ) ) continue;
++					retainedPrograms.add( program );
++					program.usedTimes ++;
++
++				}
++				_customShaders.retain( material, retainedStages );
++
++			},
++			dispose( contextLost = false ) {
++
++				if ( disposed ) return;
++				disposed = true;
++				for ( const program of retainedPrograms ) {
++
++					if ( contextLost ) program.usedTimes --;
++					else releaseProgram( program );
++
++				}
++				retainedPrograms.clear();
++				_customShaders.release( retainedStages );
++				retentions.delete( retention );
++
++			}
++		};
++		retentions.add( retention );
++		return retention;
++
++	}
++
++	function releaseRetentions( contextLost = false ) {
++
++		for ( const retention of retentions ) retention.dispose( contextLost );
++
++	}
++
+ 	function dispose() {
+ 
++		releaseRetentions();
+ 		_customShaders.dispose();
+ 
+ 	}
+@@ -684,6 +732,8 @@
+ 		acquireProgram: acquireProgram,
+ 		releaseProgram: releaseProgram,
+ 		releaseShaderCache: releaseShaderCache,
++		createRetention: createRetention,
++		releaseRetentions: releaseRetentions,
+ 		// Exposed for resource monitoring & error feedback via renderer.info:
+ 		programs: programs,
+ 		dispose: dispose
+diff --git a/src/renderers/webgl/WebGLShaderCache.js b/src/renderers/webgl/WebGLShaderCache.js
+--- a/src/renderers/webgl/WebGLShaderCache.js
++++ b/src/renderers/webgl/WebGLShaderCache.js
+@@ -46,6 +46,29 @@
+ 		this.materialCache.delete( material );
+ 
+ 		return this;
++
++	}
++
++	retain( material, retainedStages ) {
++
++		for ( const stage of this.materialCache.get( material ) ?? [] ) {
++
++			if ( retainedStages.has( stage ) ) continue;
++			retainedStages.add( stage );
++			stage.usedTimes ++;
++
++		}
++
++	}
++
++	release( retainedStages ) {
++
++		for ( const stage of retainedStages ) {
++
++			if ( -- stage.usedTimes === 0 ) this.shaderCache.delete( stage.code );
++
++		}
++		retainedStages.clear();
+ 
+ 	}
+ 
+diff --git a/src/renderers/webgl/WebGLState.js b/src/renderers/webgl/WebGLState.js
+--- a/src/renderers/webgl/WebGLState.js
++++ b/src/renderers/webgl/WebGLState.js
+@@ -1251,8 +1251,8 @@
+ 
+ 		gl.lineWidth( 1 );
+ 
+-		gl.scissor( 0, 0, gl.canvas.width, gl.canvas.height );
+-		gl.viewport( 0, 0, gl.canvas.width, gl.canvas.height );
++		gl.scissor( 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight );
++		gl.viewport( 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight );
+ 
+ 		gl.pixelStorei( gl.PACK_ALIGNMENT, 4 );
+ 		gl.pixelStorei( gl.UNPACK_ALIGNMENT, 4 );
+@@ -1302,8 +1302,8 @@
+ 		currentPolygonOffsetFactor = null;
+ 		currentPolygonOffsetUnits = null;
+ 
+-		currentScissor.set( 0, 0, gl.canvas.width, gl.canvas.height );
+-		currentViewport.set( 0, 0, gl.canvas.width, gl.canvas.height );
++		currentScissor.set( 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight );
++		currentViewport.set( 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight );
+ 
+ 		colorBuffer.reset();
+ 		depthBuffer.reset();

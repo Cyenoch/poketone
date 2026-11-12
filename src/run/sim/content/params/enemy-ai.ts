@@ -1,0 +1,61 @@
+import type { EnemyId } from "../enemies";
+
+/** Aim quality × the attack's lead window; early/late scales span the continuous six-map route. */
+export const ENEMY_AIM = {
+  ordinary: 0.35,
+  guardian: 0.85,
+  early: 0.28,
+  late: 1,
+  maxSeconds: 1.4,
+  maxDistance: 4.5,
+  species: {
+    oddish: 0.15,
+    bellsprout: 0.2,
+    "nidoran-m": 0.25,
+    "nidoran-f": 0.25,
+    vulpix: 0.35,
+    nidorina: 0.4,
+    magnemite: 0.5,
+    magneton: 0.65,
+    exeggcute: 0.3,
+    exeggutor: 0.6,
+    golduck: 0.85,
+    seadra: 0.95,
+    jolteon: 0.8,
+    jynx: 0.95,
+    ninetales: 0.95,
+    alakazam: 1,
+    starmie: 0.95,
+    dragonite: 0.85,
+    snorlax: 0.25,
+    pinsir: 0.5,
+  } as Partial<Record<EnemyId, number>>,
+} as const;
+
+/** Only these species actively sidestep. Seconds, world units, and ordinary movement speed multiples. */
+export const ENEMY_DODGE = {
+  reactionEarly: 0.32,
+  reactionLate: 0.14,
+  cooldownEarly: 5.5,
+  cooldownLate: 3.2,
+  duration: 0.32,
+  distance: 1.35,
+  speed: 1.7,
+  lookAhead: 0.8,
+  scanTicks: 3,
+  species: {
+    zubat: 0.5,
+    golbat: 0.75,
+    abra: 0.6,
+    kadabra: 0.8,
+    alakazam: 1,
+    meowth: 0.55,
+    persian: 0.85,
+    jolteon: 1,
+    scyther: 0.9,
+    hitmonlee: 0.65,
+    hitmonchan: 0.7,
+    staryu: 0.6,
+    starmie: 0.9,
+  } as Partial<Record<EnemyId, number>>,
+} as const;

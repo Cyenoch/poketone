@@ -1,0 +1,16 @@
+{
+  "assets": ["charmander", "bulbasaur", "squirtle", "pikachu"],
+  "createdAt": "2026-11-07",
+  "generator": "Magpie generate_image, openrouter/google/gemini-nano-banana-2.1",
+  "processing": "ImageMagick: trim to alpha bounds, fit 304x304, center on transparent 320x320, WebP quality 90.",
+  "purpose": "Shared starter portraits in lobby roster, loading medal, stats panel and codex. Existing resource paths retained.",
+  "validation": [
+    "All four exported WebPs are 320x320 RGBA with transparent and opaque pixels and nonzero margin.",
+    "Viewed 40px and 96px light-background and 48px dark-background contact sheets.",
+    "Existing ui-icons test passed: 1 test, 0 failures. This checks item/lab/station file coverage, not these portraits."
+  ],
+  "notValidated": [
+    "Rendered game screens and actual platform installations were not exercised in this batch."
+  ],
+  "rights": "AI-generated artwork depicting Pokémon third-party IP. No rights clearance or official affiliation asserted."
+}

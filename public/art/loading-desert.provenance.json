@@ -1,0 +1,9 @@
+{
+  "asset": "loading-desert.webp",
+  "generator": "Magpie Image, model codex/gpt-image-2 (ash/gpt-image-2.5-sunburst, the forest's model, was unreachable), loading-forest.webp as style reference",
+  "createdAt": "2026-11-07",
+  "sources": "One generation, returned 1672×941 (not checked in)",
+  "prompts": "docs/ART-PROMPTS.md (生成记录 2026-11-07 加载背景 岩石沙漠)",
+  "processing": "Centre crop to 16:9 (1672×940), Lanczos to 1280×720, WebP quality 78",
+  "rights": "Generated for a noncommercial Pokémon fan project. No official artwork used as input."
+}

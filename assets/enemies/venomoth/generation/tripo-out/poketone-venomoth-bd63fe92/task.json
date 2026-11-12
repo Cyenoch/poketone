@@ -1,0 +1,30 @@
+{
+  "task_id": "bd63fe92-485a-4321-8e62-49193f6d294a",
+  "type": "text_to_model",
+  "status": "success",
+  "input": {
+    "pbr": true,
+    "prompt": "Venomoth Pokemon, pale lavender moth with wide lavender wings, darker purple segmented body, three short head antennae, large blue eyes, small legs, hovering pose, clear moth silhouette. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+    "texture": true,
+    "export_uv": true,
+    "face_limit": 1000,
+    "model_version": "v3.1-20260211",
+    "smart_low_poly": true,
+    "geometry_quality": "standard",
+    "texture_alignment": "geometry"
+  },
+  "output_fields": [
+    "model_url",
+    "rendered_image_url",
+    "generated_image_url"
+  ],
+  "credits_consumed": 30,
+  "created_at": "2026-11-05T06:51:53.510346Z",
+  "completed_at": "2026-11-05T06:53:39.350482Z",
+  "files": [
+    "model.glb",
+    "rendered_image.webp",
+    "generated_image.jpeg",
+    "preview.png"
+  ]
+}

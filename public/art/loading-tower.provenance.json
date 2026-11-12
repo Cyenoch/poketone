@@ -1,0 +1,9 @@
+{
+  "asset": "loading-tower.webp",
+  "generator": "Built-in image_gen",
+  "createdAt": "2026-11-08",
+  "sources": "One generated image; source retained at <codex-generated>/call_nCI5kA7bBsBU2CdVIlFfSNPE.png",
+  "prompts": "docs/ART-PROMPTS.md (2026-11-08 后三图载入背景)",
+  "processing": "Centre crop and Lanczos resize to 1280×720, WebP quality 78",
+  "rights": "Generated environment artwork for this noncommercial fan project; no official artwork used as input."
+}

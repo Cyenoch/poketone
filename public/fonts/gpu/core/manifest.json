@@ -1,0 +1,71 @@
+{
+  "base": "401640cfb9d6cfc6",
+  "tools": {
+    "msdf-atlas-gen": "MSDF-Atlas-Gen v1.4.0\n  with MSDFgen v1.13.0",
+    "fonttools": "4.68.0",
+    "pillow": "13.0.0",
+    "brotli": "1.2.1",
+    "libwebp": "1.6.0"
+  },
+  "ui-500": {
+    "json": "ui-500.63ba060879f0bc64.json",
+    "sha256": "63ba060879f0bc647b47f78d276c68127ab5935768fcdb4d2112e33bfea3b5b4",
+    "weight": 500,
+    "glyphs": 1168,
+    "pages": 2,
+    "unavailable": "−",
+    "chromePages": 1,
+    "source": "public/fonts/noto-sans-sc-game.woff2",
+    "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
+    "jsonBytes": 47937,
+    "pageBytes": [
+      1373754,
+      1174332
+    ]
+  },
+  "ui-700": {
+    "json": "ui-700.6ead14e7beb2f258.json",
+    "sha256": "6ead14e7beb2f25808f3f4903ec6abfe45be988b332813fa76e476057d6629fb",
+    "weight": 700,
+    "glyphs": 1168,
+    "pages": 2,
+    "unavailable": "−",
+    "chromePages": 1,
+    "source": "public/fonts/noto-sans-sc-game.woff2",
+    "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
+    "jsonBytes": 48001,
+    "pageBytes": [
+      1382532,
+      1181536
+    ]
+  },
+  "ui-800": {
+    "json": "ui-800.c9b710c6c9b6d188.json",
+    "sha256": "c9b710c6c9b6d188ec10627df091279d21cb616493c628140f08451ef52cc721",
+    "weight": 800,
+    "glyphs": 1168,
+    "pages": 2,
+    "unavailable": "−",
+    "chromePages": 1,
+    "source": "public/fonts/noto-sans-sc-game.woff2",
+    "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
+    "jsonBytes": 48022,
+    "pageBytes": [
+      1380156,
+      1178970
+    ]
+  },
+  "display": {
+    "json": "display.39e22dc8e86cb900.json",
+    "sha256": "39e22dc8e86cb9001bea32b0f6018791f106d4396c82a36a0e52ad1c977b2718",
+    "weight": 400,
+    "glyphs": 7,
+    "pages": 1,
+    "source": "public/fonts/poketone-display.woff2",
+    "sourceSha256": "ff6de9e1222aa7b1e7796dfcfb8e2e2eecd9bb67eef4c537b261659e377c7ee8",
+    "jsonBytes": 498,
+    "pageBytes": [
+      6246
+    ]
+  }
+}

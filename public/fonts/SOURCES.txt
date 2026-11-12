@@ -1,0 +1,58 @@
+Poketone UI
+
+Source: https://github.com/google/fonts/tree/main/ofl/notosanssc
+Upstream file: NotoSansSC[wght].ttf
+License: SIL Open Font License 1.1, see NOTO-OFL.txt.
+Fetched: 2026-10-31
+Changes: fonttools 4.68.0; subset to GB2312, Latin U+0020–024F,
+punctuation U+2000–206F, CJK punctuation U+3000–303F,
+and full-width forms U+FF00–FFEF present in source; WOFF2 compression;
+weight axis narrowed to 400–800. Retains 7,851 mappings.
+Vertical metrics re-centred (ascent 1095 / descent 353, same 1.448 em line box) by
+scripts/fonts/centre-metrics.py so labels sit centred in their boxes; rerun it after any re-subset.
+Noto Sans SC font family is aliased to Poketone UI by CSS only.
+Glyph shapes unchanged. Real variable weights, no synthesized bold.
+
+Poketone Display
+
+Source: https://github.com/Warren2060/ChillRound
+Author: © 2023 ChillType
+License: SIL Open Font License 1.1, see OFL.txt.
+Derives from ChillRoundF v3.0.ttf, Latin U+0020–024F for the wordmark only.
+Changes: fonttools 4.68.0 subset and WOFF2; family/full/PostScript names
+changed to Poketone Display to respect Reserved Font Names.
+Glyph shapes unchanged, static 400 weight.
+
+The legacy DOM UI uses system fonts for characters outside these subsets.
+
+GPU MSDF atlases (public/fonts/gpu)
+
+Derived offline from the WOFF2 files above (and pinned upstream for the base set) by
+scripts/fonts/build-core.py and build-base.py.
+Poketone UI uses real instantiated 500, 700 and 800 weights; Poketone Display uses 400.
+Atlas glyphs are rendered at 48 px/em with a 4 px MSDF distance range, stored as lossless WebP.
+Each font's metrics json preserves source advances and the source baseline (no kerning: the
+source has GPOS only); its yoffset includes half the atlas leading to account for UIKit's font
+normalization. Each set's manifest.json records source SHA-256s, toolchain, glyph and page counts,
+file digests and byte sizes.
+The source fonts' respective SIL OFL licenses apply to these derived resources.
+
+Paged sets (docs/fonts-paging-design.md). The GPU renderer has no system-font fallback.
+- public/fonts/gpu/core/ (committed, scripts/fonts/build-core.py): the game's own text, from
+  project source plus ASCII and UI punctuation, from the WOFF2 above. Page 0 is chrome.
+- public/fonts/gpu/base/<key>/ (generated, not committed, scripts/fonts/build-base.py): the name
+  charset, from upstream NotoSansSC[wght].ttf pinned to google/fonts commit
+  2894aab31764f10f29c421bdfd2340d3b382d384 (SHA-256 a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da),
+  narrowed to wght 400-800 and given the same 1095 / 353 vertical metrics, which reproduces the
+  WOFF2's outlines, advances and line metrics exactly. 512x512 pages.
+- Toolchain pinned and recorded in each manifest: msdf-atlas-gen 1.4.0 on MSDFgen 1.13.0 (no Skia),
+  fonttools 4.68.0, Pillow 13.0.0 (lossless WebP), Brotli 1.2.1.
+
+Name charset (provisional: the lead's choice, pending user confirmation): CJK Unified Ideographs
+U+4E00-9FFF, the CJK Compatibility Ideographs the source has, hiragana and katakana, half/full-width
+forms, ASCII + Latin-1, general and CJK punctuation, and the source's letterlike, number-form,
+arrow, math, enclosed alphanumeric, box-drawing, geometric, miscellaneous-symbol, dingbat and
+enclosed/compatibility CJK symbols: 22,880 code points per weight. Outside it, and rejected at the
+input boundary rather than drawn: Latin Extended-A (deferred), CJK Extension A and later, emoji.
+Disclosed limitation (provisional): one Simplified Chinese source, so Han characters shared with
+Japanese and Traditional Chinese draw in Simplified Chinese regional forms.

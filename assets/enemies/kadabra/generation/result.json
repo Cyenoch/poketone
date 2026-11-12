@@ -1,0 +1,14 @@
+{
+  "task_id": "6625aa4f-25a8-4b51-8155-c37707f0b986",
+  "type": "multiview_to_model",
+  "status": "success",
+  "credits_consumed": 40,
+  "output_dir": "assets/enemies/kadabra/generation/tripo-out/tripo-out/kadabra-mv-6625aa4f",
+  "files": [
+    "model.glb",
+    "rendered_image.webp",
+    "preview.png"
+  ],
+  "model_file": "assets/enemies/kadabra/generation/tripo-out/tripo-out/kadabra-mv-6625aa4f/model.glb",
+  "preview": "assets/enemies/kadabra/generation/tripo-out/tripo-out/kadabra-mv-6625aa4f/preview.png"
+}

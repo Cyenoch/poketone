@@ -1,0 +1,11 @@
+{
+  "generator": "assets/props/build-map-props.py",
+  "seed": 4074761254,
+  "source": "Original scripted geometry; no external assets",
+  "triangles": 400,
+  "materials": 1,
+  "vertexColors": true,
+  "units": "metres",
+  "sha256": "c543429c07c35d16e49e511337d7dda89c906c98436fbf13e1bb14ec67f520e1",
+  "tripoCredits": 0
+}

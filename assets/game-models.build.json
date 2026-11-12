@@ -1,0 +1,2005 @@
+{
+  "caterpie": {
+    "name": "caterpie",
+    "source": "enemies/caterpie/retexture/tripo-out/poketone-caterpie-retexture-text-874a7716/model.glb",
+    "output": "public/models/enemies/caterpie.glb",
+    "trianglesBefore": 1608,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 91044
+  },
+  "weedle": {
+    "name": "weedle",
+    "source": "enemies/weedle/generation/model.glb",
+    "output": "public/models/enemies/weedle.glb",
+    "trianglesBefore": 1296,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 71312
+  },
+  "rattata": {
+    "name": "rattata",
+    "source": "enemies/rattata/generation/tripo-out/poketone-rattata-ded65260/model.glb",
+    "output": "public/models/enemies/rattata.glb",
+    "trianglesBefore": 1157,
+    "trianglesAfter": 875,
+    "texture": 512,
+    "clips": [],
+    "bytes": 84072
+  },
+  "pidgey": {
+    "name": "pidgey",
+    "source": "enemies/pidgey/generation/tripo-out/poketone-pidgey-1a32ddf3/model.glb",
+    "output": "public/models/enemies/pidgey.glb",
+    "trianglesBefore": 978,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 78040
+  },
+  "oddish": {
+    "name": "oddish",
+    "source": "enemies/oddish/generation/tripo-out/poketone-oddish-4792b675/model.glb",
+    "output": "public/models/enemies/oddish.glb",
+    "trianglesBefore": 1140,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 69892
+  },
+  "scyther": {
+    "name": "scyther",
+    "source": "enemies/scyther/generation/tripo-out/poketone-scyther-bf8d1c9d/model.glb",
+    "output": "public/models/enemies/scyther.glb",
+    "trianglesBefore": 1903,
+    "trianglesAfter": 1903,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 207216
+  },
+  "tree": {
+    "name": "tree",
+    "source": "props/tree/blender/model.glb",
+    "output": "public/models/props/tree.glb",
+    "trianglesBefore": 524,
+    "trianglesAfter": 524,
+    "texture": 512,
+    "clips": [],
+    "bytes": 14188
+  },
+  "pine": {
+    "name": "pine",
+    "source": "props/pine/generation/tripo-out/poketone-pine-57a0086d/model.glb",
+    "output": "public/models/props/pine.glb",
+    "trianglesBefore": 877,
+    "trianglesAfter": 599,
+    "texture": 512,
+    "clips": [],
+    "bytes": 44544
+  },
+  "rock": {
+    "name": "rock",
+    "source": "props/rock/generation/tripo-out/poketone-rock-b593ee64/model.glb",
+    "output": "public/models/props/rock.glb",
+    "trianglesBefore": 511,
+    "trianglesAfter": 500,
+    "texture": 512,
+    "clips": [],
+    "bytes": 38040
+  },
+  "bush": {
+    "name": "bush",
+    "source": "props/bush/blender/model.glb",
+    "output": "public/models/props/bush.glb",
+    "trianglesBefore": 400,
+    "trianglesAfter": 400,
+    "texture": 512,
+    "clips": [],
+    "bytes": 11084
+  },
+  "bulbasaur": {
+    "name": "bulbasaur",
+    "source": "characters/bulbasaur/blender/model.glb",
+    "output": "public/models/bulbasaur.glb",
+    "trianglesBefore": 2013,
+    "trianglesAfter": 2013,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 299448
+  },
+  "squirtle": {
+    "name": "squirtle",
+    "source": "characters/squirtle/blender/model.glb",
+    "output": "public/models/squirtle.glb",
+    "trianglesBefore": 1948,
+    "trianglesAfter": 1724,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 697172
+  },
+  "pikachu": {
+    "name": "pikachu",
+    "source": "characters/pikachu/blender/model.glb",
+    "output": "public/models/pikachu.glb",
+    "trianglesBefore": 1682,
+    "trianglesAfter": 1682,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 656648
+  },
+  "spearow": {
+    "name": "spearow",
+    "source": "enemies/spearow/generation/tripo-out/poketone-spearow-70e2f150/model.glb",
+    "output": "public/models/enemies/spearow.glb",
+    "trianglesBefore": 1175,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 80348
+  },
+  "zubat": {
+    "name": "zubat",
+    "source": "enemies/zubat/generation/tripo-out/poketone-zubat-38fd9d91/model.glb",
+    "output": "public/models/enemies/zubat.glb",
+    "trianglesBefore": 1332,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 85212
+  },
+  "ekans": {
+    "name": "ekans",
+    "source": "enemies/ekans/generation/tripo-out/poketone-ekans-cac43666/model.glb",
+    "output": "public/models/enemies/ekans.glb",
+    "trianglesBefore": 1192,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 66640
+  },
+  "paras": {
+    "name": "paras",
+    "source": "enemies/paras/generation/tripo-out/poketone-paras-230b60f0/model.glb",
+    "output": "public/models/enemies/paras.glb",
+    "trianglesBefore": 1343,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 83088
+  },
+  "geodude": {
+    "name": "geodude",
+    "source": "enemies/geodude/generation/tripo-out/poketone-geodude-f875fc01/model.glb",
+    "output": "public/models/enemies/geodude.glb",
+    "trianglesBefore": 952,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 60316
+  },
+  "venonat": {
+    "name": "venonat",
+    "source": "enemies/venonat/generation/tripo-out/poketone-venonat-264b34f9/model.glb",
+    "output": "public/models/enemies/venonat.glb",
+    "trianglesBefore": 1285,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 82664
+  },
+  "wartortle": {
+    "name": "wartortle",
+    "source": "characters/wartortle/blender/model.glb",
+    "output": "public/models/wartortle.glb",
+    "trianglesBefore": 2163,
+    "trianglesAfter": 2163,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 773772
+  },
+  "blastoise": {
+    "name": "blastoise",
+    "source": "characters/blastoise/animations/tripo-out/blastoise-anim-mv-cbec6380/model.glb",
+    "output": "public/models/blastoise.glb",
+    "trianglesBefore": 2251,
+    "trianglesAfter": 2251,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 794048
+  },
+  "raichu": {
+    "name": "raichu",
+    "source": "characters/raichu/blender/model.glb",
+    "output": "public/models/raichu.glb",
+    "trianglesBefore": 1602,
+    "trianglesAfter": 1996,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 696544
+  },
+  "charmeleon": {
+    "name": "charmeleon",
+    "source": "characters/charmeleon/animations/tripo-out/charmeleon-anim-mv-457eacc8/model.glb",
+    "output": "public/models/charmeleon.glb",
+    "trianglesBefore": 2164,
+    "trianglesAfter": 2164,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 712308
+  },
+  "ivysaur": {
+    "name": "ivysaur",
+    "source": "characters/ivysaur/blender/model.glb",
+    "output": "public/models/ivysaur.glb",
+    "trianglesBefore": 2016,
+    "trianglesAfter": 2016,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 307696
+  },
+  "venusaur": {
+    "name": "venusaur",
+    "source": "characters/venusaur/blender/model.glb",
+    "output": "public/models/venusaur.glb",
+    "trianglesBefore": 2179,
+    "trianglesAfter": 2179,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 341284
+  },
+  "charizard": {
+    "name": "charizard",
+    "source": "characters/charizard/animations/tripo-out/charizard-anim-mv-40109997/model.glb",
+    "output": "public/models/charizard.glb",
+    "trianglesBefore": 2361,
+    "trianglesAfter": 2361,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 756740
+  },
+  "hypno": {
+    "name": "hypno",
+    "source": "props/hypno/generation/tripo-out/poketone-hypno-ab6aff40/model.glb",
+    "output": "public/models/props/hypno.glb",
+    "trianglesBefore": 1669,
+    "trianglesAfter": 1200,
+    "texture": 512,
+    "clips": [],
+    "bytes": 111260
+  },
+  "bill-machine": {
+    "name": "bill-machine",
+    "source": "props/bill-machine/generation/tripo-out/poketone-bill-machine-226c46da/model.glb",
+    "output": "public/models/props/bill-machine.glb",
+    "trianglesBefore": 2037,
+    "trianglesAfter": 1200,
+    "texture": 512,
+    "clips": [],
+    "bytes": 118204
+  },
+  "metapod": {
+    "name": "metapod",
+    "source": "enemies/metapod/generation/tripo-out/poketone-metapod-847a197d/model.glb",
+    "output": "public/models/enemies/metapod.glb",
+    "trianglesBefore": 1237,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 81328
+  },
+  "kakuna": {
+    "name": "kakuna",
+    "source": "enemies/kakuna/generation/tripo-out/poketone-kakuna-82df3cc8/model.glb",
+    "output": "public/models/enemies/kakuna.glb",
+    "trianglesBefore": 1038,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 51328
+  },
+  "nidoran-f": {
+    "name": "nidoran-f",
+    "source": "enemies/nidoran-f/generation/tripo-out/poketone-nidoran-f-d8698bc4/model.glb",
+    "output": "public/models/enemies/nidoran-f.glb",
+    "trianglesBefore": 1522,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 84172
+  },
+  "nidoran-m": {
+    "name": "nidoran-m",
+    "source": "enemies/nidoran-m/generation/tripo-out/poketone-nidoran-m-0f9cc909/model.glb",
+    "output": "public/models/enemies/nidoran-m.glb",
+    "trianglesBefore": 1313,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 74292
+  },
+  "voltorb": {
+    "name": "voltorb",
+    "source": "enemies/voltorb/generation/tripo-out/poketone-voltorb-14456671/model.glb",
+    "output": "public/models/enemies/voltorb.glb",
+    "trianglesBefore": 1031,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 55304
+  },
+  "vulpix": {
+    "name": "vulpix",
+    "source": "enemies/vulpix/generation/tripo-out/poketone-vulpix-2668f0c5/model.glb",
+    "output": "public/models/enemies/vulpix.glb",
+    "trianglesBefore": 1439,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 77712
+  },
+  "growlithe": {
+    "name": "growlithe",
+    "source": "enemies/growlithe/generation/tripo-out/poketone-growlithe-a2d54e6e/model.glb",
+    "output": "public/models/enemies/growlithe.glb",
+    "trianglesBefore": 1674,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 97216
+  },
+  "butterfree": {
+    "name": "butterfree",
+    "source": "enemies/butterfree/generation/tripo-out/poketone-butterfree-07dba174/model.glb",
+    "output": "public/models/enemies/butterfree.glb",
+    "trianglesBefore": 1768,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 110780
+  },
+  "beedrill": {
+    "name": "beedrill",
+    "source": "enemies/beedrill/generation/tripo-out/poketone-beedrill-35ac11ba/model.glb",
+    "output": "public/models/enemies/beedrill.glb",
+    "trianglesBefore": 1178,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 89992
+  },
+  "raticate": {
+    "name": "raticate",
+    "source": "enemies/raticate/generation/tripo-out/poketone-raticate-4d75c04c/model.glb",
+    "output": "public/models/enemies/raticate.glb",
+    "trianglesBefore": 1406,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 80248
+  },
+  "pidgeotto": {
+    "name": "pidgeotto",
+    "source": "enemies/pidgeotto/generation/tripo-out/poketone-pidgeotto-41fe6c70/model.glb",
+    "output": "public/models/enemies/pidgeotto.glb",
+    "trianglesBefore": 1253,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 87912
+  },
+  "gloom": {
+    "name": "gloom",
+    "source": "enemies/gloom/generation/tripo-out/poketone-gloom-47db2050/model.glb",
+    "output": "public/models/enemies/gloom.glb",
+    "trianglesBefore": 1795,
+    "trianglesAfter": 897,
+    "texture": 512,
+    "clips": [],
+    "bytes": 91768
+  },
+  "arbok": {
+    "name": "arbok",
+    "source": "enemies/arbok/generation/tripo-out/poketone-arbok-0b7e481b/model.glb",
+    "output": "public/models/enemies/arbok.glb",
+    "trianglesBefore": 1417,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 78848
+  },
+  "parasect": {
+    "name": "parasect",
+    "source": "enemies/parasect/generation/tripo-out/poketone-parasect-0e21c7a2/model.glb",
+    "output": "public/models/enemies/parasect.glb",
+    "trianglesBefore": 1429,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 77096
+  },
+  "venomoth": {
+    "name": "venomoth",
+    "source": "enemies/venomoth/generation/tripo-out/poketone-venomoth-bd63fe92/model.glb",
+    "output": "public/models/enemies/venomoth.glb",
+    "trianglesBefore": 1378,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 74632
+  },
+  "fearow": {
+    "name": "fearow",
+    "source": "enemies/fearow/generation/tripo-out/poketone-fearow-addc0889/model.glb",
+    "output": "public/models/enemies/fearow.glb",
+    "trianglesBefore": 1339,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 82928
+  },
+  "vileplume": {
+    "name": "vileplume",
+    "source": "enemies/vileplume/generation/tripo-out/poketone-vileplume-b64a8c9e/model.glb",
+    "output": "public/models/enemies/vileplume.glb",
+    "trianglesBefore": 1334,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 78732
+  },
+  "graveler": {
+    "name": "graveler",
+    "source": "enemies/graveler/generation/tripo-out/poketone-graveler-2e63e5f0/model.glb",
+    "output": "public/models/enemies/graveler.glb",
+    "trianglesBefore": 1876,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 83524
+  },
+  "electrode": {
+    "name": "electrode",
+    "source": "enemies/electrode/generation/tripo-out/poketone-electrode-9d31dabc/model.glb",
+    "output": "public/models/enemies/electrode.glb",
+    "trianglesBefore": 1256,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 67168
+  },
+  "golem": {
+    "name": "golem",
+    "source": "enemies/golem/generation/tripo-out/poketone-golem-bfdd4123/model.glb",
+    "output": "public/models/enemies/golem.glb",
+    "trianglesBefore": 1796,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 91756
+  },
+  "charmander": {
+    "name": "charmander",
+    "source": "characters/charmander/blender/model.glb",
+    "output": "public/models/charmander.glb",
+    "trianglesBefore": 1846,
+    "trianglesAfter": 1846,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 685196
+  },
+  "nidorina": {
+    "name": "nidorina",
+    "source": "enemies/nidorina/generation/tripo-out/tripo-out/poketone-nidorina-mv-8f205d69/model.glb",
+    "output": "public/models/enemies/nidorina.glb",
+    "trianglesBefore": 1821,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 89728
+  },
+  "poliwag": {
+    "name": "poliwag",
+    "source": "enemies/poliwag/generation/tripo-out/tripo-out/poketone-poliwag-mv-1983f638/model.glb",
+    "output": "public/models/enemies/poliwag.glb",
+    "trianglesBefore": 1540,
+    "trianglesAfter": 898,
+    "texture": 512,
+    "clips": [],
+    "bytes": 78404
+  },
+  "diglett": {
+    "name": "diglett",
+    "source": "enemies/diglett/generation/tripo-out/tripo-out/poketone-diglett-mv-b8217130/model.glb",
+    "output": "public/models/enemies/diglett.glb",
+    "trianglesBefore": 2240,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 80724
+  },
+  "mankey": {
+    "name": "mankey",
+    "source": "enemies/mankey/generation/tripo-out/tripo-out/poketone-mankey-mv-70343010/model.glb",
+    "output": "public/models/enemies/mankey.glb",
+    "trianglesBefore": 1787,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 97800
+  },
+  "sandshrew": {
+    "name": "sandshrew",
+    "source": "enemies/sandshrew/generation/tripo-out/tripo-out/poketone-sandshrew-mv-ce766ba7/model.glb",
+    "output": "public/models/enemies/sandshrew.glb",
+    "trianglesBefore": 1817,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 116500
+  },
+  "psyduck": {
+    "name": "psyduck",
+    "source": "enemies/psyduck/generation/tripo-out/tripo-out/poketone-psyduck-mv-d959da98/model.glb",
+    "output": "public/models/enemies/psyduck.glb",
+    "trianglesBefore": 1572,
+    "trianglesAfter": 898,
+    "texture": 512,
+    "clips": [],
+    "bytes": 78028
+  },
+  "nidorino": {
+    "name": "nidorino",
+    "source": "enemies/nidorino/generation/tripo-out/tripo-out/poketone-nidorino-mv-6c2fd5f4/model.glb",
+    "output": "public/models/enemies/nidorino.glb",
+    "trianglesBefore": 1968,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 90608
+  },
+  "magnemite": {
+    "name": "magnemite",
+    "source": "enemies/magnemite/generation/tripo-out/tripo-out/poketone-magnemite-mv-a9eb6da3/model.glb",
+    "output": "public/models/enemies/magnemite.glb",
+    "trianglesBefore": 1524,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 91856
+  },
+  "poliwhirl": {
+    "name": "poliwhirl",
+    "source": "enemies/poliwhirl/generation/tripo-out/tripo-out/poketone-poliwhirl-mv-9e383ddf/model.glb",
+    "output": "public/models/enemies/poliwhirl.glb",
+    "trianglesBefore": 1597,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 93400
+  },
+  "exeggcute": {
+    "name": "exeggcute",
+    "source": "enemies/exeggcute/generation/tripo-out/tripo-out/poketone-exeggcute-mv-7a070dc0/model.glb",
+    "output": "public/models/enemies/exeggcute.glb",
+    "trianglesBefore": 1785,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 85692
+  },
+  "primeape": {
+    "name": "primeape",
+    "source": "enemies/primeape/generation/tripo-out/tripo-out/primeape-mv2-c26b4973/model.glb",
+    "output": "public/models/enemies/primeape.glb",
+    "trianglesBefore": 2107,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 120436
+  },
+  "pinsir": {
+    "name": "pinsir",
+    "source": "enemies/pinsir/generation/tripo-out/tripo-out/pinsir-mv-52141421/model.glb",
+    "output": "public/models/enemies/pinsir.glb",
+    "trianglesBefore": 3172,
+    "trianglesAfter": 3172,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 294720
+  },
+  "gastly": {
+    "name": "gastly",
+    "source": "enemies/gastly/generation/tripo-out/tripo-out/gastly-mv-8146571c/model.glb",
+    "output": "public/models/enemies/gastly.glb",
+    "trianglesBefore": 1699,
+    "trianglesAfter": 898,
+    "texture": 512,
+    "clips": [],
+    "bytes": 74084
+  },
+  "koffing": {
+    "name": "koffing",
+    "source": "enemies/koffing/generation/tripo-out/tripo-out/koffing-mv-59f1757f/model.glb",
+    "output": "public/models/enemies/koffing.glb",
+    "trianglesBefore": 1830,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 76748
+  },
+  "clefairy": {
+    "name": "clefairy",
+    "source": "enemies/clefairy/generation/tripo-out/tripo-out/clefairy-mv-8e11f0c2/model.glb",
+    "output": "public/models/enemies/clefairy.glb",
+    "trianglesBefore": 2154,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 91260
+  },
+  "tangela": {
+    "name": "tangela",
+    "source": "enemies/tangela/generation/tripo-out/tripo-out/tangela-mv-2acec34d/model.glb",
+    "output": "public/models/enemies/tangela.glb",
+    "trianglesBefore": 2630,
+    "trianglesAfter": 1287,
+    "texture": 512,
+    "clips": [],
+    "bytes": 136360
+  },
+  "haunter": {
+    "name": "haunter",
+    "source": "enemies/haunter/generation/tripo-out/tripo-out/haunter-mv-22ecdbf8/model.glb",
+    "output": "public/models/enemies/haunter.glb",
+    "trianglesBefore": 1481,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 79536
+  },
+  "weezing": {
+    "name": "weezing",
+    "source": "enemies/weezing/generation/tripo-out/tripo-out/weezing-mv-82a59b02/model.glb",
+    "output": "public/models/enemies/weezing.glb",
+    "trianglesBefore": 2327,
+    "trianglesAfter": 1299,
+    "texture": 512,
+    "clips": [],
+    "bytes": 104000
+  },
+  "exeggutor": {
+    "name": "exeggutor",
+    "source": "enemies/exeggutor/generation/tripo-out/tripo-out/exeggutor-mv-a471ee66/model.glb",
+    "output": "public/models/enemies/exeggutor.glb",
+    "trianglesBefore": 1768,
+    "trianglesAfter": 881,
+    "texture": 512,
+    "clips": [],
+    "bytes": 96748
+  },
+  "nidoking": {
+    "name": "nidoking",
+    "source": "enemies/nidoking/generation/tripo-out/tripo-out/nidoking-mv-f8e29084/model.glb",
+    "output": "public/models/enemies/nidoking.glb",
+    "trianglesBefore": 3112,
+    "trianglesAfter": 3088,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 266456
+  },
+  "krabby": {
+    "name": "krabby",
+    "source": "enemies/krabby/generation/tripo-out/tripo-out/krabby-mv-89e2acdb/model.glb",
+    "output": "public/models/enemies/krabby.glb",
+    "trianglesBefore": 2486,
+    "trianglesAfter": 1300,
+    "texture": 512,
+    "clips": [],
+    "bytes": 130296
+  },
+  "tentacool": {
+    "name": "tentacool",
+    "source": "enemies/tentacool/generation/tripo-out/tripo-out/tentacool-mv-5e7b74c0/model.glb",
+    "output": "public/models/enemies/tentacool.glb",
+    "trianglesBefore": 1463,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 82000
+  },
+  "omanyte": {
+    "name": "omanyte",
+    "source": "enemies/omanyte/generation/tripo-out/tripo-out/omanyte-mv-496ba8c5/model.glb",
+    "output": "public/models/enemies/omanyte.glb",
+    "trianglesBefore": 2447,
+    "trianglesAfter": 1300,
+    "texture": 512,
+    "clips": [],
+    "bytes": 123512
+  },
+  "kabuto": {
+    "name": "kabuto",
+    "source": "enemies/kabuto/generation/tripo-out/tripo-out/kabuto-mv-2685df58/model.glb",
+    "output": "public/models/enemies/kabuto.glb",
+    "trianglesBefore": 1632,
+    "trianglesAfter": 1300,
+    "texture": 512,
+    "clips": [],
+    "bytes": 94108
+  },
+  "seadra": {
+    "name": "seadra",
+    "source": "enemies/seadra/generation/tripo-out/tripo-out/seadra-mv-293f3049/model.glb",
+    "output": "public/models/enemies/seadra.glb",
+    "trianglesBefore": 1676,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 89544
+  },
+  "magneton": {
+    "name": "magneton",
+    "source": "enemies/magneton/generation/tripo-out/tripo-out/magneton-mv-33d6cc29/model.glb",
+    "output": "public/models/enemies/magneton.glb",
+    "trianglesBefore": 2076,
+    "trianglesAfter": 1300,
+    "texture": 512,
+    "clips": [],
+    "bytes": 130332
+  },
+  "golduck": {
+    "name": "golduck",
+    "source": "enemies/golduck/generation/tripo-out/tripo-out/golduck-mv-a05b38bf/model.glb",
+    "output": "public/models/enemies/golduck.glb",
+    "trianglesBefore": 2546,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 107124
+  },
+  "kingler": {
+    "name": "kingler",
+    "source": "enemies/kingler/generation/tripo-out/tripo-out/kingler-mv-7d4a3d35/model.glb",
+    "output": "public/models/enemies/kingler.glb",
+    "trianglesBefore": 3179,
+    "trianglesAfter": 3179,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 310732
+  },
+  "chansey": {
+    "name": "chansey",
+    "source": "enemies/chansey/generation/tripo-out/tripo-out/chansey-mv2-d6b62ab5/model.glb",
+    "output": "public/models/enemies/chansey.glb",
+    "trianglesBefore": 1336,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 71128
+  },
+  "doduo": {
+    "name": "doduo",
+    "source": "enemies/doduo/generation/tripo-out/tripo-out/doduo-mv-5a2075d4/model.glb",
+    "output": "public/models/enemies/doduo.glb",
+    "trianglesBefore": 2583,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 101288
+  },
+  "meowth": {
+    "name": "meowth",
+    "source": "enemies/meowth/generation/tripo-out/tripo-out/meowth-mv-14df2636/model.glb",
+    "output": "public/models/enemies/meowth.glb",
+    "trianglesBefore": 1852,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 105296
+  },
+  "ponyta": {
+    "name": "ponyta",
+    "source": "enemies/ponyta/generation/tripo-out/tripo-out/ponyta-mv-7e542c8c/model.glb",
+    "output": "public/models/enemies/ponyta.glb",
+    "trianglesBefore": 2793,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 118264
+  },
+  "cubone": {
+    "name": "cubone",
+    "source": "enemies/cubone/generation/tripo-out/tripo-out/cubone-mv-e84dfa90/model.glb",
+    "output": "public/models/enemies/cubone.glb",
+    "trianglesBefore": 2238,
+    "trianglesAfter": 1298,
+    "texture": 512,
+    "clips": [],
+    "bytes": 126888
+  },
+  "tauros": {
+    "name": "tauros",
+    "source": "enemies/tauros/generation/tripo-out/tripo-out/tauros-mv-cdf5caa2/model.glb",
+    "output": "public/models/enemies/tauros.glb",
+    "trianglesBefore": 2532,
+    "trianglesAfter": 2568,
+    "texture": 512,
+    "clips": [],
+    "bytes": 193392
+  },
+  "sandslash": {
+    "name": "sandslash",
+    "source": "enemies/sandslash/generation/tripo-out/tripo-out/sandslash-mv-b872ef73/model.glb",
+    "output": "public/models/enemies/sandslash.glb",
+    "trianglesBefore": 2708,
+    "trianglesAfter": 2708,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 292076
+  },
+  "machop": {
+    "name": "machop",
+    "source": "enemies/machop/generation/tripo-out/tripo-out/machop-mv-aa69b9c2/model.glb",
+    "output": "public/models/enemies/machop.glb",
+    "trianglesBefore": 2156,
+    "trianglesAfter": 1299,
+    "texture": 512,
+    "clips": [],
+    "bytes": 107604
+  },
+  "hitmonlee": {
+    "name": "hitmonlee",
+    "source": "enemies/hitmonlee/generation/tripo-out/tripo-out/hitmonlee-mv-fadbb10d/model.glb",
+    "output": "public/models/enemies/hitmonlee.glb",
+    "trianglesBefore": 1800,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 102912
+  },
+  "rhyhorn": {
+    "name": "rhyhorn",
+    "source": "enemies/rhyhorn/generation/tripo-out/tripo-out/rhyhorn-mv-13510452/model.glb",
+    "output": "public/models/enemies/rhyhorn.glb",
+    "trianglesBefore": 2051,
+    "trianglesAfter": 1299,
+    "texture": 512,
+    "clips": [],
+    "bytes": 134564
+  },
+  "lickitung": {
+    "name": "lickitung",
+    "source": "enemies/lickitung/generation/tripo-out/tripo-out/lickitung-mv-b38785ba/model.glb",
+    "output": "public/models/enemies/lickitung.glb",
+    "trianglesBefore": 1910,
+    "trianglesAfter": 1300,
+    "texture": 512,
+    "clips": [],
+    "bytes": 98804
+  },
+  "seaking": {
+    "name": "seaking",
+    "source": "enemies/seaking/generation/tripo-out/tripo-out/seaking-mv-b6f1e569/model.glb",
+    "output": "public/models/enemies/seaking.glb",
+    "trianglesBefore": 1855,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 101324
+  },
+  "poliwrath": {
+    "name": "poliwrath",
+    "source": "enemies/poliwrath/generation/tripo-out/tripo-out/poliwrath-mv-f40494b6/model.glb",
+    "output": "public/models/enemies/poliwrath.glb",
+    "trianglesBefore": 2230,
+    "trianglesAfter": 1300,
+    "texture": 512,
+    "clips": [],
+    "bytes": 109284
+  },
+  "gyarados": {
+    "name": "gyarados",
+    "source": "enemies/gyarados/generation/tripo-out/tripo-out/gyarados-mv-163c0f34/model.glb",
+    "output": "public/models/enemies/gyarados.glb",
+    "trianglesBefore": 3107,
+    "trianglesAfter": 3107,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 352868
+  },
+  "staryu": {
+    "name": "staryu",
+    "source": "enemies/staryu/generation/tripo-out/tripo-out/staryu-mv-07cdbedd/model.glb",
+    "output": "public/models/enemies/staryu.glb",
+    "trianglesBefore": 1187,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 88744
+  },
+  "jolteon": {
+    "name": "jolteon",
+    "source": "enemies/jolteon/generation/tripo-out/tripo-out/jolteon-mv-457267a2/model.glb",
+    "output": "public/models/enemies/jolteon.glb",
+    "trianglesBefore": 1574,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 102784
+  },
+  "electabuzz": {
+    "name": "electabuzz",
+    "source": "enemies/electabuzz/generation/tripo-out/tripo-out/electabuzz-mv-08f9582d/model.glb",
+    "output": "public/models/enemies/electabuzz.glb",
+    "trianglesBefore": 2063,
+    "trianglesAfter": 1299,
+    "texture": 512,
+    "clips": [],
+    "bytes": 134632
+  },
+  "dragonair": {
+    "name": "dragonair",
+    "source": "enemies/dragonair/generation/tripo-out/tripo-out/dragonair-mv-5e1fdb2d/model.glb",
+    "output": "public/models/enemies/dragonair.glb",
+    "trianglesBefore": 1500,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 77648
+  },
+  "starmie": {
+    "name": "starmie",
+    "source": "enemies/starmie/generation/tripo-out/tripo-out/starmie-mv-b963a50d/model.glb",
+    "output": "public/models/enemies/starmie.glb",
+    "trianglesBefore": 2005,
+    "trianglesAfter": 2005,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 262896
+  },
+  "dodrio": {
+    "name": "dodrio",
+    "source": "enemies/dodrio/generation/tripo-out/tripo-out/dodrio-mv-11e681e3/model.glb",
+    "output": "public/models/enemies/dodrio.glb",
+    "trianglesBefore": 3286,
+    "trianglesAfter": 1300,
+    "texture": 512,
+    "clips": [],
+    "bytes": 144204
+  },
+  "onix": {
+    "name": "onix",
+    "source": "enemies/onix/generation/tripo-out/tripo-out/onix-mv-2ae4d7f2/model.glb",
+    "output": "public/models/enemies/onix.glb",
+    "trianglesBefore": 1975,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 84716
+  },
+  "marowak": {
+    "name": "marowak",
+    "source": "enemies/marowak/generation/retexture/tripo-out/tripo-out/marowak-retex-texture-dc285482/model.glb",
+    "output": "public/models/enemies/marowak.glb",
+    "trianglesBefore": 2466,
+    "trianglesAfter": 2466,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 244772
+  },
+  "rapidash": {
+    "name": "rapidash",
+    "source": "enemies/rapidash/generation/tripo-out/tripo-out/rapidash-mv-eaa75120/model.glb",
+    "output": "public/models/enemies/rapidash.glb",
+    "trianglesBefore": 3064,
+    "trianglesAfter": 1299,
+    "texture": 512,
+    "clips": [],
+    "bytes": 139432
+  },
+  "kabutops": {
+    "name": "kabutops",
+    "source": "enemies/kabutops/generation/tripo-out/tripo-out/kabutops-mv-820738c7/model.glb",
+    "output": "public/models/enemies/kabutops.glb",
+    "trianglesBefore": 2316,
+    "trianglesAfter": 1300,
+    "texture": 512,
+    "clips": [],
+    "bytes": 135748
+  },
+  "omastar": {
+    "name": "omastar",
+    "source": "enemies/omastar/generation/tripo-out/tripo-out/omastar-mv-6dd52a7a/model.glb",
+    "output": "public/models/enemies/omastar.glb",
+    "trianglesBefore": 1935,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 97444
+  },
+  "rhydon": {
+    "name": "rhydon",
+    "source": "enemies/rhydon/generation/tripo-out/tripo-out/rhydon-mv-7629f733/model.glb",
+    "output": "public/models/enemies/rhydon.glb",
+    "trianglesBefore": 2479,
+    "trianglesAfter": 1299,
+    "texture": 512,
+    "clips": [],
+    "bytes": 113136
+  },
+  "aerodactyl": {
+    "name": "aerodactyl",
+    "source": "enemies/aerodactyl/generation/tripo-out/tripo-out/aerodactyl-mv3-c127c0de/model.glb",
+    "output": "public/models/enemies/aerodactyl.glb",
+    "trianglesBefore": 2721,
+    "trianglesAfter": 2721,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 202312
+  },
+  "dugtrio": {
+    "name": "dugtrio",
+    "source": "enemies/dugtrio/generation/tripo-out/tripo-out/dugtrio-mv-775639f8/model.glb",
+    "output": "public/models/enemies/dugtrio.glb",
+    "trianglesBefore": 2189,
+    "trianglesAfter": 1299,
+    "texture": 512,
+    "clips": [],
+    "bytes": 92084
+  },
+  "ninetales": {
+    "name": "ninetales",
+    "source": "enemies/ninetales/generation/tripo-out/tripo-out/ninetales-mv-fce9699c/model.glb",
+    "output": "public/models/enemies/ninetales.glb",
+    "trianglesBefore": 2090,
+    "trianglesAfter": 1300,
+    "texture": 512,
+    "clips": [],
+    "bytes": 131464
+  },
+  "hitmonchan": {
+    "name": "hitmonchan",
+    "source": "enemies/hitmonchan/generation/tripo-out/tripo-out/hitmonchan-mv-b01cddf1/model.glb",
+    "output": "public/models/enemies/hitmonchan.glb",
+    "trianglesBefore": 2064,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 107816
+  },
+  "flareon": {
+    "name": "flareon",
+    "source": "enemies/flareon/generation/tripo-out/tripo-out/flareon-mv-715dde09/model.glb",
+    "output": "public/models/enemies/flareon.glb",
+    "trianglesBefore": 1692,
+    "trianglesAfter": 1300,
+    "texture": 512,
+    "clips": [],
+    "bytes": 122476
+  },
+  "magmar": {
+    "name": "magmar",
+    "source": "enemies/magmar/generation/tripo-out/tripo-out/magmar-mv-74f7cd77/model.glb",
+    "output": "public/models/enemies/magmar.glb",
+    "trianglesBefore": 3437,
+    "trianglesAfter": 3437,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 360156
+  },
+  "arcanine": {
+    "name": "arcanine",
+    "source": "enemies/arcanine/generation/tripo-out/tripo-out/arcanine-mv-491493a6/model.glb",
+    "output": "public/models/enemies/arcanine.glb",
+    "trianglesBefore": 2576,
+    "trianglesAfter": 2576,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 303760
+  },
+  "dragonite": {
+    "name": "dragonite",
+    "source": "enemies/dragonite/generation/tripo-out/tripo-out/dragonite-mv-ae39e63d/model.glb",
+    "output": "public/models/enemies/dragonite.glb",
+    "trianglesBefore": 2826,
+    "trianglesAfter": 2826,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 257416
+  },
+  "palm": {
+    "name": "palm",
+    "source": "props/palm/blender/model.glb",
+    "output": "public/models/props/palm.glb",
+    "trianglesBefore": 976,
+    "trianglesAfter": 976,
+    "texture": 512,
+    "clips": [],
+    "bytes": 33536
+  },
+  "seel": {
+    "name": "seel",
+    "source": "enemies/seel/generation/tripo-out/tripo-out/seel-mv-7c631f5d/model.glb",
+    "output": "public/models/enemies/seel.glb",
+    "trianglesBefore": 1694,
+    "trianglesAfter": 1300,
+    "texture": 512,
+    "clips": [],
+    "bytes": 93392
+  },
+  "shellder": {
+    "name": "shellder",
+    "source": "enemies/shellder/generation/tripo-out/tripo-out/shellder-mv-7cff8c69/model.glb",
+    "output": "public/models/enemies/shellder.glb",
+    "trianglesBefore": 1688,
+    "trianglesAfter": 1300,
+    "texture": 512,
+    "clips": [],
+    "bytes": 107672
+  },
+  "slowpoke": {
+    "name": "slowpoke",
+    "source": "enemies/slowpoke/generation/tripo-out/tripo-out/slowpoke-mv-779d5657/model.glb",
+    "output": "public/models/enemies/slowpoke.glb",
+    "trianglesBefore": 1494,
+    "trianglesAfter": 1300,
+    "texture": 512,
+    "clips": [],
+    "bytes": 89544
+  },
+  "vaporeon": {
+    "name": "vaporeon",
+    "source": "enemies/vaporeon/generation/tripo-out/tripo-out/vaporeon-mv-ed68917f/model.glb",
+    "output": "public/models/enemies/vaporeon.glb",
+    "trianglesBefore": 2162,
+    "trianglesAfter": 1300,
+    "texture": 512,
+    "clips": [],
+    "bytes": 135960
+  },
+  "dratini": {
+    "name": "dratini",
+    "source": "enemies/dratini/generation/tripo-out/tripo-out/dratini-mv-5086d979/model.glb",
+    "output": "public/models/enemies/dratini.glb",
+    "trianglesBefore": 1278,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 74800
+  },
+  "snorlax": {
+    "name": "snorlax",
+    "source": "enemies/snorlax/generation/tripo-out/tripo-out/snorlax-mv-0ea44502/model.glb",
+    "output": "public/models/enemies/snorlax.glb",
+    "trianglesBefore": 1534,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 81920
+  },
+  "grimer": {
+    "name": "grimer",
+    "source": "enemies/grimer/generation/tripo-out/tripo-out/grimer-mv-bf7649f1/model.glb",
+    "output": "public/models/enemies/grimer.glb",
+    "trianglesBefore": 1890,
+    "trianglesAfter": 1300,
+    "texture": 512,
+    "clips": [],
+    "bytes": 104444
+  },
+  "jigglypuff": {
+    "name": "jigglypuff",
+    "source": "enemies/jigglypuff/generation/tripo-out/tripo-out/jigglypuff-mv-0504a011/model.glb",
+    "output": "public/models/enemies/jigglypuff.glb",
+    "trianglesBefore": 1502,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 63380
+  },
+  "kadabra": {
+    "name": "kadabra",
+    "source": "enemies/kadabra/generation/tripo-out/tripo-out/kadabra-mv-6625aa4f/model.glb",
+    "output": "public/models/enemies/kadabra.glb",
+    "trianglesBefore": 2367,
+    "trianglesAfter": 2287,
+    "texture": 512,
+    "clips": [],
+    "bytes": 187044
+  },
+  "wigglytuff": {
+    "name": "wigglytuff",
+    "source": "enemies/wigglytuff/generation/tripo-out/tripo-out/wigglytuff-mv-b55568c6/model.glb",
+    "output": "public/models/enemies/wigglytuff.glb",
+    "trianglesBefore": 1392,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 68976
+  },
+  "jynx": {
+    "name": "jynx",
+    "source": "enemies/jynx/generation/face-redraw/tripo-out/tripo-out/jynx-face-redraw-mv-c7ee59a6/model.glb",
+    "output": "public/models/enemies/jynx.glb",
+    "trianglesBefore": 1857,
+    "trianglesAfter": 1300,
+    "texture": 512,
+    "clips": [],
+    "bytes": 123600
+  },
+  "muk": {
+    "name": "muk",
+    "source": "enemies/muk/generation/tripo-out/tripo-out/muk-mv-635985be/model.glb",
+    "output": "public/models/enemies/muk.glb",
+    "trianglesBefore": 2896,
+    "trianglesAfter": 2896,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 211300
+  },
+  "mr-mime": {
+    "name": "mr-mime",
+    "source": "enemies/mr-mime/generation/tripo-out/tripo-out/mr-mime-mv-b969d391/model.glb",
+    "output": "public/models/enemies/mr-mime.glb",
+    "trianglesBefore": 3208,
+    "trianglesAfter": 3208,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 315676
+  },
+  "golbat": {
+    "name": "golbat",
+    "source": "enemies/golbat/generation/tripo-out/tripo-out/golbat-mv-96338bb1/model.glb",
+    "output": "public/models/enemies/golbat.glb",
+    "trianglesBefore": 1928,
+    "trianglesAfter": 1928,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 172944
+  },
+  "alakazam": {
+    "name": "alakazam",
+    "source": "enemies/alakazam/generation/tripo-out/tripo-out/alakazam-mv-f345b383/model.glb",
+    "output": "public/models/enemies/alakazam.glb",
+    "trianglesBefore": 2774,
+    "trianglesAfter": 2774,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 277956
+  },
+  "gengar": {
+    "name": "gengar",
+    "source": "enemies/gengar/generation/tripo-out/tripo-out/gengar-mv-895e4eba/model.glb",
+    "output": "public/models/enemies/gengar.glb",
+    "trianglesBefore": 2324,
+    "trianglesAfter": 2324,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 155124
+  },
+  "dewgong": {
+    "name": "dewgong",
+    "source": "enemies/dewgong/generation/tripo-out/tripo-out/dewgong-mv-10164862/model.glb",
+    "output": "public/models/enemies/dewgong.glb",
+    "trianglesBefore": 2166,
+    "trianglesAfter": 2166,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 166796
+  },
+  "cloyster": {
+    "name": "cloyster",
+    "source": "enemies/cloyster/generation/tripo-out/tripo-out/cloyster-mv-cddd93d7/model.glb",
+    "output": "public/models/enemies/cloyster.glb",
+    "trianglesBefore": 3046,
+    "trianglesAfter": 3046,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 272536
+  },
+  "lapras": {
+    "name": "lapras",
+    "source": "enemies/lapras/generation/tripo-out/tripo-out/lapras-mv-da0706f4/model.glb",
+    "output": "public/models/enemies/lapras.glb",
+    "trianglesBefore": 2642,
+    "trianglesAfter": 2642,
+    "texture": 1024,
+    "clips": [],
+    "bytes": 233352
+  },
+  "forest-rock-1": {
+    "name": "forest-rock-1",
+    "source": "props/forest-rock-1/blender/model.glb",
+    "output": "public/models/props/forest-rock-1.glb",
+    "trianglesBefore": 240,
+    "trianglesAfter": 240,
+    "texture": 256,
+    "clips": [],
+    "bytes": 28492
+  },
+  "forest-rock-2": {
+    "name": "forest-rock-2",
+    "source": "props/forest-rock-2/blender/model.glb",
+    "output": "public/models/props/forest-rock-2.glb",
+    "trianglesBefore": 240,
+    "trianglesAfter": 240,
+    "texture": 256,
+    "clips": [],
+    "bytes": 28496
+  },
+  "forest-rock-3": {
+    "name": "forest-rock-3",
+    "source": "props/forest-rock-3/blender/model.glb",
+    "output": "public/models/props/forest-rock-3.glb",
+    "trianglesBefore": 240,
+    "trianglesAfter": 240,
+    "texture": 256,
+    "clips": [],
+    "bytes": 28496
+  },
+  "forest-landmark": {
+    "name": "forest-landmark",
+    "source": "props/forest-landmark/blender/model.glb",
+    "output": "public/models/props/forest-landmark.glb",
+    "trianglesBefore": 1176,
+    "trianglesAfter": 1176,
+    "texture": 256,
+    "clips": [],
+    "bytes": 132624
+  },
+  "forest-station": {
+    "name": "forest-station",
+    "source": "props/forest-station/blender/model.glb",
+    "output": "public/models/props/forest-station.glb",
+    "trianglesBefore": 72,
+    "trianglesAfter": 72,
+    "texture": 256,
+    "clips": [],
+    "bytes": 5860
+  },
+  "desert-rock-1": {
+    "name": "desert-rock-1",
+    "source": "props/desert-rock-1/blender/model.glb",
+    "output": "public/models/props/desert-rock-1.glb",
+    "trianglesBefore": 160,
+    "trianglesAfter": 160,
+    "texture": 256,
+    "clips": [],
+    "bytes": 19376
+  },
+  "desert-rock-2": {
+    "name": "desert-rock-2",
+    "source": "props/desert-rock-2/blender/model.glb",
+    "output": "public/models/props/desert-rock-2.glb",
+    "trianglesBefore": 84,
+    "trianglesAfter": 84,
+    "texture": 256,
+    "clips": [],
+    "bytes": 6816
+  },
+  "desert-rock-3": {
+    "name": "desert-rock-3",
+    "source": "props/desert-rock-3/blender/model.glb",
+    "output": "public/models/props/desert-rock-3.glb",
+    "trianglesBefore": 100,
+    "trianglesAfter": 100,
+    "texture": 256,
+    "clips": [],
+    "bytes": 8208
+  },
+  "desert-landmark": {
+    "name": "desert-landmark",
+    "source": "props/desert-landmark/blender/model.glb",
+    "output": "public/models/props/desert-landmark.glb",
+    "trianglesBefore": 124,
+    "trianglesAfter": 124,
+    "texture": 256,
+    "clips": [],
+    "bytes": 9660
+  },
+  "desert-station": {
+    "name": "desert-station",
+    "source": "props/desert-station/blender/model.glb",
+    "output": "public/models/props/desert-station.glb",
+    "trianglesBefore": 72,
+    "trianglesAfter": 72,
+    "texture": 256,
+    "clips": [],
+    "bytes": 5860
+  },
+  "coast-rock-1": {
+    "name": "coast-rock-1",
+    "source": "props/coast-rock-1/blender/model.glb",
+    "output": "public/models/props/coast-rock-1.glb",
+    "trianglesBefore": 160,
+    "trianglesAfter": 160,
+    "texture": 256,
+    "clips": [],
+    "bytes": 19372
+  },
+  "coast-rock-2": {
+    "name": "coast-rock-2",
+    "source": "props/coast-rock-2/blender/model.glb",
+    "output": "public/models/props/coast-rock-2.glb",
+    "trianglesBefore": 160,
+    "trianglesAfter": 160,
+    "texture": 256,
+    "clips": [],
+    "bytes": 19372
+  },
+  "coast-rock-3": {
+    "name": "coast-rock-3",
+    "source": "props/coast-rock-3/blender/model.glb",
+    "output": "public/models/props/coast-rock-3.glb",
+    "trianglesBefore": 160,
+    "trianglesAfter": 160,
+    "texture": 256,
+    "clips": [],
+    "bytes": 19372
+  },
+  "coast-landmark": {
+    "name": "coast-landmark",
+    "source": "props/coast-landmark/blender/model.glb",
+    "output": "public/models/props/coast-landmark.glb",
+    "trianglesBefore": 160,
+    "trianglesAfter": 160,
+    "texture": 256,
+    "clips": [],
+    "bytes": 12304
+  },
+  "coast-station": {
+    "name": "coast-station",
+    "source": "props/coast-station/blender/model.glb",
+    "output": "public/models/props/coast-station.glb",
+    "trianglesBefore": 72,
+    "trianglesAfter": 72,
+    "texture": 256,
+    "clips": [],
+    "bytes": 5856
+  },
+  "glacier-rock-1": {
+    "name": "glacier-rock-1",
+    "source": "props/glacier-rock-1/blender/model.glb",
+    "output": "public/models/props/glacier-rock-1.glb",
+    "trianglesBefore": 160,
+    "trianglesAfter": 160,
+    "texture": 256,
+    "clips": [],
+    "bytes": 19380
+  },
+  "glacier-rock-2": {
+    "name": "glacier-rock-2",
+    "source": "props/glacier-rock-2/blender/model.glb",
+    "output": "public/models/props/glacier-rock-2.glb",
+    "trianglesBefore": 160,
+    "trianglesAfter": 160,
+    "texture": 256,
+    "clips": [],
+    "bytes": 19380
+  },
+  "glacier-rock-3": {
+    "name": "glacier-rock-3",
+    "source": "props/glacier-rock-3/blender/model.glb",
+    "output": "public/models/props/glacier-rock-3.glb",
+    "trianglesBefore": 160,
+    "trianglesAfter": 160,
+    "texture": 256,
+    "clips": [],
+    "bytes": 19380
+  },
+  "glacier-landmark": {
+    "name": "glacier-landmark",
+    "source": "props/glacier-landmark/blender/model.glb",
+    "output": "public/models/props/glacier-landmark.glb",
+    "trianglesBefore": 92,
+    "trianglesAfter": 92,
+    "texture": 256,
+    "clips": [],
+    "bytes": 7812
+  },
+  "glacier-station": {
+    "name": "glacier-station",
+    "source": "props/glacier-station/blender/model.glb",
+    "output": "public/models/props/glacier-station.glb",
+    "trianglesBefore": 72,
+    "trianglesAfter": 72,
+    "texture": 256,
+    "clips": [],
+    "bytes": 5864
+  },
+  "volcano-rock-1": {
+    "name": "volcano-rock-1",
+    "source": "props/volcano-rock-1/blender/model.glb",
+    "output": "public/models/props/volcano-rock-1.glb",
+    "trianglesBefore": 60,
+    "trianglesAfter": 60,
+    "texture": 256,
+    "clips": [],
+    "bytes": 5384
+  },
+  "volcano-rock-2": {
+    "name": "volcano-rock-2",
+    "source": "props/volcano-rock-2/blender/model.glb",
+    "output": "public/models/props/volcano-rock-2.glb",
+    "trianglesBefore": 60,
+    "trianglesAfter": 60,
+    "texture": 256,
+    "clips": [],
+    "bytes": 5384
+  },
+  "volcano-rock-3": {
+    "name": "volcano-rock-3",
+    "source": "props/volcano-rock-3/blender/model.glb",
+    "output": "public/models/props/volcano-rock-3.glb",
+    "trianglesBefore": 60,
+    "trianglesAfter": 60,
+    "texture": 256,
+    "clips": [],
+    "bytes": 5384
+  },
+  "volcano-landmark": {
+    "name": "volcano-landmark",
+    "source": "props/volcano-landmark/blender/model.glb",
+    "output": "public/models/props/volcano-landmark.glb",
+    "trianglesBefore": 220,
+    "trianglesAfter": 220,
+    "texture": 256,
+    "clips": [],
+    "bytes": 16288
+  },
+  "volcano-station": {
+    "name": "volcano-station",
+    "source": "props/volcano-station/blender/model.glb",
+    "output": "public/models/props/volcano-station.glb",
+    "trianglesBefore": 72,
+    "trianglesAfter": 72,
+    "texture": 256,
+    "clips": [],
+    "bytes": 5864
+  },
+  "tower-rock-1": {
+    "name": "tower-rock-1",
+    "source": "props/tower-rock-1/blender/model.glb",
+    "output": "public/models/props/tower-rock-1.glb",
+    "trianglesBefore": 160,
+    "trianglesAfter": 160,
+    "texture": 256,
+    "clips": [],
+    "bytes": 19372
+  },
+  "tower-rock-2": {
+    "name": "tower-rock-2",
+    "source": "props/tower-rock-2/blender/model.glb",
+    "output": "public/models/props/tower-rock-2.glb",
+    "trianglesBefore": 160,
+    "trianglesAfter": 160,
+    "texture": 256,
+    "clips": [],
+    "bytes": 19372
+  },
+  "tower-rock-3": {
+    "name": "tower-rock-3",
+    "source": "props/tower-rock-3/blender/model.glb",
+    "output": "public/models/props/tower-rock-3.glb",
+    "trianglesBefore": 160,
+    "trianglesAfter": 160,
+    "texture": 256,
+    "clips": [],
+    "bytes": 19372
+  },
+  "tower-landmark": {
+    "name": "tower-landmark",
+    "source": "props/tower-landmark/blender/model.glb",
+    "output": "public/models/props/tower-landmark.glb",
+    "trianglesBefore": 140,
+    "trianglesAfter": 140,
+    "texture": 256,
+    "clips": [],
+    "bytes": 12776
+  },
+  "tower-station": {
+    "name": "tower-station",
+    "source": "props/tower-station/blender/model.glb",
+    "output": "public/models/props/tower-station.glb",
+    "trianglesBefore": 72,
+    "trianglesAfter": 72,
+    "texture": 256,
+    "clips": [],
+    "bytes": 5856
+  },
+  "forest-mushroom-1": {
+    "name": "forest-mushroom-1",
+    "source": "props/forest-mushroom-1/blender/model.glb",
+    "output": "public/models/props/forest-mushroom-1.glb",
+    "trianglesBefore": 48,
+    "trianglesAfter": 48,
+    "texture": 256,
+    "clips": [],
+    "bytes": 4460
+  },
+  "forest-mushroom-2": {
+    "name": "forest-mushroom-2",
+    "source": "props/forest-mushroom-2/blender/model.glb",
+    "output": "public/models/props/forest-mushroom-2.glb",
+    "trianglesBefore": 48,
+    "trianglesAfter": 48,
+    "texture": 256,
+    "clips": [],
+    "bytes": 4460
+  },
+  "forest-mushroom-3": {
+    "name": "forest-mushroom-3",
+    "source": "props/forest-mushroom-3/blender/model.glb",
+    "output": "public/models/props/forest-mushroom-3.glb",
+    "trianglesBefore": 48,
+    "trianglesAfter": 48,
+    "texture": 256,
+    "clips": [],
+    "bytes": 4460
+  },
+  "forest-leaves": {
+    "name": "forest-leaves",
+    "source": "props/forest-leaves/blender/model.glb",
+    "output": "public/models/props/forest-leaves.glb",
+    "trianglesBefore": 160,
+    "trianglesAfter": 160,
+    "texture": 256,
+    "clips": [],
+    "bytes": 19380
+  },
+  "forest-log": {
+    "name": "forest-log",
+    "source": "props/forest-log/blender/model.glb",
+    "output": "public/models/props/forest-log.glb",
+    "trianglesBefore": 68,
+    "trianglesAfter": 68,
+    "texture": 256,
+    "clips": [],
+    "bytes": 6036
+  },
+  "forest-bush": {
+    "name": "forest-bush",
+    "source": "props/forest-bush/blender/model.glb",
+    "output": "public/models/props/forest-bush.glb",
+    "trianglesBefore": 560,
+    "trianglesAfter": 560,
+    "texture": 256,
+    "clips": [],
+    "bytes": 64980
+  },
+  "desert-dry-bush": {
+    "name": "desert-dry-bush",
+    "source": "props/desert-dry-bush/blender/model.glb",
+    "output": "public/models/props/desert-dry-bush.glb",
+    "trianglesBefore": 280,
+    "trianglesAfter": 280,
+    "texture": 256,
+    "clips": [],
+    "bytes": 21656
+  },
+  "desert-tumbleweed": {
+    "name": "desert-tumbleweed",
+    "source": "props/desert-tumbleweed/blender/model.glb",
+    "output": "public/models/props/desert-tumbleweed.glb",
+    "trianglesBefore": 420,
+    "trianglesAfter": 420,
+    "texture": 256,
+    "clips": [],
+    "bytes": 32004
+  },
+  "coast-driftwood": {
+    "name": "coast-driftwood",
+    "source": "props/coast-driftwood/blender/model.glb",
+    "output": "public/models/props/coast-driftwood.glb",
+    "trianglesBefore": 68,
+    "trianglesAfter": 68,
+    "texture": 256,
+    "clips": [],
+    "bytes": 6048
+  },
+  "desert-cactus": {
+    "name": "desert-cactus",
+    "source": "props/desert-cactus/blender/model.glb",
+    "output": "public/models/props/desert-cactus.glb",
+    "trianglesBefore": 56,
+    "trianglesAfter": 56,
+    "texture": 256,
+    "clips": [],
+    "bytes": 5792
+  },
+  "desert-pebbles": {
+    "name": "desert-pebbles",
+    "source": "props/desert-pebbles/blender/model.glb",
+    "output": "public/models/props/desert-pebbles.glb",
+    "trianglesBefore": 400,
+    "trianglesAfter": 400,
+    "texture": 256,
+    "clips": [],
+    "bytes": 46752
+  },
+  "tower-rubble": {
+    "name": "tower-rubble",
+    "source": "props/tower-rubble/blender/model.glb",
+    "output": "public/models/props/tower-rubble.glb",
+    "trianglesBefore": 400,
+    "trianglesAfter": 400,
+    "texture": 256,
+    "clips": [],
+    "bytes": 46744
+  },
+  "glacier-snowdrift": {
+    "name": "glacier-snowdrift",
+    "source": "props/glacier-snowdrift/blender/model.glb",
+    "output": "public/models/props/glacier-snowdrift.glb",
+    "trianglesBefore": 400,
+    "trianglesAfter": 400,
+    "texture": 256,
+    "clips": [],
+    "bytes": 46764
+  },
+  "desert-ribs": {
+    "name": "desert-ribs",
+    "source": "props/desert-ribs/blender/model.glb",
+    "output": "public/models/props/desert-ribs.glb",
+    "trianglesBefore": 340,
+    "trianglesAfter": 340,
+    "texture": 256,
+    "clips": [],
+    "bytes": 27692
+  },
+  "desert-skull": {
+    "name": "desert-skull",
+    "source": "props/desert-skull/blender/model.glb",
+    "output": "public/models/props/desert-skull.glb",
+    "trianglesBefore": 120,
+    "trianglesAfter": 120,
+    "texture": 256,
+    "clips": [],
+    "bytes": 14816
+  },
+  "coast-shrub-1": {
+    "name": "coast-shrub-1",
+    "source": "props/coast-shrub-1/blender/model.glb",
+    "output": "public/models/props/coast-shrub-1.glb",
+    "trianglesBefore": 800,
+    "trianglesAfter": 800,
+    "texture": 256,
+    "clips": [],
+    "bytes": 92344
+  },
+  "coast-shrub-2": {
+    "name": "coast-shrub-2",
+    "source": "props/coast-shrub-2/blender/model.glb",
+    "output": "public/models/props/coast-shrub-2.glb",
+    "trianglesBefore": 800,
+    "trianglesAfter": 800,
+    "texture": 256,
+    "clips": [],
+    "bytes": 92344
+  },
+  "coast-shell": {
+    "name": "coast-shell",
+    "source": "props/coast-shell/blender/model.glb",
+    "output": "public/models/props/coast-shell.glb",
+    "trianglesBefore": 120,
+    "trianglesAfter": 120,
+    "texture": 256,
+    "clips": [],
+    "bytes": 10492
+  },
+  "coast-seagrass": {
+    "name": "coast-seagrass",
+    "source": "props/coast-seagrass/blender/model.glb",
+    "output": "public/models/props/coast-seagrass.glb",
+    "trianglesBefore": 560,
+    "trianglesAfter": 560,
+    "texture": 256,
+    "clips": [],
+    "bytes": 64988
+  },
+  "glacier-frost-shrub": {
+    "name": "glacier-frost-shrub",
+    "source": "props/glacier-frost-shrub/blender/model.glb",
+    "output": "public/models/props/glacier-frost-shrub.glb",
+    "trianglesBefore": 280,
+    "trianglesAfter": 280,
+    "texture": 256,
+    "clips": [],
+    "bytes": 21556
+  },
+  "glacier-icicles-1": {
+    "name": "glacier-icicles-1",
+    "source": "props/glacier-icicles-1/blender/model.glb",
+    "output": "public/models/props/glacier-icicles-1.glb",
+    "trianglesBefore": 120,
+    "trianglesAfter": 120,
+    "texture": 256,
+    "clips": [],
+    "bytes": 10868
+  },
+  "glacier-icicles-2": {
+    "name": "glacier-icicles-2",
+    "source": "props/glacier-icicles-2/blender/model.glb",
+    "output": "public/models/props/glacier-icicles-2.glb",
+    "trianglesBefore": 144,
+    "trianglesAfter": 144,
+    "texture": 256,
+    "clips": [],
+    "bytes": 12812
+  },
+  "glacier-crystals": {
+    "name": "glacier-crystals",
+    "source": "props/glacier-crystals/blender/model.glb",
+    "output": "public/models/props/glacier-crystals.glb",
+    "trianglesBefore": 96,
+    "trianglesAfter": 96,
+    "texture": 256,
+    "clips": [],
+    "bytes": 8920
+  },
+  "volcano-dead-tree-1": {
+    "name": "volcano-dead-tree-1",
+    "source": "props/volcano-dead-tree-1/blender/model.glb",
+    "output": "public/models/props/volcano-dead-tree-1.glb",
+    "trianglesBefore": 100,
+    "trianglesAfter": 100,
+    "texture": 256,
+    "clips": [],
+    "bytes": 8340
+  },
+  "volcano-dead-tree-2": {
+    "name": "volcano-dead-tree-2",
+    "source": "props/volcano-dead-tree-2/blender/model.glb",
+    "output": "public/models/props/volcano-dead-tree-2.glb",
+    "trianglesBefore": 100,
+    "trianglesAfter": 100,
+    "texture": 256,
+    "clips": [],
+    "bytes": 8340
+  },
+  "volcano-obsidian": {
+    "name": "volcano-obsidian",
+    "source": "props/volcano-obsidian/blender/model.glb",
+    "output": "public/models/props/volcano-obsidian.glb",
+    "trianglesBefore": 96,
+    "trianglesAfter": 96,
+    "texture": 256,
+    "clips": [],
+    "bytes": 8920
+  },
+  "volcano-sulphur": {
+    "name": "volcano-sulphur",
+    "source": "props/volcano-sulphur/blender/model.glb",
+    "output": "public/models/props/volcano-sulphur.glb",
+    "trianglesBefore": 96,
+    "trianglesAfter": 96,
+    "texture": 256,
+    "clips": [],
+    "bytes": 8916
+  },
+  "volcano-vent": {
+    "name": "volcano-vent",
+    "source": "props/volcano-vent/blender/model.glb",
+    "output": "public/models/props/volcano-vent.glb",
+    "trianglesBefore": 56,
+    "trianglesAfter": 56,
+    "texture": 256,
+    "clips": [],
+    "bytes": 4924
+  },
+  "tower-candles": {
+    "name": "tower-candles",
+    "source": "props/tower-candles/blender/model.glb",
+    "output": "public/models/props/tower-candles.glb",
+    "trianglesBefore": 232,
+    "trianglesAfter": 232,
+    "texture": 256,
+    "clips": [],
+    "bytes": 19808
+  },
+  "tower-candles-out": {
+    "name": "tower-candles-out",
+    "source": "props/tower-candles-out/blender/model.glb",
+    "output": "public/models/props/tower-candles-out.glb",
+    "trianglesBefore": 172,
+    "trianglesAfter": 172,
+    "texture": 256,
+    "clips": [],
+    "bytes": 12980
+  },
+  "tower-column": {
+    "name": "tower-column",
+    "source": "props/tower-column/blender/model.glb",
+    "output": "public/models/props/tower-column.glb",
+    "trianglesBefore": 180,
+    "trianglesAfter": 180,
+    "texture": 256,
+    "clips": [],
+    "bytes": 13012
+  },
+  "tower-tomb-1": {
+    "name": "tower-tomb-1",
+    "source": "props/tower-tomb-1/blender/model.glb",
+    "output": "public/models/props/tower-tomb-1.glb",
+    "trianglesBefore": 56,
+    "trianglesAfter": 56,
+    "texture": 256,
+    "clips": [],
+    "bytes": 6220
+  },
+  "tower-tomb-2": {
+    "name": "tower-tomb-2",
+    "source": "props/tower-tomb-2/blender/model.glb",
+    "output": "public/models/props/tower-tomb-2.glb",
+    "trianglesBefore": 48,
+    "trianglesAfter": 48,
+    "texture": 256,
+    "clips": [],
+    "bytes": 4872
+  },
+  "tower-tomb-3": {
+    "name": "tower-tomb-3",
+    "source": "props/tower-tomb-3/blender/model.glb",
+    "output": "public/models/props/tower-tomb-3.glb",
+    "trianglesBefore": 48,
+    "trianglesAfter": 48,
+    "texture": 256,
+    "clips": [],
+    "bytes": 4872
+  },
+  "tower-petals": {
+    "name": "tower-petals",
+    "source": "props/tower-petals/blender/model.glb",
+    "output": "public/models/props/tower-petals.glb",
+    "trianglesBefore": 160,
+    "trianglesAfter": 160,
+    "texture": 256,
+    "clips": [],
+    "bytes": 19376
+  },
+  "tower-incense": {
+    "name": "tower-incense",
+    "source": "props/tower-incense/blender/model.glb",
+    "output": "public/models/props/tower-incense.glb",
+    "trianglesBefore": 96,
+    "trianglesAfter": 96,
+    "texture": 256,
+    "clips": [],
+    "bytes": 7808
+  }
+}

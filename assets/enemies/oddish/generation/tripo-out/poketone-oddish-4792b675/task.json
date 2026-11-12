@@ -1,0 +1,31 @@
+{
+  "task_id": "4792b675-8824-44ba-9f80-7754eefdd84a",
+  "type": "text_to_model",
+  "status": "success",
+  "input": {
+    "pbr": true,
+    "prompt": "Oddish Pokemon, round dark blue body with two small feet, red eyes, five long green leaves sprouting from top of head, standing pose, facing forward. Classic low-polygon video-game asset, economical silhouette geometry, simple clean diffuse color regions, few broad forms, no tiny surface details, not realistic, not crystalline faceted, not plush. Full body isolated, no pedestal, no scenery, no text.",
+    "texture": true,
+    "export_uv": true,
+    "face_limit": 800,
+    "model_version": "v3.1-20260211",
+    "smart_low_poly": true,
+    "texture_quality": "standard",
+    "geometry_quality": "standard",
+    "texture_alignment": "geometry"
+  },
+  "output_fields": [
+    "model_url",
+    "rendered_image_url",
+    "generated_image_url"
+  ],
+  "credits_consumed": 30,
+  "created_at": "2026-11-04T06:37:10.996154Z",
+  "completed_at": "2026-11-04T06:39:36.099724Z",
+  "files": [
+    "model.glb",
+    "rendered_image.webp",
+    "generated_image.jpeg",
+    "preview.png"
+  ]
+}

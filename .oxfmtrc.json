@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": [
+    ".agents/**",
+    ".claude/skills/openspec-*/**",
+    ".claude/commands/opsx/**",
+    ".impeccable/surfaces/**",
+    "skills-lock.json",
+    "bun.lock",
+    "references/**",
+    "dist/**",
+    "assets/**/task.json",
+    "assets/**/result.json",
+    "assets/game-models.build.json",
+    "public/audio/bank.json",
+    "public/fonts/gpu/core/*.json",
+    "scripts/native/licenses/**"
+  ]
+}

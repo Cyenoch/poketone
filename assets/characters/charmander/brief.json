@@ -1,0 +1,15 @@
+{
+  "character": "Charmander / 小火龙",
+  "purpose": "Noncommercial Pokémon-related low-poly 3D game prototype",
+  "status": "locally-reduced-corrected-four-actions",
+  "generator": "Tripo CLI 0.8.1",
+  "model": "P2-20260801",
+  "seed": 112004,
+  "triangleLimit": 1808,
+  "textureQuality": "standard",
+  "pbr": false,
+  "style": "Classic low-polygon Pokémon-like game model, economical silhouette, simple diffuse color regions and soft shading. Not a high-detail sculpture, realism, toy, plush, baby chibi, or crystalline faceted art.",
+  "pose": "Short arms held clear of the belly. Shipping actions: idle, walk, run, scratch. No humanoid shooting pose.",
+  "approvedSpend": "Actual spend: 110 credits base generation + 25 rig + 50 five animations = 185 credits. Rig/animation task IDs and shipping metadata are in public/models/charmander.provenance.json. No reroll or evolution generation.",
+  "rights": "Character IP belongs to its respective rights holders. Noncommercial fan-project use and generated output do not imply permission or endorsement."
+}

@@ -1,0 +1,1285 @@
+{
+  "generator": "Tripo CLI 0.8.1 (TRIPO_CLIENT_APP=claude)",
+  "createdAt": "2026-11-04",
+  "generationModel": "v3.1-20260211 with smart_low_poly, face_limit 500–1500, texture_quality standard",
+  "rig": "v3.0-20260909 biped for squirtle/pikachu/charmeleon/charizard/wartortle/blastoise/raichu, animations retargeted in place (squirtle/pikachu/wartortle/raichu ship a run keyed in Blender by assets/characters/run-bipeds.py on that rig, 0 credits; the Tripo run is kept in the archive); bulbasaur/ivysaur/venusaur: blender procedural rig (assets/characters/rig-quadrupeds.py, 0 credits) on the unrigged Tripo meshes, their Tripo quadruped rigs not shipped",
+  "tasks": [
+    {
+      "asset": "characters/bulbasaur",
+      "step": "animations",
+      "taskId": "070d302b-6e28-4a2b-95ae-7e6454d6915a",
+      "type": "animate_retarget",
+      "credits": 10,
+      "note": "not shipped: the rig mislabeled the bulb as the head, so the walk folds the face under the body; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/bulbasaur",
+      "step": "generation",
+      "taskId": "2963edf1-1ff6-4137-9bbc-93ac7ee0640c",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/bulbasaur",
+      "step": "rig",
+      "taskId": "5cec7b6c-20cd-4c3a-8d86-33ec2e66a1a7",
+      "type": "animate_rig",
+      "credits": 25,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/pikachu",
+      "step": "animations",
+      "taskId": "11df0e18-2bde-4fbd-8f27-ce412c46f237",
+      "type": "animate_retarget",
+      "credits": 20,
+      "note": "replaced 2026-11-06: blue eyes and ear tips from Tripo's reference image, stubby blocky body; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/pikachu",
+      "step": "generation",
+      "taskId": "c73c7fbd-3d52-4f7e-bbf2-8d8ca037869f",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "replaced 2026-11-06: blue eyes and ear tips from Tripo's reference image, stubby blocky body; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/pikachu",
+      "step": "rig",
+      "taskId": "2213f80b-a950-4074-820c-4ab16c06219b",
+      "type": "animate_rig",
+      "credits": 25,
+      "note": "replaced 2026-11-06: blue eyes and ear tips from Tripo's reference image, stubby blocky body; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/squirtle",
+      "step": "animations",
+      "taskId": "061da7d3-f3e0-441a-b95a-75a2f3b3c316",
+      "type": "animate_retarget",
+      "credits": 20,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/squirtle",
+      "step": "generation",
+      "taskId": "edcd17fb-31e2-4982-9e53-bb175650a190",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/squirtle",
+      "step": "rig",
+      "taskId": "deaed2e7-3b63-4d4b-b163-feeaa999521d",
+      "type": "animate_rig",
+      "credits": 25,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "enemies/caterpie",
+      "step": "generation",
+      "taskId": "ab930199-9d4d-479d-84f1-209afc40d5de",
+      "type": "text_to_model",
+      "credits": 30
+    },
+    {
+      "asset": "enemies/caterpie",
+      "step": "retexture",
+      "taskId": "874a7716-11b4-44f5-8c51-8f64f4979ad6",
+      "type": "texture_model",
+      "credits": 10
+    },
+    {
+      "asset": "enemies/oddish",
+      "step": "generation",
+      "taskId": "4792b675-8824-44ba-9f80-7754eefdd84a",
+      "type": "text_to_model",
+      "credits": 30
+    },
+    {
+      "asset": "enemies/pidgey",
+      "step": "generation",
+      "taskId": "1a32ddf3-946c-432f-8752-2cf23cb97b96",
+      "type": "text_to_model",
+      "credits": 30
+    },
+    {
+      "asset": "enemies/rattata",
+      "step": "generation",
+      "taskId": "ded65260-34f9-48a9-bc54-9c5bc7b8adfa",
+      "type": "text_to_model",
+      "credits": 30
+    },
+    {
+      "asset": "enemies/scyther",
+      "step": "generation",
+      "taskId": "bf8d1c9d-cfb7-4fe0-a106-23a46e669cf3",
+      "type": "text_to_model",
+      "credits": 30
+    },
+    {
+      "asset": "enemies/weedle",
+      "step": "generation",
+      "taskId": "db7acac9-041a-4e6b-bc2d-8b7501926671",
+      "type": "text_to_model",
+      "credits": 30
+    },
+    {
+      "asset": "props/bush",
+      "step": "generation",
+      "taskId": "4aa36f25-940d-408c-b3a1-eb33a2346b23",
+      "type": "text_to_model",
+      "credits": 30
+    },
+    {
+      "asset": "props/pine",
+      "step": "generation",
+      "taskId": "57a0086d-0f2a-49ee-90b8-0a6701ccf3b8",
+      "type": "text_to_model",
+      "credits": 30
+    },
+    {
+      "asset": "props/rock",
+      "step": "generation",
+      "taskId": "b593ee64-7d96-4cec-8974-f6474eeabef8",
+      "type": "text_to_model",
+      "credits": 30
+    },
+    {
+      "asset": "props/tree",
+      "step": "generation",
+      "taskId": "844852b0-c542-4c72-8e43-f8673a41727a",
+      "type": "text_to_model",
+      "credits": 30
+    },
+    {
+      "asset": "enemies/spearow",
+      "step": "generation",
+      "taskId": "70e2f150-084f-4716-a995-9ea7cd60ebde",
+      "type": "text_to_model",
+      "credits": 30
+    },
+    {
+      "asset": "enemies/zubat",
+      "step": "generation",
+      "taskId": "38fd9d91-67c3-45e9-b32e-2f61aaf7ca45",
+      "type": "text_to_model",
+      "credits": 30
+    },
+    {
+      "asset": "enemies/ekans",
+      "step": "generation",
+      "taskId": "cac43666-b713-4472-b21b-201be8cc7cd9",
+      "type": "text_to_model",
+      "credits": 30
+    },
+    {
+      "asset": "enemies/paras",
+      "step": "generation",
+      "taskId": "230b60f0-5849-4540-8195-d104e7c87bf4",
+      "type": "text_to_model",
+      "credits": 30
+    },
+    {
+      "asset": "enemies/geodude",
+      "step": "generation",
+      "taskId": "f875fc01-290b-483e-ae13-fd2cfe6418d0",
+      "type": "text_to_model",
+      "credits": 30
+    },
+    {
+      "asset": "enemies/venonat",
+      "step": "generation",
+      "taskId": "264b34f9-2c32-432e-91f2-bd338556cfb7",
+      "type": "text_to_model",
+      "credits": 30
+    },
+    {
+      "asset": "characters/blastoise",
+      "step": "animations",
+      "taskId": "d3ee3c9e-bdf1-4ddb-9184-17863f06b7f8",
+      "type": "animate_retarget",
+      "credits": 20,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/blastoise",
+      "step": "generation",
+      "taskId": "628a52e6-bafe-49ed-97f8-50a221cbf3fa",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/blastoise",
+      "step": "rig",
+      "taskId": "f1572e10-c006-4d6a-858a-4820e0dda622",
+      "type": "animate_rig",
+      "credits": 25,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/charizard",
+      "step": "animations",
+      "taskId": "939d0728-65e0-4c72-8661-08926495fb23",
+      "type": "animate_retarget",
+      "credits": 20,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/charizard",
+      "step": "generation",
+      "taskId": "afff34e7-c02d-4343-930c-a8c78e242057",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/charizard",
+      "step": "animations",
+      "taskId": "cadf5dff-b17f-49ef-ab9a-4fa11fe399f6",
+      "type": "animate_retarget",
+      "credits": 20,
+      "note": "clips of the rejected Charizard; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/charizard",
+      "step": "generation",
+      "taskId": "a6ff069f-dd39-4272-b463-23628bc4cf87",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected: short tail skinned to the left thigh, tail flame a detached floating piece; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/charizard",
+      "step": "rig",
+      "taskId": "afdf962c-ebcd-4e97-95b1-24fc7478f3a1",
+      "type": "animate_rig",
+      "credits": 25,
+      "note": "rig of the rejected Charizard; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/charizard",
+      "step": "rig",
+      "taskId": "f1820ee8-04e5-4912-acd0-e847a99e03b9",
+      "type": "animate_rig",
+      "credits": 25,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/charmeleon",
+      "step": "animations",
+      "taskId": "1556109f-dd4e-47ac-af09-7ad00dfaad6e",
+      "type": "animate_retarget",
+      "credits": 20,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/charmeleon",
+      "step": "generation",
+      "taskId": "1a144e0f-43fb-4351-8f41-43c477127c51",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/charmeleon",
+      "step": "rig",
+      "taskId": "d6ccbf5e-7cc5-4330-95cc-d021158af6d3",
+      "type": "animate_rig",
+      "credits": 25,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/ivysaur",
+      "step": "animations",
+      "taskId": "9622f8ec-a389-45fa-ba95-d12960227c3a",
+      "type": "animate_retarget",
+      "credits": 10,
+      "note": "not shipped: preset:quadruped:walk stretches the legs onto spiked tiptoes; replaced by the blender procedural rig; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/ivysaur",
+      "step": "generation",
+      "taskId": "4bc5ef34-73a3-453e-b885-4e8cdd3f227b",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/ivysaur",
+      "step": "rig",
+      "taskId": "25349395-9413-4daf-b679-ef61171019ed",
+      "type": "animate_rig",
+      "credits": 25,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "animations",
+      "taskId": "886fa19a-5e37-41a8-86ad-31d575107231",
+      "type": "animate_retarget",
+      "credits": 20,
+      "note": "replaced 2026-11-06: lopsided ears, blobby body; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "d2ec122c-9719-4652-863b-29d48253cee2",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "replaced 2026-11-06: lopsided ears, blobby body; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "rig",
+      "taskId": "81072435-bea0-465e-8751-0914592a727b",
+      "type": "animate_rig",
+      "credits": 25,
+      "note": "replaced 2026-11-06: lopsided ears, blobby body; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/venusaur",
+      "step": "generation",
+      "taskId": "25f5ec05-0743-46ca-a74b-5fdcf4f725f5",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected: two haunch-ball legs and a tail, so it could only stomp; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/venusaur",
+      "step": "rig",
+      "taskId": "3ee34ae9-39de-41b0-875b-9b391fcb87e9",
+      "type": "animate_rig",
+      "credits": 25,
+      "note": "rig of the rejected two-legged mesh; the quadruped rig scattered the body over unnamed bones, so no walk was bought; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/venusaur",
+      "step": "generation",
+      "taskId": "4ace04a9-a3fa-4c0b-af84-a71dcb44a5fa",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected: four legs, but a long lizard body and the flower on a tall palm trunk; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/venusaur",
+      "step": "generation",
+      "taskId": "fbffbbcd-f528-4c93-bfb8-9d3aae83eb59",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "shipped: four legs; the mesh faces glTF +Z, rig-quadrupeds.py turns it to +X; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/wartortle",
+      "step": "animations",
+      "taskId": "0499d425-d552-49a0-aba5-b02f6692619b",
+      "type": "animate_retarget",
+      "credits": 20,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/wartortle",
+      "step": "generation",
+      "taskId": "451bd574-09b6-4f35-b217-3ba6b560f689",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/wartortle",
+      "step": "generation",
+      "taskId": "18faa2eb-048f-4706-a3b1-cf8ab9d2e891",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected: ears grew on thin stalks; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/wartortle",
+      "step": "rig",
+      "taskId": "fd10f533-0c96-4660-b4d5-9e6244e31f33",
+      "type": "animate_rig",
+      "credits": 25,
+      "note": "superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "props/hypno",
+      "step": "generation",
+      "taskId": "ab6aff40-98a2-4de5-b104-1e38150e154a",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "station (Hypno); face_limit 1200; faces glTF +X like the other Tripo exports (default facingYaw, checked in game)"
+    },
+    {
+      "asset": "props/bill-machine",
+      "step": "generation",
+      "taskId": "226c46da-ec9e-4df9-86e5-1b279c706456",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "station (Bill's machine); face_limit 1200; default facingYaw, turned to face the arena centre in the view"
+    },
+    {
+      "asset": "characters/pikachu",
+      "step": "generation",
+      "taskId": "5e2f240e-42cc-448e-a1b4-0b7076d1e0ef",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "regenerated 2026-11-06 (prompt in its task.json): black eyes and ear tips, red cheeks, arms clear of the body; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/pikachu",
+      "step": "generation",
+      "taskId": "2e85e34f-a60b-4eab-a94f-315b7922b317",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected: slimmer, less faithful head; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/pikachu",
+      "step": "generation",
+      "taskId": "6a7d37f2-8ca2-477d-85bd-92e5a222ecd0",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected: a floating blue shard beside the head; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/pikachu",
+      "step": "rig",
+      "taskId": "3bc783ee-8a20-4d97-8d36-64a0925b889c",
+      "type": "animate_rig",
+      "credits": 25,
+      "note": "skins the tail blade to L_Forearm again; run-bipeds.py rehomes it to Pelvis; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/pikachu",
+      "step": "animations",
+      "taskId": "9fa1a000-accf-42d5-b38c-0d5bae26095f",
+      "type": "animate_retarget",
+      "credits": 20,
+      "note": "idle + run in place; the run is replaced by run-bipeds.py; superseded 2026-11-06 by the multiview regeneration"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "0ef1c357-0946-4554-992e-1c58bc0d7573",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected: wire-thin tail; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "83c29b75-5af2-454a-83c5-b2003f3b5d0b",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected: stub tail; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "d7a95c13-bf4f-4e2a-8107-a270061ed1bd",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected: the tail bolt floats beside the left shoulder; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "rig",
+      "taskId": "c9eca346-fea3-42cf-bd4d-4b2752790f87",
+      "type": "animate_rig",
+      "credits": 25,
+      "note": "rig of the rejected d7a95c13; skinned the floating bolt to a left finger; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "animations",
+      "taskId": "5347d121-f113-4ee0-aed6-3383f8ac1c1f",
+      "type": "animate_retarget",
+      "credits": 20,
+      "note": "clips of the rejected d7a95c13; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "4c637044-6b07-411b-8107-2b0abe3aed04",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected: ears splayed sideways, tail off to the side; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "e2293925-f91f-40fa-a4fc-fbfadd076ee4",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected: black arms, tail in floating pieces; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "f5db7cb4-6694-4c9b-be20-ce328b9ad6e8",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected: fragmented ears; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "8cc4f96c-6425-4f57-84e6-a80c787c5e54",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected: spindly arms, pale head, tail hidden under a flat bolt; rigged by mistake; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "rig",
+      "taskId": "457f5e11-07f7-486f-b012-02a564912048",
+      "type": "animate_rig",
+      "credits": 25,
+      "note": "rig of the rejected 8cc4f96c (picked by mistake); superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "animations",
+      "taskId": "ba07d10d-4c9e-4093-a9f0-f2bc8a6d15a5",
+      "type": "animate_retarget",
+      "credits": 20,
+      "note": "clips of the rejected 8cc4f96c; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "7eafe9a9-18d7-491b-9796-2d0aa603330b",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected: bolts floating round the body; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "09e0e452-6089-4ea0-8539-a0c96c752721",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected: yellow head from its reference image; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "rig",
+      "taskId": "0459636f-265e-44a4-ada0-83670670df4f",
+      "type": "animate_rig",
+      "credits": 25,
+      "note": "rig of the rejected 09e0e452; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "animations",
+      "taskId": "cd7e5b9b-cc82-45c9-85c7-cc3f92ede0cf",
+      "type": "animate_retarget",
+      "credits": 20,
+      "note": "clips of the rejected 09e0e452; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "2acb263b-92f2-4378-b9ea-7c53c301dead",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected, but its reference image, with the tail edited, is the shipped model's input; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "bc941390-bf4e-4fcd-8601-f869b1df7732",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected: stray stick, squirrel tail; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "19884030-164f-4a9c-adb8-0a3fdb03d42c",
+      "type": "text_to_model",
+      "credits": 30,
+      "note": "rejected: blue muzzle, no belly; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "658cf9d7-18d3-44c9-a0bc-9e0a531cb842",
+      "type": "image_to_model",
+      "credits": 40,
+      "note": "regenerated 2026-11-06 from raichu/generation/reference.png (2acb263b's generated image with the tail redrawn behind the body by Gemini 3 Pro Image via Magpie); texture_alignment original_image; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "226239b3-1aa6-4c5c-a7bc-f6186db675c2",
+      "type": "image_to_model",
+      "credits": 40,
+      "note": "rejected: a brown collar ring on the back; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "3fb5084c-2d66-49df-934c-9ae9a2e63d07",
+      "type": "image_to_model",
+      "credits": 40,
+      "note": "rejected: near-identical spare; 658cf9d7 has cleaner ears and hands; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "rig",
+      "taskId": "ba9a25cb-b9bd-43ff-98fc-9f9feab63ad9",
+      "type": "animate_rig",
+      "credits": 25,
+      "note": "skins the tail's far half and bolt to L_ToeBase; run-bipeds.py rehomes them to Pelvis; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "animations",
+      "taskId": "1e562e63-1885-44e0-a8be-b4447d95ee31",
+      "type": "animate_retarget",
+      "credits": 20,
+      "note": "idle + run in place; the run is replaced by run-bipeds.py; superseded 2026-11-06 by the multiview body with a hand-built tail"
+    },
+    {
+      "asset": "characters/blastoise",
+      "step": "animations",
+      "taskId": "cbec6380-51cd-4083-9d4c-8b62c43644dd",
+      "type": "animate_retarget",
+      "credits": 20,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/blastoise",
+      "step": "generation",
+      "taskId": "78c19b65-eff5-47f3-b35a-6da07acdfa4e",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/blastoise",
+      "step": "rig",
+      "taskId": "79b3fb94-9cd7-4745-a461-d650f6c9a0cf",
+      "type": "animate_rig",
+      "credits": 25,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/bulbasaur",
+      "step": "generation",
+      "taskId": "048c05fd-2400-450c-a580-6e4652d26c8d",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/charmander",
+      "step": "animations",
+      "taskId": "54d48239-736e-4336-bffd-aecd8664a691",
+      "type": "animate_retarget",
+      "credits": 20,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/charmander",
+      "step": "generation",
+      "taskId": "f851650f-7759-41b2-8b60-d2a87a1cc69b",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/charmander",
+      "step": "rig",
+      "taskId": "26b87f4f-3d4f-4336-b3f5-31ee30fa7539",
+      "type": "animate_rig",
+      "credits": 25,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/charmeleon",
+      "step": "animations",
+      "taskId": "457eacc8-2d28-48eb-9adb-9a4d9d1f80c5",
+      "type": "animate_retarget",
+      "credits": 20,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/charmeleon",
+      "step": "generation",
+      "taskId": "c87040a3-66b8-4247-a4fc-d34b1949e048",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/charmeleon",
+      "step": "rig",
+      "taskId": "3c2fbc56-243a-46d8-a625-99e897dcf5ca",
+      "type": "animate_rig",
+      "credits": 25,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/ivysaur",
+      "step": "generation",
+      "taskId": "b6bf2773-eb63-4f77-be4d-cd5324736482",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/pikachu",
+      "step": "animations",
+      "taskId": "02350864-684b-49e6-b624-4da2db5e7ef5",
+      "type": "animate_retarget",
+      "credits": 20,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/pikachu",
+      "step": "generation",
+      "taskId": "c872d2aa-dc84-43f7-88c8-39a47492a8da",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/pikachu",
+      "step": "rig",
+      "taskId": "6aa548a1-05d5-4b9b-a8c7-3cdfd2ea6144",
+      "type": "animate_rig",
+      "credits": 25,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/squirtle",
+      "step": "animations",
+      "taskId": "cea8e390-05e5-42cf-93af-c705da7a0f41",
+      "type": "animate_retarget",
+      "credits": 20,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/squirtle",
+      "step": "generation",
+      "taskId": "07497f3a-c24e-4896-9640-1f64f51c7acb",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)",
+      "note": "built the tail on both sides (the sheet's side views each drew it on the near side, v-back on the right); the shipped GLB keeps the left one, as in the official artwork and v-front, and assets/prepare-game-models.py `drop_lobe` deletes the right curl and its root (2026-11-06, 0 credits)"
+    },
+    {
+      "asset": "characters/squirtle",
+      "step": "rig",
+      "taskId": "240d8f0b-b3ef-450d-a6a7-ad39215d8fe8",
+      "type": "animate_rig",
+      "credits": 25,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/venusaur",
+      "step": "generation",
+      "taskId": "52d3eebc-09b4-478b-ab10-58ce0b44dfbc",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/wartortle",
+      "step": "animations",
+      "taskId": "5e5dd99c-8852-4443-b62d-335cead2142d",
+      "type": "animate_retarget",
+      "credits": 20,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/wartortle",
+      "step": "generation",
+      "taskId": "07cfe586-7030-4381-8e24-7dced4f6bae9",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/wartortle",
+      "step": "rig",
+      "taskId": "995a5806-3cf8-4fd1-ad47-ccef1fdd7e92",
+      "type": "animate_rig",
+      "credits": 25,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)"
+    },
+    {
+      "asset": "characters/charizard",
+      "step": "rig",
+      "taskId": "0bc6eef6-e3d5-4488-8f2a-9ae76d51cb0c",
+      "type": "animate_rig",
+      "credits": 25,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)",
+      "note": "rig of efd58e85: leg chains run along the tail"
+    },
+    {
+      "asset": "characters/charizard",
+      "step": "rig",
+      "taskId": "9d64fdce-054c-48f9-ba38-0f805c1374ed",
+      "type": "animate_rig",
+      "credits": 25,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)",
+      "note": "rig of c9d5fe51: head at hip height, a hand on the floor"
+    },
+    {
+      "asset": "characters/charizard",
+      "step": "generation",
+      "taskId": "6cb033a4-c514-4b3d-b728-76c5eb056aa0",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)",
+      "note": "rejected: flame on both sides"
+    },
+    {
+      "asset": "characters/charizard",
+      "step": "generation",
+      "taskId": "432154c6-33f5-42c6-a12b-3f3ab9fb7902",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)",
+      "note": "rejected: no tail, the flame a separate floating piece"
+    },
+    {
+      "asset": "characters/charizard",
+      "step": "generation",
+      "taskId": "efd58e85-b50d-4d69-801f-2de7b415b276",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)",
+      "note": "rejected: its ground-curling tail rigged as both legs"
+    },
+    {
+      "asset": "characters/charizard",
+      "step": "generation",
+      "taskId": "c9d5fe51-eff3-4be4-baed-543b2cbeb0a4",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)",
+      "note": "rejected: rig put the head at hip height"
+    },
+    {
+      "asset": "characters/charmander",
+      "step": "generation",
+      "taskId": "2b77c909-b270-4ec2-9a28-bda87b627e40",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)",
+      "note": "rejected: flame on both sides (back view drew it on the front view's image side) and no eyes"
+    },
+    {
+      "asset": "characters/ivysaur",
+      "step": "generation",
+      "taskId": "819aebd5-f83e-4fee-b68d-c82ed3373566",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)",
+      "note": "rejected: the bud floated above the body"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "64e0aa1d-c8e2-4d83-8aff-d8fa47006572",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)",
+      "note": "rejected: tail and bolt on both sides"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "f36c0c3b-964c-4bab-9d47-bc1a5ab77b43",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)",
+      "note": "rejected: thin tail lost, bolt a separate piece"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "6575c281-3cd8-4d12-a44c-b96087796a0e",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)",
+      "note": "rejected: tail and bolt on both sides"
+    },
+    {
+      "asset": "characters/wartortle",
+      "step": "rig",
+      "taskId": "666b9d44-dde2-4293-8c21-6fa4000e0ec9",
+      "type": "animate_rig",
+      "credits": 25,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)",
+      "note": "rig of the rejected 58e22709: head below the hip, feet above the knees"
+    },
+    {
+      "asset": "characters/wartortle",
+      "step": "rig",
+      "taskId": "71b9bac9-33f6-4128-8932-7c6e043a15d9",
+      "type": "animate_rig",
+      "credits": 25,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)",
+      "note": "re-rig of 58e22709: identical to the first"
+    },
+    {
+      "asset": "characters/wartortle",
+      "step": "generation",
+      "taskId": "58e22709-b470-4bc3-9888-b4dc3ca4073d",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet, split views)",
+      "note": "rejected: Tripo's biped rig put the head below the hip (rigged twice, same result)"
+    },
+    {
+      "asset": "characters/charizard",
+      "step": "generation",
+      "taskId": "f5705c0e-bc0c-4efe-81a7-96b7df3146ae",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet with the wings raised, split views)"
+    },
+    {
+      "asset": "characters/charizard",
+      "step": "rig",
+      "taskId": "4fd8942e-8cf6-4bf1-afb3-2404f41ca2be",
+      "type": "animate_rig",
+      "credits": 25,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet with the wings raised, split views)"
+    },
+    {
+      "asset": "characters/charizard",
+      "step": "animations",
+      "taskId": "40109997-04c4-444f-8974-813c7eee5f73",
+      "type": "animate_retarget",
+      "credits": 20,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview (official artwork, nano banana 2.1 sheet with the wings raised, split views)"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "generation",
+      "taskId": "bbd78cf4-8eb0-4caa-b877-7d8b0f7d8ca9",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview body (official artwork, nano banana 2.1 sheet with a centred tail, split views); tail hand-built by add_tail in prepare-game-models.py",
+      "note": "5th multiview round: body, ears and face kept; its tail came out as a floating bolt sheet, removed by drop_islands and replaced by a hand-built tail (add_tail)"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "rig",
+      "taskId": "7df5fc4c-55f4-4c9e-8d77-6ac47dd683b0",
+      "type": "animate_rig",
+      "credits": 25,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview body (official artwork, nano banana 2.1 sheet with a centred tail, split views); tail hand-built by add_tail in prepare-game-models.py"
+    },
+    {
+      "asset": "characters/raichu",
+      "step": "animations",
+      "taskId": "e3de27e0-f70f-4f7c-8060-6b8857995763",
+      "type": "animate_retarget",
+      "credits": 20,
+      "date": "2026-11-06",
+      "workflow": "skill-model multiview body (official artwork, nano banana 2.1 sheet with a centred tail, split views); tail hand-built by add_tail in prepare-game-models.py",
+      "note": "idle kept; run replaced by run-bipeds.py"
+    }
+  ],
+  "creditsTotal": 3520,
+  "shipping": [
+    {
+      "file": "public/models/enemies/caterpie.glb",
+      "source": "assets/enemies/caterpie/retexture/tripo-out/poketone-caterpie-retexture-text-874a7716/model.glb",
+      "triangles": 900,
+      "texture": 512,
+      "clips": [],
+      "bytes": 92612
+    },
+    {
+      "file": "public/models/enemies/weedle.glb",
+      "source": "assets/enemies/weedle/generation/model.glb",
+      "triangles": 899,
+      "texture": 512,
+      "clips": [],
+      "bytes": 71312
+    },
+    {
+      "file": "public/models/enemies/rattata.glb",
+      "source": "assets/enemies/rattata/generation/tripo-out/poketone-rattata-ded65260/model.glb",
+      "triangles": 900,
+      "texture": 512,
+      "clips": [],
+      "bytes": 87976
+    },
+    {
+      "file": "public/models/enemies/pidgey.glb",
+      "source": "assets/enemies/pidgey/generation/tripo-out/poketone-pidgey-1a32ddf3/model.glb",
+      "triangles": 900,
+      "texture": 512,
+      "clips": [],
+      "bytes": 78040
+    },
+    {
+      "file": "public/models/enemies/oddish.glb",
+      "source": "assets/enemies/oddish/generation/tripo-out/poketone-oddish-4792b675/model.glb",
+      "triangles": 900,
+      "texture": 512,
+      "clips": [],
+      "bytes": 69892
+    },
+    {
+      "file": "public/models/enemies/scyther.glb",
+      "source": "assets/enemies/scyther/generation/tripo-out/poketone-scyther-bf8d1c9d/model.glb",
+      "triangles": 1903,
+      "texture": 1024,
+      "clips": [],
+      "bytes": 207216
+    },
+    {
+      "file": "public/models/enemies/spearow.glb",
+      "source": "assets/enemies/spearow/generation/tripo-out/poketone-spearow-70e2f150/model.glb",
+      "triangles": 900,
+      "texture": 512,
+      "clips": [],
+      "bytes": 80348
+    },
+    {
+      "file": "public/models/enemies/zubat.glb",
+      "source": "assets/enemies/zubat/generation/tripo-out/poketone-zubat-38fd9d91/model.glb",
+      "triangles": 900,
+      "texture": 512,
+      "clips": [],
+      "bytes": 85212
+    },
+    {
+      "file": "public/models/enemies/ekans.glb",
+      "source": "assets/enemies/ekans/generation/tripo-out/poketone-ekans-cac43666/model.glb",
+      "triangles": 900,
+      "texture": 512,
+      "clips": [],
+      "bytes": 66640
+    },
+    {
+      "file": "public/models/enemies/paras.glb",
+      "source": "assets/enemies/paras/generation/tripo-out/poketone-paras-230b60f0/model.glb",
+      "triangles": 900,
+      "texture": 512,
+      "clips": [],
+      "bytes": 85012
+    },
+    {
+      "file": "public/models/enemies/geodude.glb",
+      "source": "assets/enemies/geodude/generation/tripo-out/poketone-geodude-f875fc01/model.glb",
+      "triangles": 899,
+      "texture": 512,
+      "clips": [],
+      "bytes": 60316
+    },
+    {
+      "file": "public/models/enemies/venonat.glb",
+      "source": "assets/enemies/venonat/generation/tripo-out/poketone-venonat-264b34f9/model.glb",
+      "triangles": 900,
+      "texture": 512,
+      "clips": [],
+      "bytes": 83880
+    },
+    {
+      "file": "public/models/props/tree.glb",
+      "source": "assets/props/tree/blender/model.glb (hand-built by assets/props/build-props.py, 0 credits; Tripo export not shipped)",
+      "triangles": 524,
+      "texture": null,
+      "clips": [],
+      "bytes": 14188
+    },
+    {
+      "file": "public/models/props/pine.glb",
+      "source": "assets/props/pine/generation/tripo-out/poketone-pine-57a0086d/model.glb",
+      "triangles": 600,
+      "texture": 512,
+      "clips": [],
+      "bytes": 46916
+    },
+    {
+      "file": "public/models/props/rock.glb",
+      "source": "assets/props/rock/generation/tripo-out/poketone-rock-b593ee64/model.glb",
+      "triangles": 500,
+      "texture": 512,
+      "clips": [],
+      "bytes": 38040
+    },
+    {
+      "file": "public/models/props/bush.glb",
+      "source": "assets/props/bush/blender/model.glb (hand-built by assets/props/build-props.py, 0 credits; Tripo export not shipped)",
+      "triangles": 400,
+      "texture": null,
+      "clips": [],
+      "bytes": 11084
+    },
+    {
+      "file": "public/models/bulbasaur.glb",
+      "source": "assets/characters/bulbasaur/blender/model.glb (Tripo multiview 2026-11-06, blender procedural rig by assets/characters/rig-quadrupeds.py)",
+      "triangles": 2013,
+      "texture": 1024,
+      "clips": ["idle", "run"],
+      "bytes": 299448,
+      "method": "blender procedural rig",
+      "credits": 0
+    },
+    {
+      "file": "public/models/squirtle.glb",
+      "source": "assets/characters/squirtle/blender/model.glb (Tripo multiview 2026-11-06, Tripo biped rig + idle, run keyed by assets/characters/run-bipeds.py; drop_lobe + symmetrise + open_arms in prepare-game-models.py)",
+      "triangles": 1948,
+      "texture": 1024,
+      "clips": ["idle", "run"],
+      "bytes": 708924,
+      "method": "blender keyed run on the Tripo biped rig",
+      "credits": 0
+    },
+    {
+      "file": "public/models/pikachu.glb",
+      "source": "assets/characters/pikachu/blender/model.glb (Tripo multiview 2026-11-06, Tripo biped rig + idle, run keyed by assets/characters/run-bipeds.py; symmetrise + open_arms in prepare-game-models.py)",
+      "triangles": 1682,
+      "texture": 1024,
+      "clips": ["idle", "run"],
+      "bytes": 668536,
+      "method": "blender keyed run on the Tripo biped rig",
+      "credits": 0
+    },
+    {
+      "file": "public/models/ivysaur.glb",
+      "source": "assets/characters/ivysaur/blender/model.glb (Tripo multiview 2026-11-06, blender procedural rig by assets/characters/rig-quadrupeds.py)",
+      "triangles": 2016,
+      "texture": 1024,
+      "clips": ["idle", "run"],
+      "bytes": 307696,
+      "method": "blender procedural rig",
+      "credits": 0
+    },
+    {
+      "file": "public/models/venusaur.glb",
+      "source": "assets/characters/venusaur/blender/model.glb (Tripo multiview 2026-11-06, blender procedural rig by assets/characters/rig-quadrupeds.py)",
+      "triangles": 2179,
+      "texture": 1024,
+      "clips": ["idle", "run"],
+      "bytes": 341284,
+      "method": "blender procedural rig",
+      "credits": 0
+    },
+    {
+      "file": "public/models/charmeleon.glb",
+      "source": "assets/characters/charmeleon/animations/tripo-out/charmeleon-anim-mv-457eacc8/model.glb (Tripo multiview 2026-11-06, Tripo biped rig + idle and run; symmetrise + open_arms in prepare-game-models.py)",
+      "triangles": 2164,
+      "texture": 1024,
+      "clips": ["idle", "run"],
+      "bytes": 723820
+    },
+    {
+      "file": "public/models/charizard.glb",
+      "source": "assets/characters/charizard/animations/tripo-out/charizard-anim-mv-40109997/model.glb (Tripo multiview 2026-11-06, Tripo biped rig + idle and run; symmetrise + open_arms in prepare-game-models.py)",
+      "triangles": 2361,
+      "texture": 1024,
+      "clips": ["idle", "run"],
+      "bytes": 768552
+    },
+    {
+      "file": "public/models/wartortle.glb",
+      "source": "assets/characters/wartortle/blender/model.glb (Tripo multiview 2026-11-06, Tripo biped rig + idle, run keyed by assets/characters/run-bipeds.py; symmetrise + open_arms in prepare-game-models.py)",
+      "triangles": 2163,
+      "texture": 1024,
+      "clips": ["idle", "run"],
+      "bytes": 785528,
+      "method": "blender keyed run on the Tripo biped rig",
+      "credits": 0
+    },
+    {
+      "file": "public/models/blastoise.glb",
+      "source": "assets/characters/blastoise/animations/tripo-out/blastoise-anim-mv-cbec6380/model.glb (Tripo multiview 2026-11-06, Tripo biped rig + idle and run; symmetrise + open_arms in prepare-game-models.py)",
+      "triangles": 2251,
+      "texture": 1024,
+      "clips": ["idle", "run"],
+      "bytes": 805844
+    },
+    {
+      "file": "public/models/raichu.glb",
+      "source": "assets/characters/raichu/blender/model.glb (body: Tripo multiview 2026-11-06 via skill-model, Tripo biped rig + idle, run keyed by run-bipeds.py; tail: hand-built in Blender by add_tail, 0 credits; drop_islands + symmetrise + open_arms + add_tail in prepare-game-models.py)",
+      "triangles": 1602,
+      "texture": 1024,
+      "clips": ["idle", "run"],
+      "bytes": 708168,
+      "method": "partial deviation: skill-pipeline body, hand-built tail",
+      "credits": 0
+    },
+    {
+      "file": "public/models/props/hypno.glb",
+      "source": "assets/props/hypno/generation/tripo-out/poketone-hypno-ab6aff40/model.glb",
+      "triangles": 1200,
+      "texture": 512,
+      "clips": [],
+      "bytes": 111260
+    },
+    {
+      "file": "public/models/props/bill-machine.glb",
+      "source": "assets/props/bill-machine/generation/tripo-out/poketone-bill-machine-226c46da/model.glb",
+      "triangles": 1200,
+      "texture": 512,
+      "clips": [],
+      "bytes": 120032
+    },
+    {
+      "file": "public/models/charmander.glb",
+      "source": "assets/characters/charmander/blender/model.glb (Tripo multiview 2026-11-06, Tripo biped rig + idle, run keyed by assets/characters/run-bipeds.py; symmetrise + open_arms in prepare-game-models.py)",
+      "triangles": 1846,
+      "texture": 1024,
+      "clips": ["idle", "run"],
+      "bytes": 696948
+    }
+  ],
+  "rebuild": "pnpm assets:game (Blender 5.2, assets/prepare-game-models.py): base colour only, textures downsized, swarm enemies decimated to ~900 tris. Tree and bush sources come from blender --background --factory-startup --python assets/props/build-props.py (closed icosphere clumps, vertex colours) because their Tripo exports were open shard shells; Squirtle, Pikachu, Wartortle and Raichu (and Charmander, via pnpm assets:charmander) take their run from blender --background --factory-startup --python assets/characters/run-bipeds.py (two-bone leg IK on the Tripo biped rig, heel peel, longer stride with a flight phase) because Tripo's in-place runs were too short-strided for the forms' speeds under the cadence cap; the Bulbasaur line (Bulbasaur, Ivysaur, Venusaur) comes from blender --background --factory-startup --python assets/characters/rig-quadrupeds.py (hand-built armature, region weights, scripted diagonal trot) because the Tripo quadruped rigs misread the bodies; Wartortle's and Blastoise's violet bellies (from Tripo's own reference images, so a re-texture would repeat them) are repainted cream by hue band (recolour); every Tripo biped but Charmander (re-posed by its own prepare-model.mjs) has its shoulder and upper-arm keys turned half-way back to the T-pose (open_arms), because Tripo's retargeted idle and run lower the arms like a slim human's and bury the hands in these round bellies; run-bipeds.py moves tail vertices Tripo skinned to an arm or foot onto the pelvis (rehome); the multiview forms (2026-11-06) get symmetrise(run_shift) before open_arms: it mirrors the better-fitting side's rest bones, skin weights and clip keys onto the other side, because Tripo's preset idle leans to one side and its rigger fits the two arms differently",
+  "rights": "Pokémon character IP belongs to its rights holders. Generated output and noncommercial use do not imply permission, endorsement, or an open-source license.",
+  "updatedAt": "2026-11-06"
+}

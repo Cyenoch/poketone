@@ -1,0 +1,60 @@
+{
+  "character": "Charmander / 小火龙",
+  "purpose": "Noncommercial Pokémon fan game asset trial",
+  "createdAt": "2026-10-31",
+  "generator": "Tripo CLI 0.8.1",
+  "source": "https://www.tripo3d.ai/",
+  "sourceDirectory": "assets/characters/charmander/",
+  "generation": {
+    "taskId": "1c5da680-3863-4f4b-80c9-bae1f0ca9e9e",
+    "model": "P2-20260801",
+    "seed": 112004,
+    "faceLimit": 2500,
+    "textureQuality": "standard",
+    "pbr": false,
+    "credits": 110
+  },
+  "rig": {
+    "taskId": "ba17eacd-a19d-492d-81f7-6e45f3bda60d",
+    "model": "v3.0-20260909",
+    "type": "biped",
+    "spec": "tripo",
+    "joints": 78,
+    "credits": 25
+  },
+  "animations": {
+    "taskId": "b0ad0ba4-8f82-486a-911d-c37fa0e59261",
+    "presets": ["preset:idle", "preset:walk", "preset:run", "preset:slash", "preset:shoot"],
+    "animateInPlace": true,
+    "credits": 50
+  },
+  "creditsTotal": 185,
+  "asset": {
+    "file": "charmander.glb",
+    "bytes": 977792,
+    "triangles": 1808,
+    "vertices": 1464,
+    "meshes": 1,
+    "materials": 1,
+    "clips": ["idle", "walk", "run", "scratch"],
+    "selfContained": true,
+    "compressionExtensions": []
+  },
+  "changes": "Rebuild with blender --background --factory-startup --python assets/characters/run-bipeds.py -- charmander (keeps the Tripo rig, skin and idle; replaces run with a longer-striding springy jog keyed on the rig, 0 credits; moves the 221 tail-flame vertices Tripo skinned to R_Forearm wholly onto Waist), then pnpm assets:charmander. Offline meshoptimizer 1.3.0 reduces 2584 triangles to 1808 (30.03%) while preserving UV, normal and skin attributes. The bad humanoid arm channels are replaced with baked creature shoulder/elbow/wrist poses; scratch is a new 1.2-second grounded claw motion using idle body support, not the original slash lunge. shoot is removed entirely. Animation buffers and constant tracks are deduplicated. No additional paid generation.",
+  "verification": {
+    "handClearance": "45 samples per clip; hand vertices tested laterally against non-arm torso triangles. No penetration samples in idle, walk, run or scratch.",
+    "minimumHandClearance": {
+      "idle": 0.1027,
+      "walk": 0.0864,
+      "run": 0.0717,
+      "scratch": 0.1036
+    },
+    "scope": "Geometric sampling and actual Three.js preview; not a continuous collision proof or gameplay animation approval."
+  },
+  "limitations": [
+    "Generic biped skeleton still has no dedicated tail joints.",
+    "The original paid retarget history includes shoot; that clip is absent from the shipping GLB."
+  ],
+  "rights": "Pokémon character IP belongs to its rights holders. Generated output and noncommercial use do not imply permission, endorsement, or an open-source license. No official game screenshots are shipped.",
+  "superseded": "2026-11-06: replaced by the Tripo multiview model in game-models.provenance.json; this record is archive"
+}

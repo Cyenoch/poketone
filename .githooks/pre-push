@@ -1,0 +1,60 @@
+#!/bin/sh
+# Tracked pre-push hook (enabled by `bun install` through package.json "prepare").
+stdin=$(cat)
+
+# 1. Refuse a push whose commits contain the Coolify token from the local, untracked tool configs.
+#    The token is read at run time, so this hook never stores it.
+token=$(python3 - <<'PY'
+import re, pathlib
+for p in (".mcp.json", ".codex/config.toml"):
+    f = pathlib.Path(p)
+    if f.exists():
+        m = re.search(r"Bearer\s+([A-Za-z0-9|._-]{12,})", f.read_text())
+        if m:
+            print(m.group(1)); break
+PY
+)
+zero=0000000000000000000000000000000000000000
+if [ -n "$token" ]; then
+  echo "$stdin" | while read -r local_ref local_sha remote_ref remote_sha; do
+    [ -z "$local_sha" ] || [ "$local_sha" = "$zero" ] && continue
+    if [ "$remote_sha" = "$zero" ]; then range="$local_sha"; else range="$remote_sha..$local_sha"; fi
+    if git log -p "$range" | grep -qF "$token"; then
+      echo "pre-push: refusing to push $local_ref: its history contains the Coolify API token." >&2
+      echo "Remove it from history (and rotate the token) before pushing." >&2
+      exit 1
+    fi
+  done || exit 1
+fi
+
+# 2. CI downloads base.tar from release fonts-base-<key>; without it CI rebuilds every MSDF atlas
+#    (~25 min). Before a push of main pins a key, make sure that asset is fully uploaded.
+main_sha=$(echo "$stdin" | while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$remote_ref" = refs/heads/main ] && [ "$local_sha" != "$zero" ] && echo "$local_sha"
+done)
+[ -z "$main_sha" ] && exit 0
+key=$(git show "$main_sha:public/fonts/gpu/core/manifest.json" 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin)["base"])' 2>/dev/null)
+[ -z "$key" ] && exit 0
+tag=fonts-base-$key
+if ! command -v gh >/dev/null; then
+  echo "pre-push: gh not found; cannot check $tag/base.tar (CI may rebuild fonts)." >&2
+  exit 0
+fi
+ready=$(gh release view "$tag" --json assets --jq '.assets[] | select(.name == "base.tar" and .state == "uploaded") | .name' 2>/dev/null)
+[ "$ready" = base.tar ] && exit 0
+set_dir=public/fonts/gpu/base/$key
+if [ ! -f "$set_dir/manifest.json" ]; then
+  echo "pre-push: $tag/base.tar is missing and $set_dir is not built." >&2
+  echo "Run \`bun run fonts:base\` and push again, so CI does not rebuild every atlas." >&2
+  exit 1
+fi
+work=$(mktemp -d)
+tar -C public/fonts/gpu/base -cf "$work/base.tar" "$key" || exit 1
+echo "pre-push: publishing font base set $key as $tag/base.tar" >&2
+if gh release view "$tag" >/dev/null 2>&1; then
+  gh release upload "$tag" "$work/base.tar" --clobber >&2 || exit 1
+else
+  gh release create "$tag" "$work/base.tar" --title "UI font base set $key" \
+    --notes "Prebuilt GPU UI font base set; CI downloads it when the cache misses." --latest=false >&2 || exit 1
+fi
+rm -rf "$work"

@@ -1,0 +1,30 @@
+{
+  "task_id": "07dba174-fed8-4cdc-97eb-b7ca291b3a6c",
+  "type": "text_to_model",
+  "status": "success",
+  "input": {
+    "pbr": true,
+    "prompt": "Butterfree Pokemon, small purple butterfly body, two large white wings with bold black outlines and black veins spread to the sides, red compound eyes, two black antennae, small blue feet, hovering pose. Single recognizable character, complete body centered and isolated, low poly cartoon 3D game enemy matching the existing Pokemon forest roster, chunky clean silhouette, simple matte base colors, no realistic fur, no scenery, no platform, no text, no accessories. Unrigged static mesh, approximately 1000 triangles.",
+    "texture": true,
+    "export_uv": true,
+    "face_limit": 1000,
+    "model_version": "v3.1-20260211",
+    "smart_low_poly": true,
+    "geometry_quality": "standard",
+    "texture_alignment": "geometry"
+  },
+  "output_fields": [
+    "model_url",
+    "rendered_image_url",
+    "generated_image_url"
+  ],
+  "credits_consumed": 30,
+  "created_at": "2026-11-05T06:44:35.557842Z",
+  "completed_at": "2026-11-05T06:46:55.586657Z",
+  "files": [
+    "model.glb",
+    "rendered_image.webp",
+    "generated_image.jpeg",
+    "preview.png"
+  ]
+}

@@ -1,0 +1,1699 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-05T06:30:00.000Z",
+  "title": "Design System: poketone",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "neutral",
+        "displayName": "正文墨",
+        "tonalRamp": [
+          "oklch(15.00% 0.0228 254.77)",
+          "oklch(26.43% 0.0402 254.77)",
+          "oklch(37.86% 0.0576 254.77)",
+          "oklch(49.29% 0.0685 254.77)",
+          "oklch(60.71% 0.0685 254.77)",
+          "oklch(72.14% 0.0685 254.77)",
+          "oklch(83.57% 0.0563 254.77)",
+          "oklch(95.00% 0.0171 254.77)"
+        ]
+      },
+      "navy": {
+        "role": "primary",
+        "displayName": "深海框",
+        "tonalRamp": [
+          "oklch(15.00% 0.0228 254.77)",
+          "oklch(26.43% 0.0402 254.77)",
+          "oklch(37.86% 0.0576 254.77)",
+          "oklch(49.29% 0.0685 254.77)",
+          "oklch(60.71% 0.0685 254.77)",
+          "oklch(72.14% 0.0685 254.77)",
+          "oklch(83.57% 0.0563 254.77)",
+          "oklch(95.00% 0.0171 254.77)"
+        ]
+      },
+      "navy-deep": {
+        "role": "primary",
+        "displayName": "深海底",
+        "tonalRamp": [
+          "oklch(15.00% 0.0200 255.59)",
+          "oklch(26.43% 0.0353 255.59)",
+          "oklch(37.86% 0.0505 255.59)",
+          "oklch(49.29% 0.0600 255.59)",
+          "oklch(60.71% 0.0600 255.59)",
+          "oklch(72.14% 0.0600 255.59)",
+          "oklch(83.57% 0.0493 255.59)",
+          "oklch(95.00% 0.0150 255.59)"
+        ]
+      },
+      "blue": {
+        "role": "primary",
+        "displayName": "海岸蓝",
+        "tonalRamp": [
+          "oklch(15.00% 0.0403 250.38)",
+          "oklch(26.43% 0.0710 250.38)",
+          "oklch(37.86% 0.1017 250.38)",
+          "oklch(49.29% 0.1208 250.38)",
+          "oklch(60.71% 0.1208 250.38)",
+          "oklch(72.14% 0.1208 250.38)",
+          "oklch(83.57% 0.0993 250.38)",
+          "oklch(95.00% 0.0302 250.38)"
+        ]
+      },
+      "blue-deep": {
+        "role": "primary",
+        "displayName": "深蓝指令",
+        "tonalRamp": [
+          "oklch(15.00% 0.0319 255.33)",
+          "oklch(26.43% 0.0561 255.33)",
+          "oklch(37.86% 0.0804 255.33)",
+          "oklch(49.29% 0.0956 255.33)",
+          "oklch(60.71% 0.0956 255.33)",
+          "oklch(72.14% 0.0956 255.33)",
+          "oklch(83.57% 0.0785 255.33)",
+          "oklch(95.00% 0.0239 255.33)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "冰蓝内容",
+        "tonalRamp": [
+          "oklch(15.00% 0.0050 235.38)",
+          "oklch(26.43% 0.0088 235.38)",
+          "oklch(37.86% 0.0126 235.38)",
+          "oklch(49.29% 0.0150 235.38)",
+          "oklch(60.71% 0.0150 235.38)",
+          "oklch(72.14% 0.0150 235.38)",
+          "oklch(83.57% 0.0123 235.38)",
+          "oklch(95.00% 0.0038 235.38)"
+        ]
+      },
+      "ice": {
+        "role": "neutral",
+        "displayName": "冰蓝文字",
+        "tonalRamp": [
+          "oklch(15.00% 0.0097 230.29)",
+          "oklch(26.43% 0.0172 230.29)",
+          "oklch(37.86% 0.0246 230.29)",
+          "oklch(49.29% 0.0292 230.29)",
+          "oklch(60.71% 0.0292 230.29)",
+          "oklch(72.14% 0.0292 230.29)",
+          "oklch(83.57% 0.0240 230.29)",
+          "oklch(95.00% 0.0073 230.29)"
+        ]
+      },
+      "sky": {
+        "role": "neutral",
+        "displayName": "天空底",
+        "tonalRamp": [
+          "oklch(15.00% 0.0168 223.89)",
+          "oklch(26.43% 0.0296 223.89)",
+          "oklch(37.86% 0.0424 223.89)",
+          "oklch(49.29% 0.0504 223.89)",
+          "oklch(60.71% 0.0504 223.89)",
+          "oklch(72.14% 0.0504 223.89)",
+          "oklch(83.57% 0.0414 223.89)",
+          "oklch(95.00% 0.0126 223.89)"
+        ]
+      },
+      "yellow": {
+        "role": "secondary",
+        "displayName": "暖黄选择",
+        "tonalRamp": [
+          "oklch(15.00% 0.0483 89.43)",
+          "oklch(26.43% 0.0851 89.43)",
+          "oklch(37.86% 0.1219 89.43)",
+          "oklch(49.29% 0.1449 89.43)",
+          "oklch(60.71% 0.1449 89.43)",
+          "oklch(72.14% 0.1449 89.43)",
+          "oklch(83.57% 0.1190 89.43)",
+          "oklch(95.00% 0.0362 89.43)"
+        ]
+      },
+      "gold": {
+        "role": "secondary",
+        "displayName": "金棕边缘",
+        "tonalRamp": [
+          "oklch(15.00% 0.0394 76.65)",
+          "oklch(26.43% 0.0695 76.65)",
+          "oklch(37.86% 0.0995 76.65)",
+          "oklch(49.29% 0.1183 76.65)",
+          "oklch(60.71% 0.1183 76.65)",
+          "oklch(72.14% 0.1183 76.65)",
+          "oklch(83.57% 0.0972 76.65)",
+          "oklch(95.00% 0.0296 76.65)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "轮廓线",
+        "tonalRamp": [
+          "oklch(15.00% 0.0182 237.26)",
+          "oklch(26.43% 0.0320 237.26)",
+          "oklch(37.86% 0.0458 237.26)",
+          "oklch(49.29% 0.0545 237.26)",
+          "oklch(60.71% 0.0545 237.26)",
+          "oklch(72.14% 0.0545 237.26)",
+          "oklch(83.57% 0.0447 237.26)",
+          "oklch(95.00% 0.0136 237.26)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "辅助墨",
+        "tonalRamp": [
+          "oklch(15.00% 0.0155 247.65)",
+          "oklch(26.43% 0.0272 247.65)",
+          "oklch(37.86% 0.0390 247.65)",
+          "oklch(49.29% 0.0464 247.65)",
+          "oklch(60.71% 0.0464 247.65)",
+          "oklch(72.14% 0.0464 247.65)",
+          "oklch(83.57% 0.0381 247.65)",
+          "oklch(95.00% 0.0116 247.65)"
+        ]
+      },
+      "success": {
+        "role": "functional",
+        "displayName": "完成绿",
+        "tonalRamp": [
+          "oklch(15.00% 0.0320 162.15)",
+          "oklch(26.43% 0.0564 162.15)",
+          "oklch(37.86% 0.0807 162.15)",
+          "oklch(49.29% 0.0959 162.15)",
+          "oklch(60.71% 0.0959 162.15)",
+          "oklch(72.14% 0.0959 162.15)",
+          "oklch(83.57% 0.0788 162.15)",
+          "oklch(95.00% 0.0240 162.15)"
+        ]
+      },
+      "danger": {
+        "role": "functional",
+        "displayName": "错误红",
+        "tonalRamp": [
+          "oklch(15.00% 0.0511 16.56)",
+          "oklch(26.43% 0.0900 16.56)",
+          "oklch(37.86% 0.1289 16.56)",
+          "oklch(49.29% 0.1532 16.56)",
+          "oklch(60.71% 0.1532 16.56)",
+          "oklch(72.14% 0.1532 16.56)",
+          "oklch(83.57% 0.1259 16.56)",
+          "oklch(95.00% 0.0383 16.56)"
+        ]
+      },
+      "danger-surface": {
+        "role": "functional",
+        "displayName": "重置浅底",
+        "tonalRamp": [
+          "oklch(15.00% 0.0084 17.61)",
+          "oklch(26.43% 0.0148 17.61)",
+          "oklch(37.86% 0.0212 17.61)",
+          "oklch(49.29% 0.0252 17.61)",
+          "oklch(60.71% 0.0252 17.61)",
+          "oklch(72.14% 0.0252 17.61)",
+          "oklch(83.57% 0.0207 17.61)",
+          "oklch(95.00% 0.0063 17.61)"
+        ]
+      },
+      "danger-line": {
+        "role": "functional",
+        "displayName": "重置边缘",
+        "tonalRamp": [
+          "oklch(15.00% 0.0247 8.15)",
+          "oklch(26.43% 0.0435 8.15)",
+          "oklch(37.86% 0.0622 8.15)",
+          "oklch(49.29% 0.0740 8.15)",
+          "oklch(60.71% 0.0740 8.15)",
+          "oklch(72.14% 0.0740 8.15)",
+          "oklch(83.57% 0.0608 8.15)",
+          "oklch(95.00% 0.0185 8.15)"
+        ]
+      },
+      "error-surface": {
+        "role": "functional",
+        "displayName": "错误浅底",
+        "tonalRamp": [
+          "oklch(15.00% 0.0054 22.08)",
+          "oklch(26.43% 0.0096 22.08)",
+          "oklch(37.86% 0.0137 22.08)",
+          "oklch(49.29% 0.0163 22.08)",
+          "oklch(60.71% 0.0163 22.08)",
+          "oklch(72.14% 0.0163 22.08)",
+          "oklch(83.57% 0.0134 22.08)",
+          "oklch(95.00% 0.0041 22.08)"
+        ]
+      },
+      "disabled-surface": {
+        "role": "neutral",
+        "displayName": "禁用底",
+        "tonalRamp": [
+          "oklch(15.00% 0.0077 241.91)",
+          "oklch(26.43% 0.0136 241.91)",
+          "oklch(37.86% 0.0194 241.91)",
+          "oklch(49.29% 0.0231 241.91)",
+          "oklch(60.71% 0.0231 241.91)",
+          "oklch(72.14% 0.0231 241.91)",
+          "oklch(83.57% 0.0190 241.91)",
+          "oklch(95.00% 0.0058 241.91)"
+        ]
+      },
+      "disabled-ink": {
+        "role": "neutral",
+        "displayName": "禁用字",
+        "tonalRamp": [
+          "oklch(15.00% 0.0142 248.58)",
+          "oklch(26.43% 0.0251 248.58)",
+          "oklch(37.86% 0.0360 248.58)",
+          "oklch(49.29% 0.0427 248.58)",
+          "oklch(60.71% 0.0427 248.58)",
+          "oklch(72.14% 0.0427 248.58)",
+          "oklch(83.57% 0.0351 248.58)",
+          "oklch(95.00% 0.0107 248.58)"
+        ]
+      },
+      "disabled-line": {
+        "role": "neutral",
+        "displayName": "禁用边",
+        "tonalRamp": [
+          "oklch(15.00% 0.0107 240.73)",
+          "oklch(26.43% 0.0189 240.73)",
+          "oklch(37.86% 0.0270 240.73)",
+          "oklch(49.29% 0.0321 240.73)",
+          "oklch(60.71% 0.0321 240.73)",
+          "oklch(72.14% 0.0321 240.73)",
+          "oklch(83.57% 0.0264 240.73)",
+          "oklch(95.00% 0.0080 240.73)"
+        ]
+      },
+      "sample-blue": {
+        "role": "sample",
+        "displayName": "样例海蓝",
+        "tonalRamp": [
+          "oklch(15.00% 0.0369 230.27)",
+          "oklch(26.43% 0.0650 230.27)",
+          "oklch(37.86% 0.0931 230.27)",
+          "oklch(49.29% 0.1107 230.27)",
+          "oklch(60.71% 0.1107 230.27)",
+          "oklch(72.14% 0.1107 230.27)",
+          "oklch(83.57% 0.0909 230.27)",
+          "oklch(95.00% 0.0277 230.27)"
+        ]
+      },
+      "sample-green": {
+        "role": "sample",
+        "displayName": "样例叶绿",
+        "tonalRamp": [
+          "oklch(15.00% 0.0398 161.41)",
+          "oklch(26.43% 0.0701 161.41)",
+          "oklch(37.86% 0.1004 161.41)",
+          "oklch(49.29% 0.1193 161.41)",
+          "oklch(60.71% 0.1193 161.41)",
+          "oklch(72.14% 0.1193 161.41)",
+          "oklch(83.57% 0.0980 161.41)",
+          "oklch(95.00% 0.0298 161.41)"
+        ]
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "字标白",
+        "tonalRamp": [
+          "oklch(15.00% 0.0000 89.88)",
+          "oklch(26.43% 0.0000 89.88)",
+          "oklch(37.86% 0.0000 89.88)",
+          "oklch(49.29% 0.0000 89.88)",
+          "oklch(60.71% 0.0000 89.88)",
+          "oklch(72.14% 0.0000 89.88)",
+          "oklch(83.57% 0.0000 89.88)",
+          "oklch(95.00% 0.0000 89.88)"
+        ]
+      },
+      "cloud": {
+        "role": "neutral",
+        "displayName": "云幕白",
+        "tonalRamp": [
+          "oklch(15.00% 0.0028 236.56)",
+          "oklch(26.43% 0.0049 236.56)",
+          "oklch(37.86% 0.0070 236.56)",
+          "oklch(49.29% 0.0083 236.56)",
+          "oklch(60.71% 0.0083 236.56)",
+          "oklch(72.14% 0.0083 236.56)",
+          "oklch(83.57% 0.0068 236.56)",
+          "oklch(95.00% 0.0021 236.56)"
+        ]
+      },
+      "menu-field": {
+        "role": "neutral",
+        "displayName": "首页斜切面",
+        "tonalRamp": [
+          "oklch(15.00% 0.0018 197.07)",
+          "oklch(26.43% 0.0031 197.07)",
+          "oklch(37.86% 0.0045 197.07)",
+          "oklch(49.29% 0.0053 197.07)",
+          "oklch(60.71% 0.0053 197.07)",
+          "oklch(72.14% 0.0053 197.07)",
+          "oklch(83.57% 0.0044 197.07)",
+          "oklch(95.00% 0.0013 197.07)"
+        ],
+        "canonical": "rgb(241 246 246 / 94%)"
+      },
+      "menu-shade": {
+        "role": "neutral",
+        "displayName": "首页轻暗层",
+        "tonalRamp": [
+          "oklch(15.00% 0.0207 242.43)",
+          "oklch(26.43% 0.0365 242.43)",
+          "oklch(37.86% 0.0523 242.43)",
+          "oklch(49.29% 0.0622 242.43)",
+          "oklch(60.71% 0.0622 242.43)",
+          "oklch(72.14% 0.0622 242.43)",
+          "oklch(83.57% 0.0511 242.43)",
+          "oklch(95.00% 0.0155 242.43)"
+        ],
+        "canonical": "rgb(22 59 85 / 9%)"
+      },
+      "run-sky": {
+        "role": "neutral",
+        "displayName": "对局载入天空",
+        "tonalRamp": [
+          "oklch(15.00% 0.0156 226.13)",
+          "oklch(26.43% 0.0275 226.13)",
+          "oklch(37.86% 0.0394 226.13)",
+          "oklch(49.29% 0.0469 226.13)",
+          "oklch(60.71% 0.0469 226.13)",
+          "oklch(72.14% 0.0469 226.13)",
+          "oklch(83.57% 0.0385 226.13)",
+          "oklch(95.00% 0.0117 226.13)"
+        ]
+      },
+      "hud-scrim": {
+        "role": "functional",
+        "displayName": "HUD 透明底",
+        "tonalRamp": [
+          "oklch(15.00% 0.0200 255.59)",
+          "oklch(26.43% 0.0353 255.59)",
+          "oklch(37.86% 0.0505 255.59)",
+          "oklch(49.29% 0.0600 255.59)",
+          "oklch(60.71% 0.0600 255.59)",
+          "oklch(72.14% 0.0600 255.59)",
+          "oklch(83.57% 0.0493 255.59)",
+          "oklch(95.00% 0.0150 255.59)"
+        ],
+        "canonical": "rgb(13 35 63 / 55%)"
+      },
+      "hud-inset-shade": {
+        "role": "functional",
+        "displayName": "计量槽内凹",
+        "tonalRamp": [
+          "oklch(15.00% 0.0000 0.00)",
+          "oklch(26.43% 0.0000 0.00)",
+          "oklch(37.86% 0.0000 0.00)",
+          "oklch(49.29% 0.0000 0.00)",
+          "oklch(60.71% 0.0000 0.00)",
+          "oklch(72.14% 0.0000 0.00)",
+          "oklch(83.57% 0.0000 0.00)",
+          "oklch(95.00% 0.0000 0.00)"
+        ],
+        "canonical": "rgb(0 0 0 / 30%)"
+      },
+      "emblem-light": {
+        "role": "functional",
+        "displayName": "徽章高光",
+        "tonalRamp": [
+          "oklch(15.00% 0.0368 93.90)",
+          "oklch(26.43% 0.0648 93.90)",
+          "oklch(37.86% 0.0928 93.90)",
+          "oklch(49.29% 0.1103 93.90)",
+          "oklch(60.71% 0.1103 93.90)",
+          "oklch(72.14% 0.1103 93.90)",
+          "oklch(83.57% 0.0906 93.90)",
+          "oklch(95.00% 0.0276 93.90)"
+        ]
+      },
+      "emblem-deep": {
+        "role": "functional",
+        "displayName": "徽章暗金",
+        "tonalRamp": [
+          "oklch(15.00% 0.0521 82.19)",
+          "oklch(26.43% 0.0918 82.19)",
+          "oklch(37.86% 0.1316 82.19)",
+          "oklch(49.29% 0.1564 82.19)",
+          "oklch(60.71% 0.1564 82.19)",
+          "oklch(72.14% 0.1564 82.19)",
+          "oklch(83.57% 0.1285 82.19)",
+          "oklch(95.00% 0.0391 82.19)"
+        ]
+      },
+      "hp-light": {
+        "role": "functional",
+        "displayName": "生命高光",
+        "tonalRamp": [
+          "oklch(15.00% 0.0509 138.76)",
+          "oklch(26.43% 0.0898 138.76)",
+          "oklch(37.86% 0.1286 138.76)",
+          "oklch(49.29% 0.1528 138.76)",
+          "oklch(60.71% 0.1528 138.76)",
+          "oklch(72.14% 0.1528 138.76)",
+          "oklch(83.57% 0.1256 138.76)",
+          "oklch(95.00% 0.0382 138.76)"
+        ]
+      },
+      "hp": {
+        "role": "functional",
+        "displayName": "生命绿",
+        "tonalRamp": [
+          "oklch(15.00% 0.0576 143.93)",
+          "oklch(26.43% 0.1014 143.93)",
+          "oklch(37.86% 0.1453 143.93)",
+          "oklch(49.29% 0.1727 143.93)",
+          "oklch(60.71% 0.1727 143.93)",
+          "oklch(72.14% 0.1727 143.93)",
+          "oklch(83.57% 0.1418 143.93)",
+          "oklch(95.00% 0.0432 143.93)"
+        ]
+      },
+      "hp-deep": {
+        "role": "functional",
+        "displayName": "生命深绿",
+        "tonalRamp": [
+          "oklch(15.00% 0.0506 145.42)",
+          "oklch(26.43% 0.0892 145.42)",
+          "oklch(37.86% 0.1278 145.42)",
+          "oklch(49.29% 0.1519 145.42)",
+          "oklch(60.71% 0.1519 145.42)",
+          "oklch(72.14% 0.1519 145.42)",
+          "oklch(83.57% 0.1248 145.42)",
+          "oklch(95.00% 0.0380 145.42)"
+        ]
+      },
+      "hp-low-light": {
+        "role": "functional",
+        "displayName": "低血高光",
+        "tonalRamp": [
+          "oklch(15.00% 0.0416 30.90)",
+          "oklch(26.43% 0.0732 30.90)",
+          "oklch(37.86% 0.1049 30.90)",
+          "oklch(49.29% 0.1247 30.90)",
+          "oklch(60.71% 0.1247 30.90)",
+          "oklch(72.14% 0.1247 30.90)",
+          "oklch(83.57% 0.1024 30.90)",
+          "oklch(95.00% 0.0312 30.90)"
+        ]
+      },
+      "hp-low": {
+        "role": "functional",
+        "displayName": "低血红",
+        "tonalRamp": [
+          "oklch(15.00% 0.0628 17.62)",
+          "oklch(26.43% 0.1107 17.62)",
+          "oklch(37.86% 0.1586 17.62)",
+          "oklch(49.29% 0.1885 17.62)",
+          "oklch(60.71% 0.1885 17.62)",
+          "oklch(72.14% 0.1885 17.62)",
+          "oklch(83.57% 0.1549 17.62)",
+          "oklch(95.00% 0.0471 17.62)"
+        ]
+      },
+      "hp-low-deep": {
+        "role": "functional",
+        "displayName": "低血深红",
+        "tonalRamp": [
+          "oklch(15.00% 0.0608 17.91)",
+          "oklch(26.43% 0.1070 17.91)",
+          "oklch(37.86% 0.1533 17.91)",
+          "oklch(49.29% 0.1823 17.91)",
+          "oklch(60.71% 0.1823 17.91)",
+          "oklch(72.14% 0.1823 17.91)",
+          "oklch(83.57% 0.1497 17.91)",
+          "oklch(95.00% 0.0456 17.91)"
+        ]
+      },
+      "hit-flash": {
+        "role": "functional",
+        "displayName": "受击闪框",
+        "tonalRamp": [
+          "oklch(15.00% 0.0585 16.72)",
+          "oklch(26.43% 0.1031 16.72)",
+          "oklch(37.86% 0.1477 16.72)",
+          "oklch(49.29% 0.1756 16.72)",
+          "oklch(60.71% 0.1756 16.72)",
+          "oklch(72.14% 0.1756 16.72)",
+          "oklch(83.57% 0.1442 16.72)",
+          "oklch(95.00% 0.0439 16.72)"
+        ]
+      },
+      "boss-hp": {
+        "role": "functional",
+        "displayName": "首领血红",
+        "tonalRamp": [
+          "oklch(15.00% 0.0654 18.03)",
+          "oklch(26.43% 0.1152 18.03)",
+          "oklch(37.86% 0.1651 18.03)",
+          "oklch(49.29% 0.1962 18.03)",
+          "oklch(60.71% 0.1962 18.03)",
+          "oklch(72.14% 0.1962 18.03)",
+          "oklch(83.57% 0.1612 18.03)",
+          "oklch(95.00% 0.0491 18.03)"
+        ]
+      },
+      "boss-hp-deep": {
+        "role": "functional",
+        "displayName": "首领深红",
+        "tonalRamp": [
+          "oklch(15.00% 0.0604 17.28)",
+          "oklch(26.43% 0.1065 17.28)",
+          "oklch(37.86% 0.1525 17.28)",
+          "oklch(49.29% 0.1813 17.28)",
+          "oklch(60.71% 0.1813 17.28)",
+          "oklch(72.14% 0.1813 17.28)",
+          "oklch(83.57% 0.1489 17.28)",
+          "oklch(95.00% 0.0453 17.28)"
+        ]
+      },
+      "xp": {
+        "role": "functional",
+        "displayName": "经验蓝",
+        "tonalRamp": [
+          "oklch(15.00% 0.0424 233.20)",
+          "oklch(26.43% 0.0747 233.20)",
+          "oklch(37.86% 0.1071 233.20)",
+          "oklch(49.29% 0.1273 233.20)",
+          "oklch(60.71% 0.1273 233.20)",
+          "oklch(72.14% 0.1273 233.20)",
+          "oklch(83.57% 0.1045 233.20)",
+          "oklch(95.00% 0.0318 233.20)"
+        ]
+      },
+      "xp-light": {
+        "role": "functional",
+        "displayName": "经验浅蓝",
+        "tonalRamp": [
+          "oklch(15.00% 0.0235 225.23)",
+          "oklch(26.43% 0.0414 225.23)",
+          "oklch(37.86% 0.0594 225.23)",
+          "oklch(49.29% 0.0706 225.23)",
+          "oklch(60.71% 0.0706 225.23)",
+          "oklch(72.14% 0.0706 225.23)",
+          "oklch(83.57% 0.0580 225.23)",
+          "oklch(95.00% 0.0176 225.23)"
+        ]
+      },
+      "rampage-ink": {
+        "role": "functional",
+        "displayName": "暴走数字",
+        "tonalRamp": [
+          "oklch(15.00% 0.0234 18.60)",
+          "oklch(26.43% 0.0413 18.60)",
+          "oklch(37.86% 0.0591 18.60)",
+          "oklch(49.29% 0.0702 18.60)",
+          "oklch(60.71% 0.0702 18.60)",
+          "oklch(72.14% 0.0702 18.60)",
+          "oklch(83.57% 0.0577 18.60)",
+          "oklch(95.00% 0.0176 18.60)"
+        ]
+      },
+      "rampage-stroke": {
+        "role": "functional",
+        "displayName": "暴走描边",
+        "tonalRamp": [
+          "oklch(15.00% 0.0361 14.95)",
+          "oklch(26.43% 0.0637 14.95)",
+          "oklch(37.86% 0.0912 14.95)",
+          "oklch(49.29% 0.1084 14.95)",
+          "oklch(60.71% 0.1084 14.95)",
+          "oklch(72.14% 0.1084 14.95)",
+          "oklch(83.57% 0.0890 14.95)",
+          "oklch(95.00% 0.0271 14.95)"
+        ]
+      },
+      "rampage-scrim": {
+        "role": "functional",
+        "displayName": "暴走副行底",
+        "tonalRamp": [
+          "oklch(15.00% 0.0530 18.42)",
+          "oklch(26.43% 0.0934 18.42)",
+          "oklch(37.86% 0.1338 18.42)",
+          "oklch(49.29% 0.1590 18.42)",
+          "oklch(60.71% 0.1590 18.42)",
+          "oklch(72.14% 0.1590 18.42)",
+          "oklch(83.57% 0.1306 18.42)",
+          "oklch(95.00% 0.0398 18.42)"
+        ],
+        "canonical": "rgb(150 24 46 / 82%)"
+      },
+      "hurt-vignette": {
+        "role": "functional",
+        "displayName": "受击边缘",
+        "tonalRamp": [
+          "oklch(15.00% 0.0669 22.48)",
+          "oklch(26.43% 0.1180 22.48)",
+          "oklch(37.86% 0.1690 22.48)",
+          "oklch(49.29% 0.2008 22.48)",
+          "oklch(60.71% 0.2008 22.48)",
+          "oklch(72.14% 0.2008 22.48)",
+          "oklch(83.57% 0.1650 22.48)",
+          "oklch(95.00% 0.0502 22.48)"
+        ],
+        "canonical": "rgb(200 30 50 / 55%)"
+      },
+      "low-hp-vignette": {
+        "role": "functional",
+        "displayName": "低血边缘",
+        "tonalRamp": [
+          "oklch(15.00% 0.0669 22.48)",
+          "oklch(26.43% 0.1180 22.48)",
+          "oklch(37.86% 0.1690 22.48)",
+          "oklch(49.29% 0.2008 22.48)",
+          "oklch(60.71% 0.2008 22.48)",
+          "oklch(72.14% 0.2008 22.48)",
+          "oklch(83.57% 0.1650 22.48)",
+          "oklch(95.00% 0.0502 22.48)"
+        ],
+        "canonical": "rgb(200 30 50 / 35%)"
+      },
+      "dash-empty": {
+        "role": "functional",
+        "displayName": "冲刺冷却",
+        "tonalRamp": [
+          "oklch(15.00% 0.0066 240.77)",
+          "oklch(26.43% 0.0116 240.77)",
+          "oklch(37.86% 0.0166 240.77)",
+          "oklch(49.29% 0.0198 240.77)",
+          "oklch(60.71% 0.0198 240.77)",
+          "oklch(72.14% 0.0198 240.77)",
+          "oklch(83.57% 0.0162 240.77)",
+          "oklch(95.00% 0.0049 240.77)"
+        ]
+      },
+      "hit-weak": {
+        "role": "functional",
+        "displayName": "被抵抗伤害",
+        "tonalRamp": [
+          "oklch(15.00% 0.0047 247.99)",
+          "oklch(26.43% 0.0082 247.99)",
+          "oklch(37.86% 0.0118 247.99)",
+          "oklch(49.29% 0.0140 247.99)",
+          "oklch(60.71% 0.0140 247.99)",
+          "oklch(72.14% 0.0140 247.99)",
+          "oklch(83.57% 0.0115 247.99)",
+          "oklch(95.00% 0.0035 247.99)"
+        ]
+      },
+      "dev-ink": {
+        "role": "functional",
+        "displayName": "开发面板字",
+        "tonalRamp": [
+          "oklch(15.00% 0.0218 145.04)",
+          "oklch(26.43% 0.0385 145.04)",
+          "oklch(37.86% 0.0551 145.04)",
+          "oklch(49.29% 0.0655 145.04)",
+          "oklch(60.71% 0.0655 145.04)",
+          "oklch(72.14% 0.0655 145.04)",
+          "oklch(83.57% 0.0538 145.04)",
+          "oklch(95.00% 0.0164 145.04)"
+        ]
+      },
+      "rarity-common": {
+        "role": "functional",
+        "displayName": "普通稀有度",
+        "tonalRamp": [
+          "oklch(15.00% 0.0116 244.10)",
+          "oklch(26.43% 0.0204 244.10)",
+          "oklch(37.86% 0.0293 244.10)",
+          "oklch(49.29% 0.0348 244.10)",
+          "oklch(60.71% 0.0348 244.10)",
+          "oklch(72.14% 0.0348 244.10)",
+          "oklch(83.57% 0.0286 244.10)",
+          "oklch(95.00% 0.0087 244.10)"
+        ]
+      },
+      "rarity-rare": {
+        "role": "functional",
+        "displayName": "稀有",
+        "tonalRamp": [
+          "oklch(15.00% 0.0489 251.28)",
+          "oklch(26.43% 0.0862 251.28)",
+          "oklch(37.86% 0.1235 251.28)",
+          "oklch(49.29% 0.1468 251.28)",
+          "oklch(60.71% 0.1468 251.28)",
+          "oklch(72.14% 0.1468 251.28)",
+          "oklch(83.57% 0.1206 251.28)",
+          "oklch(95.00% 0.0367 251.28)"
+        ]
+      },
+      "rarity-epic": {
+        "role": "functional",
+        "displayName": "史诗",
+        "tonalRamp": [
+          "oklch(15.00% 0.0658 306.25)",
+          "oklch(26.43% 0.1159 306.25)",
+          "oklch(37.86% 0.1659 306.25)",
+          "oklch(49.29% 0.1973 306.25)",
+          "oklch(60.71% 0.1973 306.25)",
+          "oklch(72.14% 0.1973 306.25)",
+          "oklch(83.57% 0.1620 306.25)",
+          "oklch(95.00% 0.0493 306.25)"
+        ]
+      },
+      "rarity-legendary": {
+        "role": "functional",
+        "displayName": "传说",
+        "tonalRamp": [
+          "oklch(15.00% 0.0539 75.44)",
+          "oklch(26.43% 0.0950 75.44)",
+          "oklch(37.86% 0.1361 75.44)",
+          "oklch(49.29% 0.1618 75.44)",
+          "oklch(60.71% 0.1618 75.44)",
+          "oklch(72.14% 0.1618 75.44)",
+          "oklch(83.57% 0.1329 75.44)",
+          "oklch(95.00% 0.0404 75.44)"
+        ]
+      },
+      "type-fire": {
+        "role": "functional",
+        "displayName": "火属性",
+        "tonalRamp": [
+          "oklch(15.00% 0.0584 44.54)",
+          "oklch(26.43% 0.1029 44.54)",
+          "oklch(37.86% 0.1474 44.54)",
+          "oklch(49.29% 0.1752 44.54)",
+          "oklch(60.71% 0.1752 44.54)",
+          "oklch(72.14% 0.1752 44.54)",
+          "oklch(83.57% 0.1439 44.54)",
+          "oklch(95.00% 0.0438 44.54)"
+        ]
+      },
+      "type-fire-soft": {
+        "role": "functional",
+        "displayName": "火属性浅底",
+        "tonalRamp": [
+          "oklch(15.00% 0.0136 55.35)",
+          "oklch(26.43% 0.0240 55.35)",
+          "oklch(37.86% 0.0344 55.35)",
+          "oklch(49.29% 0.0409 55.35)",
+          "oklch(60.71% 0.0409 55.35)",
+          "oklch(72.14% 0.0409 55.35)",
+          "oklch(83.57% 0.0336 55.35)",
+          "oklch(95.00% 0.0102 55.35)"
+        ]
+      },
+      "type-water": {
+        "role": "functional",
+        "displayName": "水属性",
+        "tonalRamp": [
+          "oklch(15.00% 0.0499 248.54)",
+          "oklch(26.43% 0.0880 248.54)",
+          "oklch(37.86% 0.1261 248.54)",
+          "oklch(49.29% 0.1498 248.54)",
+          "oklch(60.71% 0.1498 248.54)",
+          "oklch(72.14% 0.1498 248.54)",
+          "oklch(83.57% 0.1231 248.54)",
+          "oklch(95.00% 0.0375 248.54)"
+        ]
+      },
+      "type-water-soft": {
+        "role": "functional",
+        "displayName": "水属性浅底",
+        "tonalRamp": [
+          "oklch(15.00% 0.0116 244.19)",
+          "oklch(26.43% 0.0205 244.19)",
+          "oklch(37.86% 0.0293 244.19)",
+          "oklch(49.29% 0.0348 244.19)",
+          "oklch(60.71% 0.0348 244.19)",
+          "oklch(72.14% 0.0348 244.19)",
+          "oklch(83.57% 0.0286 244.19)",
+          "oklch(95.00% 0.0087 244.19)"
+        ]
+      },
+      "type-grass": {
+        "role": "functional",
+        "displayName": "草属性",
+        "tonalRamp": [
+          "oklch(15.00% 0.0550 142.65)",
+          "oklch(26.43% 0.0968 142.65)",
+          "oklch(37.86% 0.1387 142.65)",
+          "oklch(49.29% 0.1649 142.65)",
+          "oklch(60.71% 0.1649 142.65)",
+          "oklch(72.14% 0.1649 142.65)",
+          "oklch(83.57% 0.1354 142.65)",
+          "oklch(95.00% 0.0412 142.65)"
+        ]
+      },
+      "type-grass-soft": {
+        "role": "functional",
+        "displayName": "草属性浅底",
+        "tonalRamp": [
+          "oklch(15.00% 0.0167 136.12)",
+          "oklch(26.43% 0.0294 136.12)",
+          "oklch(37.86% 0.0421 136.12)",
+          "oklch(49.29% 0.0500 136.12)",
+          "oklch(60.71% 0.0500 136.12)",
+          "oklch(72.14% 0.0500 136.12)",
+          "oklch(83.57% 0.0411 136.12)",
+          "oklch(95.00% 0.0125 136.12)"
+        ]
+      },
+      "type-electric": {
+        "role": "functional",
+        "displayName": "电属性",
+        "tonalRamp": [
+          "oklch(15.00% 0.0511 85.21)",
+          "oklch(26.43% 0.0900 85.21)",
+          "oklch(37.86% 0.1289 85.21)",
+          "oklch(49.29% 0.1532 85.21)",
+          "oklch(60.71% 0.1532 85.21)",
+          "oklch(72.14% 0.1532 85.21)",
+          "oklch(83.57% 0.1258 85.21)",
+          "oklch(95.00% 0.0383 85.21)"
+        ]
+      },
+      "type-electric-soft": {
+        "role": "functional",
+        "displayName": "电属性浅底",
+        "tonalRamp": [
+          "oklch(15.00% 0.0211 94.68)",
+          "oklch(26.43% 0.0372 94.68)",
+          "oklch(37.86% 0.0533 94.68)",
+          "oklch(49.29% 0.0633 94.68)",
+          "oklch(60.71% 0.0633 94.68)",
+          "oklch(72.14% 0.0633 94.68)",
+          "oklch(83.57% 0.0520 94.68)",
+          "oklch(95.00% 0.0158 94.68)"
+        ]
+      },
+      "type-normal": {
+        "role": "functional",
+        "displayName": "一般属性",
+        "tonalRamp": [
+          "oklch(15.00% 0.0085 93.47)",
+          "oklch(26.43% 0.0150 93.47)",
+          "oklch(37.86% 0.0215 93.47)",
+          "oklch(49.29% 0.0255 93.47)",
+          "oklch(60.71% 0.0255 93.47)",
+          "oklch(72.14% 0.0255 93.47)",
+          "oklch(83.57% 0.0210 93.47)",
+          "oklch(95.00% 0.0064 93.47)"
+        ]
+      },
+      "type-normal-soft": {
+        "role": "functional",
+        "displayName": "一般属性浅底",
+        "tonalRamp": [
+          "oklch(15.00% 0.0037 89.72)",
+          "oklch(26.43% 0.0065 89.72)",
+          "oklch(37.86% 0.0094 89.72)",
+          "oklch(49.29% 0.0111 89.72)",
+          "oklch(60.71% 0.0111 89.72)",
+          "oklch(72.14% 0.0111 89.72)",
+          "oklch(83.57% 0.0092 89.72)",
+          "oklch(95.00% 0.0028 89.72)"
+        ]
+      },
+      "type-poison": {
+        "role": "functional",
+        "displayName": "毒属性",
+        "tonalRamp": [
+          "oklch(15.00% 0.0621 310.67)",
+          "oklch(26.43% 0.1094 310.67)",
+          "oklch(37.86% 0.1566 310.67)",
+          "oklch(49.29% 0.1862 310.67)",
+          "oklch(60.71% 0.1862 310.67)",
+          "oklch(72.14% 0.1862 310.67)",
+          "oklch(83.57% 0.1530 310.67)",
+          "oklch(95.00% 0.0466 310.67)"
+        ]
+      },
+      "type-poison-soft": {
+        "role": "functional",
+        "displayName": "毒属性浅底",
+        "tonalRamp": [
+          "oklch(15.00% 0.0151 314.59)",
+          "oklch(26.43% 0.0267 314.59)",
+          "oklch(37.86% 0.0382 314.59)",
+          "oklch(49.29% 0.0454 314.59)",
+          "oklch(60.71% 0.0454 314.59)",
+          "oklch(72.14% 0.0454 314.59)",
+          "oklch(83.57% 0.0373 314.59)",
+          "oklch(95.00% 0.0114 314.59)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Latin 字标",
+        "purpose": "本地 ChillRoundF 衍生字体，仅用于 poketone 字标。"
+      },
+      "headline": {
+        "displayName": "场景标题牌",
+        "purpose": "顶部标题牌、选卡标题牌、结算标题、守卫横幅；紧凑档取 headline-compact。"
+      },
+      "headline-compact": {
+        "displayName": "标题牌（紧凑）",
+        "purpose": "高度 ≤480px 横屏时 --type-headline 的取值。"
+      },
+      "subject": {
+        "displayName": "伙伴名",
+        "purpose": "伙伴选择详情名；预览角色名沿用同值 clamp；紧凑 22px。"
+      },
+      "hud": {
+        "displayName": "计时数字",
+        "purpose": "HUD 计时，tabular-nums 并加 navy-deep 描边。"
+      },
+      "hud-compact": {
+        "displayName": "计时数字（紧凑）",
+        "purpose": "高度 ≤480px 横屏时 --type-hud 的取值。"
+      },
+      "hit-crit": {
+        "displayName": "会心飘字",
+        "purpose": "会心伤害数字基准，再乘 --magnitude；不进紧凑档。"
+      },
+      "menu-command": {
+        "displayName": "首页指令",
+        "purpose": "主菜单纵向指令；短横屏 18px，高度 ≤410px 为 17px。"
+      },
+      "title": {
+        "displayName": "窗口标题",
+        "purpose": "卡面名称、弹窗 / Panel 标题、事件横幅。"
+      },
+      "title-compact": {
+        "displayName": "窗口标题（紧凑）",
+        "purpose": "高度 ≤480px 横屏时 --type-title 的取值。"
+      },
+      "name": {
+        "displayName": "名称数值",
+        "purpose": "伙伴格名称、等级数字、HP / 速度数值。"
+      },
+      "hit": {
+        "displayName": "伤害飘字",
+        "purpose": "普通伤害数字基准，再乘 --magnitude；不进紧凑档。"
+      },
+      "prose": {
+        "displayName": "弹窗正文",
+        "purpose": "通用 Dialog 正文，16px / 1.65。"
+      },
+      "label": {
+        "displayName": "指令标签",
+        "purpose": "按钮、招式名、首领名、结算行、提示横幅；不随紧凑档缩小。"
+      },
+      "body": {
+        "displayName": "正文",
+        "purpose": "卡面效果行、特性说明、定位；紧凑取 body-compact。"
+      },
+      "name-compact": {
+        "displayName": "名称数值（紧凑）",
+        "purpose": "高度 ≤480px 横屏时 --type-name 的取值。"
+      },
+      "description": {
+        "displayName": "辅助说明",
+        "purpose": "通用控件说明与 small 按钮。"
+      },
+      "hit-weak": {
+        "displayName": "被抵抗飘字",
+        "purpose": "被抵抗伤害数字基准，再乘 --magnitude。"
+      },
+      "caption": {
+        "displayName": "副行",
+        "purpose": "副行、类别、属性标签、HP 数字、招式形态、记录。"
+      },
+      "body-compact": {
+        "displayName": "正文（紧凑）",
+        "purpose": "高度 ≤480px 横屏时 --type-body 的取值。"
+      },
+      "caption-compact": {
+        "displayName": "副行（紧凑）",
+        "purpose": "高度 ≤480px 横屏时 --type-caption 的取值。"
+      },
+      "data": {
+        "displayName": "开发数据",
+        "purpose": "仅开发者面板，等宽 12px。"
+      },
+      "badge": {
+        "displayName": "角标",
+        "purpose": "格子等级角标、「初始」、按键提示；全站最小字号。"
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-hud",
+        "value": "0 4px 10px rgb(13 35 63 / 22%)",
+        "purpose": "--shadow-hud：HUD 格子、冲刺、圆形 HUD 按钮、横幅。"
+      },
+      {
+        "name": "shadow-raised",
+        "value": "0 6px 16px rgb(13 35 63 / 18%)",
+        "purpose": "--shadow-raised：伙伴格、出发栏、标题牌。"
+      },
+      {
+        "name": "shadow-window",
+        "value": "0 12px 32px rgb(13 35 63 / 25%)",
+        "purpose": "--shadow-window：通用 Panel、详情窗、选卡卡面、短消息；首页菜单不使用阴影。"
+      },
+      {
+        "name": "shadow-modal",
+        "value": "0 20px 70px rgb(13 35 63 / 40%)",
+        "purpose": "--shadow-modal：Dialog 与对局弹窗的下投影。"
+      },
+      {
+        "name": "dialog",
+        "value": "inset 0 0 0 1px var(--yellow, #ffd45b), var(--shadow-modal, 0 20px 70px rgb(13 35 63 / 40%))",
+        "purpose": "原生 Dialog 与 .run-modal：1px 暖黄内线 + modal 层。"
+      },
+      {
+        "name": "run-modal-dim",
+        "value": "0 0 0 100vmax rgb(13 35 63 / 45%)",
+        "purpose": "对局弹窗不在 top layer，用外扩阴影压暗画面。"
+      },
+      {
+        "name": "title-plate",
+        "value": "inset 0 0 0 3px var(--blue-deep, #173f70), var(--shadow-raised, 0 6px 16px rgb(13 35 63 / 18%))",
+        "purpose": "顶部标题牌的 blue-deep 内线 + raised 层；选卡标题牌只取内线。"
+      },
+      {
+        "name": "choice-tone-strip",
+        "value": "inset 0 8px 0 var(--tone), var(--shadow-window, 0 12px 32px rgb(13 35 63 / 25%))",
+        "purpose": "选卡顶部 8px 稀有度 / 属性 / 道具色条。"
+      },
+      {
+        "name": "vitals-lift",
+        "value": "drop-shadow(0 2px 3px rgb(13 35 63 / 35%))",
+        "purpose": "filter：生命组无底板，把徽章与计量条一起托离草地。"
+      },
+      {
+        "name": "meter-groove",
+        "value": "inset 0 2px 3px rgb(0 0 0 / 30%)",
+        "purpose": "计量条 hud-scrim 轨道的凹槽。"
+      },
+      {
+        "name": "meter-gloss",
+        "value": "inset 0 2px 0 rgb(255 255 255 / 35%)",
+        "purpose": "HP / 首领填充顶部 2px 高光；XP 不使用。"
+      },
+      {
+        "name": "hp-flash",
+        "value": "0 0 0 2px rgb(255 111 125 / 70%), inset 0 2px 3px rgb(0 0 0 / 30%)",
+        "purpose": "受击时 HP 框起始帧，420ms 内消退。"
+      },
+      {
+        "name": "workshop-window",
+        "value": "inset 0 0 0 1px var(--ice, #d8effb), 0 10px 28px rgb(13 35 63 / 22%)",
+        "purpose": "工坊浅内容窗的内缘与层次。"
+      },
+      {
+        "name": "preview-tools",
+        "value": "inset 0 0 0 1px var(--ice, #d8effb), 0 10px 28px rgb(20 47 80 / 22%)",
+        "purpose": "模型预览指令窗。"
+      },
+      {
+        "name": "button-rest",
+        "value": "inset 0 1px 0 rgb(255 255 255 / 35%), 0 3px 6px rgb(13 35 63 / 10%)",
+        "purpose": "按钮静止状态。"
+      },
+      {
+        "name": "button-hover",
+        "value": "inset 0 1px 0 rgb(255 255 255 / 45%), 0 6px 12px rgb(13 35 63 / 20%)",
+        "purpose": "可用按钮悬停。"
+      },
+      {
+        "name": "button-active",
+        "value": "inset 0 2px 3px rgb(13 35 63 / 15%)",
+        "purpose": "按钮按下。"
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "按钮、游标、窗口及工具滑动。"
+      },
+      {
+        "name": "control-color",
+        "value": "120ms",
+        "purpose": "按钮与选项颜色/边缘反馈。"
+      },
+      {
+        "name": "cursor-opacity",
+        "value": "100ms",
+        "purpose": "游标出现。"
+      },
+      {
+        "name": "control-transform",
+        "value": "150ms",
+        "purpose": "按钮和游标位移。"
+      },
+      {
+        "name": "workshop-enter",
+        "value": "200ms",
+        "purpose": "分类内容窗口入场。"
+      },
+      {
+        "name": "preview-slide",
+        "value": "280ms",
+        "purpose": "指令展开/收起与舞台空间。"
+      },
+      {
+        "name": "dialog-opacity",
+        "value": "140ms ease-out",
+        "purpose": "弹窗与遮罩透明度。"
+      },
+      {
+        "name": "dialog-transform",
+        "value": "220ms",
+        "purpose": "弹窗入场位移与缩放。"
+      },
+      {
+        "name": "toast-transform",
+        "value": "200ms",
+        "purpose": "短消息进退。"
+      },
+      {
+        "name": "scene-cover",
+        "value": "260ms cubic-bezier(0.22, 0.75, 0.25, 1)",
+        "purpose": "云幕完整遮盖。"
+      },
+      {
+        "name": "scene-reveal",
+        "value": "340ms cubic-bezier(0.4, 0, 0.24, 1)",
+        "purpose": "提交目标后揭幕。"
+      },
+      {
+        "name": "run-hp-fill",
+        "value": "transform 120ms linear",
+        "purpose": "HP / XP / 首领填充追随当前值。"
+      },
+      {
+        "name": "run-hp-trail",
+        "value": "right 420ms cubic-bezier(0.4, 0, 0.6, 1) 350ms",
+        "purpose": "掉血段右沿（旧值）停留 350ms（--chip-hold）后 420ms 追上当前值。"
+      },
+      {
+        "name": "run-chip-swell",
+        "value": "530ms linear keyframes: 0% 2× 高白色 → 38% 转 yellow → 66% 仍 2× → 100% 180ms ease-out 回到条内",
+        "purpose": "每次命中（data-hit odd/even 切换）重启；与 src/run/view/healthBars.ts 的 CHIP_HOLD 0.35s / 180ms 回落一致。"
+      },
+      {
+        "name": "run-hit-shake",
+        "value": "300ms ease-out",
+        "purpose": "受击（.run-overlay.is-hurt）时生命组 ±3px 抖动。"
+      },
+      {
+        "name": "run-hp-flash",
+        "value": "420ms ease-out",
+        "purpose": "受击时 HP 框从 hit-flash 消退。"
+      },
+      {
+        "name": "run-hurt-vignette",
+        "value": "380ms ease-out",
+        "purpose": "受击边缘径向闪。"
+      },
+      {
+        "name": "run-low-hp-pulse",
+        "value": "700ms ease-in-out infinite alternate",
+        "purpose": "HP <30% 填充 brightness 呼吸。"
+      },
+      {
+        "name": "run-low-hp-vignette",
+        "value": "1.1s ease-in-out infinite alternate",
+        "purpose": "低血画面边缘呼吸。"
+      },
+      {
+        "name": "run-number-pop",
+        "value": "280ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "purpose": "伤害数字内层 .run-number__pop 缩放 2.1 → 0.86 → 1；只动内层。"
+      },
+      {
+        "name": "run-number-pop-crit",
+        "value": "340ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "purpose": "会心数字弹出时长。"
+      },
+      {
+        "name": "run-banner-in",
+        "value": "260ms var(--ease-out)",
+        "purpose": "横幅入场（上移 10px + 0.96 缩放）。"
+      },
+      {
+        "name": "run-banner-hold",
+        "value": "900ms / 2600ms",
+        "purpose": "提示横幅停留 0.9s，其余 2.6s；最多三条。"
+      },
+      {
+        "name": "run-overlay-fade",
+        "value": "180ms ease-out",
+        "purpose": "选卡遮罩与对局弹窗淡入。"
+      },
+      {
+        "name": "run-card-in",
+        "value": "260ms var(--ease-out), stagger 50ms",
+        "purpose": "三张卡依次入场。"
+      },
+      {
+        "name": "run-card-hover",
+        "value": "transform 140ms var(--ease-out), background-color 140ms",
+        "purpose": "卡面悬停 / 焦点上移 6px 转白底。"
+      },
+      {
+        "name": "run-loading-hop",
+        "value": "600ms ease-in-out infinite alternate",
+        "purpose": "载入立绘上下跳动 12px。"
+      },
+      {
+        "name": "starter-tile",
+        "value": "transform 160ms var(--ease-out), background-color 160ms",
+        "purpose": "伙伴格选中右移与底色。"
+      },
+      {
+        "name": "starter-portrait-pop",
+        "value": "320ms var(--ease-out)",
+        "purpose": "切换伙伴时详情立绘弹入。"
+      },
+      {
+        "name": "run-map-in",
+        "value": "160ms var(--ease-out)",
+        "purpose": "大地图遮罩淡入。"
+      },
+      {
+        "name": "minimap-danger",
+        "value": "指数缓动，时间常数约 0.4s（canvas，每帧 dt × 2.5）",
+        "purpose": "小地图纸面 86% → 98%、敌群点 75% → 100% 随 9 单位内危险度变化，不闪烁。"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "workshop-compact",
+        "value": "(max-width: 950px)"
+      },
+      {
+        "name": "portrait-rotation-notice",
+        "value": "(max-width: 700px) and (orientation: portrait)"
+      },
+      {
+        "name": "small-components",
+        "value": "(max-width: 520px)"
+      },
+      {
+        "name": "short-landscape",
+        "value": "(max-height: 560px) and (orientation: landscape)"
+      },
+      {
+        "name": "short-preview-landscape",
+        "value": "(max-height: 500px) and (orientation: landscape)"
+      },
+      {
+        "name": "compact-tier",
+        "value": "(max-height: 480px) and (orientation: landscape)"
+      },
+      {
+        "name": "narrow-landscape",
+        "value": "(max-width: 700px) and (orientation: landscape)"
+      },
+      {
+        "name": "compact-menu-landscape",
+        "value": "(max-height: 410px) and (orientation: landscape)"
+      },
+      {
+        "name": "compact-landscape",
+        "value": "(max-height: 350px) and (orientation: landscape)"
+      },
+      {
+        "name": "coarse-pointer",
+        "value": "(pointer: coarse)"
+      }
+    ],
+    "metadata": {
+      "sources": [
+        "src/styles.css",
+        "src/ui/ui.css",
+        "src/fonts.css",
+        "src/ui/Button.tsx",
+        "src/ui/Toggle.tsx",
+        "src/ui/Dialog.tsx",
+        "src/ui/Toast.tsx",
+        "src/ui/TextField.tsx",
+        "src/ui/Select.tsx",
+        "src/ui/Stepper.tsx",
+        "src/ui/Slider.tsx",
+        "src/ui/SegmentedControl.tsx",
+        "src/ui/ProgressBar.tsx",
+        "src/ui/ResourceMeter.tsx",
+        "src/ui/CurrencyCounter.tsx",
+        "src/ui/StatusEffects.tsx",
+        "src/ui/PartyList.tsx",
+        "src/ui/ItemSlot.tsx",
+        "src/ui/Hotbar.tsx",
+        "src/ui/CooldownButton.tsx",
+        "src/ui/HintPopover.tsx",
+        "src/ui/QuestTracker.tsx",
+        "src/ui/DialogueBox.tsx",
+        "src/ui/hud-components.css",
+        "src/ui/inventory-components.css",
+        "src/ui/narrative-components.css",
+        "src/screens/GameComponentExamples.tsx",
+        "src/screens/game-component-examples.css",
+        "src/ui/field-controls.css",
+        "src/ui/choice-controls.css",
+        "src/ui/navigateCommands.ts",
+        "src/ui/useSceneTransition.ts",
+        "src/ui/transition.css",
+        "src/screens/Workshop.tsx",
+        "src/screens/workshop.css",
+        "src/screens/ModelPreview.tsx",
+        "src/screens/model-preview.css",
+        "src/ui/LandscapeNotice.tsx",
+        "src/App.tsx",
+        "src/screens/StarterSelect.tsx",
+        "src/screens/starter-select.css",
+        "src/screens/RunScreen.tsx",
+        "src/screens/run-screen.css",
+        "src/ui/type-colors.css",
+        "src/ui/Icon.tsx",
+        "src/run/view/minimap.ts",
+        "src/run/view/minimapBake.ts",
+        "src/run/view/minimapLayers.ts",
+        "src/run/view/minimap.css",
+        "src/run/createRun.ts"
+      ],
+      "primitiveSource": "DESIGN.md YAML frontmatter；本 sidecar 不另建颜色、排版、圆角、间距或组件原子表。",
+      "tonalRampPurpose": "从当前源色计算的8步 OKLCH 展示条，仅供色板浏览；不代表额外产品状态、可用主题或生产色阶。",
+      "snippetBoundary": "33个独立HTML/CSS展示片段；后七个（HUD 生命组、招式/道具格、圆形 HUD 按钮、冲刺键、选卡卡面、对局弹窗、出发栏）从 RunScreen / StarterSelect 的 DOM 与 run-screen.css / starter-select.css 提取为 ds- 预览，引用 :root token 并带当前值回退；招式与道具图标以内联 SVG 占位，实机为 webp。--fill / --trail / --ready / is-hurt 是静态演示值，不模拟 createRun 运行时。 小地图与大地图实机为 canvas 每帧绘制（烘焙底图 + 标记层），片段用内联 SVG 近似色带、崖线、水面、平台与标记，颜色取 minimapBake.ts / minimapLayers.ts 的字面值；危险度、守卫箭头呼吸与相机旋转为运行时行为，不模拟。 两条地图片段不带 refersTo：DESIGN.md 前置没有对应组件原子（canvas 内容装不进 8 属性），本轮未改前置。",
+      "verificationEvidence": "早前：工坊三组游戏组件在1440×900、844×390、568×320无页面或窗口横向溢出，竖屏提示往返保留物品状态。本次 sidecar 刷新：逐项比对 styles.css :root 与两处覆盖、run-screen.css、starter-select.css、ui.css 的阴影、动效、断点与组件值；colorMeta / typographyMeta 键与 DESIGN.md 前置一一对应，组件 refersTo 均存在于前置。未在浏览器中渲染新增片段。浏览器/触控模拟不等于实机认证。 小地图刷新（本轮）：两条新片段逐值比对 minimap.css、minimap.ts、minimapBake.ts、minimapLayers.ts 与 createRun.ts 的暂停归属；未在浏览器中渲染。",
+      "approvalBoundary": "用户明确要求延续之前首页浅色斜切分区与轻量菜单，手机只支持横屏；功能窗口规则不覆盖首页，没有获批的精确像素稿。",
+      "settingsBoundary": "声音、开发者模式与界面缩放按浏览器保存在本地存储；动效只有一套，不提供减少动态。",
+      "inputBoundary": "当前键鼠与触控；无已实现的手柄或重映射支持。",
+      "assetBoundary": "public/art 中海岸景观随资源来源记录；首页标记由代码绘制，不使用后来生成的罗盘。字体来源及OFL在public/fonts，模型来源独立记录。",
+      "notCanonized": "首页深蓝金边大框与罗盘替换被用户撤回；竖屏游戏布局不再支持。模型制作限制和旧提案不纳入UI规则。横幅基础样式（navy 86%）在当前三种 tone（info / danger / boss）下不会单独出现，未作为独立变体收录片段。 小地图精英紫 #9a4fc7 与森林 / 地形色带是 canvas 字面值，未进 DESIGN.md 前置色板，故不建 colorMeta。"
+    }
+  },
+  "components": [
+    {
+      "name": "ResourceMeter 资源槽",
+      "kind": "input",
+      "refersTo": "resource-meter",
+      "description": "原生meter静态显示；数值由调用者提供。",
+      "html": "<div class=\"ds-game-preview\"><div class=\"ds-resource ds-resource--health\" data-low=\"false\"><div class=\"ds-resource__heading\"><span id=\"_r_i_\" class=\"ds-resource__label\">潮汐生命</span><span class=\"ds-resource__reading\"><span class=\"ds-resource__value\">75 / 100</span></span></div><meter class=\"ds-resource__meter\" min=\"0\" max=\"100\" value=\"75\" aria-labelledby=\"_r_i_\" aria-valuetext=\"75 / 100\">75 / 100</meter></div></div>",
+      "css": ".ds-game-preview{--ink:#142f50;--navy:#142f50;--navy-deep:#0d233f;--blue:#2165a4;--blue-deep:#173f70;--surface:#e9f4fb;--ice:#d8effb;--sky:#b9e4f5;--yellow:#ffd45b;--gold:#b48129;--line:#92b8d1;--muted:#536b82;--success:#287a58;--danger:#a83243;--danger-surface:#fce5e5;--danger-line:#d89ba5;--error-surface:#fff0ef;--disabled-surface:#d0dfeb;--disabled-ink:#657b91;--disabled-line:#b3c8d8;--menu-field:rgb(241 246 246 / 94%);--sample-blue:#5bbce8;--sample-green:#55bc8d;--white:#ffffff;--cloud:#f5fbff;--radius-control:8px;--radius-window:10px;--ease-out:cubic-bezier(.16,1,.3,1);--shadow-window:0 12px 32px rgb(13 35 63 / 25%);min-width:0;padding:8px;color:var(--ink);background:var(--surface);font:600 16px/1.4 'Poketone UI',sans-serif;}\n.ds-resource { --resource-fill: var(--success); min-width: 0px; color: var(--ink); }\n.ds-resource[data-low=\"true\"] { --resource-fill: var(--danger); }\n.ds-resource__heading { flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; margin-bottom: 6px; font-size: 14px; line-height: 1.5; display: flex; }\n.ds-resource__label { overflow-wrap: anywhere; min-width: 0px; font-weight: 700; }\n.ds-resource__reading { flex-wrap: wrap; align-items: baseline; gap: 4px 8px; min-width: 0px; display: inline-flex; }\n.ds-resource__value { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; font-weight: 800; }\n.ds-resource__meter { appearance: none; border: 2px solid var(--navy); background: var(--ice); border-radius: 5px; width: 100%; height: 16px; display: block; overflow: hidden; }\n.ds-resource__meter::-webkit-meter-bar { background: var(--ice); height: 100%; box-shadow: none; border: 0px; border-radius: 0px; }\n.ds-resource__meter::-webkit-meter-optimum-value { background: var(--resource-fill); }\n.ds-resource__meter::-webkit-meter-suboptimum-value { background: var(--resource-fill); }\n.ds-resource__meter::-webkit-meter-even-less-good-value { background: var(--resource-fill); }\n"
+    },
+    {
+      "name": "CurrencyCounter 货币计数",
+      "kind": "input",
+      "refersTo": "currency-counter",
+      "description": "完整数值显示；不模拟交易。",
+      "html": "<div class=\"ds-game-preview\"><div class=\"ds-currency\"><span id=\"_r_m_\" class=\"ds-currency__label\"><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon \" width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"4\"></circle><path d=\"M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.4 1.4m11.2 11.2L19 19M5 19l1.4-1.4M17.6 6.4 19 5\"></path></svg><span>样例金币</span></span><output class=\"ds-currency__value\" aria-labelledby=\"_r_m_\" aria-live=\"off\">120</output></div></div>",
+      "css": ".ds-game-preview{--ink:#142f50;--navy:#142f50;--navy-deep:#0d233f;--blue:#2165a4;--blue-deep:#173f70;--surface:#e9f4fb;--ice:#d8effb;--sky:#b9e4f5;--yellow:#ffd45b;--gold:#b48129;--line:#92b8d1;--muted:#536b82;--success:#287a58;--danger:#a83243;--danger-surface:#fce5e5;--danger-line:#d89ba5;--error-surface:#fff0ef;--disabled-surface:#d0dfeb;--disabled-ink:#657b91;--disabled-line:#b3c8d8;--menu-field:rgb(241 246 246 / 94%);--sample-blue:#5bbce8;--sample-green:#55bc8d;--white:#ffffff;--cloud:#f5fbff;--radius-control:8px;--radius-window:10px;--ease-out:cubic-bezier(.16,1,.3,1);--shadow-window:0 12px 32px rgb(13 35 63 / 25%);min-width:0;padding:8px;color:var(--ink);background:var(--surface);font:600 16px/1.4 'Poketone UI',sans-serif;}\n.preview-tools__header h3 .ds-icon { color: var(--yellow); width: 21px; height: 21px; }\n.ds-currency { min-width: 0px; color: var(--ink); flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 20px; display: flex; }\n.ds-currency__label { align-items: center; gap: 10px; min-width: 0px; font-size: 16px; font-weight: 800; display: inline-flex; }\n.ds-currency__label > span { overflow-wrap: anywhere; min-width: 0px; }\n.ds-currency__label > svg { color: var(--blue-deep); }\n.ds-currency__value { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; min-width: 0px; font-size: 24px; font-weight: 800; line-height: 1.4; }\n.ds-icon { vertical-align: middle; flex-shrink: 0; display: inline-block; }\n"
+    },
+    {
+      "name": "StatusEffects 状态列表",
+      "kind": "input",
+      "refersTo": "status-effects",
+      "description": "状态与回合静态样例；解除事件在应用绑定。",
+      "html": "<div class=\"ds-game-preview\"><div class=\"ds-status-effects\"><h3 id=\"_r_n_\" class=\"ds-status-effects__label\">状态效果</h3><ul class=\"ds-status-effects__list\" aria-labelledby=\"_r_n_\"><li class=\"ds-status-effects__item\" data-tone=\"positive\"><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon ds-status-effects__icon\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m12 3 2.6 6.4L21 12l-6.4 2.6L12 21l-2.6-6.4L3 12l6.4-2.6L12 3Z\"></path></svg><div class=\"ds-status-effects__content\"><div class=\"ds-status-effects__heading\"><strong>鼓舞</strong><span class=\"ds-status-effects__tone\">增益</span><span class=\"ds-status-effects__turns\">剩余3回合</span></div><p class=\"ds-status-effects__description\">状态效果样例</p></div><button aria-label=\"解除鼓舞\" type=\"button\" class=\"ds-button ds-button--ghost ds-button--small ds-status-effects__remove\"><svg class=\"ds-button__cursor\" aria-hidden=\"true\" focusable=\"false\" width=\"25\" height=\"28\" viewBox=\"0 0 25 28\"><path d=\"M3 3 22 14 3 25Z\" fill=\"var(--yellow)\" stroke=\"var(--navy-deep)\" stroke-width=\"3\" stroke-linejoin=\"round\"></path></svg><span class=\"ds-button__icon\"><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon \" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m6 6 12 12M6 18 18 6\"></path></svg></span></button></li></ul></div></div>",
+      "css": ".ds-game-preview{--ink:#142f50;--navy:#142f50;--navy-deep:#0d233f;--blue:#2165a4;--blue-deep:#173f70;--surface:#e9f4fb;--ice:#d8effb;--sky:#b9e4f5;--yellow:#ffd45b;--gold:#b48129;--line:#92b8d1;--muted:#536b82;--success:#287a58;--danger:#a83243;--danger-surface:#fce5e5;--danger-line:#d89ba5;--error-surface:#fff0ef;--disabled-surface:#d0dfeb;--disabled-ink:#657b91;--disabled-line:#b3c8d8;--menu-field:rgb(241 246 246 / 94%);--sample-blue:#5bbce8;--sample-green:#55bc8d;--white:#ffffff;--cloud:#f5fbff;--radius-control:8px;--radius-window:10px;--ease-out:cubic-bezier(.16,1,.3,1);--shadow-window:0 12px 32px rgb(13 35 63 / 25%);min-width:0;padding:8px;color:var(--ink);background:var(--surface);font:600 16px/1.4 'Poketone UI',sans-serif;}\n.preview-toolbar .ds-button { min-height: 48px; box-shadow: rgba(20, 47, 80, 0.14) 0px 5px 14px; }\n.preview-tools__header h3 .ds-icon { color: var(--yellow); width: 21px; height: 21px; }\n.preview-source-command.ds-button, .preview-animation-command.ds-button { text-align: left; justify-content: flex-start; width: 100%; min-height: 48px; font-size: 16px; }\n@media (height <= 500px) and (orientation: landscape) {.preview-toolbar .ds-button { padding-inline: 32px 12px; font-size: 13px; }\n}\n.ds-example-actions > .ds-button { flex: 1 1 160px; min-width: 0px; }\n@media (width <= 700px) and (orientation: landscape) {.ds-example-actions > .ds-button { flex-basis: 100%; }\n}\n.workshop-command-list > .ds-button { justify-content: flex-start; width: 100%; min-height: 55px; font-size: 17px; }\n.workshop-charge-actions > .ds-button { min-width: 0px; padding-inline: 33px 16px; }\n.workshop-charge-actions > .ds-button:last-child { gap: 6px; padding-inline: 26px 8px; }\n.workshop-charge-actions > .ds-button:last-child .ds-button__icon { display: none; }\n.workshop-charge-actions > .ds-button:last-child .ds-button__label { white-space: nowrap; }\n@media (height <= 560px) and (orientation: landscape) {.workshop-command-list > .ds-button { min-height: 48px; font-size: 16px; }\n}\n.trainer-categories .ds-button { min-height: 44px; padding: 7px 4px; font-size: 15px; }\n.trainer-categories .ds-button__cursor { display: none; }\n.trainer-pair .ds-button { width: 100%; padding-inline: 27px 10px; font-size: 15px; }\n.trainer-pair .ds-button__cursor { width: 17px; left: 6px; }\n.trainer-tools__footer .ds-button { padding-inline: 27px 9px; font-size: 15px; }\n.trainer-tools__footer .ds-button__cursor { width: 17px; left: 6px; }\n.ds-status-effects { min-width: 0px; color: var(--ink); }\n.ds-status-effects__label, .ds-party__legend { overflow-wrap: anywhere; margin: 0px 0px 12px; padding: 0px; font-size: 16px; font-weight: 800; line-height: 1.4; }\n.ds-status-effects__list { margin: 0px; padding: 0px; list-style: none; }\n.ds-status-effects__item { align-items: flex-start; gap: 12px; padding-block: 12px; display: flex; }\n.ds-status-effects__item + .ds-status-effects__item { border-top: 1px solid var(--line); }\n.ds-status-effects__icon { color: var(--blue-deep); margin-top: 3px; }\n.ds-status-effects__item[data-tone=\"positive\"] .ds-status-effects__icon, .ds-status-effects__item[data-tone=\"positive\"] .ds-status-effects__tone { color: var(--success); }\n.ds-status-effects__item[data-tone=\"negative\"] .ds-status-effects__icon, .ds-status-effects__item[data-tone=\"negative\"] .ds-status-effects__tone { color: var(--danger); }\n.ds-status-effects__content { flex: 1 1 0%; min-width: 0px; }\n.ds-status-effects__heading { overflow-wrap: anywhere; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; display: flex; }\n.ds-status-effects__heading strong { min-width: 0px; font-size: 16px; font-weight: 800; }\n.ds-status-effects__tone, .ds-status-effects__turns { font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 700; }\n.ds-status-effects__turns { color: var(--muted); }\n.ds-status-effects__description { color: var(--muted); overflow-wrap: anywhere; margin: 4px 0px 0px; font-size: 14px; font-weight: 500; line-height: 1.5; }\n.ds-status-effects__remove.ds-button { flex-shrink: 0; min-width: 44px; min-height: 44px; padding: 10px; }\n.ds-status-effects__remove .ds-button__cursor { display: none; }\n.ds-status-effects__remove:focus-visible { outline-color: var(--blue); }\n.ds-item-slot:focus-visible, .ds-hotbar__slot input:focus-visible + .ds-hotbar__face, .ds-button.ds-cooldown:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }\n.ds-button.ds-cooldown { --button-border: var(--blue); max-width: 100%; }\n.ds-button.ds-cooldown:disabled { --button-border: var(--disabled-line,#b3c8d8); }\n.ds-dialogue__actions .ds-button { text-align: left; justify-content: flex-start; }\n.ds-button { --button-fill: var(--surface); --button-ink: var(--ink); --button-border: var(--line); border: 2px solid var(--button-border); border-radius: var(--radius-control); min-width: 48px; min-height: 50px; color: var(--button-ink); background: var(--button-fill); font-style: inherit; font-variant: inherit; font-stretch: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; text-align: center; cursor: pointer; touch-action: manipulation; transition: background-color .12s, border-color .12s, color .12s, transform .15s var(--ease-out), box-shadow .15s; justify-content: center; align-items: center; gap: 12px; padding: 11px 22px 11px 38px; font-size: 16px; font-weight: 800; line-height: 1.4; text-decoration: none; display: inline-flex; position: relative; box-shadow: rgba(255, 255, 255, 0.35) 0px 1px inset, rgba(13, 35, 63, 0.1) 0px 3px 6px; }\n.ds-button--ghost { --button-fill: transparent; --button-border: transparent; --button-ink: inherit; box-shadow: none; }\n.ds-button--small { min-width: 44px; min-height: 44px; padding: 8px 16px 8px 32px; font-size: 14px; }\n.ds-button__cursor { opacity: 0; width: 22px; height: 25px; transition: opacity .1s, transform .15s var(--ease-out); pointer-events: none; filter: drop-shadow(rgba(13, 35, 63, 0.2) 0px 2px 2px); position: absolute; top: 50%; left: 7px; transform: translate(-4px, -50%); }\n.ds-button--small .ds-button__cursor { width: 20px; height: 23px; left: 4px; }\n.ds-button__icon, .ds-button__label { align-items: center; justify-content: inherit; gap: 10px; min-width: 0px; display: inline-flex; }\n.ds-button__icon { flex-shrink: 0; }\n.ds-icon { vertical-align: middle; flex-shrink: 0; display: inline-block; }\n.ds-button:not(:disabled):is(:focus-visible, [aria-pressed=\"true\"], [aria-current=\"page\"]) { --button-fill: var(--yellow); --button-ink: var(--navy-deep); --button-border: var(--gold); }\n.ds-button:not(:disabled):is(:focus-visible, [aria-pressed=\"true\"], [aria-current=\"page\"]) .ds-button__cursor { opacity: 1; transform: translateY(-50%); }\n.ds-button:focus-visible, .ds-toggle:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }\n@media (hover: hover) {.ds-button:not(:disabled):hover { --button-fill: var(--yellow); --button-ink: var(--navy-deep); --button-border: var(--gold); transform: translateY(-2px); box-shadow: rgba(255, 255, 255, 0.45) 0px 1px inset, rgba(13, 35, 63, 0.2) 0px 6px 12px; }\n.ds-button:not(:disabled):hover .ds-button__cursor { opacity: 1; transform: translateY(-50%); }\n}\n.ds-button:not(:disabled):active { transform: translateY(1px) scale(0.985); box-shadow: rgba(13, 35, 63, 0.15) 0px 2px 3px inset; }\n.ds-button:disabled { --button-fill: #d0dfeb; --button-ink: #657b91; --button-border: #b3c8d8; box-shadow: none; cursor: not-allowed; }\n.ds-dialog__close .ds-button__cursor, .ds-toast__dismiss .ds-button__cursor { display: none; }\n.ds-dialog__actions .ds-button { min-width: 130px; }\n@media (width <= 520px) {.ds-dialog__actions .ds-button { flex: 1 1 0%; min-width: 100px; }\n}\n.title-actions .ds-button { isolation: isolate; width: 100%; min-height: 68px; box-shadow: none; background: 0px 0px; border: 0px; border-radius: 2px; justify-content: flex-start; gap: 18px; padding-inline: 38px 26px; font-size: 23px; font-weight: 800; }\n.title-actions .ds-button::before { content: \"\"; z-index: -1; background: var(--button-fill); clip-path: polygon(0px 0px, calc(100% - 15px) 0px, 100% 100%, 0px 100%); transition: background-color 0.12s; position: absolute; inset: 0px; }\n.title-actions .ds-button:focus { --button-fill: var(--navy-deep); --button-ink: var(--ice); }\n.title-actions .ds-button:focus .ds-button__cursor { opacity: 1; transform: translateY(-50%); }\n.title-actions .ds-button:focus-visible { outline: 3px solid var(--blue-deep); outline-offset: 3px; }\n@media (hover: hover) {.title-actions .ds-button:not(:disabled):hover { --button-fill: var(--navy-deep); --button-ink: var(--ice); box-shadow: none; transform: none; }\n}\n.title-actions .ds-button:not(:disabled):active { box-shadow: none; transform: scale(0.985); }\n.ds-topline > .ds-button { --button-fill: var(--navy); --button-ink: var(--ice); --button-border: var(--line); }\n.ds-topline .icon-button .ds-button__cursor { display: none; }\n@media (height <= 560px) and (orientation: landscape) {.title-actions .ds-button { min-height: 48px; padding-block: 6px; font-size: 18px; }\n}\n@media (width <= 700px) and (orientation: landscape) {.title-actions .ds-button { gap: 12px; padding-inline: 32px 18px; }\n}\n@media (height <= 410px) and (orientation: landscape) {.title-actions .ds-button { min-height: 44px; font-size: 17px; }\n}\n"
+    },
+    {
+      "name": "PartyList 队伍列表",
+      "kind": "input",
+      "refersTo": "party-list",
+      "description": "原生radio队伍选择外观；数值更新在应用绑定。",
+      "html": "<div class=\"ds-game-preview\"><fieldset class=\"ds-party\"><legend class=\"ds-party__legend\">样例队伍</legend><div class=\"ds-party__members\"><div class=\"ds-party__member\"><input id=\"_r_h_-tide\" class=\"ds-party__radio\" type=\"radio\" value=\"tide\" checked=\"\" name=\"_r_h_\"><div class=\"ds-party__face\"><label class=\"ds-party__choice\" for=\"_r_h_-tide\"><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon \" width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Zm0 9L4 7.5M12 12l8-4.5M12 12v9M8 5.2l8 4.6\"></path></svg><span class=\"ds-party__name\">潮汐</span><span class=\"ds-party__level\">等级 12</span><span class=\"ds-party__selected\"><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon \" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m5 12 4.5 4.5L19 7\"></path></svg><span>已选</span></span></label><div class=\"ds-party__health\"><div class=\"ds-resource ds-resource--health\" data-low=\"false\"><div class=\"ds-resource__heading\"><span id=\"_r_i_\" class=\"ds-resource__label\">潮汐生命</span><span class=\"ds-resource__reading\"><span class=\"ds-resource__value\">75 / 100</span></span></div><meter class=\"ds-resource__meter\" min=\"0\" max=\"100\" value=\"75\" aria-labelledby=\"_r_i_\" aria-valuetext=\"75 / 100\">75 / 100</meter></div></div></div></div><div class=\"ds-party__member\"><input id=\"_r_h_-wind\" class=\"ds-party__radio\" type=\"radio\" value=\"wind\" name=\"_r_h_\"><div class=\"ds-party__face\"><label class=\"ds-party__choice\" for=\"_r_h_-wind\"><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon \" width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m12 3 2.6 6.4L21 12l-6.4 2.6L12 21l-2.6-6.4L3 12l6.4-2.6L12 3Z\"></path></svg><span class=\"ds-party__name\">风铃</span><span class=\"ds-party__level\">等级 10</span><span class=\"ds-party__selected\"><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon \" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m5 12 4.5 4.5L19 7\"></path></svg><span>已选</span></span></label><div class=\"ds-party__health\"><div class=\"ds-resource ds-resource--health\" data-low=\"false\"><div class=\"ds-resource__heading\"><span id=\"_r_j_\" class=\"ds-resource__label\">风铃生命</span><span class=\"ds-resource__reading\"><span class=\"ds-resource__value\">24 / 80</span></span></div><meter class=\"ds-resource__meter\" min=\"0\" max=\"80\" value=\"24\" aria-labelledby=\"_r_j_\" aria-valuetext=\"24 / 80\">24 / 80</meter></div></div></div></div><div class=\"ds-party__member\"><input id=\"_r_h_-sprout\" class=\"ds-party__radio\" type=\"radio\" value=\"sprout\" name=\"_r_h_\"><div class=\"ds-party__face\"><label class=\"ds-party__choice\" for=\"_r_h_-sprout\"><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon \" width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"4\"></circle><path d=\"M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.4 1.4m11.2 11.2L19 19M5 19l1.4-1.4M17.6 6.4 19 5\"></path></svg><span class=\"ds-party__name\">岩芽</span><span class=\"ds-party__level\">等级 8</span><span class=\"ds-party__selected\"><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon \" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m5 12 4.5 4.5L19 7\"></path></svg><span>已选</span></span></label><div class=\"ds-party__health\"><div class=\"ds-resource ds-resource--health\" data-low=\"true\"><div class=\"ds-resource__heading\"><span id=\"_r_k_\" class=\"ds-resource__label\">岩芽生命</span><span class=\"ds-resource__reading\"><span class=\"ds-resource__state\">耗尽</span><span class=\"ds-resource__value\">0 / 60</span></span></div><meter class=\"ds-resource__meter\" min=\"0\" max=\"60\" value=\"0\" aria-labelledby=\"_r_k_\" aria-valuetext=\"0 / 60，耗尽\">0 / 60</meter></div></div></div></div></div></fieldset></div>",
+      "css": ".ds-game-preview{--ink:#142f50;--navy:#142f50;--navy-deep:#0d233f;--blue:#2165a4;--blue-deep:#173f70;--surface:#e9f4fb;--ice:#d8effb;--sky:#b9e4f5;--yellow:#ffd45b;--gold:#b48129;--line:#92b8d1;--muted:#536b82;--success:#287a58;--danger:#a83243;--danger-surface:#fce5e5;--danger-line:#d89ba5;--error-surface:#fff0ef;--disabled-surface:#d0dfeb;--disabled-ink:#657b91;--disabled-line:#b3c8d8;--menu-field:rgb(241 246 246 / 94%);--sample-blue:#5bbce8;--sample-green:#55bc8d;--white:#ffffff;--cloud:#f5fbff;--radius-control:8px;--radius-window:10px;--ease-out:cubic-bezier(.16,1,.3,1);--shadow-window:0 12px 32px rgb(13 35 63 / 25%);min-width:0;padding:8px;color:var(--ink);background:var(--surface);font:600 16px/1.4 'Poketone UI',sans-serif;}\n.preview-tools__header h3 .ds-icon { color: var(--yellow); width: 21px; height: 21px; }\n.ds-resource { --resource-fill: var(--success); min-width: 0px; color: var(--ink); }\n.ds-resource[data-low=\"true\"] { --resource-fill: var(--danger); }\n.ds-resource__heading { flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; margin-bottom: 6px; font-size: 14px; line-height: 1.5; display: flex; }\n.ds-resource__label { overflow-wrap: anywhere; min-width: 0px; font-weight: 700; }\n.ds-resource__reading { flex-wrap: wrap; align-items: baseline; gap: 4px 8px; min-width: 0px; display: inline-flex; }\n.ds-resource__value { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; font-weight: 800; }\n.ds-resource__state { color: var(--danger); font-weight: 800; }\n.ds-resource__meter { appearance: none; border: 2px solid var(--navy); background: var(--ice); border-radius: 5px; width: 100%; height: 16px; display: block; overflow: hidden; }\n.ds-resource__meter::-webkit-meter-bar { background: var(--ice); height: 100%; box-shadow: none; border: 0px; border-radius: 0px; }\n.ds-resource__meter::-webkit-meter-optimum-value { background: var(--resource-fill); }\n.ds-resource__meter::-webkit-meter-suboptimum-value { background: var(--resource-fill); }\n.ds-resource__meter::-webkit-meter-even-less-good-value { background: var(--resource-fill); }\n.ds-status-effects__label, .ds-party__legend { overflow-wrap: anywhere; margin: 0px 0px 12px; padding: 0px; font-size: 16px; font-weight: 800; line-height: 1.4; }\n.ds-party { min-width: 0px; color: var(--ink); border: 0px; margin: 0px; padding: 0px; }\n.ds-party__members { gap: 10px; display: grid; }\n.ds-party__member { min-width: 0px; position: relative; }\n.ds-party__radio { opacity: 0; width: 1px; height: 1px; margin: 0px; position: absolute; }\n.ds-party__face { border: 2px solid var(--line); border-radius: var(--radius-control); min-width: 0px; padding: 4px 12px 12px; transition: border-color 0.12s, background-color 0.12s; }\n.ds-party__choice { cursor: pointer; touch-action: manipulation; flex-wrap: wrap; align-items: center; gap: 6px 10px; min-height: 44px; display: flex; }\n.ds-party__name { overflow-wrap: anywhere; flex: 1 1 100px; min-width: 0px; font-size: 16px; font-weight: 800; }\n.ds-party__level, .ds-party__unavailable { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; font-size: 14px; font-weight: 700; }\n.ds-party__selected { visibility: hidden; color: var(--navy-deep); background: var(--yellow); border-radius: 4px; align-items: center; gap: 4px; padding: 2px 6px; font-size: 14px; font-weight: 800; display: inline-flex; }\n.ds-party__health { margin-top: 2px; }\n.ds-party__radio:checked + .ds-party__face { border-color: var(--blue-deep); background: var(--ice); }\n.ds-party__radio:checked + .ds-party__face .ds-party__selected { visibility: visible; }\n.ds-party__radio:focus-visible + .ds-party__face { outline: 3px solid var(--blue); outline-offset: 3px; }\n.ds-party__radio:disabled + .ds-party__face { color: var(--muted); background: rgb(208, 223, 235); border-color: rgb(179, 200, 216); }\n.ds-party__radio:disabled + .ds-party__face .ds-party__choice { cursor: not-allowed; }\n@media (hover: hover) {.ds-party__radio:not(:disabled):not(:checked) + .ds-party__face:has(.ds-party__choice:hover) { border-color: var(--blue); background: var(--ice); }\n}\n.ds-icon { vertical-align: middle; flex-shrink: 0; display: inline-block; }\n"
+    },
+    {
+      "name": "ItemSlot 物品格",
+      "kind": "input",
+      "refersTo": "item-slot",
+      "description": "原生button物品格，数量与选中态由调用者提供。",
+      "html": "<div class=\"ds-game-preview\"><button type=\"button\" class=\"ds-item-slot\" aria-label=\"恢复药，数量 3\" aria-pressed=\"true\" data-empty=\"false\"><span class=\"ds-item-slot__head\" aria-hidden=\"true\"><span class=\"ds-item-slot__art\"><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon \" width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14M12 5v14\"></path></svg></span><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon ds-item-slot__check\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m5 12 4.5 4.5L19 7\"></path></svg></span><span class=\"ds-item-slot__label\">恢复药</span><span class=\"ds-item-slot__quantity\">×3</span></button></div>",
+      "css": ".ds-game-preview{--ink:#142f50;--navy:#142f50;--navy-deep:#0d233f;--blue:#2165a4;--blue-deep:#173f70;--surface:#e9f4fb;--ice:#d8effb;--sky:#b9e4f5;--yellow:#ffd45b;--gold:#b48129;--line:#92b8d1;--muted:#536b82;--success:#287a58;--danger:#a83243;--danger-surface:#fce5e5;--danger-line:#d89ba5;--error-surface:#fff0ef;--disabled-surface:#d0dfeb;--disabled-ink:#657b91;--disabled-line:#b3c8d8;--menu-field:rgb(241 246 246 / 94%);--sample-blue:#5bbce8;--sample-green:#55bc8d;--white:#ffffff;--cloud:#f5fbff;--radius-control:8px;--radius-window:10px;--ease-out:cubic-bezier(.16,1,.3,1);--shadow-window:0 12px 32px rgb(13 35 63 / 25%);min-width:0;padding:8px;color:var(--ink);background:var(--surface);font:600 16px/1.4 'Poketone UI',sans-serif;}\n.preview-tools__header h3 .ds-icon { color: var(--yellow); width: 21px; height: 21px; }\n.ds-item-slot, .ds-hotbar__face { box-sizing: border-box; border: 2px solid var(--blue); border-radius: var(--radius-control); min-width: 64px; max-width: 100%; min-height: 64px; color: var(--ink); background: var(--ice); font-style: inherit; font-variant: inherit; font-stretch: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; text-align: center; overflow-wrap: anywhere; cursor: pointer; touch-action: manipulation; flex-direction: column; justify-content: flex-start; align-items: center; gap: 6px; padding: 10px; font-size: 14px; font-weight: 800; line-height: 1.4; transition: background-color 0.12s, border-color 0.12s, color 0.12s; display: flex; }\n.ds-item-slot { width: 112px; position: relative; }\n.ds-item-slot__head, .ds-hotbar__head { justify-content: space-between; align-items: center; gap: 8px; width: 100%; min-width: 0px; display: flex; }\n.ds-item-slot__art { justify-content: center; align-items: center; min-height: 28px; display: flex; }\n.ds-item-slot__check, .ds-hotbar__check { visibility: hidden; }\n.ds-item-slot__label, .ds-hotbar__label, .ds-cooldown__label { overflow-wrap: anywhere; min-width: 0px; max-width: 100%; }\n.ds-item-slot__quantity, .ds-hotbar__quantity { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; align-self: flex-end; max-width: 100%; margin-top: auto; }\n.ds-item-slot[data-empty=\"true\"] { border-style: dashed; }\n.ds-item-slot[aria-pressed=\"true\"], .ds-hotbar__slot input:checked + .ds-hotbar__face { border-color: var(--navy); color: var(--navy-deep); background: var(--yellow); }\n.ds-item-slot[aria-pressed=\"true\"] .ds-item-slot__check, .ds-hotbar__slot input:checked + .ds-hotbar__face .ds-hotbar__check { visibility: visible; }\n.ds-item-slot:focus-visible, .ds-hotbar__slot input:focus-visible + .ds-hotbar__face, .ds-button.ds-cooldown:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }\n.ds-item-slot:disabled, .ds-hotbar__slot input:disabled + .ds-hotbar__face { border-color: var(--disabled-line,#b3c8d8); color: var(--disabled-ink,#657b91); background: var(--disabled-surface,#d0dfeb); cursor: not-allowed; }\n@media (hover: hover) {.ds-item-slot:not(:disabled):hover, .ds-hotbar__slot input:not(:disabled) + .ds-hotbar__face:hover { border-color: var(--navy); color: var(--navy-deep); background: var(--yellow); }\n}\n.ds-icon { vertical-align: middle; flex-shrink: 0; display: inline-block; }\n"
+    },
+    {
+      "name": "Hotbar 快捷栏",
+      "kind": "input",
+      "refersTo": "hotbar",
+      "description": "原生radio快捷位选择；不绑定全局数字键。",
+      "html": "<div class=\"ds-game-preview\"><fieldset class=\"ds-hotbar\"><legend class=\"ds-hotbar__legend\">样例快捷栏</legend><div class=\"ds-hotbar__slots\"><label class=\"ds-hotbar__slot\"><input aria-label=\"槽位 1，恢复药，数量 3\" type=\"radio\" value=\"quick-1\" checked=\"\" name=\"_r_p_\"><span class=\"ds-hotbar__face\"><span class=\"ds-hotbar__head\" aria-hidden=\"true\"><span class=\"ds-hotbar__index\">1</span><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon ds-hotbar__check\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m5 12 4.5 4.5L19 7\"></path></svg></span><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon \" width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14M12 5v14\"></path></svg><span class=\"ds-hotbar__label\">恢复药</span><span class=\"ds-hotbar__quantity\">×3</span></span></label><label class=\"ds-hotbar__slot\"><input aria-label=\"槽位 2，空位\" type=\"radio\" value=\"quick-2\" name=\"_r_p_\"><span class=\"ds-hotbar__face\"><span class=\"ds-hotbar__head\" aria-hidden=\"true\"><span class=\"ds-hotbar__index\">2</span><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon ds-hotbar__check\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m5 12 4.5 4.5L19 7\"></path></svg></span><span class=\"ds-hotbar__label\">空位</span></span></label><label class=\"ds-hotbar__slot\"><input aria-label=\"槽位 3，空位\" type=\"radio\" value=\"quick-3\" name=\"_r_p_\"><span class=\"ds-hotbar__face\"><span class=\"ds-hotbar__head\" aria-hidden=\"true\"><span class=\"ds-hotbar__index\">3</span><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon ds-hotbar__check\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m5 12 4.5 4.5L19 7\"></path></svg></span><span class=\"ds-hotbar__label\">空位</span></span></label></div></fieldset></div>",
+      "css": ".ds-game-preview{--ink:#142f50;--navy:#142f50;--navy-deep:#0d233f;--blue:#2165a4;--blue-deep:#173f70;--surface:#e9f4fb;--ice:#d8effb;--sky:#b9e4f5;--yellow:#ffd45b;--gold:#b48129;--line:#92b8d1;--muted:#536b82;--success:#287a58;--danger:#a83243;--danger-surface:#fce5e5;--danger-line:#d89ba5;--error-surface:#fff0ef;--disabled-surface:#d0dfeb;--disabled-ink:#657b91;--disabled-line:#b3c8d8;--menu-field:rgb(241 246 246 / 94%);--sample-blue:#5bbce8;--sample-green:#55bc8d;--white:#ffffff;--cloud:#f5fbff;--radius-control:8px;--radius-window:10px;--ease-out:cubic-bezier(.16,1,.3,1);--shadow-window:0 12px 32px rgb(13 35 63 / 25%);min-width:0;padding:8px;color:var(--ink);background:var(--surface);font:600 16px/1.4 'Poketone UI',sans-serif;}\n.preview-tools__header h3 .ds-icon { color: var(--yellow); width: 21px; height: 21px; }\n.ds-item-slot, .ds-hotbar__face { box-sizing: border-box; border: 2px solid var(--blue); border-radius: var(--radius-control); min-width: 64px; max-width: 100%; min-height: 64px; color: var(--ink); background: var(--ice); font-style: inherit; font-variant: inherit; font-stretch: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; text-align: center; overflow-wrap: anywhere; cursor: pointer; touch-action: manipulation; flex-direction: column; justify-content: flex-start; align-items: center; gap: 6px; padding: 10px; font-size: 14px; font-weight: 800; line-height: 1.4; transition: background-color 0.12s, border-color 0.12s, color 0.12s; display: flex; }\n.ds-item-slot__head, .ds-hotbar__head { justify-content: space-between; align-items: center; gap: 8px; width: 100%; min-width: 0px; display: flex; }\n.ds-item-slot__check, .ds-hotbar__check { visibility: hidden; }\n.ds-item-slot__label, .ds-hotbar__label, .ds-cooldown__label { overflow-wrap: anywhere; min-width: 0px; max-width: 100%; }\n.ds-item-slot__quantity, .ds-hotbar__quantity { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; align-self: flex-end; max-width: 100%; margin-top: auto; }\n.ds-item-slot[aria-pressed=\"true\"], .ds-hotbar__slot input:checked + .ds-hotbar__face { border-color: var(--navy); color: var(--navy-deep); background: var(--yellow); }\n.ds-item-slot[aria-pressed=\"true\"] .ds-item-slot__check, .ds-hotbar__slot input:checked + .ds-hotbar__face .ds-hotbar__check { visibility: visible; }\n.ds-item-slot:focus-visible, .ds-hotbar__slot input:focus-visible + .ds-hotbar__face, .ds-button.ds-cooldown:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }\n.ds-item-slot:disabled, .ds-hotbar__slot input:disabled + .ds-hotbar__face { border-color: var(--disabled-line,#b3c8d8); color: var(--disabled-ink,#657b91); background: var(--disabled-surface,#d0dfeb); cursor: not-allowed; }\n.ds-hotbar { border: 0px; min-width: 0px; max-width: 100%; margin: 0px; padding: 0px; }\n.ds-hotbar__legend { max-width: 100%; color: var(--ink); overflow-wrap: anywhere; margin-bottom: 10px; padding: 0px; font-size: 16px; font-weight: 800; line-height: 1.4; }\n.ds-hotbar__slots { flex-wrap: wrap; align-items: stretch; gap: 10px; min-width: 0px; display: flex; }\n.ds-hotbar__slot { flex: 0 1 104px; min-width: 64px; max-width: 100%; display: flex; position: relative; }\n.ds-hotbar__slot input { opacity: 0; width: 1px; height: 1px; margin: 0px; position: absolute; }\n.ds-hotbar__face { width: 100%; }\n.ds-hotbar__index { color: var(--blue-deep); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; min-width: 0px; font-size: 12px; }\n.ds-hotbar__slot input:disabled + .ds-hotbar__face .ds-hotbar__index { color: inherit; }\n@media (hover: hover) {.ds-item-slot:not(:disabled):hover, .ds-hotbar__slot input:not(:disabled) + .ds-hotbar__face:hover { border-color: var(--navy); color: var(--navy-deep); background: var(--yellow); }\n}\n.ds-icon { vertical-align: middle; flex-shrink: 0; display: inline-block; }\n"
+    },
+    {
+      "name": "CooldownButton 冷却按钮",
+      "kind": "input",
+      "refersTo": "cooldown-button",
+      "description": "原生button空闲外观；静态预览不模拟冷却计时。",
+      "html": "<div class=\"ds-game-preview\"><button aria-label=\"使用恢复药\" type=\"button\" class=\"ds-button ds-button--secondary ds-button--normal ds-cooldown\"><svg class=\"ds-button__cursor\" aria-hidden=\"true\" focusable=\"false\" width=\"25\" height=\"28\" viewBox=\"0 0 25 28\"><path d=\"M3 3 22 14 3 25Z\" fill=\"var(--yellow)\" stroke=\"var(--navy-deep)\" stroke-width=\"3\" stroke-linejoin=\"round\"></path></svg><span class=\"ds-button__icon\"><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon \" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14M12 5v14\"></path></svg></span><span class=\"ds-button__label\"><span class=\"ds-cooldown__label\">使用恢复药</span></span></button></div>",
+      "css": ".ds-game-preview{--ink:#142f50;--navy:#142f50;--navy-deep:#0d233f;--blue:#2165a4;--blue-deep:#173f70;--surface:#e9f4fb;--ice:#d8effb;--sky:#b9e4f5;--yellow:#ffd45b;--gold:#b48129;--line:#92b8d1;--muted:#536b82;--success:#287a58;--danger:#a83243;--danger-surface:#fce5e5;--danger-line:#d89ba5;--error-surface:#fff0ef;--disabled-surface:#d0dfeb;--disabled-ink:#657b91;--disabled-line:#b3c8d8;--menu-field:rgb(241 246 246 / 94%);--sample-blue:#5bbce8;--sample-green:#55bc8d;--white:#ffffff;--cloud:#f5fbff;--radius-control:8px;--radius-window:10px;--ease-out:cubic-bezier(.16,1,.3,1);--shadow-window:0 12px 32px rgb(13 35 63 / 25%);min-width:0;padding:8px;color:var(--ink);background:var(--surface);font:600 16px/1.4 'Poketone UI',sans-serif;}\n.preview-toolbar .ds-button { min-height: 48px; box-shadow: rgba(20, 47, 80, 0.14) 0px 5px 14px; }\n.preview-tools__header h3 .ds-icon { color: var(--yellow); width: 21px; height: 21px; }\n.preview-source-command.ds-button, .preview-animation-command.ds-button { text-align: left; justify-content: flex-start; width: 100%; min-height: 48px; font-size: 16px; }\n.preview-source-command .ds-button__label, .preview-animation-command .ds-button__label { overflow-wrap: anywhere; min-width: 0px; }\n@media (height <= 500px) and (orientation: landscape) {.preview-toolbar .ds-button { padding-inline: 32px 12px; font-size: 13px; }\n}\n.ds-example-actions > .ds-button { flex: 1 1 160px; min-width: 0px; }\n@media (width <= 700px) and (orientation: landscape) {.ds-example-actions > .ds-button { flex-basis: 100%; }\n}\n.workshop-command-list > .ds-button { justify-content: flex-start; width: 100%; min-height: 55px; font-size: 17px; }\n.workshop-charge-actions > .ds-button { min-width: 0px; padding-inline: 33px 16px; }\n.workshop-charge-actions > .ds-button:last-child { gap: 6px; padding-inline: 26px 8px; }\n.workshop-charge-actions > .ds-button:last-child .ds-button__icon { display: none; }\n.workshop-charge-actions > .ds-button:last-child .ds-button__label { white-space: nowrap; }\n@media (height <= 560px) and (orientation: landscape) {.workshop-command-list > .ds-button { min-height: 48px; font-size: 16px; }\n}\n@media (width <= 700px) and (orientation: landscape) {.workshop-charge-actions .ds-button__label { white-space: nowrap; }\n}\n.trainer-categories .ds-button { min-height: 44px; padding: 7px 4px; font-size: 15px; }\n.trainer-categories .ds-button__cursor { display: none; }\n.trainer-pair .ds-button { width: 100%; padding-inline: 27px 10px; font-size: 15px; }\n.trainer-pair .ds-button__cursor { width: 17px; left: 6px; }\n.trainer-tools__footer .ds-button { padding-inline: 27px 9px; font-size: 15px; }\n.trainer-tools__footer .ds-button__cursor { width: 17px; left: 6px; }\n.ds-status-effects__remove.ds-button { flex-shrink: 0; min-width: 44px; min-height: 44px; padding: 10px; }\n.ds-status-effects__remove .ds-button__cursor { display: none; }\n.ds-item-slot__label, .ds-hotbar__label, .ds-cooldown__label { overflow-wrap: anywhere; min-width: 0px; max-width: 100%; }\n.ds-item-slot:focus-visible, .ds-hotbar__slot input:focus-visible + .ds-hotbar__face, .ds-button.ds-cooldown:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }\n.ds-button.ds-cooldown { --button-border: var(--blue); max-width: 100%; }\n.ds-button.ds-cooldown:disabled { --button-border: var(--disabled-line,#b3c8d8); }\n.ds-dialogue__actions .ds-button { text-align: left; justify-content: flex-start; }\n.ds-button { --button-fill: var(--surface); --button-ink: var(--ink); --button-border: var(--line); border: 2px solid var(--button-border); border-radius: var(--radius-control); min-width: 48px; min-height: 50px; color: var(--button-ink); background: var(--button-fill); font-style: inherit; font-variant: inherit; font-stretch: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; text-align: center; cursor: pointer; touch-action: manipulation; transition: background-color .12s, border-color .12s, color .12s, transform .15s var(--ease-out), box-shadow .15s; justify-content: center; align-items: center; gap: 12px; padding: 11px 22px 11px 38px; font-size: 16px; font-weight: 800; line-height: 1.4; text-decoration: none; display: inline-flex; position: relative; box-shadow: rgba(255, 255, 255, 0.35) 0px 1px inset, rgba(13, 35, 63, 0.1) 0px 3px 6px; }\n.ds-button__cursor { opacity: 0; width: 22px; height: 25px; transition: opacity .1s, transform .15s var(--ease-out); pointer-events: none; filter: drop-shadow(rgba(13, 35, 63, 0.2) 0px 2px 2px); position: absolute; top: 50%; left: 7px; transform: translate(-4px, -50%); }\n.ds-button--small .ds-button__cursor { width: 20px; height: 23px; left: 4px; }\n.ds-button__icon, .ds-button__label { align-items: center; justify-content: inherit; gap: 10px; min-width: 0px; display: inline-flex; }\n.ds-button__label { overflow-wrap: anywhere; flex-wrap: wrap; flex: 1 1 0%; }\n.ds-button__icon { flex-shrink: 0; }\n.ds-icon { vertical-align: middle; flex-shrink: 0; display: inline-block; }\n.ds-button:not(:disabled):is(:focus-visible, [aria-pressed=\"true\"], [aria-current=\"page\"]) { --button-fill: var(--yellow); --button-ink: var(--navy-deep); --button-border: var(--gold); }\n.ds-button:not(:disabled):is(:focus-visible, [aria-pressed=\"true\"], [aria-current=\"page\"]) .ds-button__cursor { opacity: 1; transform: translateY(-50%); }\n.ds-button:focus-visible, .ds-toggle:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }\n@media (hover: hover) {.ds-button:not(:disabled):hover { --button-fill: var(--yellow); --button-ink: var(--navy-deep); --button-border: var(--gold); transform: translateY(-2px); box-shadow: rgba(255, 255, 255, 0.45) 0px 1px inset, rgba(13, 35, 63, 0.2) 0px 6px 12px; }\n.ds-button:not(:disabled):hover .ds-button__cursor { opacity: 1; transform: translateY(-50%); }\n}\n.ds-button:not(:disabled):active { transform: translateY(1px) scale(0.985); box-shadow: rgba(13, 35, 63, 0.15) 0px 2px 3px inset; }\n.ds-button:disabled { --button-fill: #d0dfeb; --button-ink: #657b91; --button-border: #b3c8d8; box-shadow: none; cursor: not-allowed; }\n.ds-dialog__close .ds-button__cursor, .ds-toast__dismiss .ds-button__cursor { display: none; }\n.ds-dialog__actions .ds-button { min-width: 130px; }\n@media (width <= 520px) {.ds-dialog__actions .ds-button { flex: 1 1 0%; min-width: 100px; }\n}\n.title-actions .ds-button { isolation: isolate; width: 100%; min-height: 68px; box-shadow: none; background: 0px 0px; border: 0px; border-radius: 2px; justify-content: flex-start; gap: 18px; padding-inline: 38px 26px; font-size: 23px; font-weight: 800; }\n.title-actions .ds-button::before { content: \"\"; z-index: -1; background: var(--button-fill); clip-path: polygon(0px 0px, calc(100% - 15px) 0px, 100% 100%, 0px 100%); transition: background-color 0.12s; position: absolute; inset: 0px; }\n.title-actions .ds-button__label { flex: 1 1 0%; justify-content: space-between; gap: 16px; }\n.title-actions .ds-button__label > svg { width: 20px; }\n.title-actions .ds-button--secondary { --button-fill: transparent; --button-ink: var(--ink); }\n.title-actions .ds-button:focus { --button-fill: var(--navy-deep); --button-ink: var(--ice); }\n.title-actions .ds-button:focus .ds-button__cursor { opacity: 1; transform: translateY(-50%); }\n.title-actions .ds-button:focus-visible { outline: 3px solid var(--blue-deep); outline-offset: 3px; }\n@media (hover: hover) {.title-actions .ds-button:not(:disabled):hover { --button-fill: var(--navy-deep); --button-ink: var(--ice); box-shadow: none; transform: none; }\n}\n.title-actions .ds-button:not(:disabled):active { box-shadow: none; transform: scale(0.985); }\n.ds-topline > .ds-button { --button-fill: var(--navy); --button-ink: var(--ice); --button-border: var(--line); }\n.ds-topline .icon-button .ds-button__cursor { display: none; }\n@media (height <= 560px) and (orientation: landscape) {.title-actions .ds-button { min-height: 48px; padding-block: 6px; font-size: 18px; }\n}\n@media (width <= 700px) and (orientation: landscape) {.title-actions .ds-button { gap: 12px; padding-inline: 32px 18px; }\n}\n@media (height <= 410px) and (orientation: landscape) {.title-actions .ds-button { min-height: 44px; font-size: 17px; }\n}\n"
+    },
+    {
+      "name": "HintPopover 按需提示",
+      "kind": "input",
+      "refersTo": "hint-popover",
+      "description": "原生details可展开；预览不模拟应用Esc事件。",
+      "html": "<div class=\"ds-game-preview\"><details class=\"ds-hint\"><summary aria-controls=\"_r_o_\"><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon \" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m12 3 2.6 6.4L21 12l-6.4 2.6L12 21l-2.6-6.4L3 12l6.4-2.6L12 3Z\"></path></svg>查看物品说明<svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon ds-hint__arrow\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m9 5 7 7-7 7\"></path></svg></summary><div id=\"_r_o_\" class=\"ds-hint__content\"><p>恢复药：可放入快捷栏，使用后消耗一个。</p></div></details></div>",
+      "css": ".ds-game-preview{--ink:#142f50;--navy:#142f50;--navy-deep:#0d233f;--blue:#2165a4;--blue-deep:#173f70;--surface:#e9f4fb;--ice:#d8effb;--sky:#b9e4f5;--yellow:#ffd45b;--gold:#b48129;--line:#92b8d1;--muted:#536b82;--success:#287a58;--danger:#a83243;--danger-surface:#fce5e5;--danger-line:#d89ba5;--error-surface:#fff0ef;--disabled-surface:#d0dfeb;--disabled-ink:#657b91;--disabled-line:#b3c8d8;--menu-field:rgb(241 246 246 / 94%);--sample-blue:#5bbce8;--sample-green:#55bc8d;--white:#ffffff;--cloud:#f5fbff;--radius-control:8px;--radius-window:10px;--ease-out:cubic-bezier(.16,1,.3,1);--shadow-window:0 12px 32px rgb(13 35 63 / 25%);min-width:0;padding:8px;color:var(--ink);background:var(--surface);font:600 16px/1.4 'Poketone UI',sans-serif;}\n.preview-tools__header h3 .ds-icon { color: var(--yellow); width: 21px; height: 21px; }\n.ds-hint { min-width: 0px; color: var(--blue-deep); font-size: 14px; }\n.ds-hint summary { cursor: pointer; overflow-wrap: anywhere; align-items: center; gap: 8px; width: fit-content; max-width: 100%; min-height: 44px; padding: 8px 4px; font-weight: 800; list-style: none; display: flex; }\n.ds-hint summary::-webkit-details-marker { display: none; }\n.ds-hint summary:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }\n.ds-hint__arrow { margin-left: auto; }\n.ds-hint[open] .ds-hint__arrow { transform: rotate(90deg); }\n.ds-hint__content { border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--ice); color: var(--ink); overflow-wrap: anywhere; padding: 12px 16px; line-height: 1.65; }\n.ds-hint__content p { margin: 0px; }\n.ds-icon { vertical-align: middle; flex-shrink: 0; display: inline-block; }\n"
+    },
+    {
+      "name": "QuestTracker 任务追踪",
+      "kind": "input",
+      "refersTo": "quest-tracker",
+      "description": "目标静态样例；追踪与进度事件由应用绑定。",
+      "html": "<div class=\"ds-game-preview\"><section class=\"ds-quest\" aria-labelledby=\"_r_q_\" data-complete=\"false\"><header class=\"ds-quest__header\"><h3 id=\"_r_q_\">样例任务：海岸信号</h3><button aria-pressed=\"true\" type=\"button\" class=\"ds-button ds-button--secondary ds-button--small \"><svg class=\"ds-button__cursor\" aria-hidden=\"true\" focusable=\"false\" width=\"25\" height=\"28\" viewBox=\"0 0 25 28\"><path d=\"M3 3 22 14 3 25Z\" fill=\"var(--yellow)\" stroke=\"var(--navy-deep)\" stroke-width=\"3\" stroke-linejoin=\"round\"></path></svg><span class=\"ds-button__label\">取消追踪</span></button></header><ul class=\"ds-quest__objectives\"><li data-complete=\"false\"><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon \" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m9 5 7 7-7 7\"></path></svg><span>检查信号点</span><span class=\"ds-quest__count\">0 / 3</span></li><li data-complete=\"false\"><svg aria-hidden=\"true\" focusable=\"false\" class=\"ds-icon \" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m9 5 7 7-7 7\"></path></svg><span>向向导报告</span><span class=\"ds-quest__count\">0 / 1</span></li></ul><p class=\"ds-quest__state\" aria-live=\"polite\">追踪中</p></section></div>",
+      "css": ".ds-game-preview{--ink:#142f50;--navy:#142f50;--navy-deep:#0d233f;--blue:#2165a4;--blue-deep:#173f70;--surface:#e9f4fb;--ice:#d8effb;--sky:#b9e4f5;--yellow:#ffd45b;--gold:#b48129;--line:#92b8d1;--muted:#536b82;--success:#287a58;--danger:#a83243;--danger-surface:#fce5e5;--danger-line:#d89ba5;--error-surface:#fff0ef;--disabled-surface:#d0dfeb;--disabled-ink:#657b91;--disabled-line:#b3c8d8;--menu-field:rgb(241 246 246 / 94%);--sample-blue:#5bbce8;--sample-green:#55bc8d;--white:#ffffff;--cloud:#f5fbff;--radius-control:8px;--radius-window:10px;--ease-out:cubic-bezier(.16,1,.3,1);--shadow-window:0 12px 32px rgb(13 35 63 / 25%);min-width:0;padding:8px;color:var(--ink);background:var(--surface);font:600 16px/1.4 'Poketone UI',sans-serif;}\n.preview-toolbar .ds-button { min-height: 48px; box-shadow: rgba(20, 47, 80, 0.14) 0px 5px 14px; }\n.preview-tools__header h3 .ds-icon { color: var(--yellow); width: 21px; height: 21px; }\n.preview-source-command.ds-button, .preview-animation-command.ds-button { text-align: left; justify-content: flex-start; width: 100%; min-height: 48px; font-size: 16px; }\n.preview-source-command .ds-button__label, .preview-animation-command .ds-button__label { overflow-wrap: anywhere; min-width: 0px; }\n@media (height <= 500px) and (orientation: landscape) {.preview-toolbar .ds-button { padding-inline: 32px 12px; font-size: 13px; }\n}\n.ds-example-actions > .ds-button { flex: 1 1 160px; min-width: 0px; }\n@media (width <= 700px) and (orientation: landscape) {.ds-example-actions > .ds-button { flex-basis: 100%; }\n}\n.workshop-command-list > .ds-button { justify-content: flex-start; width: 100%; min-height: 55px; font-size: 17px; }\n.workshop-charge-actions > .ds-button { min-width: 0px; padding-inline: 33px 16px; }\n.workshop-charge-actions > .ds-button:last-child { gap: 6px; padding-inline: 26px 8px; }\n.workshop-charge-actions > .ds-button:last-child .ds-button__icon { display: none; }\n.workshop-charge-actions > .ds-button:last-child .ds-button__label { white-space: nowrap; }\n@media (height <= 560px) and (orientation: landscape) {.workshop-command-list > .ds-button { min-height: 48px; font-size: 16px; }\n}\n@media (width <= 700px) and (orientation: landscape) {.workshop-charge-actions .ds-button__label { white-space: nowrap; }\n}\n.trainer-categories .ds-button { min-height: 44px; padding: 7px 4px; font-size: 15px; }\n.trainer-categories .ds-button__cursor { display: none; }\n.trainer-pair .ds-button { width: 100%; padding-inline: 27px 10px; font-size: 15px; }\n.trainer-pair .ds-button__cursor { width: 17px; left: 6px; }\n.trainer-tools__footer .ds-button { padding-inline: 27px 9px; font-size: 15px; }\n.trainer-tools__footer .ds-button__cursor { width: 17px; left: 6px; }\n.ds-status-effects__remove.ds-button { flex-shrink: 0; min-width: 44px; min-height: 44px; padding: 10px; }\n.ds-status-effects__remove .ds-button__cursor { display: none; }\n.ds-item-slot:focus-visible, .ds-hotbar__slot input:focus-visible + .ds-hotbar__face, .ds-button.ds-cooldown:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }\n.ds-button.ds-cooldown { --button-border: var(--blue); max-width: 100%; }\n.ds-button.ds-cooldown:disabled { --button-border: var(--disabled-line,#b3c8d8); }\n.ds-quest { min-width: 0px; }\n.ds-quest__header { flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; display: flex; }\n.ds-quest h3, .ds-dialogue h3 { color: var(--navy); overflow-wrap: anywhere; margin: 0px; font-size: 18px; font-weight: 800; }\n.ds-quest__objectives { gap: 10px; margin: 18px 0px 0px; padding: 0px; list-style: none; display: grid; }\n.ds-quest__objectives li { border-bottom: 1px solid var(--line); align-items: center; gap: 10px; min-width: 0px; padding-block: 10px; display: flex; }\n.ds-quest__objectives li > span:first-of-type { overflow-wrap: anywhere; flex: 1 1 0%; min-width: 0px; }\n.ds-quest__count { font-variant-numeric: tabular-nums; flex-shrink: 0; font-weight: 800; }\n.ds-quest__objectives [data-complete=\"true\"], .ds-quest[data-complete=\"true\"] .ds-quest__state { color: var(--success); }\n.ds-quest__state { color: var(--muted); margin: 12px 0px 0px; font-size: 14px; }\n.ds-dialogue__actions .ds-button { text-align: left; justify-content: flex-start; }\n@media (width <= 700px) and (orientation: landscape) {.ds-quest__objectives li { flex-wrap: wrap; }\n}\n.ds-button { --button-fill: var(--surface); --button-ink: var(--ink); --button-border: var(--line); border: 2px solid var(--button-border); border-radius: var(--radius-control); min-width: 48px; min-height: 50px; color: var(--button-ink); background: var(--button-fill); font-style: inherit; font-variant: inherit; font-stretch: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; text-align: center; cursor: pointer; touch-action: manipulation; transition: background-color .12s, border-color .12s, color .12s, transform .15s var(--ease-out), box-shadow .15s; justify-content: center; align-items: center; gap: 12px; padding: 11px 22px 11px 38px; font-size: 16px; font-weight: 800; line-height: 1.4; text-decoration: none; display: inline-flex; position: relative; box-shadow: rgba(255, 255, 255, 0.35) 0px 1px inset, rgba(13, 35, 63, 0.1) 0px 3px 6px; }\n.ds-button--small { min-width: 44px; min-height: 44px; padding: 8px 16px 8px 32px; font-size: 14px; }\n.ds-button__cursor { opacity: 0; width: 22px; height: 25px; transition: opacity .1s, transform .15s var(--ease-out); pointer-events: none; filter: drop-shadow(rgba(13, 35, 63, 0.2) 0px 2px 2px); position: absolute; top: 50%; left: 7px; transform: translate(-4px, -50%); }\n.ds-button--small .ds-button__cursor { width: 20px; height: 23px; left: 4px; }\n.ds-button__icon, .ds-button__label { align-items: center; justify-content: inherit; gap: 10px; min-width: 0px; display: inline-flex; }\n.ds-button__label { overflow-wrap: anywhere; flex-wrap: wrap; flex: 1 1 0%; }\n.ds-icon { vertical-align: middle; flex-shrink: 0; display: inline-block; }\n.ds-button:not(:disabled):is(:focus-visible, [aria-pressed=\"true\"], [aria-current=\"page\"]) { --button-fill: var(--yellow); --button-ink: var(--navy-deep); --button-border: var(--gold); }\n.ds-button:not(:disabled):is(:focus-visible, [aria-pressed=\"true\"], [aria-current=\"page\"]) .ds-button__cursor { opacity: 1; transform: translateY(-50%); }\n.ds-button:focus-visible, .ds-toggle:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }\n@media (hover: hover) {.ds-button:not(:disabled):hover { --button-fill: var(--yellow); --button-ink: var(--navy-deep); --button-border: var(--gold); transform: translateY(-2px); box-shadow: rgba(255, 255, 255, 0.45) 0px 1px inset, rgba(13, 35, 63, 0.2) 0px 6px 12px; }\n.ds-button:not(:disabled):hover .ds-button__cursor { opacity: 1; transform: translateY(-50%); }\n}\n.ds-button:not(:disabled):active { transform: translateY(1px) scale(0.985); box-shadow: rgba(13, 35, 63, 0.15) 0px 2px 3px inset; }\n.ds-button:disabled { --button-fill: #d0dfeb; --button-ink: #657b91; --button-border: #b3c8d8; box-shadow: none; cursor: not-allowed; }\n.ds-dialog__close .ds-button__cursor, .ds-toast__dismiss .ds-button__cursor { display: none; }\n.ds-dialog__actions .ds-button { min-width: 130px; }\n@media (width <= 520px) {.ds-dialog__actions .ds-button { flex: 1 1 0%; min-width: 100px; }\n}\n.title-actions .ds-button { isolation: isolate; width: 100%; min-height: 68px; box-shadow: none; background: 0px 0px; border: 0px; border-radius: 2px; justify-content: flex-start; gap: 18px; padding-inline: 38px 26px; font-size: 23px; font-weight: 800; }\n.title-actions .ds-button::before { content: \"\"; z-index: -1; background: var(--button-fill); clip-path: polygon(0px 0px, calc(100% - 15px) 0px, 100% 100%, 0px 100%); transition: background-color 0.12s; position: absolute; inset: 0px; }\n.title-actions .ds-button__label { flex: 1 1 0%; justify-content: space-between; gap: 16px; }\n.title-actions .ds-button__label > svg { width: 20px; }\n.title-actions .ds-button--secondary { --button-fill: transparent; --button-ink: var(--ink); }\n.title-actions .ds-button:focus { --button-fill: var(--navy-deep); --button-ink: var(--ice); }\n.title-actions .ds-button:focus .ds-button__cursor { opacity: 1; transform: translateY(-50%); }\n.title-actions .ds-button:focus-visible { outline: 3px solid var(--blue-deep); outline-offset: 3px; }\n@media (hover: hover) {.title-actions .ds-button:not(:disabled):hover { --button-fill: var(--navy-deep); --button-ink: var(--ice); box-shadow: none; transform: none; }\n}\n.title-actions .ds-button:not(:disabled):active { box-shadow: none; transform: scale(0.985); }\n.ds-topline > .ds-button { --button-fill: var(--navy); --button-ink: var(--ice); --button-border: var(--line); }\n.ds-topline .icon-button .ds-button__cursor { display: none; }\n@media (height <= 560px) and (orientation: landscape) {.title-actions .ds-button { min-height: 48px; padding-block: 6px; font-size: 18px; }\n}\n@media (width <= 700px) and (orientation: landscape) {.title-actions .ds-button { gap: 12px; padding-inline: 32px 18px; }\n}\n@media (height <= 410px) and (orientation: landscape) {.title-actions .ds-button { min-height: 44px; font-size: 17px; }\n}\n"
+    },
+    {
+      "name": "DialogueBox 对话框",
+      "kind": "custom",
+      "refersTo": "dialogue-box",
+      "description": "当前对话行与选择；静态预览不运行对话状态。",
+      "html": "<div class=\"ds-game-preview\"><section class=\"ds-dialogue\" aria-labelledby=\"_r_r_\"><h3 id=\"_r_r_\">工坊向导</h3><p class=\"ds-dialogue__line\" aria-live=\"polite\" aria-atomic=\"true\">这是一段对话样例。要试着检查海岸信号吗？</p><div class=\"ds-dialogue__actions\" data-command-list=\"true\"><button type=\"button\" class=\"ds-button ds-button--secondary ds-button--normal \"><svg class=\"ds-button__cursor\" aria-hidden=\"true\" focusable=\"false\" width=\"25\" height=\"28\" viewBox=\"0 0 25 28\"><path d=\"M3 3 22 14 3 25Z\" fill=\"var(--yellow)\" stroke=\"var(--navy-deep)\" stroke-width=\"3\" stroke-linejoin=\"round\"></path></svg><span class=\"ds-button__label\">我来检查</span></button><button type=\"button\" class=\"ds-button ds-button--secondary ds-button--normal \"><svg class=\"ds-button__cursor\" aria-hidden=\"true\" focusable=\"false\" width=\"25\" height=\"28\" viewBox=\"0 0 25 28\"><path d=\"M3 3 22 14 3 25Z\" fill=\"var(--yellow)\" stroke=\"var(--navy-deep)\" stroke-width=\"3\" stroke-linejoin=\"round\"></path></svg><span class=\"ds-button__label\">稍后再说</span></button><button disabled=\"\" type=\"button\" class=\"ds-button ds-button--secondary ds-button--normal \"><svg class=\"ds-button__cursor\" aria-hidden=\"true\" focusable=\"false\" width=\"25\" height=\"28\" viewBox=\"0 0 25 28\"><path d=\"M3 3 22 14 3 25Z\" fill=\"var(--yellow)\" stroke=\"var(--navy-deep)\" stroke-width=\"3\" stroke-linejoin=\"round\"></path></svg><span class=\"ds-button__label\">尚未开放的选项</span></button></div></section></div>",
+      "css": ".ds-game-preview{--ink:#142f50;--navy:#142f50;--navy-deep:#0d233f;--blue:#2165a4;--blue-deep:#173f70;--surface:#e9f4fb;--ice:#d8effb;--sky:#b9e4f5;--yellow:#ffd45b;--gold:#b48129;--line:#92b8d1;--muted:#536b82;--success:#287a58;--danger:#a83243;--danger-surface:#fce5e5;--danger-line:#d89ba5;--error-surface:#fff0ef;--disabled-surface:#d0dfeb;--disabled-ink:#657b91;--disabled-line:#b3c8d8;--menu-field:rgb(241 246 246 / 94%);--sample-blue:#5bbce8;--sample-green:#55bc8d;--white:#ffffff;--cloud:#f5fbff;--radius-control:8px;--radius-window:10px;--ease-out:cubic-bezier(.16,1,.3,1);--shadow-window:0 12px 32px rgb(13 35 63 / 25%);min-width:0;padding:8px;color:var(--ink);background:var(--surface);font:600 16px/1.4 'Poketone UI',sans-serif;}\n.preview-toolbar .ds-button { min-height: 48px; box-shadow: rgba(20, 47, 80, 0.14) 0px 5px 14px; }\n.preview-source-command.ds-button, .preview-animation-command.ds-button { text-align: left; justify-content: flex-start; width: 100%; min-height: 48px; font-size: 16px; }\n.preview-source-command .ds-button__label, .preview-animation-command .ds-button__label { overflow-wrap: anywhere; min-width: 0px; }\n@media (height <= 500px) and (orientation: landscape) {.preview-toolbar .ds-button { padding-inline: 32px 12px; font-size: 13px; }\n}\n.ds-example-actions > .ds-button { flex: 1 1 160px; min-width: 0px; }\n@media (width <= 700px) and (orientation: landscape) {.ds-example-actions > .ds-button { flex-basis: 100%; }\n}\n.workshop-command-list > .ds-button { justify-content: flex-start; width: 100%; min-height: 55px; font-size: 17px; }\n.workshop-charge-actions > .ds-button { min-width: 0px; padding-inline: 33px 16px; }\n.workshop-charge-actions > .ds-button:last-child { gap: 6px; padding-inline: 26px 8px; }\n.workshop-charge-actions > .ds-button:last-child .ds-button__icon { display: none; }\n.workshop-charge-actions > .ds-button:last-child .ds-button__label { white-space: nowrap; }\n@media (height <= 560px) and (orientation: landscape) {.workshop-command-list > .ds-button { min-height: 48px; font-size: 16px; }\n}\n@media (width <= 700px) and (orientation: landscape) {.workshop-charge-actions .ds-button__label { white-space: nowrap; }\n}\n.trainer-categories .ds-button { min-height: 44px; padding: 7px 4px; font-size: 15px; }\n.trainer-categories .ds-button__cursor { display: none; }\n.trainer-pair .ds-button { width: 100%; padding-inline: 27px 10px; font-size: 15px; }\n.trainer-pair .ds-button__cursor { width: 17px; left: 6px; }\n.trainer-tools__footer .ds-button { padding-inline: 27px 9px; font-size: 15px; }\n.trainer-tools__footer .ds-button__cursor { width: 17px; left: 6px; }\n.ds-status-effects__remove.ds-button { flex-shrink: 0; min-width: 44px; min-height: 44px; padding: 10px; }\n.ds-status-effects__remove .ds-button__cursor { display: none; }\n.ds-item-slot:focus-visible, .ds-hotbar__slot input:focus-visible + .ds-hotbar__face, .ds-button.ds-cooldown:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }\n.ds-button.ds-cooldown { --button-border: var(--blue); max-width: 100%; }\n.ds-button.ds-cooldown:disabled { --button-border: var(--disabled-line,#b3c8d8); }\n.ds-quest h3, .ds-dialogue h3 { color: var(--navy); overflow-wrap: anywhere; margin: 0px; font-size: 18px; font-weight: 800; }\n.ds-dialogue { border: 2px solid var(--navy); border-radius: var(--radius-window); background: var(--ice); min-width: 0px; color: var(--ink); padding: 20px; }\n.ds-dialogue__line { overflow-wrap: anywhere; min-height: 3.3em; margin: 14px 0px 20px; font-size: 16px; line-height: 1.65; }\n.ds-dialogue__actions { gap: 8px; display: grid; }\n.ds-dialogue__actions .ds-button { text-align: left; justify-content: flex-start; }\n@media (width <= 700px) and (orientation: landscape) {.ds-dialogue { padding: 14px; }\n}\n.ds-button { --button-fill: var(--surface); --button-ink: var(--ink); --button-border: var(--line); border: 2px solid var(--button-border); border-radius: var(--radius-control); min-width: 48px; min-height: 50px; color: var(--button-ink); background: var(--button-fill); font-style: inherit; font-variant: inherit; font-stretch: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; text-align: center; cursor: pointer; touch-action: manipulation; transition: background-color .12s, border-color .12s, color .12s, transform .15s var(--ease-out), box-shadow .15s; justify-content: center; align-items: center; gap: 12px; padding: 11px 22px 11px 38px; font-size: 16px; font-weight: 800; line-height: 1.4; text-decoration: none; display: inline-flex; position: relative; box-shadow: rgba(255, 255, 255, 0.35) 0px 1px inset, rgba(13, 35, 63, 0.1) 0px 3px 6px; }\n.ds-button__cursor { opacity: 0; width: 22px; height: 25px; transition: opacity .1s, transform .15s var(--ease-out); pointer-events: none; filter: drop-shadow(rgba(13, 35, 63, 0.2) 0px 2px 2px); position: absolute; top: 50%; left: 7px; transform: translate(-4px, -50%); }\n.ds-button--small .ds-button__cursor { width: 20px; height: 23px; left: 4px; }\n.ds-button__icon, .ds-button__label { align-items: center; justify-content: inherit; gap: 10px; min-width: 0px; display: inline-flex; }\n.ds-button__label { overflow-wrap: anywhere; flex-wrap: wrap; flex: 1 1 0%; }\n.ds-button:not(:disabled):is(:focus-visible, [aria-pressed=\"true\"], [aria-current=\"page\"]) { --button-fill: var(--yellow); --button-ink: var(--navy-deep); --button-border: var(--gold); }\n.ds-button:not(:disabled):is(:focus-visible, [aria-pressed=\"true\"], [aria-current=\"page\"]) .ds-button__cursor { opacity: 1; transform: translateY(-50%); }\n.ds-button:focus-visible, .ds-toggle:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }\n@media (hover: hover) {.ds-button:not(:disabled):hover { --button-fill: var(--yellow); --button-ink: var(--navy-deep); --button-border: var(--gold); transform: translateY(-2px); box-shadow: rgba(255, 255, 255, 0.45) 0px 1px inset, rgba(13, 35, 63, 0.2) 0px 6px 12px; }\n.ds-button:not(:disabled):hover .ds-button__cursor { opacity: 1; transform: translateY(-50%); }\n}\n.ds-button:not(:disabled):active { transform: translateY(1px) scale(0.985); box-shadow: rgba(13, 35, 63, 0.15) 0px 2px 3px inset; }\n.ds-button:disabled { --button-fill: #d0dfeb; --button-ink: #657b91; --button-border: #b3c8d8; box-shadow: none; cursor: not-allowed; }\n.ds-dialog__close .ds-button__cursor, .ds-toast__dismiss .ds-button__cursor { display: none; }\n.ds-dialog__actions .ds-button { min-width: 130px; }\n@media (width <= 520px) {.ds-dialog__actions .ds-button { flex: 1 1 0%; min-width: 100px; }\n}\n.title-actions .ds-button { isolation: isolate; width: 100%; min-height: 68px; box-shadow: none; background: 0px 0px; border: 0px; border-radius: 2px; justify-content: flex-start; gap: 18px; padding-inline: 38px 26px; font-size: 23px; font-weight: 800; }\n.title-actions .ds-button::before { content: \"\"; z-index: -1; background: var(--button-fill); clip-path: polygon(0px 0px, calc(100% - 15px) 0px, 100% 100%, 0px 100%); transition: background-color 0.12s; position: absolute; inset: 0px; }\n.title-actions .ds-button__label { flex: 1 1 0%; justify-content: space-between; gap: 16px; }\n.title-actions .ds-button__label > svg { width: 20px; }\n.title-actions .ds-button--secondary { --button-fill: transparent; --button-ink: var(--ink); }\n.title-actions .ds-button:focus { --button-fill: var(--navy-deep); --button-ink: var(--ice); }\n.title-actions .ds-button:focus .ds-button__cursor { opacity: 1; transform: translateY(-50%); }\n.title-actions .ds-button:focus-visible { outline: 3px solid var(--blue-deep); outline-offset: 3px; }\n@media (hover: hover) {.title-actions .ds-button:not(:disabled):hover { --button-fill: var(--navy-deep); --button-ink: var(--ice); box-shadow: none; transform: none; }\n}\n.title-actions .ds-button:not(:disabled):active { box-shadow: none; transform: scale(0.985); }\n.ds-topline > .ds-button { --button-fill: var(--navy); --button-ink: var(--ice); --button-border: var(--line); }\n.ds-topline .icon-button .ds-button__cursor { display: none; }\n@media (height <= 560px) and (orientation: landscape) {.title-actions .ds-button { min-height: 48px; padding-block: 6px; font-size: 18px; }\n}\n@media (width <= 700px) and (orientation: landscape) {.title-actions .ds-button { gap: 12px; padding-inline: 32px 18px; }\n}\n@media (height <= 410px) and (orientation: landscape) {.title-actions .ds-button { min-height: 44px; font-size: 17px; }\n}\n"
+    },
+    {
+      "name": "文本输入与错误",
+      "kind": "input",
+      "refersTo": "field-input",
+      "description": "原生文本输入，标签、错误文字和aria-invalid保持关联。实际工坊提交空白后聚焦错误字段。",
+      "html": "<div class=\"ds-field\"><label for=\"ds-name\">样例名称</label><input id=\"ds-name\" type=\"text\" maxlength=\"20\" required aria-invalid=\"true\" aria-describedby=\"ds-name-error\"><p id=\"ds-name-error\">请输入名称</p></div>",
+      "css": ".ds-field{display:grid;gap:8px;min-width:0;font:500 16px/1.4 'Poketone UI',sans-serif;color:var(--ink,#142f50)}.ds-field label{font-weight:800}.ds-field input{box-sizing:border-box;min-width:0;width:100%;min-height:48px;padding:10px 12px;border:2px solid var(--danger,#a83243);border-radius:8px;background:var(--surface,#e9f4fb);color:inherit;font:inherit;caret-color:var(--blue,#2165a4)}.ds-field input:focus-visible{outline:3px solid var(--blue,#2165a4);outline-offset:3px}.ds-field p{margin:0;color:var(--danger,#a83243);font-size:14px;line-height:1.5}"
+    },
+    {
+      "name": "原生下拉选择",
+      "kind": "input",
+      "refersTo": "field-input",
+      "description": "保留原生下拉、方向键和触控选项，单项和整组可禁用。",
+      "html": "<div class=\"ds-select-field\"><label for=\"ds-icon\">图标</label><select id=\"ds-icon\"><option value=\"spark\">星芒</option><option value=\"cube\">方块</option><option value=\"sun\">太阳</option></select></div>",
+      "css": ".ds-select-field{display:grid;gap:8px;min-width:0;font:500 16px/1.4 'Poketone UI',sans-serif;color:var(--ink,#142f50)}.ds-select-field label{font-weight:800}.ds-select-field select{box-sizing:border-box;width:100%;min-width:0;min-height:48px;padding:10px 12px;border:2px solid var(--blue,#2165a4);border-radius:8px;background:var(--surface,#e9f4fb);color:inherit;font:inherit;cursor:pointer}.ds-select-field select:focus-visible{outline:3px solid var(--blue,#2165a4);outline-offset:3px}.ds-select-field select:disabled{color:var(--muted,#536b82);border-color:var(--line,#92b8d1);background:var(--ice,#d8effb);cursor:not-allowed}"
+    },
+    {
+      "name": "有界数量步进",
+      "kind": "input",
+      "refersTo": "field-input",
+      "description": "原生number与加减按钮的静态边界外观；应用提供步长对齐、清空编辑、失焦提交和状态更新，片段不模拟按钮事件。",
+      "html": "<div class=\"ds-stepper-field\"><label for=\"ds-count\">数量</label><div class=\"ds-stepper\"><button type=\"button\" aria-label=\"减少数量\" disabled><svg aria-hidden=\"true\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\"><path d=\"M5 12h14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\"/></svg></button><input id=\"ds-count\" type=\"number\" min=\"1\" max=\"5\" step=\"1\" value=\"1\"><button type=\"button\" aria-label=\"增加数量\"><svg aria-hidden=\"true\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\"><path d=\"M5 12h14M12 5v14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\"/></svg></button></div></div>",
+      "css": ".ds-stepper-field{display:grid;gap:8px;min-width:0;font:500 16px/1.4 'Poketone UI',sans-serif;color:var(--ink,#142f50)}.ds-stepper-field label{font-weight:800}.ds-stepper{display:grid;grid-template-columns:48px minmax(0,1fr) 48px;gap:8px;min-width:0}.ds-stepper input,.ds-stepper button{box-sizing:border-box;width:100%;min-width:0;min-height:48px;padding:10px 6px;border:2px solid var(--line,#92b8d1);border-radius:8px;background:var(--surface,#e9f4fb);color:inherit;font:inherit;text-align:center}.ds-stepper input{border-color:var(--blue,#2165a4)}.ds-stepper button{display:grid;place-items:center;background:var(--ice,#d8effb);cursor:pointer}.ds-stepper :focus-visible{outline:3px solid var(--blue,#2165a4);outline-offset:3px}.ds-stepper button:disabled{color:var(--muted,#536b82);cursor:not-allowed}"
+    },
+    {
+      "name": "分段单选",
+      "kind": "input",
+      "refersTo": "segmented-choice",
+      "description": "原生radio保留方向键与Tab，选中项有实体勾形标记，禁用项不能被选中。",
+      "html": "<fieldset class=\"ds-segments\"><legend>排列</legend><div><label><input type=\"radio\" name=\"ds-layout\" value=\"row\" checked><span>横向</span></label><label><input type=\"radio\" name=\"ds-layout\" value=\"column\"><span>纵向</span></label><label><input type=\"radio\" name=\"ds-layout\" value=\"grid\" disabled><span>网格</span></label></div></fieldset>",
+      "css": ".ds-segments{margin:0;padding:0;border:0;min-width:0;font:800 16px/1.4 'Poketone UI',sans-serif;color:var(--ink,#142f50)}.ds-segments legend{padding:0;margin-bottom:10px}.ds-segments>div{display:flex;flex-wrap:wrap;gap:6px}.ds-segments label{position:relative;flex:1 1 100px;min-width:0}.ds-segments input{position:absolute;width:1px;height:1px;opacity:0;margin:0}.ds-segments span{box-sizing:border-box;display:flex;justify-content:center;align-items:center;gap:8px;min-height:48px;padding:10px 12px;border:2px solid var(--line,#92b8d1);border-radius:8px;background:var(--ice,#d8effb);cursor:pointer}.ds-segments input:checked+span{background:var(--yellow,#ffd45b);border-color:var(--gold,#b48129)}.ds-segments input:checked+span:before{content:'';width:6px;height:11px;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(45deg)}.ds-segments input:focus-visible+span{outline:3px solid var(--blue,#2165a4);outline-offset:3px}.ds-segments input:disabled+span{color:var(--muted,#536b82);background:var(--surface,#e9f4fb);cursor:not-allowed}"
+    },
+    {
+      "name": "主要指令",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "原生 button；示例只展示外观和 CSS 交互状态，产品动作由应用绑定。",
+      "html": "<button class=\"ds-primary\" type=\"button\"><svg class=\"ds-primary-cursor\" aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 25 28\" width=\"22\" height=\"25\"><path d=\"M3 3 22 14 3 25Z\" fill=\"var(--yellow, #ffd45b)\" stroke=\"var(--navy-deep, #0d233f)\" stroke-width=\"3\" stroke-linejoin=\"round\"/></svg>进入渲染场景</button>",
+      "css": ".ds-primary{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-width:48px;min-height:50px;padding:11px 22px 11px 38px;border:2px solid var(--gold, #b48129);border-radius:var(--radius-control,8px);background:var(--yellow, #ffd45b);color:var(--navy-deep, #0d233f);font:800 16px/1.4 \"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;cursor:pointer;touch-action:manipulation;box-shadow:inset 0 1px 0 rgb(255 255 255 / 35%),0 3px 6px rgb(13 35 63 / 10%);transition:background-color 120ms,border-color 120ms,color 120ms,transform 150ms var(--ease-out,cubic-bezier(.16,1,.3,1))}.ds-primary-cursor{position:absolute;left:7px;top:50%;opacity:0;transform:translate(-4px,-50%);pointer-events:none;transition:opacity 100ms,transform 150ms var(--ease-out,cubic-bezier(.16,1,.3,1))}.ds-primary:not(:disabled):is(:focus-visible,[aria-pressed=\"true\"]){background:var(--yellow, #ffd45b);color:var(--navy-deep, #0d233f);border-color:var(--gold, #b48129)}.ds-primary:focus-visible{outline:3px solid var(--yellow, #ffd45b);outline-offset:3px}.ds-primary:is(:focus-visible,[aria-pressed=\"true\"]) .ds-primary-cursor{opacity:1;transform:translate(0,-50%)}@media(hover:hover){.ds-primary:not(:disabled):hover{background:var(--yellow, #ffd45b);color:var(--navy-deep, #0d233f);border-color:var(--gold, #b48129);transform:translateY(-2px);box-shadow:inset 0 1px 0 rgb(255 255 255 / 45%),0 6px 12px rgb(13 35 63 / 20%)}.ds-primary:not(:disabled):hover .ds-primary-cursor{opacity:1;transform:translate(0,-50%)}}.ds-primary:not(:disabled):active{transform:translateY(1px) scale(.985);box-shadow:inset 0 2px 3px rgb(13 35 63 / 15%)}.ds-primary:disabled{background:var(--disabled-surface,#d0dfeb);color:var(--disabled-ink,#657b91);border-color:var(--disabled-line,#b3c8d8);box-shadow:none;cursor:not-allowed}"
+    },
+    {
+      "name": "次要指令",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "原生 button；示例只展示外观和 CSS 交互状态，产品动作由应用绑定。",
+      "html": "<button class=\"ds-secondary\" type=\"button\"><svg class=\"ds-secondary-cursor\" aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 25 28\" width=\"22\" height=\"25\"><path d=\"M3 3 22 14 3 25Z\" fill=\"var(--yellow, #ffd45b)\" stroke=\"var(--navy-deep, #0d233f)\" stroke-width=\"3\" stroke-linejoin=\"round\"/></svg>显示消息</button>",
+      "css": ".ds-secondary{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-width:48px;min-height:50px;padding:11px 22px 11px 38px;border:2px solid var(--line, #92b8d1);border-radius:var(--radius-control,8px);background:var(--surface, #e9f4fb);color:var(--ink, #142f50);font:800 16px/1.4 \"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;cursor:pointer;touch-action:manipulation;box-shadow:inset 0 1px 0 rgb(255 255 255 / 35%),0 3px 6px rgb(13 35 63 / 10%);transition:background-color 120ms,border-color 120ms,color 120ms,transform 150ms var(--ease-out,cubic-bezier(.16,1,.3,1))}.ds-secondary-cursor{position:absolute;left:7px;top:50%;opacity:0;transform:translate(-4px,-50%);pointer-events:none;transition:opacity 100ms,transform 150ms var(--ease-out,cubic-bezier(.16,1,.3,1))}.ds-secondary:not(:disabled):is(:focus-visible,[aria-pressed=\"true\"]){background:var(--yellow, #ffd45b);color:var(--navy-deep, #0d233f);border-color:var(--gold, #b48129)}.ds-secondary:focus-visible{outline:3px solid var(--yellow, #ffd45b);outline-offset:3px}.ds-secondary:is(:focus-visible,[aria-pressed=\"true\"]) .ds-secondary-cursor{opacity:1;transform:translate(0,-50%)}@media(hover:hover){.ds-secondary:not(:disabled):hover{background:var(--yellow, #ffd45b);color:var(--navy-deep, #0d233f);border-color:var(--gold, #b48129);transform:translateY(-2px);box-shadow:inset 0 1px 0 rgb(255 255 255 / 45%),0 6px 12px rgb(13 35 63 / 20%)}.ds-secondary:not(:disabled):hover .ds-secondary-cursor{opacity:1;transform:translate(0,-50%)}}.ds-secondary:not(:disabled):active{transform:translateY(1px) scale(.985);box-shadow:inset 0 2px 3px rgb(13 35 63 / 15%)}.ds-secondary:disabled{background:var(--disabled-surface,#d0dfeb);color:var(--disabled-ink,#657b91);border-color:var(--disabled-line,#b3c8d8);box-shadow:none;cursor:not-allowed}"
+    },
+    {
+      "name": "重置指令",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "原生 button；示例只展示外观和 CSS 交互状态，产品动作由应用绑定。",
+      "html": "<button class=\"ds-danger\" type=\"button\"><svg class=\"ds-danger-cursor\" aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 25 28\" width=\"22\" height=\"25\"><path d=\"M3 3 22 14 3 25Z\" fill=\"var(--yellow, #ffd45b)\" stroke=\"var(--navy-deep, #0d233f)\" stroke-width=\"3\" stroke-linejoin=\"round\"/></svg>重置</button>",
+      "css": ".ds-danger{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-width:48px;min-height:50px;padding:11px 22px 11px 38px;border:2px solid var(--danger-line,#d89ba5);border-radius:var(--radius-control,8px);background:var(--danger-surface,#fce5e5);color:var(--danger, #a83243);font:800 16px/1.4 \"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;cursor:pointer;touch-action:manipulation;box-shadow:inset 0 1px 0 rgb(255 255 255 / 35%),0 3px 6px rgb(13 35 63 / 10%);transition:background-color 120ms,border-color 120ms,color 120ms,transform 150ms var(--ease-out,cubic-bezier(.16,1,.3,1))}.ds-danger-cursor{position:absolute;left:7px;top:50%;opacity:0;transform:translate(-4px,-50%);pointer-events:none;transition:opacity 100ms,transform 150ms var(--ease-out,cubic-bezier(.16,1,.3,1))}.ds-danger:not(:disabled):is(:focus-visible,[aria-pressed=\"true\"]){background:var(--yellow, #ffd45b);color:var(--navy-deep, #0d233f);border-color:var(--gold, #b48129)}.ds-danger:focus-visible{outline:3px solid var(--yellow, #ffd45b);outline-offset:3px}.ds-danger:is(:focus-visible,[aria-pressed=\"true\"]) .ds-danger-cursor{opacity:1;transform:translate(0,-50%)}@media(hover:hover){.ds-danger:not(:disabled):hover{background:var(--yellow, #ffd45b);color:var(--navy-deep, #0d233f);border-color:var(--gold, #b48129);transform:translateY(-2px);box-shadow:inset 0 1px 0 rgb(255 255 255 / 45%),0 6px 12px rgb(13 35 63 / 20%)}.ds-danger:not(:disabled):hover .ds-danger-cursor{opacity:1;transform:translate(0,-50%)}}.ds-danger:not(:disabled):active{transform:translateY(1px) scale(.985);box-shadow:inset 0 2px 3px rgb(13 35 63 / 15%)}.ds-danger:disabled{background:var(--disabled-surface,#d0dfeb);color:var(--disabled-ink,#657b91);border-color:var(--disabled-line,#b3c8d8);box-shadow:none;cursor:not-allowed}"
+    },
+    {
+      "name": "图标关闭按钮",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "无游标的 ghost 关闭按钮，保留可访问名称及44px目标。",
+      "html": "<button class=\"ds-close\" type=\"button\" aria-label=\"关闭弹窗\"><svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 24 24\" width=\"20\" height=\"20\"><path d=\"m6 6 12 12M18 6 6 18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\"/></svg></button>",
+      "css": ".ds-close{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:10px;border:2px solid transparent;border-radius:var(--radius-control,8px);background:transparent;color:var(--navy,#142f50);cursor:pointer;transition:background-color 120ms,color 120ms}.ds-close:focus-visible{outline:3px solid var(--yellow,#ffd45b);outline-offset:3px}.ds-close:active{background:var(--yellow,#ffd45b)}@media(hover:hover){.ds-close:hover{background:var(--yellow,#ffd45b);color:var(--navy-deep,#0d233f);border-color:var(--gold,#b48129)}}.ds-close:disabled{color:var(--muted,#536b82);cursor:not-allowed}"
+    },
+    {
+      "name": "文字选项开关",
+      "kind": "input",
+      "refersTo": "toggle-choice",
+      "description": "当前开启状态的原生 button / switch；箭头和开启文字明确状态。交互处理与说明见 DESIGN.md。",
+      "html": "<button class=\"ds-toggle\" type=\"button\" role=\"switch\" aria-checked=\"true\" aria-labelledby=\"ds-sound-label\"><span class=\"ds-toggle-copy\"><span class=\"ds-toggle-label\" id=\"ds-sound-label\">声音</span></span><span class=\"ds-toggle-choice\" aria-hidden=\"true\"><span class=\"ds-toggle-prev\"><svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\"><path d=\"m9 5 7 7-7 7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></span><span>开启</span><svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\"><path d=\"m9 5 7 7-7 7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></span></button>",
+      "css": ".ds-toggle{display:flex;align-items:center;justify-content:space-between;gap:24px;width:100%;min-height:66px;padding:12px 14px;border:1px solid transparent;border-bottom-color:var(--line, #92b8d1);border-radius:4px;background:transparent;color:var(--ink, #142f50);font-family:\"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;text-align:left;cursor:pointer;transition:background-color 120ms,color 120ms}.ds-toggle-copy{display:grid;gap:4px;min-width:0}.ds-toggle-label{font-size:16px;font-weight:800;line-height:1.45}.ds-toggle-description{max-width:38ch;font-size:14px;font-weight:500;line-height:1.5;color:var(--muted, #536b82);overflow-wrap:anywhere}.ds-toggle-choice{display:inline-flex;flex-shrink:0;align-items:center;justify-content:space-between;gap:10px;min-width:112px;min-height:40px;padding:6px 8px;border:1px solid var(--line, #92b8d1);border-radius:5px;background:var(--ice, #d8effb);color:var(--navy, #142f50);font-size:16px;font-weight:800;line-height:1.4}.ds-toggle-prev{display:inline-flex;transform:rotate(180deg)}.ds-toggle[aria-checked=\"true\"] .ds-toggle-choice{border-color:var(--gold, #b48129);background:var(--yellow, #ffd45b)}.ds-toggle:focus-visible{outline:3px solid var(--yellow, #ffd45b);outline-offset:3px;background:var(--navy, #142f50);color:var(--ice, #d8effb)}.ds-toggle:focus-visible .ds-toggle-description{color:var(--ice, #d8effb)}@media(hover:hover){.ds-toggle:not(:disabled):hover{background:var(--navy, #142f50);color:var(--ice, #d8effb)}.ds-toggle:not(:disabled):hover .ds-toggle-description{color:var(--ice, #d8effb)}}.ds-toggle:disabled{color:var(--muted, #536b82);cursor:not-allowed}.ds-toggle:disabled .ds-toggle-choice{background:var(--disabled-surface,#d0dfeb);border-color:var(--line, #92b8d1);color:var(--muted, #536b82)}@media(max-width:520px){.ds-toggle{gap:12px;padding:12px 8px}.ds-toggle-choice{min-width:92px;gap:4px;padding-inline:5px}}"
+    },
+    {
+      "name": "工坊分类导航",
+      "kind": "nav",
+      "refersTo": "tab-selected",
+      "description": "纵向原生 tab；产品中为 roving tabindex，箭头自动激活。手机仅横屏，示例不模拟分类状态切换。",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\" aria-label=\"工坊分类\" aria-orientation=\"vertical\"><button class=\"ds-tab\" type=\"button\" role=\"tab\" aria-selected=\"true\" tabindex=\"0\">操作反馈<small>指令与选项</small></button><button class=\"ds-tab\" type=\"button\" role=\"tab\" aria-selected=\"false\" tabindex=\"-1\">输入选择<small>表单与数值</small></button><button class=\"ds-tab\" type=\"button\" role=\"tab\" aria-selected=\"false\" tabindex=\"-1\">状态变化<small>充能与进度</small></button><button class=\"ds-tab\" type=\"button\" role=\"tab\" aria-selected=\"false\" tabindex=\"-1\">消息窗口<small>确认与提示</small></button></div>",
+      "css": ".ds-tabs{display:grid;gap:6px;padding:12px;border:3px solid var(--navy,#142f50);border-radius:10px;background:var(--navy-deep,#0d233f);color:var(--ice,#d8effb);font-family:Poketone UI,PingFang SC,Microsoft YaHei,sans-serif;box-shadow:inset 0 0 0 1px #84a9c7,0 10px 28px rgb(13 35 63 / 22%)}.ds-tab{position:relative;min-height:80px;padding:12px 12px 12px 25px;border:2px solid transparent;border-radius:7px;background:transparent;color:inherit;text-align:left;font-size:20px;font-weight:800;line-height:1.4;cursor:pointer;transition:background-color 120ms,color 120ms}.ds-tab small{display:block;margin-top:5px;font-size:12px;font-weight:600;color:#b3cee3}.ds-tab[aria-selected=true]{background:var(--yellow,#ffd45b);color:var(--navy-deep,#0d233f);border-color:var(--gold,#b48129)}.ds-tab[aria-selected=true] small{color:var(--navy,#142f50)}.ds-tab[aria-selected=true]:before{position:absolute;left:8px;top:calc(50% - 5px);width:7px;height:10px;clip-path:polygon(0 0,100% 50%,0 100%);background:currentColor;content:''}.ds-tab:focus-visible{outline:2px solid var(--ice,#d8effb);outline-offset:2px}@media(hover:hover){.ds-tab:not([aria-selected=true]):hover{background:var(--blue-deep,#173f70)}}@media(max-height:560px) and (orientation:landscape){.ds-tab{min-height:48px;font-size:16px}.ds-tab small{display:none}}"
+    },
+    {
+      "name": "充能进度与原生范围输入",
+      "kind": "input",
+      "refersTo": "progress",
+      "description": "真实 progress / range 视觉样例；此处百分比为展示值，不运行充能计时。range 保留浏览器原生方向键。",
+      "html": "<section class=\"ds-charge\" aria-label=\"充能样例\"><div class=\"ds-charge-heading\"><h3>充能样例</h3><output class=\"ds-charge-state\">等待指令</output><output class=\"ds-charge-value\" aria-label=\"充能进度\">0<small>%</small></output></div><progress class=\"ds-meter\" aria-label=\"样例充能\" max=\"100\" value=\"0\"></progress><div class=\"ds-range-row\"><label for=\"ds-duration\">充能时长</label><input id=\"ds-duration\" class=\"ds-range\" type=\"range\" min=\"1\" max=\"4\" step=\"0.5\" value=\"2\" aria-valuetext=\"2.0 秒\"><output for=\"ds-duration\">2.0 秒</output></div></section>",
+      "css": ".ds-charge{padding:18px;background:var(--surface, #e9f4fb);color:var(--ink, #142f50);font-family:\"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;font-weight:600}.ds-charge-heading{display:grid;grid-template-columns:1fr auto;gap:6px 16px;align-items:center}.ds-charge-heading h3{margin:0;font-size:20px;font-weight:800}.ds-charge-state{grid-column:1;color:var(--muted, #536b82);font-size:14px}.ds-charge-value{grid-column:2;grid-row:1/3;font-size:clamp(34px,4vw,48px);font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:var(--navy, #142f50)}.ds-charge-value small{margin-left:3px;font-size:16px}.ds-meter{display:block;width:100%;height:25px;margin:25px 0;overflow:hidden;appearance:none;border:3px solid var(--navy, #142f50);border-radius:5px;background:var(--navy-deep, #0d233f);color:var(--sample-blue,#5bbce8)}.ds-meter::-webkit-progress-bar{background:var(--navy-deep, #0d233f)}.ds-meter::-webkit-progress-value{border-block:3px solid rgb(255 255 255 / 24%);background:var(--sample-blue,#5bbce8);transition:width 80ms linear}.ds-meter::-moz-progress-bar{border-block:3px solid rgb(255 255 255 / 24%);background:var(--sample-blue,#5bbce8)}.ds-range-row{display:flex;align-items:center;gap:12px;border-top:1px solid var(--line, #92b8d1);padding-top:12px;font-size:16px}.ds-range-row label{margin-right:auto}.ds-range{width:clamp(74px,10vw,150px);min-width:0;height:44px;margin:0;accent-color:var(--blue-deep,#173f70);cursor:pointer}.ds-range:focus-visible{outline:3px solid var(--yellow, #ffd45b);outline-offset:4px}.ds-range:disabled{opacity:.5;cursor:default}.ds-range-row output{min-width:4.2em;font-variant-numeric:tabular-nums;text-align:right}"
+    },
+    {
+      "name": "确认窗口",
+      "kind": "custom",
+      "refersTo": "dialog",
+      "description": "原生 dialog 的打开外观；示例静态 open，应用运行时使用 showModal、Escape、遮罩关闭、焦点循环和归还。",
+      "html": "<dialog class=\"ds-dialog\" open aria-labelledby=\"ds-dialog-title\"><header class=\"ds-dialog-header\"><h2 id=\"ds-dialog-title\">重置工坊？</h2><button class=\"ds-dialog-close\" type=\"button\" aria-label=\"关闭弹窗\"><svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 24 24\" width=\"20\" height=\"20\"><path d=\"m6 6 12 12M18 6 6 18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\"/></svg></button></header><div class=\"ds-dialog-body\"><p>恢复选项和充能的初始状态。</p></div><footer class=\"ds-dialog-actions\"><button class=\"ds-dialog-cancel\" type=\"button\">取消</button><button class=\"ds-dialog-reset\" type=\"button\">重置</button></footer></dialog>",
+      "css": ".ds-dialog{position:relative;width:min(560px,calc(100vw - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)));max-height:calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));margin:auto;padding:5px;overflow:auto;border:3px solid var(--navy-deep, #0d233f);border-radius:12px;color:var(--ink, #142f50);background:var(--surface, #e9f4fb);font-family:\"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;box-shadow:inset 0 0 0 1px var(--yellow, #ffd45b),0 20px 70px rgb(13 35 63 / 40%)}.ds-dialog::backdrop{background:rgb(13 35 63 / 64%)}.ds-dialog-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 10px 10px 22px;border-radius:5px;color:var(--ice, #d8effb);background:var(--navy, #142f50)}.ds-dialog-header h2{margin:0;font-size:clamp(21px,1rem + .7vw,27px);font-weight:800;line-height:1.35}.ds-dialog-close{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:10px;border:2px solid transparent;border-radius:8px;color:inherit;background:transparent;cursor:pointer}.ds-dialog-body{padding:24px 22px;font-size:16px;font-weight:500;line-height:1.65}.ds-dialog-body p{margin:0}.ds-dialog-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;padding:14px;border-top:1px solid var(--line, #92b8d1)}.ds-dialog-cancel,.ds-dialog-reset{min-width:130px;min-height:50px;padding:11px 22px 11px 38px;border:2px solid var(--line, #92b8d1);border-radius:8px;background:var(--surface, #e9f4fb);color:var(--ink, #142f50);font:800 16px/1.4 \"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;cursor:pointer;transition:background-color 120ms,color 120ms}.ds-dialog-reset{background:var(--danger-surface,#fce5e5);color:var(--danger, #a83243);border-color:var(--danger-line,#d89ba5)}.ds-dialog button:focus-visible{outline:3px solid var(--yellow, #ffd45b);outline-offset:3px}.ds-dialog button:active{background:var(--yellow, #ffd45b);color:var(--navy-deep, #0d233f)}@media(hover:hover){.ds-dialog button:hover{background:var(--yellow, #ffd45b);color:var(--navy-deep, #0d233f);border-color:var(--gold, #b48129)}@media(max-width:520px){.ds-dialog-header{padding:8px 8px 8px 16px}.ds-dialog-body{padding:20px 14px}.ds-dialog-actions button{flex:1;min-width:100px}}"
+    },
+    {
+      "name": "底部短消息",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "礼貌播报的消息带；示例为静态可见状态，产品计时3000ms，hover/focus暂停，重触发重新计时。",
+      "html": "<div class=\"ds-toast\"><span class=\"ds-toast-mark\" aria-hidden=\"true\"><svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\"><path d=\"m9 5 7 7-7 7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></span><output class=\"ds-toast-message\" aria-live=\"polite\" aria-atomic=\"true\">工坊已重置</output><button class=\"ds-toast-close\" type=\"button\" aria-label=\"关闭提示\"><svg aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 24 24\" width=\"20\" height=\"20\"><path d=\"m6 6 12 12M18 6 6 18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\"/></svg></button></div>",
+      "css": ".ds-toast{display:flex;align-items:center;gap:16px;width:min(820px,calc(100% - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)));min-height:76px;margin:auto;padding:12px 16px 12px 24px;border:3px solid var(--navy-deep, #0d233f);border-radius:var(--radius-window,10px);color:var(--ice, #d8effb);background:var(--navy, #142f50);box-shadow:inset 0 0 0 1px var(--line, #92b8d1),var(--shadow-window,0 12px 32px rgb(13 35 63 / 25%));font:700 clamp(16px,.9rem + .3vw,19px)/1.5 \"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;transition:opacity 140ms ease-out,transform 200ms var(--ease-out,cubic-bezier(.16,1,.3,1))}.ds-toast-mark{display:inline-flex;flex-shrink:0;color:var(--yellow, #ffd45b)}.ds-toast-message{flex:1;min-width:0;overflow-wrap:anywhere}.ds-toast-close{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:10px;border:2px solid transparent;border-radius:8px;background:transparent;color:inherit;cursor:pointer}.ds-toast-close:focus-visible{outline:3px solid var(--yellow, #ffd45b);outline-offset:3px}.ds-toast-close:active{background:var(--yellow, #ffd45b);color:var(--navy-deep, #0d233f)}@media(hover:hover){.ds-toast-close:hover{background:var(--yellow, #ffd45b);color:var(--navy-deep, #0d233f);border-color:var(--gold, #b48129)}.ds-toast[hidden]{display:none;opacity:0;transform:translateY(12px);pointer-events:none}@media(max-width:520px){.ds-toast{gap:8px;min-height:68px;padding:10px 8px 10px 12px}}"
+    },
+    {
+      "name": "预览指令窗口与文件错误",
+      "kind": "card",
+      "refersTo": "content-window",
+      "description": "真实 aside 窗框、aria-pressed来源按钮、可折行文件名与错误反馈。静态错误示例保留上一成功模型；不提供模型运行时。",
+      "html": "<aside class=\"ds-preview\" aria-label=\"伙伴预览指令\"><header class=\"ds-preview-header\"><h3>伙伴指令</h3><span>模型预览</span></header><div class=\"ds-preview-body\" aria-busy=\"false\"><h4 id=\"ds-source-title\">选择伙伴</h4><fieldset class=\"ds-preview-commands\" aria-labelledby=\"ds-source-title\"><button class=\"ds-preview-command\" type=\"button\" aria-pressed=\"true\"><svg class=\"ds-preview-command-cursor\" aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 25 28\" width=\"22\" height=\"25\"><path d=\"M3 3 22 14 3 25Z\" fill=\"var(--yellow, #ffd45b)\" stroke=\"var(--navy-deep, #0d233f)\" stroke-width=\"3\" stroke-linejoin=\"round\"/></svg>小火龙</button><button class=\"ds-preview-command\" type=\"button\" aria-pressed=\"false\"><svg class=\"ds-preview-command-cursor\" aria-hidden=\"true\" focusable=\"false\" viewBox=\"0 0 25 28\" width=\"22\" height=\"25\"><path d=\"M3 3 22 14 3 25Z\" fill=\"var(--yellow, #ffd45b)\" stroke=\"var(--navy-deep, #0d233f)\" stroke-width=\"3\" stroke-linejoin=\"round\"/></svg>本地模型</button></fieldset><div class=\"ds-preview-file\"><span>当前模型</span><output aria-live=\"polite\" aria-atomic=\"true\">charmander.glb</output></div><div class=\"ds-preview-error\" role=\"alert\"><strong>操作未完成</strong><p>请选择有效的 GLB 模型。</p><p>可重新选择伙伴或导入其他 GLB 模型。</p></div><details class=\"ds-preview-help\"><summary>导入说明</summary><p>选择自包含、未压缩的 GLB，纹理与动画需嵌入文件。本地解析，不会上传。</p></details></div></aside>",
+      "css": ".ds-preview{width:clamp(280px,28vw,350px);max-width:100%;overflow:hidden;border:3px solid var(--navy, #142f50);border-radius:10px;background:var(--surface, #e9f4fb);color:var(--ink, #142f50);font-family:\"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;font-weight:600;box-shadow:inset 0 0 0 1px var(--ice, #d8effb),0 10px 28px rgb(20 47 80 / 22%)}.ds-preview-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:2px solid var(--gold, #b48129);background:var(--navy, #142f50);color:var(--ice, #d8effb)}.ds-preview-header h3{margin:0;font-size:20px;font-weight:800;line-height:1.3}.ds-preview-header span{font-size:12px;font-weight:700;color:var(--yellow, #ffd45b)}.ds-preview-body{padding:18px;max-height:500px;overflow-y:auto;overscroll-behavior:contain}.ds-preview-body h4{margin:0 0 10px;font-size:15px;font-weight:800;line-height:1.5;color:var(--blue-deep,#173f70)}.ds-preview-commands{display:grid;gap:8px;margin:0;padding:0;border:0;min-width:0}.ds-preview-command{width:100%;justify-content:flex-start;text-align:left;min-height:48px}.ds-preview-file{display:grid;gap:3px;margin-top:14px;padding-block:12px;border-block:1px solid var(--line, #92b8d1)}.ds-preview-file span{color:var(--muted, #536b82);font-size:12px;line-height:1.5}.ds-preview-file output{font-size:14px;line-height:1.6;overflow-wrap:anywhere}.ds-preview-error{padding:12px;margin-top:14px;border:1px solid var(--danger, #a83243);border-radius:6px;background:var(--error-surface,#fff0ef);color:var(--danger, #a83243);font-size:14px;line-height:1.7;overflow-wrap:anywhere}.ds-preview-error strong{font-weight:800}.ds-preview-error p{margin:5px 0 0}.ds-preview-help{margin-top:20px;color:var(--muted, #536b82);font-size:13px;line-height:1.8}.ds-preview-help summary{padding-block:12px;color:var(--blue-deep,#173f70);font-size:14px;font-weight:700;cursor:pointer}.ds-preview-help summary:focus-visible{outline:3px solid var(--blue, #2165a4);outline-offset:2px}.ds-preview-help p{margin:0 0 6px;overflow-wrap:anywhere}@media(hover:hover){.ds-preview-help summary:hover{text-decoration:underline}}.ds-preview-command{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-width:48px;min-height:50px;padding:11px 22px 11px 38px;border:2px solid var(--line, #92b8d1);border-radius:var(--radius-control,8px);background:var(--surface, #e9f4fb);color:var(--ink, #142f50);font:800 16px/1.4 \"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;cursor:pointer;touch-action:manipulation;box-shadow:inset 0 1px 0 rgb(255 255 255 / 35%),0 3px 6px rgb(13 35 63 / 10%);transition:background-color 120ms,border-color 120ms,color 120ms,transform 150ms var(--ease-out,cubic-bezier(.16,1,.3,1))}.ds-preview-command-cursor{position:absolute;left:7px;top:50%;opacity:0;transform:translate(-4px,-50%);pointer-events:none;transition:opacity 100ms,transform 150ms var(--ease-out,cubic-bezier(.16,1,.3,1))}.ds-preview-command:not(:disabled):is(:focus-visible,[aria-pressed=\"true\"]){background:var(--yellow, #ffd45b);color:var(--navy-deep, #0d233f);border-color:var(--gold, #b48129)}.ds-preview-command:focus-visible{outline:3px solid var(--yellow, #ffd45b);outline-offset:3px}.ds-preview-command:is(:focus-visible,[aria-pressed=\"true\"]) .ds-preview-command-cursor{opacity:1;transform:translate(0,-50%)}@media(hover:hover){.ds-preview-command:not(:disabled):hover{background:var(--yellow, #ffd45b);color:var(--navy-deep, #0d233f);border-color:var(--gold, #b48129);transform:translateY(-2px);box-shadow:inset 0 1px 0 rgb(255 255 255 / 45%),0 6px 12px rgb(13 35 63 / 20%)}.ds-preview-command:not(:disabled):hover .ds-preview-command-cursor{opacity:1;transform:translate(0,-50%)}}.ds-preview-command:not(:disabled):active{transform:translateY(1px) scale(.985);box-shadow:inset 0 2px 3px rgb(13 35 63 / 15%)}.ds-preview-command:disabled{background:var(--disabled-surface,#d0dfeb);color:var(--disabled-ink,#657b91);border-color:var(--disabled-line,#b3c8d8);box-shadow:none;cursor:not-allowed}.ds-preview-command{min-height:48px;justify-content:flex-start}"
+    },
+    {
+      "name": "HUD 生命组（掉血段）",
+      "kind": "custom",
+      "refersTo": "hud-meter",
+      "description": "左上等级徽章 + HP / XP 计量条。掉血段是独立的段（--fill 当前值 → --was 旧值），画在被裁切的计量条之外；示例循环播放「白闪 + 2× 膨胀 → 停留 350ms → 180ms 回落」。is-hurt 演示抖动与闪框，data-low 演示低血。",
+      "html": "<div class=\"ds-run-scene\"><div class=\"ds-vitals\"><div class=\"ds-level\" aria-label=\"等级 7\"><small>Lv</small>7</div><div class=\"ds-bars\"><div class=\"ds-meter ds-meter--hp\" data-hit=\"demo\" style=\"--fill:.52;--was:.78\"><meter class=\"ds-vh\" aria-label=\"HP\" min=\"0\" max=\"120\" value=\"62\"></meter><span class=\"ds-bar ds-bar--hp\"><span></span></span><i class=\"ds-chip\"></i><b>62 / 120</b></div><span class=\"ds-bar ds-bar--xp\" style=\"--fill:.4\"><span></span></span></div></div><div class=\"ds-vitals is-hurt\"><div class=\"ds-level\" aria-label=\"等级 3\"><small>Lv</small>3</div><div class=\"ds-bars\"><div class=\"ds-meter ds-meter--hp\" data-low=\"true\" style=\"--fill:.22;--was:.3\"><meter class=\"ds-vh\" aria-label=\"HP\" min=\"0\" max=\"80\" value=\"18\"></meter><span class=\"ds-bar ds-bar--hp\"><span></span></span><i class=\"ds-chip\"></i><b>18 / 80</b></div><span class=\"ds-bar ds-bar--xp\" style=\"--fill:.85\"><span></span></span></div></div></div>",
+      "css": ".ds-run-scene{position:relative;isolation:isolate;display:flex;align-items:flex-start;gap:16px;padding:24px 16px;background:var(--run-sky,#bfe6f7);font-family:\"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;color:var(--ink,#142f50)}.ds-vh{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%)}.ds-vitals{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:var(--space-2,8px);width:min(300px,100%);flex:1;filter:drop-shadow(0 2px 3px rgb(13 35 63 / 35%))}.ds-level{display:grid;place-content:center;justify-items:center;width:calc(var(--size-meter,22px) * 2.2);height:calc(var(--size-meter,22px) * 2.2);border:var(--frame,3px) solid var(--navy-deep,#0d233f);border-radius:var(--radius-control,8px);color:var(--navy-deep,#0d233f);background:linear-gradient(180deg,#ffe68f,var(--yellow,#ffd45b) 55%,#f2b52a);font-size:var(--type-name,18px);font-weight:800;line-height:1;font-variant-numeric:tabular-nums}.ds-level small{font-size:var(--type-badge,11px)}.ds-bars{display:grid;gap:var(--space-1,4px)}.ds-meter{position:relative}.ds-meter>.ds-bar{height:100%}.ds-meter--hp{height:var(--size-meter,22px)}.ds-bar{position:relative;display:block;overflow:hidden;border:var(--frame-thin,2px) solid var(--navy-deep,#0d233f);border-radius:var(--radius-chip,6px);background:rgb(13 35 63 / 55%);box-shadow:inset 0 2px 3px rgb(0 0 0 / 30%)}.ds-bar>span{position:absolute;inset:0;transform:scaleX(var(--fill,0));transform-origin:left;box-shadow:inset 0 2px 0 rgb(255 255 255 / 35%);transition:transform 120ms linear}.ds-chip{position:absolute;top:var(--frame-thin,2px);bottom:var(--frame-thin,2px);left:calc(var(--frame-thin,2px) + var(--fill,0) * (100% - var(--frame-thin,2px) * 2));right:calc(var(--frame-thin,2px) + (1 - var(--was,var(--fill,0))) * (100% - var(--frame-thin,2px) * 2));border-radius:2px;background:var(--yellow,#ffd45b)}.ds-meter[data-hit=\"demo\"]>.ds-chip{animation:ds-chip 1.4s linear infinite}@keyframes ds-chip{0%{top:-50%;bottom:-50%;background-color:#fff}14%{background-color:var(--yellow,#ffd45b)}25%{top:-50%;bottom:-50%;animation-timing-function:cubic-bezier(.2,.7,.3,1)}38%,100%{top:var(--frame-thin,2px);bottom:var(--frame-thin,2px)}}.ds-bar--hp>span{background:linear-gradient(180deg,#9be884,#4fb952 55%,#3a9a45)}.ds-meter--hp[data-low=\"true\"] .ds-bar>span{background:linear-gradient(180deg,#ff9a88,#e0475a 55%,#c22f45);animation:ds-low 700ms ease-in-out infinite alternate}.ds-bar--hp::after{content:\"\";position:absolute;inset:0;background:linear-gradient(rgb(13 35 63 / 45%),rgb(13 35 63 / 45%)) 25% 0/1px 100% no-repeat,linear-gradient(rgb(13 35 63 / 45%),rgb(13 35 63 / 45%)) 50% 0/1px 100% no-repeat,linear-gradient(rgb(13 35 63 / 45%),rgb(13 35 63 / 45%)) 75% 0/1px 100% no-repeat}.ds-meter--hp>b{position:absolute;z-index:1;inset:0 var(--space-2,8px) 0 auto;display:grid;place-items:center;color:#fff;font-size:var(--type-caption,13px);line-height:1;font-variant-numeric:tabular-nums;-webkit-text-stroke:3px var(--navy-deep,#0d233f);paint-order:stroke fill}.ds-bar--xp{height:calc(var(--size-meter,22px) * .45);border-width:1px}.ds-bar--xp>span{background:linear-gradient(90deg,#59c8ff,#a9e6ff);box-shadow:none}.ds-vitals.is-hurt{animation:ds-hit 300ms ease-out}.ds-vitals.is-hurt .ds-bar--hp{animation:ds-flash 420ms ease-out}@keyframes ds-low{to{filter:brightness(1.35)}}@keyframes ds-hit{20%{translate:-3px 1px}45%{translate:3px -1px}70%{translate:-1px 0}}@keyframes ds-flash{from{border-color:#ff6f7d;box-shadow:0 0 0 2px rgb(255 111 125 / 70%),inset 0 2px 3px rgb(0 0 0 / 30%)}}@keyframes ds-chip-tint{0%{background-color:#fff}14%,100%{background-color:var(--yellow,#ffd45b)}}"
+    },
+    {
+      "name": "HUD 招式格 / 道具格（角标）",
+      "kind": "custom",
+      "refersTo": "hud-slot",
+      "description": "底排方形格：招式格取属性浅底并叠 12 点钟顺时针冷却扇形，道具格冰蓝面；等级角标贴右上、只圆左下角，位于图标与遮罩之上；空位虚线。纯展示，不可点。",
+      "html": "<div class=\"ds-run-scene\"><ul class=\"ds-slots\" aria-label=\"招式\"><li class=\"ds-slot ds-slot--move\" style=\"--type-soft:#ffe2cf;--type:#f0702e;--ready:.62\" title=\"火花\"><svg class=\"ds-slot__icon\" aria-hidden=\"true\" focusable=\"false\" width=\"34\" height=\"34\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3c3 4 6 6.5 6 10.5A6 6 0 0 1 6 13.5C6 10 8.5 8 9 5c1.5 2 3 2.5 3-2Z\"/></svg><span class=\"ds-badge\">3</span></li><li class=\"ds-slot ds-slot--move\" style=\"--type-soft:#d6ecff;--type:#2f8fe0;--ready:1\" title=\"水枪\"><svg class=\"ds-slot__icon\" aria-hidden=\"true\" focusable=\"false\" width=\"34\" height=\"34\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11Z\"/></svg><span class=\"ds-badge\">1</span></li><li class=\"ds-slot ds-slot--move is-empty\"></li></ul><ul class=\"ds-slots\" aria-label=\"道具\"><li class=\"ds-slot ds-slot--item\" title=\"树果\"><svg class=\"ds-slot__icon\" aria-hidden=\"true\" focusable=\"false\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 8a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm0 0c0-2 1-4 3-5\"/></svg><b class=\"ds-badge\">2</b></li><li class=\"ds-slot ds-slot--item is-empty\"></li></ul></div>",
+      "css": ".ds-run-scene{position:relative;isolation:isolate;display:flex;align-items:flex-start;gap:16px;padding:16px;background:var(--run-sky,#bfe6f7);font-family:\"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;color:var(--ink,#142f50)}.ds-vh{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%)}.ds-run-scene{align-items:flex-end}.ds-slots{display:flex;align-items:end;gap:var(--space-2,8px);margin:0;padding:0;list-style:none}.ds-slot{position:relative;isolation:isolate;display:grid;place-items:center;overflow:hidden;border:var(--frame,3px) solid var(--navy,#142f50);border-radius:var(--radius-control,8px);background:var(--surface,#e9f4fb);box-shadow:var(--shadow-hud,0 4px 10px rgb(13 35 63 / 22%))}.ds-slot--move{width:var(--size-slot,60px);height:var(--size-slot,60px);color:var(--type,var(--navy,#142f50));background:var(--type-soft,var(--surface,#e9f4fb))}.ds-slot--move::after{content:\"\";position:absolute;inset:0;background:conic-gradient(rgb(13 35 63 / 55%) calc((1 - var(--ready,1)) * 360deg),transparent 0)}.ds-slot--item{width:var(--size-slot-sm,40px);height:var(--size-slot-sm,40px);color:var(--danger,#a83243)}.ds-slot__icon{width:70%;height:70%}.ds-slot--item .ds-slot__icon{width:78%;height:78%}.ds-badge{position:absolute;z-index:1;top:0;right:0;display:grid;place-items:center;min-width:var(--size-badge,16px);height:var(--size-badge,16px);padding-inline:3px;border-radius:0 0 0 var(--radius-badge,4px);color:var(--ice,#d8effb);background:var(--navy,#142f50);font-size:var(--type-badge,11px);font-weight:800;line-height:1;font-variant-numeric:tabular-nums}.ds-slot.is-empty{border-style:dashed;border-color:rgb(20 47 80 / 45%);background:rgb(233 244 251 / 35%);box-shadow:none}.ds-slot.is-empty::after{content:none}"
+    },
+    {
+      "name": "圆形 HUD 图标按钮",
+      "kind": "button",
+      "refersTo": "hud-icon-button",
+      "description": "暂停与视角旋转：48px 圆、hud-scrim 透明底、2px 冰蓝 75% 框、白色图标；悬停 / 焦点沿用通用按钮暖黄态，不显示三角游标。视角旋转只在粗指针显示。",
+      "html": "<div class=\"ds-run-scene\"><button class=\"ds-hud-btn\" type=\"button\" aria-label=\"暂停\"><svg aria-hidden=\"true\" focusable=\"false\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M8 5v14M16 5v14\"/></svg></button><button class=\"ds-hud-btn\" type=\"button\" aria-label=\"向左旋转视角\"><svg aria-hidden=\"true\" focusable=\"false\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 10a8 8 0 1 1 .7 6M4 4v6h6\"/></svg></button><button class=\"ds-hud-btn\" type=\"button\" aria-label=\"向右旋转视角\"><svg style=\"transform:scaleX(-1)\" aria-hidden=\"true\" focusable=\"false\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 10a8 8 0 1 1 .7 6M4 4v6h6\"/></svg></button></div>",
+      "css": ".ds-run-scene{position:relative;isolation:isolate;display:flex;align-items:flex-start;gap:16px;padding:16px;background:var(--run-sky,#bfe6f7);font-family:\"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;color:var(--ink,#142f50)}.ds-vh{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%)}.ds-run-scene{gap:var(--space-2,8px)}.ds-hud-btn{--fill:rgb(13 35 63 / 55%);--ink:#fff;--border:rgb(216 239 251 / 75%);display:grid;place-items:center;width:var(--size-icon-button,48px);height:var(--size-icon-button,48px);padding:0;border:var(--frame-thin,2px) solid var(--border);border-radius:50%;color:var(--ink);background:var(--fill);box-shadow:var(--shadow-hud,0 4px 10px rgb(13 35 63 / 22%));cursor:pointer;touch-action:none;transition:background-color 120ms,border-color 120ms,color 120ms,transform 150ms var(--ease-out,cubic-bezier(.16,1,.3,1))}.ds-hud-btn:focus-visible{--fill:var(--yellow,#ffd45b);--ink:var(--navy-deep,#0d233f);--border:var(--gold,#b48129);outline:3px solid var(--yellow,#ffd45b);outline-offset:3px}@media(hover:hover){.ds-hud-btn:hover{--fill:var(--yellow,#ffd45b);--ink:var(--navy-deep,#0d233f);--border:var(--gold,#b48129);transform:translateY(-2px)}}.ds-hud-btn:active{transform:translateY(1px) scale(.985)}"
+    },
+    {
+      "name": "冲刺拇指键",
+      "kind": "button",
+      "refersTo": "hud-thumb",
+      "description": "右下唯一实色主操作：--size-thumb 圆（粗指针 76px）、3px navy 框，暖黄按冷却进度顺时针填充、未满部分 dash-empty；细指针在箭头下显示「Space」按键文字，粗指针隐藏。",
+      "html": "<div class=\"ds-run-scene\"><button class=\"ds-dash\" type=\"button\" aria-label=\"冲刺\" style=\"--ready:1\"><svg aria-hidden=\"true\" focusable=\"false\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 12h16m-6-6 6 6-6 6\"/></svg><kbd>Space</kbd></button><button class=\"ds-dash\" type=\"button\" aria-label=\"冲刺\" style=\"--ready:.4\"><svg aria-hidden=\"true\" focusable=\"false\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 12h16m-6-6 6 6-6 6\"/></svg><kbd>Space</kbd></button></div>",
+      "css": ".ds-run-scene{position:relative;isolation:isolate;display:flex;align-items:flex-start;gap:16px;padding:16px;background:var(--run-sky,#bfe6f7);font-family:\"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;color:var(--ink,#142f50)}.ds-vh{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%)}.ds-dash{display:grid;place-content:center;justify-items:center;width:var(--size-thumb,64px);height:var(--size-thumb,64px);padding:0;border:var(--frame,3px) solid var(--navy,#142f50);border-radius:50%;color:var(--navy-deep,#0d233f);background:conic-gradient(var(--yellow,#ffd45b) calc(var(--ready,1) * 360deg),#c9d6e0 0);box-shadow:var(--shadow-hud,0 4px 10px rgb(13 35 63 / 22%));cursor:pointer;touch-action:none}.ds-dash svg{width:calc(var(--size-thumb,64px) * .4);height:calc(var(--size-thumb,64px) * .4)}.ds-dash kbd{font:800 var(--type-badge,11px)/1 \"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;color:inherit}.ds-dash:focus-visible{outline:3px solid var(--yellow,#ffd45b);outline-offset:4px}@media(pointer:coarse){.ds-dash{width:76px;height:76px}.ds-dash svg{width:30px;height:30px}.ds-dash kbd{display:none}}"
+    },
+    {
+      "name": "选卡卡面",
+      "kind": "card",
+      "refersTo": "choice-card",
+      "description": "升级 / 宝箱三选一：≤220px 宽、3px navy 框、window 圆角，顶部 8px 色条（稀有度、新招式取属性色、道具 gold）；类别标签文字把色条色与 navy-deep 各半混合；数字键角标；悬停 / 焦点上移 6px 转白底。",
+      "html": "<div class=\"ds-choice\"><button class=\"ds-card\" type=\"button\" style=\"--tone:#3c8ee0\"><kbd>1</kbd><svg class=\"ds-card__icon\" style=\"color:#f0702e\" aria-hidden=\"true\" focusable=\"false\" width=\"64\" height=\"64\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3c3 4 6 6.5 6 10.5A6 6 0 0 1 6 13.5C6 10 8.5 8 9 5c1.5 2 3 2.5 3-2Z\"/></svg><span class=\"ds-card__title\">火花<span class=\"ds-card__tag\">稀有</span></span><span class=\"ds-card__line\">伤害 +18%</span></button><button class=\"ds-card\" type=\"button\" style=\"--tone:#2f8fe0\"><kbd>2</kbd><svg class=\"ds-card__icon\" style=\"color:#2f8fe0\" aria-hidden=\"true\" focusable=\"false\" width=\"64\" height=\"64\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11Z\"/></svg><span class=\"ds-card__title\">水枪<span class=\"ds-card__tag\">新招式</span></span><span class=\"ds-card__line\">直线弹道</span></button><button class=\"ds-card\" type=\"button\" style=\"--tone:var(--gold,#b48129)\"><kbd>3</kbd><svg class=\"ds-card__icon\" style=\"color:#a83243\" aria-hidden=\"true\" focusable=\"false\" width=\"64\" height=\"64\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 8a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm0 0c0-2 1-4 3-5\"/></svg><span class=\"ds-card__title\">树果<span class=\"ds-card__tag\">补给</span></span><span class=\"ds-card__line\">回复 40% HP</span></button></div>",
+      "css": ".ds-choice{display:grid;grid-template-columns:repeat(3,minmax(0,220px));justify-content:center;gap:var(--space-3,12px);padding:var(--space-5,20px);background:rgb(13 35 63 / 52%);font-family:\"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif}.ds-card{position:relative;display:grid;grid-template-columns:minmax(0,1fr);align-content:start;gap:6px var(--space-3,12px);min-height:170px;padding:var(--space-6,24px) var(--space-4,16px) var(--space-4,16px);border:var(--frame,3px) solid var(--navy,#142f50);border-radius:var(--radius-window,10px);color:var(--ink,#142f50);background:var(--surface,#e9f4fb);font:inherit;text-align:left;cursor:pointer;box-shadow:inset 0 8px 0 var(--tone,var(--line,#92b8d1)),var(--shadow-window,0 12px 32px rgb(13 35 63 / 25%));transition:transform 140ms var(--ease-out,cubic-bezier(.16,1,.3,1)),background-color 140ms}.ds-card:is(:hover,:focus-visible){background:#fff;transform:translateY(-6px)}.ds-card:focus-visible{outline:3px solid var(--yellow,#ffd45b);outline-offset:3px}.ds-card kbd{position:absolute;top:var(--space-3,12px);right:var(--space-2,8px);display:inline-flex;align-items:center;justify-content:center;min-width:24px;min-height:24px;padding:2px 6px;border:1px solid var(--line,#92b8d1);border-radius:4px;font:800 .8em/1 \"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;color:var(--ice,#d8effb);background:var(--blue-deep,#173f70)}.ds-card__icon{width:64px;height:64px;margin:-4px 0 2px -4px}.ds-card__title{font-size:var(--type-title,22px);font-weight:800;line-height:1.2}.ds-card__tag{display:inline-block;margin-left:var(--space-2,8px);padding:1px var(--space-2,8px);border-radius:var(--radius-badge,4px);color:color-mix(in srgb,var(--tone,var(--line,#92b8d1)) 40%,var(--navy-deep,#0d233f));background:color-mix(in srgb,var(--tone,var(--line,#92b8d1)) 18%,var(--surface,#e9f4fb));font-size:var(--type-caption,13px);font-weight:800;vertical-align:.15em;white-space:nowrap}.ds-card__line{font-size:var(--type-body,15px);font-weight:600}@media(pointer:coarse){.ds-card kbd{display:none}}"
+    },
+    {
+      "name": "对局弹窗（暂停 / 结算）",
+      "kind": "custom",
+      "refersTo": "run-modal",
+      "description": "与通用 Dialog 同一窗框：3px navy-deep 框、1px 暖黄内线、--shadow-modal，100vmax 外扩阴影压暗画面；5px 内嵌深色标题条，结算用 headline 且胜利 success / 倒下 danger 底；操作等分一行。",
+      "html": "<div class=\"ds-run-stage\"><dialog open class=\"ds-run-modal\" aria-labelledby=\"ds-pause-title\"><h2 id=\"ds-pause-title\">暂停</h2><p class=\"ds-run-modal__meta\">小火龙 · 普通 · 07:42</p><div class=\"ds-run-modal__actions\"><button class=\"ds-rbtn ds-rbtn--primary\" type=\"button\"><svg aria-hidden=\"true\" focusable=\"false\" width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M8 5v14l11-7Z\"/></svg>继续</button><button class=\"ds-rbtn ds-rbtn--danger\" type=\"button\">放弃冒险</button></div></dialog></div><div class=\"ds-run-stage\"><dialog open class=\"ds-run-modal ds-run-modal--result\" data-outcome=\"victory\" aria-labelledby=\"ds-result-title\"><h2 id=\"ds-result-title\">守卫已击败</h2><p class=\"ds-run-modal__meta\">小火龙 · 普通 · 10:00 · Lv.18 · 击倒 642</p><ul class=\"ds-run-moves\"><li style=\"--type-soft:#ffe2cf;--share:.62\"><span>火花 <small>Lv.5</small></span><b>48,210</b></li><li style=\"--type-soft:#efece4;--share:.38\"><span>撞击 <small>Lv.3</small></span><b>29,550</b></li></ul><div class=\"ds-run-modal__actions\"><button class=\"ds-rbtn ds-rbtn--primary\" type=\"button\">再来一局</button><button class=\"ds-rbtn\" type=\"button\">换宝可梦</button></div></dialog></div>",
+      "css": ".ds-rbtn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-width:var(--touch-min,44px);min-height:var(--size-control,50px);padding:11px 22px;border:var(--frame-thin,2px) solid var(--btn-border,var(--line,#92b8d1));border-radius:var(--radius-control,8px);color:var(--btn-ink,var(--ink,#142f50));background:var(--btn-fill,var(--surface,#e9f4fb));box-shadow:inset 0 1px 0 rgb(255 255 255 / 35%),0 3px 6px rgb(13 35 63 / 10%);font:800 var(--type-label,16px)/1.4 \"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;cursor:pointer;transition:background-color 120ms,border-color 120ms,color 120ms,transform 150ms var(--ease-out,cubic-bezier(.16,1,.3,1))}.ds-rbtn--primary{--btn-fill:var(--yellow,#ffd45b);--btn-ink:var(--navy-deep,#0d233f);--btn-border:var(--gold,#b48129)}.ds-rbtn--danger{--btn-fill:var(--danger-surface,#fce5e5);--btn-ink:var(--danger,#a83243);--btn-border:var(--danger-line,#d89ba5)}.ds-rbtn:focus-visible{--btn-fill:var(--yellow,#ffd45b);--btn-ink:var(--navy-deep,#0d233f);--btn-border:var(--gold,#b48129);outline:3px solid var(--yellow,#ffd45b);outline-offset:3px}@media(hover:hover){.ds-rbtn:hover{--btn-fill:var(--yellow,#ffd45b);--btn-ink:var(--navy-deep,#0d233f);--btn-border:var(--gold,#b48129);transform:translateY(-2px);box-shadow:inset 0 1px 0 rgb(255 255 255 / 45%),0 6px 12px rgb(13 35 63 / 20%)}}.ds-rbtn:active{transform:translateY(1px) scale(.985);box-shadow:inset 0 2px 3px rgb(13 35 63 / 15%)}.ds-run-stage{position:relative;height:340px;overflow:hidden;background:var(--run-sky,#bfe6f7);font-family:\"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif}.ds-run-modal{position:absolute;top:50%;left:50%;display:grid;gap:var(--space-3,12px);width:min(420px,calc(100% - var(--edge-screen,28px) * 2));max-height:calc(100% - var(--edge-hud,16px) * 2);margin:0;padding:5px 5px var(--space-5,20px);overflow:auto;border:var(--frame,3px) solid var(--navy-deep,#0d233f);border-radius:var(--radius-dialog,12px);color:var(--ink,#142f50);background:var(--surface,#e9f4fb);box-shadow:inset 0 0 0 1px var(--yellow,#ffd45b),0 0 0 100vmax rgb(13 35 63 / 45%),var(--shadow-modal,0 20px 70px rgb(13 35 63 / 40%));transform:translate(-50%,-50%);animation:ds-fade 180ms ease-out}.ds-run-modal>:not(h2){margin-inline:var(--space-4,16px)}.ds-run-modal h2{margin:0;padding:var(--space-2,8px) var(--space-4,16px);border-radius:5px;color:var(--ice,#d8effb);background:var(--navy,#142f50);font-size:var(--type-title,22px);font-weight:800;line-height:1.35}.ds-run-modal p{margin-block:0}.ds-run-modal__meta{color:var(--muted,#536b82);font-size:var(--type-caption,13px);font-variant-numeric:tabular-nums}.ds-run-modal__actions{display:flex;flex-wrap:wrap;gap:var(--space-3,12px)}.ds-run-modal__actions .ds-rbtn{flex:1 1 0}.ds-run-modal--result{width:min(520px,calc(100% - var(--edge-screen,28px) * 2))}.ds-run-modal--result h2{font-size:var(--type-headline,clamp(24px,2.6vw,32px));line-height:1.2}.ds-run-modal[data-outcome=\"victory\"] h2{background:var(--success,#287a58)}.ds-run-modal[data-outcome=\"defeat\"] h2{background:var(--danger,#a83243)}.ds-run-moves{display:grid;gap:var(--space-1,4px);margin-block:0;padding:0;list-style:none}.ds-run-moves li{display:flex;justify-content:space-between;gap:var(--space-3,12px);padding:var(--space-row,8px) var(--space-3,12px);border-radius:var(--radius-chip,6px);background:linear-gradient(90deg,var(--type-soft) calc(var(--share) * 100%),rgb(255 255 255 / 70%) 0);font-size:var(--type-label,16px);font-weight:800;font-variant-numeric:tabular-nums}.ds-run-moves small{color:var(--muted,#536b82);font-size:var(--type-caption,13px)}@keyframes ds-fade{from{opacity:0}}"
+    },
+    {
+      "name": "小地图（绘制纸面）",
+      "kind": "custom",
+      "description": "右上暂停键下方的 2D canvas 小地图：直径 152px（紧凑 108px）、相机朝上、半径 22 世界单位；无外框，纸面从 66% 半径淡出，下垫 navy-deep 40% 径向暗影；纸面 86% → 98% 随附近危险度约 0.4s 缓动。标记停在 84% 半径内：hp-low 敌群柔点、紫菱形精英、boss-hp 守卫（出圈为边缘红三角）、暖黄宝箱、hp 树果、白点 + 暖黄楔形玩家。细指针左下显示 M 键位；点按打开大地图。",
+      "html": "<div class=\"ds-run-scene ds-map-scene\"><div class=\"ds-minimap\" role=\"img\" aria-label=\"小地图\"><svg class=\"ds-minimap__paper\" viewBox=\"0 0 100 100\" aria-hidden=\"true\"><rect x=\"0\" y=\"0\" width=\"100\" height=\"100\" fill=\"#a4c086\"/><path d=\"M0 58 C24 50 40 66 62 54 S92 40 100 46 V100 H0Z\" fill=\"#92b274\"/><path d=\"M0 78 C30 70 52 84 100 70 V100 H0Z\" fill=\"#80a364\"/><path d=\"M8 58 C24 50 40 66 62 54\" fill=\"none\" stroke=\"#142f50\" stroke-opacity=\".85\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><ellipse cx=\"72\" cy=\"26\" rx=\"12\" ry=\"8\" fill=\"#2165a4\" fill-opacity=\".78\" stroke=\"#173f70\" stroke-width=\"1.4\"/><circle cx=\"34\" cy=\"30\" r=\"7\" fill=\"rgb(233 244 251 / 40%)\" stroke=\"rgb(20 47 80 / 30%)\" stroke-width=\".8\" stroke-dasharray=\"2.4 1.8\"/><circle cx=\"20\" cy=\"44\" r=\"1.8\" fill=\"rgb(31 74 58 / 55%)\"/><circle cx=\"82\" cy=\"62\" r=\"1.6\" fill=\"rgb(20 47 80 / 30%)\"/></svg><svg class=\"ds-minimap__marks\" viewBox=\"0 0 100 100\" aria-hidden=\"true\"><defs><radialGradient id=\"ds-mm-swarm\"><stop offset=\"0\" stop-color=\"#e0475a\"/><stop offset=\".45\" stop-color=\"#e0475a\" stop-opacity=\".85\"/><stop offset=\"1\" stop-color=\"#e0475a\" stop-opacity=\"0\"/></radialGradient></defs><g stroke=\"#0d233f\" stroke-width=\"1.1\" stroke-linejoin=\"round\"><circle cx=\"64\" cy=\"70\" r=\"7\" fill=\"url(#ds-mm-swarm)\" stroke=\"none\" opacity=\".75\"/><circle cx=\"28\" cy=\"62\" r=\"4.5\" fill=\"url(#ds-mm-swarm)\" stroke=\"none\" opacity=\".6\"/><path d=\"M70 34 l3.6 3.6 -3.6 3.6 -3.6 -3.6z\" fill=\"#9a4fc7\"/><rect x=\"31\" y=\"74\" width=\"6\" height=\"6\" rx=\"1.1\" fill=\"#ffd45b\" stroke=\"#b48129\"/><circle cx=\"76\" cy=\"50\" r=\"2.6\" fill=\"#4fb952\"/><path d=\"M50 12.5 l-4 7 h8z\" fill=\"#d9384f\"/><path d=\"M50 42.3 L46.2 53.4 L53.8 53.4 Z\" fill=\"#ffd45b\"/><circle cx=\"50\" cy=\"50\" r=\"2.9\" fill=\"#fff\"/></g></svg><kbd class=\"ds-minimap__key\">M</kbd></div></div>",
+      "css": ".ds-run-scene{position:relative;isolation:isolate;display:flex;align-items:flex-start;gap:16px;padding:16px;background:var(--run-sky,#bfe6f7);font-family:\"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;color:var(--ink,#142f50)}.ds-map-scene{background:linear-gradient(180deg,var(--run-sky,#bfe6f7) 0 30%,#9ccf6f 30%)}.ds-minimap{--minimap-size:152px;position:relative;width:var(--minimap-size);height:var(--minimap-size);clip-path:circle();cursor:pointer;-webkit-tap-highlight-color:transparent;background:radial-gradient(closest-side,rgb(13 35 63 / 40%) 50%,rgb(13 35 63 / 0%) 100%)}.ds-minimap svg{position:absolute;inset:0;display:block;width:100%;height:100%}.ds-minimap__paper{opacity:.86;-webkit-mask-image:radial-gradient(closest-side,#000 66%,transparent 100%);mask-image:radial-gradient(closest-side,#000 66%,transparent 100%)}.ds-minimap__key{position:absolute;bottom:0;left:0;display:inline-flex;align-items:center;justify-content:center;min-width:var(--size-badge,16px);min-height:var(--size-badge,16px);padding:0 var(--space-1,4px);border:1px solid var(--line,#92b8d1);border-radius:4px;font:inherit;font-size:var(--type-badge,11px);font-weight:800;color:var(--ice,#d8effb);background:var(--blue-deep,#173f70)}@media (max-height:480px) and (orientation:landscape){.ds-minimap{--minimap-size:108px}}@media (pointer:coarse){.ds-minimap__key{display:none}}"
+    },
+    {
+      "name": "大地图（M 键全图）",
+      "kind": "custom",
+      "description": "M / 点小地图打开：52% 深海遮罩上的正方形全图 min(可用宽, 可用高, 760px)，北朝上，竞技场 + 8 单位森林带，四边 4% 羽化；同一烘焙底图与标记语言，玩家处暖黄 28% 视野扇（16 单位）；160ms 淡入；点任意处 / M / Esc 关闭。",
+      "html": "<div class=\"ds-run-scene ds-map-scene ds-map-stage\"><div class=\"ds-map\" role=\"dialog\" aria-label=\"大地图\"><svg class=\"ds-map__paper\" viewBox=\"0 0 100 100\" aria-hidden=\"true\"><defs><radialGradient id=\"ds-fm-swarm\"><stop offset=\"0\" stop-color=\"#e0475a\"/><stop offset=\".45\" stop-color=\"#e0475a\" stop-opacity=\".85\"/><stop offset=\"1\" stop-color=\"#e0475a\" stop-opacity=\"0\"/></radialGradient><radialGradient id=\"ds-fm-view\" cx=\"50\" cy=\"50\" r=\"16\" gradientUnits=\"userSpaceOnUse\"><stop offset=\"0\" stop-color=\"#ffd45b\" stop-opacity=\".28\"/><stop offset=\"1\" stop-color=\"#ffd45b\" stop-opacity=\"0\"/></radialGradient></defs><rect width=\"100\" height=\"100\" fill=\"#1f4a3a\"/><rect x=\"9\" y=\"9\" width=\"82\" height=\"82\" fill=\"#a4c086\"/><path d=\"M0 58 C24 50 40 66 62 54 S92 40 100 46 V100 H0Z\" fill=\"#92b274\"/><path d=\"M0 78 C30 70 52 84 100 70 V100 H0Z\" fill=\"#80a364\"/><path d=\"M8 58 C24 50 40 66 62 54\" fill=\"none\" stroke=\"#142f50\" stroke-opacity=\".85\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><ellipse cx=\"72\" cy=\"26\" rx=\"12\" ry=\"8\" fill=\"#2165a4\" fill-opacity=\".78\" stroke=\"#173f70\" stroke-width=\"1.4\"/><circle cx=\"34\" cy=\"30\" r=\"7\" fill=\"rgb(233 244 251 / 40%)\" stroke=\"rgb(20 47 80 / 30%)\" stroke-width=\".8\" stroke-dasharray=\"2.4 1.8\"/><circle cx=\"20\" cy=\"44\" r=\"1.8\" fill=\"rgb(31 74 58 / 55%)\"/><circle cx=\"82\" cy=\"62\" r=\"1.6\" fill=\"rgb(20 47 80 / 30%)\"/><rect x=\"9\" y=\"9\" width=\"82\" height=\"82\" fill=\"none\" stroke=\"rgb(13 35 63 / 55%)\" stroke-width=\".4\"/><path d=\"M50 50 L41.7 36.3 A16 16 0 0 1 58.3 36.3 Z\" fill=\"url(#ds-fm-view)\"/><g stroke=\"#0d233f\" stroke-width=\".7\" stroke-linejoin=\"round\"><circle cx=\"66\" cy=\"64\" r=\"5\" fill=\"url(#ds-fm-swarm)\" stroke=\"none\"/><circle cx=\"24\" cy=\"70\" r=\"3.5\" fill=\"url(#ds-fm-swarm)\" stroke=\"none\" opacity=\".8\"/><path d=\"M72 30 l2.6 2.6 -2.6 2.6 -2.6 -2.6z\" fill=\"#9a4fc7\"/><path d=\"M30 20 l4 4 -4 4 -4 -4z\" fill=\"#d9384f\" stroke-width=\"1\"/><circle cx=\"30\" cy=\"24\" r=\"1\" fill=\"#ffd45b\"/><rect x=\"80\" y=\"78\" width=\"4.2\" height=\"4.2\" rx=\".8\" fill=\"#ffd45b\" stroke=\"#b48129\"/><circle cx=\"76\" cy=\"50\" r=\"1.8\" fill=\"#4fb952\"/><path d=\"M50 44.5 L47.4 52.2 L52.6 52.2 Z\" fill=\"#ffd45b\"/><circle cx=\"50\" cy=\"50\" r=\"2\" fill=\"#fff\"/></g></svg></div></div>",
+      "css": ".ds-run-scene{position:relative;isolation:isolate;display:flex;align-items:flex-start;gap:16px;padding:16px;background:var(--run-sky,#bfe6f7);font-family:\"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;color:var(--ink,#142f50)}.ds-map-scene{background:linear-gradient(180deg,var(--run-sky,#bfe6f7) 0 30%,#9ccf6f 30%)}.ds-map-stage{width:100%;height:340px;padding:0}.ds-map{position:absolute;inset:0;z-index:2;display:grid;place-items:center;container-type:size;background:rgb(13 35 63 / 52%);cursor:pointer;animation:ds-map-in 160ms var(--ease-out,cubic-bezier(.16,1,.3,1))}.ds-map__paper{display:block;width:min(100cqw - 32px,100cqh - 32px,760px);aspect-ratio:1;-webkit-mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent),linear-gradient(180deg,transparent,#000 4%,#000 96%,transparent);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent),linear-gradient(180deg,transparent,#000 4%,#000 96%,transparent);mask-composite:intersect}@keyframes ds-map-in{from{opacity:0}}"
+    },
+    {
+      "name": "伙伴选择出发栏",
+      "kind": "custom",
+      "refersTo": "starter-cta",
+      "description": "一行右对齐 [难度 | 普通 困难 噩梦] [出发]，总高 --size-cta；难度分段高 cta − 8px，未解锁难度为禁用态、不写说明；出发为暖黄主指令，最小宽 180px（紧凑 140px）。",
+      "html": "<div class=\"ds-launch\"><fieldset class=\"ds-segments\"><legend>难度</legend><div class=\"ds-segments__options\"><label class=\"ds-segments__option\"><input type=\"radio\" name=\"ds-difficulty\" checked><span class=\"ds-segments__face\"><svg aria-hidden=\"true\" focusable=\"false\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m5 12 4.5 4.5L19 7\"/></svg><span>普通</span></span></label><label class=\"ds-segments__option\"><input type=\"radio\" name=\"ds-difficulty\"><span class=\"ds-segments__face\"><svg aria-hidden=\"true\" focusable=\"false\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m5 12 4.5 4.5L19 7\"/></svg><span>困难</span></span></label><label class=\"ds-segments__option\"><input type=\"radio\" name=\"ds-difficulty\" disabled><span class=\"ds-segments__face\"><svg aria-hidden=\"true\" focusable=\"false\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m5 12 4.5 4.5L19 7\"/></svg><span>噩梦</span></span></label></div></fieldset><button class=\"ds-rbtn ds-rbtn--primary ds-launch__go\" type=\"button\">出发<svg aria-hidden=\"true\" focusable=\"false\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 12h16m-6-6 6 6-6 6\"/></svg></button></div>",
+      "css": ".ds-rbtn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-width:var(--touch-min,44px);min-height:var(--size-control,50px);padding:11px 22px;border:var(--frame-thin,2px) solid var(--btn-border,var(--line,#92b8d1));border-radius:var(--radius-control,8px);color:var(--btn-ink,var(--ink,#142f50));background:var(--btn-fill,var(--surface,#e9f4fb));box-shadow:inset 0 1px 0 rgb(255 255 255 / 35%),0 3px 6px rgb(13 35 63 / 10%);font:800 var(--type-label,16px)/1.4 \"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;cursor:pointer;transition:background-color 120ms,border-color 120ms,color 120ms,transform 150ms var(--ease-out,cubic-bezier(.16,1,.3,1))}.ds-rbtn--primary{--btn-fill:var(--yellow,#ffd45b);--btn-ink:var(--navy-deep,#0d233f);--btn-border:var(--gold,#b48129)}.ds-rbtn--danger{--btn-fill:var(--danger-surface,#fce5e5);--btn-ink:var(--danger,#a83243);--btn-border:var(--danger-line,#d89ba5)}.ds-rbtn:focus-visible{--btn-fill:var(--yellow,#ffd45b);--btn-ink:var(--navy-deep,#0d233f);--btn-border:var(--gold,#b48129);outline:3px solid var(--yellow,#ffd45b);outline-offset:3px}@media(hover:hover){.ds-rbtn:hover{--btn-fill:var(--yellow,#ffd45b);--btn-ink:var(--navy-deep,#0d233f);--btn-border:var(--gold,#b48129);transform:translateY(-2px);box-shadow:inset 0 1px 0 rgb(255 255 255 / 45%),0 6px 12px rgb(13 35 63 / 20%)}}.ds-rbtn:active{transform:translateY(1px) scale(.985);box-shadow:inset 0 2px 3px rgb(13 35 63 / 15%)}.ds-launch{display:flex;align-items:stretch;justify-content:flex-end;gap:var(--space-4,16px);padding:var(--space-4,16px);background:var(--sky,#b9e4f5);font-family:\"Poketone UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;color:var(--ink,#142f50)}.ds-segments{min-width:0;margin:0;padding:var(--space-1,4px) var(--space-1,4px) var(--space-1,4px) var(--space-4,16px);border:0;border-radius:var(--radius-control,8px);background:var(--surface,#e9f4fb);box-shadow:0 0 0 var(--frame,3px) var(--navy,#142f50),var(--shadow-raised,0 6px 16px rgb(13 35 63 / 18%))}.ds-segments legend{float:left;margin:0 var(--space-3,12px) 0 0;padding:0;font-size:16px;font-weight:800;line-height:calc(var(--size-cta,60px) - var(--space-2,8px))}.ds-segments__options{display:flex;flex-wrap:nowrap;gap:6px}.ds-segments__option{position:relative;flex:1 1 100px;min-width:0}.ds-segments__option input{position:absolute;width:1px;height:1px;margin:0;opacity:0}.ds-segments__face{display:flex;align-items:center;justify-content:center;gap:8px;min-height:calc(var(--size-cta,60px) - var(--space-2,8px));padding:var(--space-1,4px) 12px;border:2px solid var(--line,#92b8d1);border-radius:var(--radius-control,8px);color:var(--ink,#142f50);background:var(--ice,#d8effb);font-weight:800;line-height:1.4;cursor:pointer;transition:background-color 120ms,border-color 120ms}.ds-segments__face>svg{visibility:hidden}.ds-segments__option input:checked+.ds-segments__face{border-color:var(--gold,#b48129);color:var(--navy-deep,#0d233f);background:var(--yellow,#ffd45b)}.ds-segments__option input:checked+.ds-segments__face>svg{visibility:visible}.ds-segments__option input:focus-visible+.ds-segments__face{outline:3px solid var(--blue,#2165a4);outline-offset:3px}.ds-segments__option input:disabled+.ds-segments__face{color:var(--muted,#536b82);border-color:var(--line,#92b8d1);background:var(--surface,#e9f4fb);cursor:not-allowed}@media(hover:hover){.ds-segments__option input:not(:disabled):not(:checked)+.ds-segments__face:hover{border-color:var(--blue,#2165a4);background:var(--surface,#e9f4fb)}}.ds-launch__go{min-width:180px;min-height:var(--size-cta,60px)}@media(max-height:480px) and (orientation:landscape){.ds-launch__go{min-width:140px}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "海岸启程的游戏指令窗",
+    "overview": "以「海岸启程的游戏指令窗」描述现有视觉：首页保留浅色斜切分区、大字标与轻量纵向指令，明亮海岸是舞台；工坊和模型预览的深海蓝窗口承载操作，冰蓝内容区保证阅读，暖黄与实体三角游标明确当前动作。不同场景共享字体、配色与交互，不要求所有界面套同一种外框。\n\n本规范从当前主菜单、伙伴选择、冒险 HUD（选卡、暂停、结算）、组件工坊、模型预览及通用控件提取。用户明确要求延续之前首页菜单设计，首页的深蓝金边大框与罗盘替换已撤回；后续只做细节优化。规范记录实现，不把技术验收称为用户批准的像素稿。「开始冒险」进入可玩的一局；工坊与模型预览是开发入口，工坊数据是交互样例，不代表玩家数据。\n\n以下「当前实现」是源代码事实；「复用要求」是据此提取的后续界面约束。前置 YAML 是颜色、文字、间距与形状的规范值；正文说明使用关系。阴影、动效、断点及可独立展示的 HTML/CSS 示例位于 `.impeccable/design.json`，示例不提供 React 运行逻辑。",
+    "keyCharacteristics": [
+      "首页浅色斜切面与轻量指令；功能界面深蓝窗框、冰蓝正文与克制的暖黄强调。",
+      "实体游标、原生语义、键鼠与触控同等可用。",
+      "局部滚动与安全区适配，景观不被页面式布局覆盖。",
+      "短促状态反馈与云幕过场。"
+    ],
+    "rules": [
+      {
+        "name": "Scene Before Panels",
+        "body": "先保留场景与模型的可见区域，再安排指令窗口；窗口间隙属于游戏画面。",
+        "section": "elevation"
+      },
+      {
+        "name": "Gold Means Attention",
+        "body": "暖黄用于主要指令、选中、焦点与少量结构强调；金棕用于这些区域的边缘，不把每个容器都镀金。",
+        "section": "colors"
+      },
+      {
+        "name": "Readable Native Type",
+        "body": "中文正文、数字与操作统一使用本地 UI 字体；展示字体仅用于 Latin 字标，真实字重不以合成粗体替代。",
+        "section": "typography"
+      },
+      {
+        "name": "State Before Motion",
+        "body": "语义状态与焦点立即生效；动画只解释变化，不延后禁用、隐藏或场景提交的归属。",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do 延续首页浅色斜切分区、大字标和轻量指令；功能窗口复用深蓝框、冰蓝正文与实体游标。",
+      "Do 让文字、图标、焦点、状态与操作提示由 Three/WebGL 实时绘制；平台节点只承接输入和可访问性，文字不烘焙进界面截图。",
+      "Do 同时提供可读文字与语义状态；保留 Tab、方向键、Home/End、Enter/Space 和各控件原生行为。",
+      "Do 按桌面与手机横屏分配舞台、指令和安全区；竖屏仅提示旋转，长内容在窗口内部滚动。",
+      "Do 保留实际加载、失败与完成反馈。",
+      "Do 对每个发布栅格资源保留同目录来源记录，对字体保留许可和子集说明。",
+      "Do 游戏画面的尺寸、间距、字号只引用 `:root` token；紧凑与粗指针档只在 `styles.css` 的一处覆盖里改值。",
+      "Do HUD 以外框、描边和 hud-scrim 保证可读，实色只给等级徽章、冲刺键与格子这些需要一眼定位的元素。"
+    ],
+    "donts": [
+      "Don't 把游戏菜单改成网站导航、dashboard、白色大卡片墙或手机设置式滑动开关。",
+      "Don't 以统一设计系统为由将首页替换为深蓝金边大框、罗盘徽章或常驻解释面板；优化保留用户认可的构图。",
+      "Don't 为 PRODUCT.md 未确定的玩法（训练师、商城、账号、跨设备同步）添加界面；工坊样例不充当玩家数据。",
+      "Don't 用颜色单独表达选择、错误或禁用，也不要让装饰游标拦截点击或进入辅助技术名称。",
+      "Don't 捕获原生 range 的方向键来移动菜单焦点，也不要让隐藏工具、禁用按钮继续获得焦点。",
+      "Don't 使用未记录来源的官方截图、图标、音乐或模型，或以非商业定位暗示第三方授权。",
+      "Don't 将旧生成提案、截图中的偶然裁切、模型骨骼问题或未实现的手柄操作写成规范。",
+      "Don't 在 HUD 上铺整块浅色面板或常驻说明；不要在 `.run-number` 本身做缩放 / 旋转动画；不要在组件短横屏块里另写一套字号。"
+    ]
+  }
+}

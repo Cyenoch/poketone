@@ -1,0 +1,31 @@
+{
+  "task_id": "ded65260-34f9-48a9-bc54-9c5bc7b8adfa",
+  "type": "text_to_model",
+  "status": "success",
+  "input": {
+    "pbr": true,
+    "prompt": "Rattata Pokemon, small purple rat on four legs, cream belly, big whiskered face with two prominent front teeth, large ears, long curled tail, standing on all fours, facing forward. Classic low-polygon video-game asset, economical silhouette geometry, simple clean diffuse color regions, few broad forms, no tiny surface details, not realistic, not crystalline faceted, not plush. Full body isolated, no pedestal, no scenery, no text.",
+    "texture": true,
+    "export_uv": true,
+    "face_limit": 800,
+    "model_version": "v3.1-20260211",
+    "smart_low_poly": true,
+    "texture_quality": "standard",
+    "geometry_quality": "standard",
+    "texture_alignment": "geometry"
+  },
+  "output_fields": [
+    "model_url",
+    "rendered_image_url",
+    "generated_image_url"
+  ],
+  "credits_consumed": 30,
+  "created_at": "2026-11-04T06:37:11.236026Z",
+  "completed_at": "2026-11-04T06:39:28.161048Z",
+  "files": [
+    "model.glb",
+    "rendered_image.webp",
+    "generated_image.jpeg",
+    "preview.png"
+  ]
+}
