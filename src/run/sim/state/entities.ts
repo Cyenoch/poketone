@@ -190,7 +190,7 @@ export interface Player {
   kills: number;
   /** Trigger state (sim/triggers): timers, stacks and cooldowns by `ActiveTrigger.key`. */
   fx: Record<string, number>;
-  /** Trigger procs in the current one-second window (per-second caps), by `ActiveTrigger.key`. */
+  /** Trigger procs in the current one-second window (per-second caps), by `ActiveTrigger.key`; `lifesteal` holds the HP lifesteal healed. */
   procs: Record<string, number>;
   procWindow: number;
 }

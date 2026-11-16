@@ -72,7 +72,7 @@ import { bossHp, enemyHealthScaling, enemyScaling, liveCap, spawnRate } from "..
 import { advancePressure, pressureSupply, pressureTarget } from "../sim/director-pressure";
 import { stageDefs, type StageId, type StageZone } from "../sim/content/stages/index";
 import { zoneClock, zoneHealthClock, zoneFactorsFor, zonesOf } from "../sim/content/params/zones";
-import { CONTACT_SECONDS, STAGGER, DRAIN_FLOOR } from "../sim/content/params/combat";
+import { CONTACT_SECONDS, STAGGER, DRAIN_FLOOR, LIFESTEAL_CAP } from "../sim/content/params/combat";
 import { skills } from "../sim/skills/index";
 import {
   ACID,
@@ -2398,6 +2398,7 @@ export interface Split {
 
 /**
  * HP healed per second (sim `afterHit` and the heal triggers): lifesteal on the HP the hits removed
+ * (within its per-second cap)
  * after the split, guardian, elites and partners included (DoT and overkill heal nothing), each
  * drain move on its own hits, regen and the heal triggers on the ledger.
  */
@@ -2430,7 +2431,8 @@ export function healPerSecond(
     typeHits,
     ...hp,
   };
-  let total = (stats.regen + stats.lifesteal * ledger.removed + drain) * stats.healing;
+  const lifesteal = stats.lifesteal * Math.min(ledger.removed, LIFESTEAL_CAP);
+  let total = (stats.regen + lifesteal + drain) * stats.healing;
   for (const { def } of stats.triggers) total += modelOf(def).sustain?.(def, ledger) ?? 0;
   return total;
 }

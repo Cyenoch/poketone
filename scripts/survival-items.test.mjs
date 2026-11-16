@@ -7,7 +7,8 @@ import { damagePlayer } from "../src/run/sim/hurt.ts";
 import { partnerSlots } from "../src/run/sim/partners.ts";
 import { currentStats, refreshStats } from "../src/run/sim/stats.ts";
 import { TICK } from "../src/run/sim/state/world.ts";
-import { fire } from "../src/run/sim/triggers/index.ts";
+import { afterHit, fire } from "../src/run/sim/triggers/index.ts";
+import { LIFESTEAL_CAP } from "../src/run/sim/content/params/combat.ts";
 import { itemCap } from "../src/run/sim/upgrades.ts";
 import { createWorld, stepWorld } from "../src/run/sim/world.ts";
 
@@ -132,4 +133,19 @@ test("Rare Candy's pick grants two whole levels and queues their cards behind th
   stepWorld(world, [{ t: "pick", player: 0, card: 77, index: 0 }]);
   assert.equal(player.level, level + 2);
   assert.equal(player.pending.length, 2);
+});
+
+test("Shell Bell's lifesteal stops at its per-second cap however much a wide hit removes", () => {
+  const { world, player, ctx } = setup([{ id: "shell-bell", level: 5 }]);
+  const stats = currentStats(player);
+  const enemy = spawnEnemy(world, "caterpie", 3, 0);
+  player.hp = 1;
+  const hit = { owner: player, type: "normal", dmg: 1 };
+  for (let i = 0; i < 50; i++) afterHit(ctx, hit, enemy, 1000, stats, false);
+  const healed = player.hp - 1;
+  const cap = stats.lifesteal * LIFESTEAL_CAP * stats.healing;
+  assert.ok(Math.abs(healed - cap) < 1e-9, `healed ${healed}, cap ${cap}`);
+  player.procs = {};
+  afterHit(ctx, hit, enemy, 10, stats, false);
+  assert.ok(player.hp - 1 > healed, "a new second heals again");
 });

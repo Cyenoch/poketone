@@ -43,3 +43,9 @@ export const FLYER_HOVER = 0.9;
 
 /** A line may dip this far into the surface before terrain counts as in the way. */
 export const GRAZE = 0.15;
+
+/**
+ * Lifesteal heals at most this many HP per second per 1.0 of lifesteal (1 HP/s per 1%), counted in the
+ * player's one-second proc window: wide hits must not turn a few percent into a full heal every second.
+ */
+export const LIFESTEAL_CAP = 100;

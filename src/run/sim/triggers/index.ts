@@ -9,6 +9,7 @@
 
 import { damageEnemy, heal, type Ctx, type Hit } from "../combat";
 import type { ResolvedTrigger, TriggerKind } from "../content/triggers";
+import { LIFESTEAL_CAP } from "../content/params/combat";
 import { THORNS_KNOCK } from "../content/params/trigger-runtime";
 import { currentStats, type ActiveTrigger, type PlayerStats } from "../stats";
 import type { Enemy, Player } from "../state/entities";
@@ -144,7 +145,14 @@ export function afterHit(
   crit: boolean,
 ): void {
   const { owner } = hit;
-  if (stats.lifesteal > 0) heal(owner, removed * stats.lifesteal);
+  if (stats.lifesteal > 0) {
+    const used = owner.procs.lifesteal ?? 0;
+    const amount = Math.min(removed * stats.lifesteal, stats.lifesteal * LIFESTEAL_CAP - used);
+    if (amount > 0) {
+      owner.procs.lifesteal = used + amount;
+      heal(owner, amount);
+    }
+  }
   if (hit.drain && owner.alive) {
     heal(owner, removed * hit.drain);
     ctx.world.events.push({ t: "drain", player: owner.id, x: enemy.x, z: enemy.z });
