@@ -129,7 +129,7 @@
         "prompt_influence": 0.5
       },
       "node": "BkEmI0BVuPSK82N3Xr87",
-      "prompt": "Sharp bright metallic tick-snap with a tiny sparkle on top, very short and crisp, dry close-mic, no reverb, no music, no voice",
+      "prompt": "Heavy dull punchy impact thump with a short dry wooden crack, very short and tight, low-mid, solid and weighty, no metallic tick, no sparkle, no ring, no bell, no hiss, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
           "file": "sfx-crit-12.mp3",
@@ -145,11 +145,21 @@
           "file": "sfx-crit-18.mp3",
           "generationId": "TJyCnq792ehXKxB5pZl9",
           "prompt": "Single firm punchy body slap, rounded and muted, a deeper and heavier impact than a normal hit, short, no ring, no bell tone, no sparkle, audible on a small speaker, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-crit-21.mp3",
+          "generationId": "CqahSsiqqNS7dKVUKc23",
+          "prompt": "Heavy dull punchy impact thump with a short dry wooden crack, very short and tight, low-mid, solid and weighty, no metallic tick, no sparkle, no ring, no bell, no hiss, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-crit-22.mp3",
+          "generationId": "oVqIaj95qT2zl9ofZ2uK",
+          "prompt": "Heavy dull punchy impact thump with a short dry wooden crack, very short and tight, low-mid, solid and weighty, no metallic tick, no sparkle, no ring, no bell, no hiss, dry close-mic, no reverb, no music, no voice"
         }
       ],
-      "pick": ["sfx-crit-13.mp3", "sfx-crit-18.mp3", "sfx-crit-12.mp3"],
+      "pick": ["sfx-crit-21.mp3", "sfx-crit-22.mp3"],
       "ship": "crit",
-      "note": "Dull thump-and-crack takes (tonal share 4-13%). The earlier bell-ping takes (crit-8/9: pure tones at 1.6 and 2.5 kHz, 300 ms) read as ding-ding-ding on every crit. Mastered at the hit level (small tier) and played on the bed bus: a crit is a heavier hit, not a cue.",
+      "note": "Replaced 2026-11-17 (crit-21/22, 1.5 kHz, 1% above 4 kHz): Dull thump-and-crack takes (tonal share 4-13%). The earlier bell-ping takes (crit-8/9: pure tones at 1.6 and 2.5 kHz, 300 ms) read as ding-ding-ding on every crit. Mastered at the hit level (small tier) and played on the bed bus: a crit is a heavier hit, not a cue.",
       "frequent": true
     },
     "hurt": {
@@ -161,7 +171,7 @@
         "prompt_influence": 0.5
       },
       "node": "eQoufNzBmxGLEayCUX2j",
-      "prompt": "Short dull body thump with a quick descending wobble, soft and muffled, dry close-mic, no reverb, no music, no scream, no voice",
+      "prompt": "Short muffled body hit: a soft mid-range knock with a quick descending wobble, audible on a small speaker, dry close-mic, no reverb, no music, no scream, no voice",
       "takes": [
         {
           "file": "sfx-hurt-5.mp3",
@@ -216,7 +226,7 @@
         "prompt_influence": 0.5
       },
       "node": "qvKrNnJFBZpPmooT65uB",
-      "prompt": "Quick rising magical zap shimmer, sparkly electric fizz, short, dry close-mic, no reverb, no music, no voice",
+      "prompt": "Quick warm magical pop that swells and bursts, a rounded muffled puff of energy, low-mid and full-bodied, mid-range audible on a small speaker, no fizz, no sparkle, no shimmer, no hiss, no bell, no pitched tone, short, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
           "file": "sfx-reaction-2.mp3",
@@ -225,10 +235,21 @@
         {
           "file": "sfx-reaction-3.mp3",
           "generationId": "GLPF0HdmYeb4AJGWskhL"
+        },
+        {
+          "file": "sfx-reaction-4.mp3",
+          "generationId": "2qzYljjHphDIvhGMPmXB",
+          "prompt": "Quick warm magical pop that swells and bursts, a rounded muffled puff of energy, low-mid and full-bodied, mid-range audible on a small speaker, no fizz, no sparkle, no shimmer, no hiss, no bell, no pitched tone, short, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-reaction-5.mp3",
+          "generationId": "Ycq31PvUWt87TtGfnLHh",
+          "prompt": "Quick warm magical pop that swells and bursts, a rounded muffled puff of energy, low-mid and full-bodied, mid-range audible on a small speaker, no fizz, no sparkle, no shimmer, no hiss, no bell, no pitched tone, short, dry close-mic, no reverb, no music, no voice"
         }
       ],
-      "pick": ["sfx-reaction-3.mp3", "sfx-reaction-2.mp3"],
-      "ship": "reaction"
+      "pick": ["sfx-reaction-4.mp3", "sfx-reaction-5.mp3"],
+      "ship": "reaction",
+      "note": "Replaced 2026-11-17: the old takes were a bright magical sparkle. Rounded energy pop (~600 Hz, 0% above 4 kHz)."
     },
     "berry": {
       "kind": "sfx",
@@ -259,7 +280,7 @@
         "prompt_influence": 0.5
       },
       "node": "wO5MTqORg5msBeM98meM",
-      "prompt": "Heavy deep thump boom with a short low rumble tail, punchy, dry close-mic, no reverb, no music, no voice",
+      "prompt": "Heavy punchy impact with a mid-range crack on top and a short deep rumble tail, audible on a small speaker, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
           "file": "sfx-elite-kill-5.mp3",
@@ -280,15 +301,21 @@
         "prompt_influence": 0.5
       },
       "node": "Ghdd12XXTamZJmr35wSs",
-      "prompt": "Treasure chest opening: soft wooden latch click followed by a glittering rising chime, dry close-mic, no reverb, no music, no voice",
+      "prompt": "Treasure chest opening: a soft wooden latch thunk and a short lid creak, then a warm mellow rising swell like a soft felt-mallet marimba run, rounded and low-mid, gentle, no glitter, no sparkle, no bell, no shimmer, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
           "file": "sfx-chest-2.mp3",
           "generationId": "Fgzeq4V1VHGgwNegrnWZ"
+        },
+        {
+          "file": "sfx-chest-3.mp3",
+          "generationId": "iJR9MtG5DhBXYkm6u8cu",
+          "prompt": "Treasure chest opening: a soft wooden latch thunk and a short lid creak, then a warm mellow rising swell like a soft felt-mallet marimba run, rounded and low-mid, gentle, no glitter, no sparkle, no bell, no shimmer, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
         }
       ],
-      "pick": ["sfx-chest-2.mp3"],
-      "ship": "chest"
+      "pick": ["sfx-chest-3.mp3"],
+      "ship": "chest",
+      "note": "Replaced 2026-11-17: the old take's bright chime run was the sharpest pickup in the bank. Wooden latch + felt-mallet swell (2.85 kHz, 4% above 4 kHz)."
     },
     "level": {
       "kind": "sfx",
@@ -344,7 +371,7 @@
         "prompt_influence": 0.5
       },
       "node": "owLaefJDxwmDueYAWInt",
-      "prompt": "Two quick urgent alarm beeps, clear mid-pitch, clean tone, short, dry close-mic, no reverb, no music, no voice",
+      "prompt": "Two short muted brass stabs, tense and ominous like a warning in a fantasy adventure game, rounded and mid-range, audible on a phone speaker, no siren, no beep, no alarm, no sparkle, ends cleanly, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
           "file": "sfx-danger-15.mp3",
@@ -376,7 +403,7 @@
         "prompt_influence": 0.5
       },
       "node": "P1mDPv58ukWYEC9MwQbs",
-      "prompt": "Magical transformation: rising shimmering whoosh into a bright powerful chord burst, ends cleanly, dry close-mic, no reverb, no music, no voice",
+      "prompt": "Magical transformation: a warm deep rising whoosh that swells into a full, rounded, soft synth-pad power burst, low-mid and full-bodied, mellow and warm, mid-range audible on a small speaker, no shimmer, no sparkle, no bright chime, no hiss, no high-pitched tone, ends cleanly, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
           "file": "sfx-evolve-1.mp3",
@@ -385,10 +412,16 @@
         {
           "file": "sfx-evolve-2.mp3",
           "generationId": "RYmcA6yNDdQ4VooBYGE1"
+        },
+        {
+          "file": "sfx-evolve-3.mp3",
+          "generationId": "e6hjREr9P0THNolFKEFZ",
+          "prompt": "Magical transformation: a warm deep rising whoosh that swells into a full, rounded, soft synth-pad power burst, low-mid and full-bodied, mellow and warm, mid-range audible on a small speaker, no shimmer, no sparkle, no bright chime, no hiss, no high-pitched tone, ends cleanly, dry close-mic, no reverb, no music, no voice"
         }
       ],
-      "pick": ["sfx-evolve-1.mp3", "sfx-evolve-2.mp3"],
-      "ship": "evolve"
+      "pick": ["sfx-evolve-3.mp3"],
+      "ship": "evolve",
+      "note": "Replaced 2026-11-17: the old shimmering chord burst was bright and shrill. One warm pad swell (391 Hz, 0% above 4 kHz); a single take, since evolution is rare."
     },
     "ult": {
       "kind": "sfx",
@@ -420,7 +453,7 @@
         "prompt_influence": 0.5
       },
       "node": "W9Q6Z4GNpjJaEAw2RcLZ",
-      "prompt": "Warm soft glowing chime swell with a gentle healing sparkle, dry close-mic, no reverb, no music, no voice",
+      "prompt": "Warm soft glowing chime swell with rounded low-mid bell tones, gentle and calm, no high-pitched sparkle, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
           "file": "sfx-revive-4.mp3",
@@ -523,10 +556,16 @@
         {
           "file": "sfx-cast-grass-2.mp3",
           "generationId": "AIq1OZQuIfYinKF3sIFh"
+        },
+        {
+          "file": "sfx-cast-grass-9.mp3",
+          "generationId": "L0mTmSscrbvDvPbGs94c",
+          "prompt": "A heavy leafy branch swung hard through the air ending in a soft thick thud, deep woody whoomp with a dull muffled leaf flutter, low-mid and full-bodied, like a pillow-soft swing, no hiss, no crisp rustle, no thin swish, no whistle, short, dry close-mic, no reverb, no music, no voice"
         }
       ],
-      "pick": ["sfx-cast-grass-1.mp3", "sfx-cast-grass-2.mp3"],
-      "ship": "cast-grass"
+      "pick": ["sfx-cast-grass-1.mp3", "sfx-cast-grass-9.mp3"],
+      "ship": "cast-grass",
+      "note": "2026-11-17: grass-2 (71% above 4 kHz, HARSH) dropped. Three rounds of darker prompts all stayed BRIGHT (leaf rustle is broadband hiss by nature); kept the two takes with the least energy above 4 kHz (2% and 6%). Redo candidate if it still reads sharp."
     },
     "cast-electric": {
       "kind": "sfx",
@@ -538,7 +577,7 @@
         "prompt_influence": 0.5
       },
       "node": "ko6milMA42NdxGn6Qel0",
-      "prompt": "Short snappy bright electric zap crackle, dry close-mic, no reverb, no music, no voice",
+      "prompt": "Short electric spark pop with a warm buzzy mid-range body, like a thick power cable arcing once, a rounded thump-buzz around the middle of the spectrum, clearly audible on a small phone speaker, no high sizzle, no hiss, no fizz, no whine, no beep, no deep sub rumble, short, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
           "file": "sfx-cast-electric-3.mp3",
@@ -549,10 +588,16 @@
           "file": "sfx-cast-electric-4.mp3",
           "generationId": "aIkqWABDuCnvLqC2Kn1U",
           "prompt": "Soft low electric buzz zap, muted rounded crackle, warm and dull, no high-pitched squeal, short, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-cast-electric-16.mp3",
+          "generationId": "9F2RqFwKcxwTfWWJkHda",
+          "prompt": "Short electric spark pop with a warm buzzy mid-range body, like a thick power cable arcing once, a rounded thump-buzz around the middle of the spectrum, clearly audible on a small phone speaker, no high sizzle, no hiss, no fizz, no whine, no beep, no deep sub rumble, short, dry close-mic, no reverb, no music, no voice"
         }
       ],
-      "pick": ["sfx-cast-electric-3.mp3", "sfx-cast-electric-4.mp3"],
-      "ship": "cast-electric"
+      "pick": ["sfx-cast-electric-16.mp3"],
+      "ship": "cast-electric",
+      "note": "Replaced 2026-11-17: the old zap takes sat at 4.6-6.9 kHz and read as a high fizz. Three prompt rounds; round 2 overshot into sub-bass (LOW). This mid-range arc pop (2.4 kHz, 0% above 4 kHz) is the only take that passed."
     },
     "ui-confirm": {
       "kind": "sfx",
@@ -621,7 +666,7 @@
         "prompt_influence": 0.5
       },
       "node": "SY0YJWKfhFid1SLtsHrP",
-      "prompt": "Energetic bright airy whoosh with an ascending marimba flourish, adventure start, dry close-mic, no reverb, no music, no voice",
+      "prompt": "Airy whoosh rising upward for about one second and ending in a bright ascending marimba flourish, sustained from start to finish, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
           "file": "sfx-ui-start-5.mp3",
@@ -1121,7 +1166,7 @@
         "prompt_influence": 0.5
       },
       "node": "Sg3V0l0LmO7DhMGUzv2Q",
-      "prompt": "Single short soft round chime ping, mid-high pitch, clear and gentle, quick decay, very short, dry close-mic, no reverb, no music, no voice",
+      "prompt": "Short soft airy swish with a dull wooden tick at the very start, muted and rounded, no ring, no bell, no pitched tone, mid-range audible on a small speaker, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
           "file": "sfx-tell-5.mp3",
@@ -1158,7 +1203,7 @@
         "prompt_influence": 0.5
       },
       "node": "KSbiT4p87e9Sd6woz4FV",
-      "prompt": "Two quick firm short mid-pitch beeps in a row, urgent but not shrill, with a very soft low thump just before the first beep, audible on a small speaker, dry close-mic, no reverb, no music, no voice",
+      "prompt": "Two quick urgent taps on a hollow wooden barrel, dull and punchy, the second slightly harder than the first, short, mid-range audible on a small speaker, no ring, no bell, no beep, no pitched tone, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
           "file": "sfx-tell-danger-13.mp3",
@@ -1191,20 +1236,25 @@
         "prompt_influence": 0.5
       },
       "node": "IN0g3x4IDrRLhProRhFn",
-      "prompt": "Soft warm breathy whoosh that swells up gently for about half a second, like a puff of air through soft cloth with a faint airy rustle at the end, rounded and calm, no bell, no chime, no pitched tone, mid-range audible on a small speaker, dry close-mic, no reverb, no music, no voice",
+      "prompt": "Soft warm muffled swell that rises gently for about half a second, like a cushion being softly pressed and released, low-mid and rounded, calm, mid-range audible on a small speaker, no breath hiss, no airy noise, no rustle, no bell, no chime, no pitched tone, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
           "file": "sfx-enemy-heal-1.mp3",
           "generationId": "SQdWgA8tnGCX1yiXe0Kk"
+        },
+        {
+          "file": "sfx-enemy-heal-5.mp3",
+          "generationId": "rRLGZcz9H0IZHZgyG9ip",
+          "prompt": "Soft warm muffled swell that rises gently for about half a second, like a cushion being softly pressed and released, low-mid and rounded, calm, mid-range audible on a small speaker, no breath hiss, no airy noise, no rustle, no bell, no chime, no pitched tone, dry close-mic, no reverb, no music, no voice"
         }
       ],
-      "pick": ["sfx-enemy-heal-1.mp3"],
+      "pick": ["sfx-enemy-heal-5.mp3"],
       "ship": "enemy-heal",
       "spend": {
         "credits": 2.3,
         "date": "2026-11-07"
       },
-      "note": "Healer pulse (forest zone 3, Clefairy): a soft breath, not a tell or a chime, so a heal never reads as an attack or a pickup. One take, as the user asked."
+      "note": "Healer pulse (forest zone 3, Clefairy): a soft breath, not a tell or a chime, so a heal never reads as an attack or a pickup. One take, as the user asked. Replaced 2026-11-17 with a muffled cushion-press swell (342 Hz) after the old take read as a high shimmer."
     },
     "hit-fire": {
       "kind": "sfx",
@@ -1250,7 +1300,7 @@
         "prompt_influence": 0.5
       },
       "node": "iwfjlr0u4KX4VhFq0Nlq",
-      "prompt": "Single short wet splash slap hitting a body, quick and soft, rounded, mid-range audible on a small speaker, no long drip tail, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice",
+      "prompt": "Single short muffled water slap, like a thick wet cloth hitting a body, dull and low-mid, quick, no hiss, no spray, no drips, no ring, no pitched tone, audible on a small speaker, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
           "file": "sfx-hit-water-6.mp3",
@@ -1316,7 +1366,7 @@
         "prompt_influence": 0.5
       },
       "node": "zzTGRMoqE24WGf0uyDmf",
-      "prompt": "Single short muffled electric pop with a soft dull thud, quick and rounded, no buzz tail, no zap, no sparkle, no high-pitched crackle, no pitched tone, mid-range audible on a small speaker, dry close-mic, no reverb, no music, no voice",
+      "prompt": "Single short dull static snap, like a muffled spark hitting thick cloth, a quick soft crack with a small thud, no buzz, no hum, no ring, no pitched tone, no sparkle, mid-range audible on a small speaker, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
           "file": "sfx-hit-electric-6.mp3",
@@ -1348,7 +1398,7 @@
         "prompt_influence": 0.5
       },
       "node": "cRSgx6q03iMCtFr9HWng",
-      "prompt": "Short soft crunch of packed snow and thin ice closing around something, one muffled crackle, mid-range, rounded and damped, no ring, no bell, no chime, no sparkle, audible on a small speaker, dry close-mic, no reverb, no music, no voice",
+      "prompt": "A heavy wet snowball hitting a wooden wall, one dull soft thud with a muffled packed-snow crunch, low-mid, thick and damped, mid-range audible on a small speaker, no ice tinkle, no glass, no crackle, no sparkle, no hiss, no ring, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
           "file": "sfx-freeze-1.mp3",
@@ -1357,10 +1407,21 @@
         {
           "file": "sfx-freeze-3.mp3",
           "generationId": "ONdvfgUTXypsVJw0vIdG"
+        },
+        {
+          "file": "sfx-freeze-9.mp3",
+          "generationId": "Zzusqy5t7ykSHelxNfB0",
+          "prompt": "A heavy wet snowball hitting a wooden wall, one dull soft thud with a muffled packed-snow crunch, low-mid, thick and damped, mid-range audible on a small speaker, no ice tinkle, no glass, no crackle, no sparkle, no hiss, no ring, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-freeze-11.mp3",
+          "generationId": "lWEG1IkI5AZaXHLHyniJ",
+          "prompt": "A heavy wet snowball hitting a wooden wall, one dull soft thud with a muffled packed-snow crunch, low-mid, thick and damped, mid-range audible on a small speaker, no ice tinkle, no glass, no crackle, no sparkle, no hiss, no ring, dry close-mic, no reverb, no music, no voice"
         }
       ],
-      "pick": ["sfx-freeze-3.mp3", "sfx-freeze-1.mp3"],
-      "ship": "freeze"
+      "pick": ["sfx-freeze-11.mp3", "sfx-freeze-9.mp3"],
+      "ship": "freeze",
+      "note": "Replaced 2026-11-17: the old ice-tinkle takes were glassy and high. Packed-snow thud takes (1.2 and 3.0 kHz, 0% above 4 kHz)."
     },
     "cast-ghost": {
       "kind": "sfx",
@@ -1488,7 +1549,7 @@
         "prompt_influence": 0.5
       },
       "node": "LzLgWILlDXSIaE5eqZ9Q",
-      "prompt": "Single short hollow ghostly thud, a quick muffled airy puff hitting a body, dull and rounded, mid-range audible on a small speaker, no wail, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice",
+      "prompt": "Single short soft muffled knock on a hollow wooden box with a quick airy puff, dull and rounded, mid-range audible on a small speaker, no bass, no boom, no wail, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
           "file": "sfx-hit-ghost-5.mp3",

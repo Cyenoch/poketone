@@ -51,11 +51,9 @@
     "crit": {
       "files": [
         "sfx/crit-1.flac",
-        "sfx/crit-2.flac",
-        "sfx/crit-3.flac"
+        "sfx/crit-2.flac"
       ],
       "hitMs": [
-        25,
         0,
         5
       ]
@@ -113,7 +111,7 @@
         "sfx/chest.flac"
       ],
       "hitMs": [
-        361
+        266
       ]
     },
     "level": {
@@ -148,12 +146,10 @@
     },
     "evolve": {
       "files": [
-        "sfx/evolve-1.flac",
-        "sfx/evolve-2.flac"
+        "sfx/evolve.flac"
       ],
       "hitMs": [
-        331,
-        426
+        341
       ]
     },
     "ult": {
@@ -209,17 +205,15 @@
       ],
       "hitMs": [
         70,
-        185
+        0
       ]
     },
     "cast-electric": {
       "files": [
-        "sfx/cast-electric-1.flac",
-        "sfx/cast-electric-2.flac"
+        "sfx/cast-electric.flac"
       ],
       "hitMs": [
-        175,
-        5
+        0
       ]
     },
     "ui-confirm": {
@@ -309,7 +303,7 @@
         "sfx/enemy-heal.flac"
       ],
       "hitMs": [
-        90
+        120
       ]
     },
     "hit-fire": {
@@ -367,7 +361,7 @@
       ],
       "hitMs": [
         0,
-        20
+        0
       ]
     },
     "cast-ghost": {

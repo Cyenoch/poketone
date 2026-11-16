@@ -39,15 +39,10 @@
     "hitMs": 145,
     "peakMs": 185
   },
-  "cast-electric-1.flac": {
-    "lenMs": 722,
-    "hitMs": 175,
-    "peakMs": 346
-  },
-  "cast-electric-2.flac": {
-    "lenMs": 722,
-    "hitMs": 5,
-    "peakMs": 431
+  "cast-electric.flac": {
+    "lenMs": 546,
+    "hitMs": 0,
+    "peakMs": 0
   },
   "cast-fighting-1.flac": {
     "lenMs": 661,
@@ -85,9 +80,9 @@
     "peakMs": 75
   },
   "cast-grass-2.flac": {
-    "lenMs": 656,
-    "hitMs": 185,
-    "peakMs": 220
+    "lenMs": 526,
+    "hitMs": 0,
+    "peakMs": 15
   },
   "cast-poison-1.flac": {
     "lenMs": 481,
@@ -110,24 +105,19 @@
     "peakMs": 90
   },
   "chest.flac": {
-    "lenMs": 1143,
-    "hitMs": 361,
-    "peakMs": 672
+    "lenMs": 456,
+    "hitMs": 266,
+    "peakMs": 296
   },
   "crit-1.flac": {
-    "lenMs": 90,
-    "hitMs": 25,
+    "lenMs": 200,
+    "hitMs": 0,
     "peakMs": 25
   },
   "crit-2.flac": {
-    "lenMs": 175,
-    "hitMs": 0,
-    "peakMs": 0
-  },
-  "crit-3.flac": {
-    "lenMs": 90,
+    "lenMs": 200,
     "hitMs": 5,
-    "peakMs": 10
+    "peakMs": 30
   },
   "danger-1.flac": {
     "lenMs": 346,
@@ -165,29 +155,24 @@
     "peakMs": 45
   },
   "enemy-heal.flac": {
-    "lenMs": 546,
-    "hitMs": 90,
-    "peakMs": 175
+    "lenMs": 531,
+    "hitMs": 120,
+    "peakMs": 195
   },
-  "evolve-1.flac": {
-    "lenMs": 1819,
-    "hitMs": 331,
-    "peakMs": 596
-  },
-  "evolve-2.flac": {
-    "lenMs": 1518,
-    "hitMs": 426,
-    "peakMs": 581
+  "evolve.flac": {
+    "lenMs": 1844,
+    "hitMs": 341,
+    "peakMs": 521
   },
   "freeze-1.flac": {
-    "lenMs": 331,
+    "lenMs": 416,
     "hitMs": 0,
-    "peakMs": 100
+    "peakMs": 5
   },
   "freeze-2.flac": {
-    "lenMs": 276,
-    "hitMs": 20,
-    "peakMs": 90
+    "lenMs": 401,
+    "hitMs": 0,
+    "peakMs": 5
   },
   "hit-1.flac": {
     "lenMs": 220,
@@ -350,14 +335,14 @@
     "peakMs": 45
   },
   "reaction-1.flac": {
-    "lenMs": 611,
+    "lenMs": 436,
     "hitMs": 0,
     "peakMs": 5
   },
   "reaction-2.flac": {
-    "lenMs": 800,
+    "lenMs": 331,
     "hitMs": 0,
-    "peakMs": 25
+    "peakMs": 5
   },
   "revive-1.flac": {
     "lenMs": 1158,

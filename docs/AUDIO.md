@@ -223,7 +223,7 @@ MCP 工具在 Claude Code 里是延迟加载的：用 `ToolSearch` 以**精确�
 - 胜负短曲只量了形状（起音、满响时长、衰减），没听过，也没比较音乐引擎和音效引擎哪个更好。
 - 在无头 Chrome 里核对过：素材载入、点击后解锁、各界面音、局内事件触发、守卫时按拍切到头目曲、一局结束停音乐、设置开关挂起 / 恢复，排期数值（`delay` / `offset`）与预期一致。**没有人在游戏里听过混音**：`BUS_GAIN`、压低量、各层响度都是起始值。
 - **没有在 iOS Safari 真机上验证** `decodeAudioData`、AudioContext 解锁和循环无缝。
-- 母带的舒适度规则（峰值上限、4 kHz 占比上限、各层响度）是按指标定的起始值，没有按耳朵校准。仍偏尖的声音：`evolve`、`chest`、`cast-grass-2`（已被压暗，但 2–8 kHz 峰值仍接近 −1 到 −6 dBFS）。另有一批已上线的 take 标了 `BRIGHT`（短促命中、`freeze`、`reaction`、`enemy-heal`、电/草施放），没人反馈过，是重做时的候选，不是待修项。
+- 母带的舒适度规则（峰值上限、4 kHz 占比上限、各层响度）是按指标定的起始值，没有按耳朵校准。2026-11-17 已按 `BRIGHT` 重做 `evolve`、`chest`、`crit`、`freeze`、`reaction`、`enemy-heal`、`cast-electric`（都落到 4 kHz 以上 ≤4%）。`cast-grass` 三轮都仍是 `BRIGHT`（叶片沙沙声本身是宽带噪声），只换掉了 `HARSH` 的那条，留下 4 kHz 以上占比最低的两条；短促命中（`hit`、电/水/毒命中，质心约 4 kHz、4 kHz 以上 5–15%）未重做。这些都没经耳朵确认。
 - 手机外放：`elite-kill`、`ult`、`boss`、`hurt` 已选质心较高的 take，但没有在手机上听过。
 - 部分稀有声音挑不出好坏，两条都留了（`level`、`danger`、`evolve` 等），听完删掉不要的。
 - 循环曲的接缝是按拍型相关度选的（C 0.76、D 0.48、E 0.52），不等于听起来无缝。
