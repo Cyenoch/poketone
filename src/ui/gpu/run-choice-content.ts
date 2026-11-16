@@ -150,8 +150,8 @@ function choiceCopy(choice: Choice): Copy {
         type: null,
         title: "招式学习器盒",
         lines: [
-          `招式 Lv ${MAX_MOVE_LEVEL + TM_CASE.moveLevels}`,
-          `融合 ★${MAX_FUSION_STARS + TM_CASE.stars}`,
+          `招式上限 Lv ${MAX_MOVE_LEVEL}→${MAX_MOVE_LEVEL + TM_CASE.moveLevels}`,
+          `融合上限 ★${MAX_FUSION_STARS}→★${MAX_FUSION_STARS + TM_CASE.stars}`,
         ],
         icon: itemIcon("tm-case"),
       };

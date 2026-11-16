@@ -396,7 +396,7 @@ const tmCaseEntry: CodexEntry = {
   types: [],
   tags: ["宝箱"],
   art: { kind: "item", item: "tm-case" },
-  summary: `招式 Lv.${MAX_MOVE_LEVEL + TM_CASE.moveLevels}，融合 ★${MAX_FUSION_STARS + TM_CASE.stars}`,
+  summary: `招式上限 Lv ${MAX_MOVE_LEVEL}→${MAX_MOVE_LEVEL + TM_CASE.moveLevels}，融合上限 ★${MAX_FUSION_STARS}→★${MAX_FUSION_STARS + TM_CASE.stars}`,
   blocks: [
     {
       kind: "stats",

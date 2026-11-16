@@ -8,8 +8,8 @@
     "libwebp": "1.6.0"
   },
   "ui-500": {
-    "json": "ui-500.4def6aa5e7925f71.json",
-    "sha256": "4def6aa5e7925f719f3ad87933d1e819d480226717be5b55fd8566f10a9c3590",
+    "json": "ui-500.db60be5c555a2b9d.json",
+    "sha256": "db60be5c555a2b9da2f4f776e3dfb081874d8a470aadc3d85a2cf6405b637dda",
     "weight": 500,
     "glyphs": 1188,
     "pages": 2,
@@ -17,15 +17,15 @@
     "chromePages": 1,
     "source": "public/fonts/noto-sans-sc-game.woff2",
     "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
-    "jsonBytes": 48773,
+    "jsonBytes": 48772,
     "pageBytes": [
-      1413288,
-      1185564
+      1413812,
+      1185180
     ]
   },
   "ui-700": {
-    "json": "ui-700.5586de0094716a28.json",
-    "sha256": "5586de0094716a28b6433a148481ca4b984b6b0e7c838f6cdb329ab72c84a592",
+    "json": "ui-700.fb0d868d2080355c.json",
+    "sha256": "fb0d868d2080355c3241e19b5d41cc30e4da1c5f295b4b20c01f854766ea156a",
     "weight": 700,
     "glyphs": 1188,
     "pages": 2,
@@ -33,15 +33,15 @@
     "chromePages": 1,
     "source": "public/fonts/noto-sans-sc-game.woff2",
     "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
-    "jsonBytes": 48825,
+    "jsonBytes": 48826,
     "pageBytes": [
-      1420530,
-      1193156
+      1421024,
+      1192516
     ]
   },
   "ui-800": {
-    "json": "ui-800.d43e13ad965a983d.json",
-    "sha256": "d43e13ad965a983dca3daa9853cd6fb85d9493376b145ac1aa30183bc67cc920",
+    "json": "ui-800.9ae5a3a1fb3ec598.json",
+    "sha256": "9ae5a3a1fb3ec5983611bbb230457ae6a7faaee875c8dfc00cb2e86ef352f15e",
     "weight": 800,
     "glyphs": 1188,
     "pages": 2,
@@ -49,10 +49,10 @@
     "chromePages": 1,
     "source": "public/fonts/noto-sans-sc-game.woff2",
     "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
-    "jsonBytes": 48842,
+    "jsonBytes": 48840,
     "pageBytes": [
-      1420026,
-      1190908
+      1420240,
+      1190378
     ]
   },
   "display": {
