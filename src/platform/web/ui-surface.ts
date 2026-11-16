@@ -88,6 +88,9 @@ export class WebUiSurface implements UiSurface {
     this.#canvas.tabIndex = interactive ? 0 : -1;
   }
   claimInstallHint = claimInstallHint;
+  openUrl(url: string) {
+    window.open(url, "_blank", "noopener");
+  }
   readonly #toggleFullscreen = () => void toggleFullscreen();
   get fullscreen() {
     return document.fullscreenElement || needsFullscreen()

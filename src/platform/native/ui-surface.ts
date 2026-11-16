@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import sdl, { type Events } from "@kmamal/sdl";
 import type { UiEvents, UiKey, UiPointer, UiSurface } from "../ui-surface";
 import type { NativeRenderSurface } from "./render-surface";
@@ -66,6 +67,15 @@ export class NativeUiSurface implements UiSurface {
   };
   get fullscreen() {
     return { active: this.#surface.window.fullscreen, toggle: this.#toggleFullscreen };
+  }
+  openUrl(url: string) {
+    const [command, ...args] =
+      process.platform === "darwin"
+        ? ["open", url]
+        : process.platform === "win32"
+          ? ["cmd", "/c", "start", "", url]
+          : ["xdg-open", url];
+    spawn(command!, args, { detached: true, stdio: "ignore" }).unref();
   }
   focus() {
     this.#surface.window.focus();

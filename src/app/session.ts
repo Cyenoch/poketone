@@ -318,6 +318,7 @@ export async function createAppSession(
           codex: () => host!.openCodex(),
           settings: openSettings,
           multiplayer: openRoom,
+          openLink: (url) => surface.openUrl(url),
         },
       );
       const scene = new LobbyScene(app, notify);

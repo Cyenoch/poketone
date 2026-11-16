@@ -20,6 +20,7 @@ import { Color, Matrix4, Mesh, PlaneGeometry, Vector3, type Texture } from "thre
 import { images } from "../../prepare/images";
 import { getAudio } from "../../audio/engine";
 import { LEGAL_NOTICE } from "../../legalNotice";
+import { COMMUNITY_LINKS } from "../../community";
 import { type LobbyPick } from "../../lobbyPick";
 import { STAGE_ROUTE } from "../../run/sim/content/campaign";
 import { formatTime, typeNames } from "../../run/labels";
@@ -71,6 +72,7 @@ export interface LobbyCallbacks {
   codex(): void;
   settings(): void;
   multiplayer(): void;
+  openLink(url: string): void;
 }
 
 const LONG_PRESS_MS = 450;
@@ -129,6 +131,7 @@ type ControlKind =
   | "settings"
   | "fullscreen"
   | "multiplayer"
+  | "link"
   | "prev"
   | "next"
   | "tile"
@@ -447,11 +450,14 @@ export class GpuLobby {
   });
   private readonly arrows: Content[] = [];
   private readonly arrowBox = new Container({ flexDirection: "row", alignItems: "center" });
+  /** The brand's corner: the community links, then the legal line. */
   private readonly legal = new Container({
     positionType: "absolute",
-    flexDirection: "row",
+    flexDirection: "column",
+    alignItems: "flex-start",
     justifyContent: "center",
   });
+  private readonly links = new Container({ flexDirection: "row", alignItems: "center" });
   /** Map tabs occupy the launch tray above difficulty; the destination labels 出发. */
   private readonly mapSign = new Container({
     flexDirection: "row",
@@ -657,7 +663,21 @@ export class GpuLobby {
       paddingX: 8,
       paddingY: 3,
     });
-    this.legal.add(this.legalText);
+    for (const [i, link] of COMMUNITY_LINKS.entries()) {
+      const button = new GameButton(this.stage, {
+        tone: "scene",
+        size: "small",
+        label: link.label,
+        flat: true,
+      });
+      this.buttons.push(button);
+      this.links.add(button.panel);
+      this.controls.push({
+        ...this.keyControl("link", button, () => this.callbacks.openLink(link.url)),
+        index: i,
+      });
+    }
+    this.legal.add(this.links, this.legalText);
     this.stage.root.add(stack(this.legal, 1), stack(this.column, 2), stack(this.topBar, 3));
     this.buildPartner();
   }
@@ -1413,7 +1433,9 @@ export class GpuLobby {
     const side = Math.max(t.switchKey, v.minTarget);
     for (const button of [this.prev, this.next])
       button.panel.setProperties({ minWidth: side, minHeight: side });
+    this.links.setProperties({ gap: t.gap });
     this.legal.setProperties({
+      gap: t.legalGap,
       positionLeft: pad.left,
       positionTop: pad.top + Math.max(t.bar, v.minTarget) + 16,
       width: Math.max(160, v.width - pad.left - pad.right - colW - t.zoneGap),
@@ -1698,6 +1720,10 @@ export class GpuLobby {
     this.focus(this.index("start"));
   }
 
+  private linkStops(): number[] {
+    return this.controls.flatMap((control, index) => (control.kind === "link" ? [index] : []));
+  }
+
   private index(kind: ControlKind): number {
     return this.controls.findIndex((c) => c.kind === kind);
   }
@@ -1723,6 +1749,7 @@ export class GpuLobby {
       this.index("multiplayer"),
       this.index("lab"),
       this.index("codex"),
+      ...this.linkStops(),
       this.index("prev"),
       this.index("next"),
       this.picked(this.tiles, starterOrder.indexOf(this.selected)),
@@ -1807,6 +1834,7 @@ export class GpuLobby {
     const infos = this.controls.flatMap((control, index) =>
       control.kind === "info" ? [index] : [],
     );
+    const links = this.linkStops();
     const top =
       current.kind === "lab" ||
       current.kind === "codex" ||
@@ -1821,6 +1849,9 @@ export class GpuLobby {
         const next = group[(at + step + group.length) % group.length]!;
         this.focus(this.controls.indexOf(next));
         next.activate();
+      } else if (current.kind === "link") {
+        const at = links.indexOf(this.focused);
+        this.focus(links[Math.min(links.length - 1, Math.max(0, at + step))]!);
       } else if (current.kind === "info") {
         const at = infos.indexOf(this.focused);
         this.focus(infos[(at + step + infos.length) % infos.length]!);
@@ -1855,7 +1886,8 @@ export class GpuLobby {
       difficulty: [infos.at(-1) ?? tile, this.index("start")],
       tile: [this.index("next"), infos[0] ?? segment],
       info: [tile, segment],
-      prev: [this.index("lab"), tile],
+      prev: [links[0]!, tile],
+      link: [this.index("multiplayer"), this.index("prev")],
       next: [this.index("codex"), tile],
       lab: [this.cardsInBar ? this.focused : this.index("settings"), this.index("next")],
       codex: [this.cardsInBar ? this.focused : this.index("settings"), this.index("next")],

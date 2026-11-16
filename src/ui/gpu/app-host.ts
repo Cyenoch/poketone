@@ -914,7 +914,15 @@ export async function createGpuAppHost(
         fonts.families,
         texture,
         { progress, pick: { starter, difficulty: 0, stage: playableStages[0]! } },
-        { start() {}, pick() {}, lab() {}, codex() {}, settings() {}, multiplayer() {} },
+        {
+          start() {},
+          pick() {},
+          lab() {},
+          codex() {},
+          settings() {},
+          multiplayer() {},
+          openLink() {},
+        },
       );
       const width = platform.display.width,
         height = platform.display.height;
