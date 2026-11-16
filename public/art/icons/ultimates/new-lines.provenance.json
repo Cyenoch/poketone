@@ -1,0 +1,9 @@
+{
+  "assets": ["gastly", "dratini", "machop"],
+  "createdAt": "2026-11-16",
+  "generator": "Magpie generate_image, openrouter/google/gemini-nano-banana-2.1",
+  "prompt": "A sprite sheet in exactly 2x2 evenly spaced square cells with broad empty margins, plain flat warm off-white (#f5f1e8) background, no grid lines. Top left: Phantom Night ultimate icon, purple spectral vortex with ghostly eyes and dark violet crescent wisps. Top right: Draco Meteor ultimate icon, three fiery violet and blue dragon meteors streaking diagonally into a blue impact burst. Bottom left: Seismic Barrage ultimate icon, two terracotta clenched fists striking cracked ground with orange impact bursts. Bottom right: a neutral gray star (unused). Each entirely contained centered in its own cell, no touching. Match style of reference. Clean solid background, no noise and no glow halo. Bright clean cartoon game art for a low-poly Pok\u00e9mon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject.",
+  "reference": "public/art/icons/ultimates/charmander.webp",
+  "processing": "assets/icons/slice-sheet.py, 2x2, first three cells, transparent 128x128 WebP q88.",
+  "rights": "Generated for noncommercial Pok\u00e9mon fan project."
+}

@@ -1,7 +1,7 @@
 import { Content, type Container } from "@pmndrs/uikit";
 import { Color, Mesh, PlaneGeometry, Vector2, Vector3 } from "three";
 import type { ElementType } from "../../run/sim/content/elements";
-import { themeGrain } from "./run-overlays-surface";
+import { themeEdge, themeGrain } from "./run-theme";
 import { UiShaderMaterial } from "./ui-shader";
 
 /** Room around the plate's box for its base, drop shadow and focus ring. */
@@ -47,6 +47,7 @@ export class SlantPlate {
     pattern: { value: Vector2 };
     focus: { value: number };
     inset: { value: number };
+    shine: { value: number };
     opacity: { value: number };
   }>;
   private readonly host: Container;
@@ -69,6 +70,7 @@ export class SlantPlate {
         pattern: { value: new Vector2(0, 0) },
         focus: { value: 0 },
         inset: { value: 0 },
+        shine: { value: -1 },
         opacity: { value: 1 },
       },
       vertexShader: /* glsl */ `
@@ -83,7 +85,7 @@ export class SlantPlate {
         }`,
       fragmentShader: /* glsl */ `
         uniform vec2 boxSize, pattern;
-        uniform float depth, radius, focus, inset, opacity;
+        uniform float depth, radius, focus, inset, shine, opacity;
         varying vec2 boxPoint;
         #include <clipping_planes_pars_fragment>
         vec3 toLinear(vec3 c) { return mix(c / 12.92, pow((c + .055) / 1.055, vec3(2.4)), step(.04045, c)); }
@@ -126,15 +128,7 @@ export class SlantPlate {
               float ux = p.x - (h - p.y) / h * s;
               float depthIn = h - 3. - p.y;
               float edge = 0.;
-              ${
-                grain.kind === 0
-                  ? `vec2 e=vec2((mod(ux,9.)-4.5)/3.6,depthIn/8.);edge=step(dot(e,e),1.);`
-                  : grain.kind === 1
-                    ? `vec2 e=vec2(mod(ux,14.)/14.,depthIn/6.4);edge=step(dot(e,e),.49);`
-                    : grain.kind === 2
-                      ? `vec2 e=vec2((mod(ux,16.)-8.)/9.6,depthIn/5.6);edge=step(dot(e,e),1.);`
-                      : `edge=step(depthIn,8.-abs(mod(ux,14.)-7.));`
-              }
+              ${themeEdge(style.theme!.type, "ux", "depthIn")}
               col = mix(col, ${v(deep)}, .6 * edge * step(0., depthIn));
             }`
                 : ""
@@ -152,6 +146,15 @@ export class SlantPlate {
               style.topLine
                 ? `col = mix(col, ${v(top)}, smoothstep(-aa, aa, plate(p, ${(3 + style.topLine.width).toFixed(1)})));`
                 : ""
+            }
+            // A light sweep (0–1 across the face; negative: none): a broad band and a thin trailing one,
+            // leaning with the slant.
+            if (shine >= 0.) {
+              float sx = p.x + .6 * p.y;
+              float c = mix(-48., boxSize.x + 48. + .6 * boxSize.y, shine);
+              float b0 = (sx - c) / 15., b1 = (sx - c + 30.) / 5.;
+              float band = exp(-b0 * b0) + .6 * exp(-b1 * b1);
+              col = mix(col, vec3(1.), .5 * min(1., band));
             }
             // Pressed: inset 0 3px 0 rgb(13 35 63 / 18%).
             col = mix(col, navyDeep, .18 * inset * smoothstep(-aa, aa, plate(p, 6.)));
@@ -171,13 +174,17 @@ export class SlantPlate {
     this.content.notifyAncestorsChanged();
   }
 
-  /** Hard base depth, pattern phase (tiles) and strength (0–1), focus and pressed shade (0–1). */
+  /**
+   * Hard base depth, pattern phase (tiles) and strength (0–1), focus and pressed shade (0–1), and
+   * the light sweep's position (0–1; negative hides it).
+   */
   set(state: {
     depth?: number;
     phase?: number;
     strength?: number;
     focus?: number;
     inset?: number;
+    shine?: number;
   }): void {
     const u = this.material.uniforms;
     if (state.depth !== undefined) u.depth.value = state.depth;
@@ -185,6 +192,7 @@ export class SlantPlate {
     if (state.strength !== undefined) u.pattern.value.y = state.strength;
     if (state.focus !== undefined) u.focus.value = state.focus;
     if (state.inset !== undefined) u.inset.value = state.inset;
+    if (state.shine !== undefined) u.shine.value = state.shine;
   }
 
   /** Follows its host box (after layout). */

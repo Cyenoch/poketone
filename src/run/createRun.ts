@@ -272,12 +272,22 @@ const HIT_SOUND: Partial<Record<ElementType, SfxName>> = {
   water: "hit-water",
   grass: "hit-grass",
   electric: "hit-electric",
+  ghost: "hit-ghost",
+  poison: "hit-poison",
+  dragon: "hit-dragon",
+  fighting: "hit-fighting",
 };
 const CAST_SOUND: Partial<Record<ElementType, SfxName>> = {
   fire: "cast-fire",
   water: "cast-water",
   grass: "cast-grass",
   electric: "cast-electric",
+  ghost: "cast-ghost",
+  poison: "cast-poison",
+  dragon: "cast-dragon",
+  // Hurricane is the only flying cast: a gust, like the dragon's.
+  flying: "cast-dragon",
+  fighting: "cast-fighting",
 };
 
 /** A move's slot reading: waiting for a target is ready (its 0.2 s retry is not a cooldown). */

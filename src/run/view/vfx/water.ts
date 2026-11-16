@@ -110,8 +110,23 @@ export const waterGun: ShotLook = {
   fly(fx, shot, x, y, z) {
     fx.sprites.draw(sheen, x, y, z, shot.radius * 1.8);
     fx.sprites.draw(head, x, y, z, shot.radius, 1, shot.vx, shot.vz);
+    const speed = Math.hypot(shot.vx, shot.vz) || 1;
+    const tail = Math.min(0.65, speed * (shot.dur - shot.life));
+    for (let i = 1; i <= 3; i++) {
+      const k = i / 3;
+      fx.sprites.draw(
+        head,
+        x - (shot.vx / speed) * tail * k,
+        y,
+        z - (shot.vz / speed) * tail * k,
+        shot.radius * (0.75 - k * 0.4),
+        0.65 * (1 - k * 0.6),
+        shot.vx * 0.15,
+        shot.vz * 0.15,
+      );
+    }
     const floor = fx.ground.heightAt(x, z);
-    for (let i = perFrame(fx, 45); i > 0; i--) {
+    for (let i = perFrame(fx, 20); i > 0; i--) {
       fx.sprites.emit(
         droplet,
         x + rand(-0.06, 0.06),
@@ -124,7 +139,7 @@ export const waterGun: ShotLook = {
         floor,
       );
     }
-    for (let i = perFrame(fx, 10); i > 0; i--) fx.sprites.emit(mist, x, y, z, 0, 0.15, 0, 0.1);
+    for (let i = perFrame(fx, 4); i > 0; i--) fx.sprites.emit(mist, x, y, z, 0, 0.15, 0, 0.1);
   },
   hit(fx, x, y, z) {
     splash(fx, x, y, z, 1);
@@ -142,6 +157,9 @@ function pop(fx: Fx, x: number, y: number, z: number): void {
 }
 
 export const bubbleShot: ShotLook = {
+  launch(fx, x, y, z) {
+    fx.sprites.emit(splashRing, x, y, z, 0, 0, 0, 0.1);
+  },
   fly(fx, shot, x, y, z) {
     const bob = Math.sin(fx.time * 5 + shot.id) * 0.06;
     fx.sprites.draw(bubble, x, y + bob, z, shot.radius * 0.95, 1, 0, 0, 0, seedOf(shot.id));
@@ -167,16 +185,17 @@ export const rapidSpin: AreaLook = {
     // Particle size and speed follow the radius (1 at the old 2.1 m spin).
     const scale = r / 2.1;
     const elapsed = area.maxLife - area.life;
-    const fade = Math.min(1, area.life / 0.25) * Math.min(1, elapsed / 0.1);
+    const fade = Math.min(1, area.life / 0.2);
+    const lift = 0.3 + 0.1 * Math.min(1, elapsed / 0.08);
     fx.volumes.whirls.add(
-      place(x, 0.05, z, 0, r * 0.92, 0.4, r * 0.92),
+      place(x, 0.05, z, 0, r * 0.92, lift * fade, r * 0.92),
       wind.white,
-      fade * 0.8,
+      fade * 0.65,
       wind.cyan,
       0,
     );
     fx.volumes.whirls.add(
-      place(x, 0.05, z, Math.PI / 3, r * 0.55, 0.3, r * 0.55),
+      place(x, 0.05, z, Math.PI / 3, r * 0.55, 0.25 * fade, r * 0.55),
       wind.white,
       fade * 0.45,
       wind.cyan,

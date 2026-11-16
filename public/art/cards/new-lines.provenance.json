@@ -1,0 +1,38 @@
+{
+  "createdAt": "2026-11-16",
+  "generator": "Magpie generate_image, openrouter/google/gemini-nano-banana-2.1",
+  "assets": [
+    {
+      "asset": "ghost.webp",
+      "prompt": "A decorative full-bleed background pattern for a game choice card: wispy ghostly curls, playful spectral sparks and small crescent shapes. Light airy palette dominated by pale lavender (#ede3f7) with gentle violet accents, soft low-contrast tonal shapes, motifs clustered toward edges and corners with calm nearly empty lighter centre, fills whole square edge to edge, no frame. Thin soft outlines in slightly darker tint of same colour, no dark navy or black lines. Bright clean cartoon game art for a low-poly Pok\u00e9mon-style adventure. Chunky simple shapes, flat cel shading with two or three tones. Saturated but not neon colours. No text, no letters, no numbers, no logos, no borders, no drop shadows.",
+      "source": "/private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/cards-ghost.jpg",
+      "artShare": 0.7
+    },
+    {
+      "asset": "dragon.webp",
+      "prompt": "A decorative full-bleed background pattern for a game choice card: flowing dragon scales, tiny wing shapes and swirling sky currents. Light airy palette dominated by pale periwinkle (#e5e5fa) with gentle blue and lilac accents, soft low-contrast tonal shapes, motifs clustered toward edges and corners with calm nearly empty lighter centre, fills whole square edge to edge, no frame. Thin soft outlines in slightly darker tint of same colour, no dark navy or black lines. Bright clean cartoon game art for a low-poly Pok\u00e9mon-style adventure. Chunky simple shapes, flat cel shading with two or three tones. Saturated but not neon colours. No text, no letters, no numbers, no logos, no borders, no drop shadows.",
+      "source": "/private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/cards-dragon.jpg",
+      "artShare": 0.9
+    },
+    {
+      "asset": "fighting.webp",
+      "prompt": "A decorative full-bleed background pattern for a game choice card: simple impact bursts, martial arts ribbons and diagonal motion strokes. Light airy palette dominated by pale warm peach (#f6e0d7) with gentle terracotta accents, soft low-contrast tonal shapes, motifs clustered toward edges and corners with calm nearly empty lighter centre, fills whole square edge to edge, no frame. Thin soft outlines in slightly darker tint of same colour, no dark navy or black lines. Bright clean cartoon game art for a low-poly Pok\u00e9mon-style adventure. Chunky simple shapes, flat cel shading with two or three tones. Saturated but not neon colours. No text, no letters, no numbers, no logos, no borders, no drop shadows.",
+      "source": "/private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/cards-fighting.jpg",
+      "artShare": 0.5
+    },
+    {
+      "asset": "poison.webp",
+      "prompt": "A decorative full-bleed background pattern for a game choice card: rounded poison droplets and little bubbly vapor curls. Light airy palette dominated by pale pink lavender (#f2e1f3) with gentle mauve accents, soft low-contrast tonal shapes, motifs clustered toward edges and corners with calm nearly empty lighter centre, fills whole square edge to edge, no frame. Thin soft outlines in slightly darker tint of same colour, no dark navy or black lines. Bright clean cartoon game art for a low-poly Pok\u00e9mon-style adventure. Chunky simple shapes, flat cel shading with two or three tones. Saturated but not neon colours. No text, no letters, no numbers, no logos, no borders, no drop shadows.",
+      "source": "/private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/cards-poison.jpg",
+      "artShare": 0.6
+    },
+    {
+      "asset": "flying.webp",
+      "prompt": "A decorative full-bleed background pattern for a game choice card: rounded feathers, small clouds and flowing wind trails. Light airy palette dominated by pale sky blue (#e5edf8) with gentle periwinkle accents, soft low-contrast tonal shapes, motifs clustered toward edges and corners with calm nearly empty lighter centre, fills whole square edge to edge, no frame. Thin soft outlines in slightly darker tint of same colour, no dark navy or black lines. Bright clean cartoon game art for a low-poly Pok\u00e9mon-style adventure. Chunky simple shapes, flat cel shading with two or three tones. Saturated but not neon colours. No text, no letters, no numbers, no logos, no borders, no drop shadows.",
+      "source": "/private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/cards-flying.jpg",
+      "artShare": 0.75
+    }
+  ],
+  "processing": "Lanczos to 512px, blend toward specified pale card color until every source pixel has at least 4.8:1 contrast to #142f50, WebP q86.",
+  "rights": "AI-generated Pok\u00e9mon fan artwork; character designs belong to their rights holders."
+}

@@ -293,6 +293,102 @@ const ultimatesTable = {
       ],
     ],
   },
+  "phantom-night": {
+    id: "phantom-night",
+    type: "ghost",
+    names: ["幽夜咒印", "幽夜毒幕", "百鬼夜行"],
+    tiers: [0, 1, 2].map((tier): Pulse[] => [
+      {
+        at: 0,
+        kind: "ring",
+        look: "ring",
+        radius: 3.2 + tier * 0.8,
+        mul: 0.8,
+        status: "curse",
+        chance: 1,
+      },
+      ...every(0.4, 2, 0.4, (at) => ({
+        at,
+        kind: "ring",
+        look: "embers",
+        radius: 2.8 + tier * 0.6,
+        mul: 0.35,
+        status: "poison",
+        chance: 0.8,
+      })),
+      ...(tier === 1
+        ? [{ at: 2.2, kind: "ring", look: "blast", radius: 4, mul: 1.4, knock: 3 } satisfies Pulse]
+        : []),
+      ...(tier === 2
+        ? [
+            {
+              at: 2.2,
+              kind: "strike",
+              look: "meteor",
+              count: 4,
+              radius: 1.5,
+              range: 7,
+              mul: 2.2,
+              status: "curse",
+              chance: 1,
+            } satisfies Pulse,
+          ]
+        : []),
+    ]),
+  },
+  "draco-meteor": {
+    id: "draco-meteor",
+    type: "dragon",
+    names: ["龙脉迸发", "龙星雨", "群星龙陨"],
+    tiers: [0, 1, 2].map((tier): Pulse[] => [
+      {
+        at: 0,
+        kind: "lines",
+        look: "roots",
+        count: 3 + tier * 2,
+        length: 8 + tier * 2,
+        radius: 0.5,
+        mul: 1.4,
+        knock: 2,
+      },
+      ...every(0.45, 1.35, 0.45, (at) => ({
+        at,
+        kind: "strike",
+        look: "meteor",
+        count: 1 + tier,
+        radius: 1.5,
+        range: 9,
+        mul: 1.2,
+        knock: 2,
+      })),
+      ...(tier === 2
+        ? [{ at: 1.8, kind: "ring", look: "blast", radius: 4, mul: 2, knock: 5 } satisfies Pulse]
+        : []),
+    ]),
+  },
+  "seismic-barrage": {
+    id: "seismic-barrage",
+    type: "fighting",
+    names: ["地动连拳", "震岳连拳", "四臂崩山"],
+    tiers: [0, 1, 2].map((tier): Pulse[] => [
+      ...every(0, 0.44 + tier * 0.44, 0.22, (at) => ({
+        at,
+        kind: "ring",
+        look: "ring",
+        radius: 2.5 + tier * 0.3,
+        mul: 0.55,
+        knock: 0.4,
+      })),
+      {
+        at: 0.66 + tier * 0.44,
+        kind: "ring",
+        look: "blast",
+        radius: 3.2 + tier * 0.4,
+        mul: 1.8,
+        knock: 7,
+      },
+    ]),
+  },
 } as const satisfies Record<string, UltimateDef<string>>;
 
 export type UltimateId = keyof typeof ultimatesTable;

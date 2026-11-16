@@ -74,6 +74,8 @@ export interface Zone {
   /** Terrain rule for an area whose centre stands on `ground` (src/run/sim/content/README.md 地形与战斗). */
   reaches(cover: Cover, a: Area, ground: number, enemy: Enemy): boolean;
   knock: number;
+  /** A combo's final punch has a stronger knock than its earlier beats. */
+  knockFor?(a: Area): number;
   /** Enemy search radius around the centre; the larger of radius and length when absent. */
   reach?(a: Area): number;
   /** Every tick, before the delay runs out (a beam clips to cover). */

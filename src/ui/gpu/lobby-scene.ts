@@ -36,7 +36,7 @@ import type { Handle } from "../../prepare/handle";
 import { studio } from "./codex-model";
 import { cubicBezier, uiEaseOut } from "./focus-mark";
 import { idleTicked } from "./motion";
-import { themeColors } from "./run-choice-surface";
+import { themeColors } from "./run-theme";
 
 /** A form's model as the lobby shows it: the store's copy, unit high, centred, facing the camera. */
 interface Staged {
@@ -80,12 +80,16 @@ export interface LobbySceneLayout {
   /** The hero's feet (the podium's top face centre) and its drawn height. */
   feet: { x: number; y: number };
   heroH: number;
+  /** The decision column's box: the scene shades the backdrop behind it. */
+  column: { x: number; y: number; w: number; h: number };
 }
 
 /** The app's one world backdrop (DESIGN.md背景); its size is read from the image. */
 const BACKDROP = "/art/lobby/backdrop.webp";
-const ENTER_MS = 420;
+const ENTER_MS = 480;
 const SINK_MS = 160;
+/** A switch's light pillar and podium shockwave. */
+const BURST_MS = 720;
 /** The three-quarter view, the slow sway around it and its period. */
 const START_YAW = -0.45;
 const SWAY = 0.15;
@@ -95,6 +99,12 @@ const BOB_MS = 2600;
 /** How much of the frame's height the unit-high model fills. */
 const FILL = 0.94;
 const easeInOut = (t: number) => cubicBezier(t, 0.42, 0, 0.58, 1);
+/** Back-out with a ~6% overshoot: the partner pops onto the podium. */
+const popOut = (t: number) => {
+  const c = 1.2;
+  const u = t - 1;
+  return 1 + (c + 1) * u * u * u + c * u * u;
+};
 
 /** A view of the image store's shared Source (one upload for every scene and screen). */
 function texture(url: string, onLoad: () => void): Texture {
@@ -117,11 +127,13 @@ const LAYERS_FRAGMENT = /* glsl */ `
 uniform vec2 viewSize, coastSize;
 uniform sampler2D coast, podium, crest;
 uniform vec4 podiumBox; // x, y, w, h (CSS px)
+uniform vec4 column; // x, y, w, h (CSS px)
 uniform vec2 feet;
-uniform float heroH, time, reveal, heroIn, ready;
+uniform float heroH, time, reveal, heroIn, ready, burst;
 uniform vec3 theme, light, deep;
 varying vec2 vUv;
 vec3 toSrgb(vec3 c) { return mix(c * 12.92, 1.055 * pow(c, vec3(1. / 2.4)) - .055, step(.0031308, c)); }
+float roundBox(vec2 p, vec2 h, float r) { vec2 q = abs(p) - h + r; return length(max(q, 0.)) + min(max(q.x, q.y), 0.) - r; }
 float ellipse(vec2 p, vec2 r) {
   float k = length(p / r);
   return k * (k - 1.) / max(length(p / (r * r)), 1e-4);
@@ -135,6 +147,11 @@ void main() {
   vec2 cu = (p - viewSize * .5) / (coastSize * s) + .5;
   vec3 col = toSrgb(tex(coast, cu).rgb);
   float pw = podiumBox.z;
+  vec3 navyDeep = vec3(.051, .137, .247);
+  // 1b. The column's ground: a soft navy-deep shade behind the decision column, so loose medals and
+  // the tray read on any crop of the backdrop.
+  float cd = roundBox(p - column.xy - column.zw * .5, column.zw * .5 + vec2(18.), 48.);
+  col = mix(col, navyDeep, .3 * (1. - smoothstep(-36., 120., cd)));
   // The type light opens from the feet on a switch (a circle, 420ms).
   float open = reveal * 1.6 * max(viewSize.x, viewSize.y);
   float shown = 1. - smoothstep(open - 2., open, length(p - feet));
@@ -144,6 +161,16 @@ void main() {
   float at = length(p - ac) / ar;
   float aura = at < .55 ? mix(.8, .33, at / .55) : mix(.33, 0., min(1., (at - .55) / .45));
   col = mix(col, light, aura * shown);
+  // 2b. Six soft rays turning slowly behind the partner (one turn in ~80s), brighter on a switch.
+  vec2 rv = p - ac;
+  float rl = length(rv);
+  float rays = pow(max(0., cos(6. * atan(rv.x, rv.y) + time * .47)), 5.);
+  float flash = burst < 1. ? (1. - burst) * (1. - burst) : 0.;
+  rays *= (1. - smoothstep(ar * .35, ar * 2.6, rl)) * smoothstep(0., ar * .3, rl);
+  col = mix(col, light, rays * (.2 + .35 * flash) * shown);
+  // 2c. The pool of type light on the ground around the podium, breathing.
+  float pool = length((p - feet - vec2(0., .06 * pw)) / (vec2(.7, .2) * pw));
+  col = mix(col, theme, .32 * (.85 + .15 * sin(time * 1.3)) * (1. - smoothstep(.35, 1., pool)) * shown);
   // 3. Crests rising through the aura's box (7s, staggered by 1s).
   for (int i = 0; i < 7; i++) {
     float fi = float(i);
@@ -178,7 +205,19 @@ void main() {
   col = mix(col, theme, .55 * glow * shown);
   col = mix(col, light, line * shown);
   float shade = 1. - smoothstep(-.2, 1., length((p - feet) / (vec2(.2, .045) * pw)));
-  col = mix(col, vec3(.051, .137, .247), .28 * shade * heroIn * ready);
+  col = mix(col, navyDeep, .28 * shade * heroIn * ready);
+  // 6. A switch: a light pillar flashes up from the feet and a shockwave runs across the top face.
+  if (burst < 1.) {
+    float dx = (p.x - feet.x) / (heroH * (.22 + .3 * burst));
+    float up = (1. - smoothstep(feet.y - .04 * pw, feet.y + .02 * pw, p.y)) * smoothstep(-heroH * .4, feet.y - heroH * .2, p.y);
+    col = mix(col, mix(light, vec3(1.), .5), .85 * flash * exp(-dx * dx) * up);
+    float wave = 1. - (1. - burst) * (1. - burst) * (1. - burst);
+    float wd = ellipse(p - feet, rr * mix(.25, 1.55, wave));
+    float ww = stroke * (1. + 3. * (1. - burst));
+    col = mix(col, vec3(1.), (1. - burst) * (1. - smoothstep(ww - aa, ww + aa, abs(wd))));
+    float wg = wd / (pw / 20.);
+    col = mix(col, light, .6 * (1. - burst) * exp(-wg * wg));
+  }
   gl_FragColor = vec4(col, 1.);
 }
 `;
@@ -220,6 +259,7 @@ export class LobbyScene {
   /** Since the current form was picked (the light's reveal) and since its model arrived. */
   private since = ENTER_MS;
   private heroAge = ENTER_MS;
+  private burstAge = BURST_MS;
   private covered = false;
   private dirty = true;
   private disposed = false;
@@ -243,6 +283,8 @@ export class LobbyScene {
         podium: { value: texture("/art/lobby/podium.webp", redraw) },
         crest: { value: null },
         podiumBox: { value: new Vector4() },
+        column: { value: new Vector4() },
+        burst: { value: 1 },
         feet: { value: new Vector2() },
         heroH: { value: 1 },
         time: { value: 0 },
@@ -282,6 +324,8 @@ export class LobbyScene {
     u.podiumBox!.value.set(x, y, w, h);
     u.feet!.value.set(layout.feet.x, layout.feet.y);
     u.heroH!.value = layout.heroH;
+    const c = layout.column;
+    u.column!.value.set(c.x, c.y, c.w, c.h);
     this.dirty = true;
   }
 
@@ -301,7 +345,11 @@ export class LobbyScene {
     crest.premultiplyAlpha = true;
     u.crest!.value = crest;
     this.since = first ? ENTER_MS : 0;
-    if (this.current) this.leaving = { prepared: this.current, age: 0 };
+    this.burstAge = first ? BURST_MS : 0;
+    // Only a partner that has stood on the podium sinks; one still waiting for the last sink is
+    // dropped and the sink already running carries on.
+    if (this.current?.holder.parent === this.turntable)
+      this.leaving = { prepared: this.current, age: 0 };
     this.current = null;
     this.turntable.clear();
     if (this.leaving) this.turntable.add(this.leaving.prepared.holder);
@@ -373,10 +421,12 @@ export class LobbyScene {
     this.age += deltaMs;
     this.since += deltaMs;
     this.heroAge += deltaMs;
+    this.burstAge += deltaMs;
     const u = this.material.uniforms;
     u.time!.value = (this.age / 1000) % 7000;
     u.reveal!.value = uiEaseOut(Math.min(1, this.since / ENTER_MS));
-    let moving = this.since < ENTER_MS || this.heroAge < ENTER_MS;
+    u.burst!.value = Math.min(1, this.burstAge / BURST_MS);
+    let moving = this.since < ENTER_MS || this.heroAge < ENTER_MS || this.burstAge < BURST_MS;
     const leaving = this.leaving;
     if (leaving) {
       leaving.age += deltaMs;
@@ -388,7 +438,9 @@ export class LobbyScene {
     }
     const current = this.current;
     if (current) {
-      if (current.holder.parent !== this.turntable) this.turntable.add(current.holder);
+      // The new partner pops in once the old one has sunk: the two never share the podium.
+      if (this.leaving) this.heroAge = 0;
+      else if (current.holder.parent !== this.turntable) this.turntable.add(current.holder);
       current.mixer?.update(deltaMs / 1000);
     }
     // The page's idle clock, read as the UI reads it: a UI loop that stepped last frame repaints
@@ -404,7 +456,8 @@ export class LobbyScene {
     renderer.setClearColor(this.clear.setRGB(0.6, 0.8, 0.95, LinearSRGBColorSpace), 1);
     renderer.clear(true, true, true);
     const u = this.material.uniforms;
-    const enter = uiEaseOut(Math.min(1, this.heroAge / ENTER_MS));
+    const progress = Math.min(1, this.heroAge / ENTER_MS);
+    const enter = uiEaseOut(progress);
     u.heroIn!.value = this.current ? enter : 0;
     u.ready!.value = this.current ? 1 : 0;
     // Cover-fit to the image's real size (an upscale may replace it under the same name).
@@ -412,6 +465,7 @@ export class LobbyScene {
     if (image?.width && image.height) u.coastSize!.value.set(image.width, image.height);
     renderer.render(this.layers, this.flat);
     if (!this.current && !this.leaving) return;
+    const shown = this.current?.holder.parent === this.turntable ? this.current : null;
     // The hero: a unit-high model filling FILL of a square frame whose bottom sits on the feet.
     const frame = layout.heroH / FILL;
     const left = layout.feet.x - frame / 2,
@@ -429,7 +483,9 @@ export class LobbyScene {
     // line: fit the model's own screen box instead, measured once per model and layout at its
     // resting turn (the sway would make it breathe), so it stands heroH tall with its footprint's
     // centre on the feet.
-    const fit = this.current ? this.fitFor(this.current, layout, frame, left, top) : null;
+    // The leaving model keeps its own fit while it sinks.
+    const fitted = shown ?? this.leaving?.prepared;
+    const fit = fitted ? this.fitFor(fitted, layout, frame, left, top) : null;
     if (fit) {
       camera.zoom = fit.zoom;
       camera.setViewOffset(frame, frame, -left, -top + fit.lift, layout.width, layout.height);
@@ -441,16 +497,16 @@ export class LobbyScene {
     if (leaving) {
       const k = Math.min(1, leaving.age / SINK_MS);
       leaving.prepared.holder.position.y = -0.2 * k;
-      leaving.prepared.holder.scale.setScalar(1 - 0.3 * k);
+      leaving.prepared.holder.scale.setScalar(1 - 0.45 * k);
     }
-    if (this.current) {
-      const holder = this.current.holder;
-      // Rising in: 28px up and 0.86 → 1; without an idle clip, the 2.6s bob.
+    if (shown) {
+      const holder = shown.holder;
+      // Popping in: 28px up and 0.72 → 1 with a small overshoot; without an idle clip, the 2.6s bob.
       const rise = (28 / layout.heroH) * (1 - enter);
       const leg = (t / BOB_MS) % 2;
-      const bob = this.current.mixer ? 0 : easeInOut(leg < 1 ? leg : 2 - leg) * 0.012;
+      const bob = shown.mixer ? 0 : easeInOut(leg < 1 ? leg : 2 - leg) * 0.012;
       holder.position.y = -rise + bob;
-      holder.scale.setScalar(0.86 + 0.14 * enter);
+      holder.scale.setScalar(0.72 + 0.28 * popOut(progress));
     }
     applyWorldOutput(this.hero);
     renderer.clearDepth();

@@ -460,6 +460,8 @@ export class Decals {
     if (this.stamped < this.stamps.length) this.stamps[this.stamped] = stamp;
     else this.stamps.push(stamp);
     this.stamped++;
+    // Area strikes arrive after begin(): show their impact now, then age it on following frames.
+    this.put(shape, x, z, radius, yaw, stamp.seed).tint(a, alpha, b, add).args(0, p2, p3);
   }
 
   end(): void {

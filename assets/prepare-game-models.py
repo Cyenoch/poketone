@@ -204,6 +204,10 @@ SEAM_REPAIRS = {
 for prop in json.loads((ASSETS / "props/map-props.json").read_text()):
     MODELS[prop] = (f"props/{prop}/blender/model.glb", f"props/{prop}.glb", None, 256)
 
+# Prefix build keys because these species also have independent swarm assets.
+for form in ("gastly", "haunter", "gengar", "dratini", "dragonair", "dragonite", "machop", "machoke", "machamp"):
+    MODELS[f"player-{form}"] = (f"characters/{form}/blender/model.glb", f"{form}.glb", None, 1024)
+
 
 def source_for(pattern):
     matches = sorted(SOURCES.glob(pattern))
@@ -896,6 +900,8 @@ def build(name):
     pattern, output, target, size = MODELS[name]
     source = source_for(pattern)
     bpy.ops.wm.read_factory_settings(use_empty=True)
+    if name.startswith("player-"):
+        bpy.context.scene.render.fps = 30
     bpy.ops.import_scene.gltf(filepath=str(source))
     # glTF's bone display widget is not part of the asset or its triangle budget.
     for obj in [o for o in bpy.context.scene.objects if o.type == "MESH" and o.hide_render]:

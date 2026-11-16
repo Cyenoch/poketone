@@ -108,7 +108,12 @@ export interface FormModel {
   lift: { run: number; idle: number };
   /** Tail centreline for the procedural tail chain (`view/tail.ts`); forms without a visible tail have none. */
   tail?: TailSpec;
+  /** Body bones, front to back along one chain, that follow the avatar's path when turning (`view/spine.ts`). */
+  spine?: readonly string[];
 }
+
+/** The serpents' body chain, head end first. */
+const SERPENT_BODY = Array.from({ length: 9 }, (_, k) => `Body${k}`);
 
 /**
  * Every playable form's model; clip speeds, cycles and lifts measured with `assets/measure-run-clip.py` (see
@@ -116,6 +121,62 @@ export interface FormModel {
  * centrelines read off rest-pose vertex plots (bind space is the GLB's own units, about 1 tall).
  */
 export const formModels: Record<FormId, FormModel> = {
+  // Gastly and Haunter drift one bob wavelength (2.6 heights) per one-second cycle, so the float traces a fixed
+  // wave over the ground; they hover, so the view never lowers them.
+  gastly: { url: "/models/gastly.glb", runClipSpeed: 2.6, runCycles: 1, lift: { run: 0, idle: 0 } },
+  haunter: {
+    url: "/models/haunter.glb",
+    runClipSpeed: 2.738,
+    runCycles: 1,
+    lift: { run: 0, idle: 0 },
+  },
+  // Gengar hop-runs on planted feet (measured).
+  gengar: {
+    url: "/models/gengar.glb",
+    runClipSpeed: 2.368,
+    runCycles: 1,
+    lift: { run: 0.033, idle: 0 },
+  },
+  // Serpents slither one body wavelength per one-second cycle; the wave stays fixed on the ground at that speed.
+  dratini: {
+    url: "/models/dratini.glb",
+    spine: SERPENT_BODY,
+    runClipSpeed: 1.32,
+    runCycles: 1,
+    lift: { run: 0.001, idle: 0 },
+  },
+  dragonair: {
+    url: "/models/dragonair.glb",
+    spine: SERPENT_BODY,
+    runClipSpeed: 1.734,
+    runCycles: 1,
+    lift: { run: 0, idle: 0 },
+  },
+  // Dragonite glides low when moving, one wing beat per 2.3 heights of travel; the hover must not be pulled down.
+  dragonite: {
+    url: "/models/dragonite.glb",
+    runClipSpeed: 2.417,
+    runCycles: 1,
+    lift: { run: 0, idle: 0 },
+  },
+  machop: {
+    url: "/models/machop.glb",
+    runClipSpeed: 1.624,
+    runCycles: 1,
+    lift: { run: 0.007, idle: 0.005 },
+  },
+  machoke: {
+    url: "/models/machoke.glb",
+    runClipSpeed: 1.949,
+    runCycles: 1,
+    lift: { run: 0.002, idle: 0 },
+  },
+  machamp: {
+    url: "/models/machamp.glb",
+    runClipSpeed: 1.943,
+    runCycles: 1,
+    lift: { run: 0.002, idle: 0 },
+  },
   charmander: {
     url: "/models/charmander.glb",
     runClipSpeed: 1.28,
@@ -265,7 +326,7 @@ export const formModels: Record<FormId, FormModel> = {
 
 /**
  * Tripo exports mostly face +X. Measured by rendering shipping GLBs in their rest pose
- * from its glTF +X and +Z sides (all eleven player forms face +X); the view rotates each model so it faces +Z like
+ * from its glTF +X and +Z sides (all player forms face +X); the view rotates each model so it faces +Z like
  * the simulation.
  */
 const facingYaw: Record<string, number> = {

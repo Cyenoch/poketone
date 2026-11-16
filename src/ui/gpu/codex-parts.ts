@@ -7,7 +7,8 @@ import { itemIcon, moveIcon } from "../../screens/runArt";
 import { cubicBezier, uiEaseOut } from "./focus-mark";
 import { stack } from "./layer";
 import type { UiMotion } from "./motion";
-import { ChoiceIconPlate, typeColors } from "./run-choice-surface";
+import { cardFaces, ChoiceIconPlate } from "./run-choice-surface";
+import { typeColors } from "./run-theme";
 import { createStationArt } from "./station-art";
 
 export const ink = {
@@ -29,9 +30,6 @@ const cssEase = (t: number) => cubicBezier(t, 0.25, 0.1, 0.25, 1);
 export function typeInk(type: ElementType | undefined): string {
   return type ? typeColors[type].type : ink.muted;
 }
-
-/** Type faces in `public/art/cards` (the set `ChoiceArt` loads). */
-const cardFaces = new Set<ElementType>(["fire", "water", "grass", "electric", "normal"]);
 
 /** Card art (`public/art/cards`): the item and training faces, else the first themed type's. */
 export function cardArt(entry: Pick<CodexEntry, "art" | "types">): string {

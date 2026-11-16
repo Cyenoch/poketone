@@ -15,6 +15,7 @@ import {
   withOpacity,
   type FontFamilies,
 } from "@pmndrs/uikit";
+import { Easing } from "@tweenjs/tween.js";
 import { Color, Matrix4, Mesh, PlaneGeometry, Vector3, type Texture } from "three";
 import { images } from "../../prepare/images";
 import { getAudio } from "../../audio/engine";
@@ -42,7 +43,7 @@ import type { LobbyScene } from "./lobby-scene";
 import { MapSwatch } from "./map-swatch";
 import { idleTicked } from "./motion";
 import { OutlinedText } from "./outlined-text";
-import { themeColors, typeColors } from "./run-choice-surface";
+import { themeColors, typeColors } from "./run-theme";
 import { createTriangleMark, HatchFill, RadialFace, Silhouette } from "./screen-parts";
 import { SlantPlate, slantOf } from "./slant-plate";
 import { UiStage } from "./stage";
@@ -85,6 +86,15 @@ const NAVY = "#142f50",
   BLUE = "#2165a4",
   SEGMENT_EDGE = "#0a1c33";
 const ease = (t: number) => cubicBezier(t, 0.25, 0.1, 0.25, 1);
+/** 出发's light sweep: one pass every SHINE_EVERY, SHINE_MS long (and one at once on hover). */
+const SHINE_EVERY = 4200;
+const SHINE_MS = 650;
+/** The tightest gap between compact medals (a wide roster). */
+const COMPACT_ROSTER_GAP = 6;
+/** Below this medal size a desktop roster folds into two staggered rows. */
+const ROW_MEDAL_MIN = 64;
+/** Two-row desktop medals stay at most this large, so the column keeps clear of the cards. */
+const STAGGER_MEDAL_MAX = 72;
 
 /** DESIGN.md: desktop / compact (logical height ≤ 600, landscape) sizes. */
 function tokens(compact: boolean) {
@@ -378,7 +388,7 @@ export class GpuLobby {
     height: 48,
     flexShrink: 0,
   });
-  private readonly word: Text;
+  private readonly word: OutlinedText;
   private readonly balance: GpuCurrency;
   private readonly column = new Container({
     positionType: "absolute",
@@ -387,12 +397,14 @@ export class GpuLobby {
   });
   private readonly ribbon = new Container({ flexDirection: "row", alignItems: "center" });
   private readonly tags = new Container({ flexDirection: "row", alignItems: "center" });
-  private readonly roster = new Container({
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    paddingX: 6,
-  });
+  /** One or two rows of medals (`rosterLayout`). */
+  private readonly roster = new Container({ flexDirection: "column", alignItems: "stretch" });
+  private readonly rosterRows = [0, 1].map(
+    () => new Container({ flexDirection: "row", alignItems: "flex-end" }),
+  );
+  private rosterRowsKey = "";
+  /** Medals per roster row (all of them in one row). */
+  private rosterPerRow = 0;
   private readonly backpack = new Container({ flexDirection: "row", alignItems: "center", gap: 6 });
   private readonly tray = new Container({
     flexDirection: "column",
@@ -464,6 +476,9 @@ export class GpuLobby {
   /** Where the cards sit (§3.1): above the column, or in the top bar on short screens. */
   private cardsInBar = false;
   private readonly medals: { panel: Container; ball: CodexBall; badge: Container }[] = [];
+  /** 出发's last light sweep (lobby time, ms). */
+  private shineAt = 0;
+  private shineShown = -1;
   private readonly segmentBoxes: Container[] = [];
   private readonly disposables: { dispose(): void; update?(): void }[] = [];
   private readonly plateParts: { dispose(): void; update?(): void }[] = [];
@@ -471,7 +486,14 @@ export class GpuLobby {
   private readonly inverse = new Matrix4();
   private readonly point = new Vector3();
   private scene: LobbyScene | null = null;
-  private emblemImage: { setProperties(p: { transformRotateZ: number }): void } | null = null;
+  private emblemImage: {
+    setProperties(p: {
+      transformRotateZ?: number;
+      transformScaleX?: number;
+      transformScaleY?: number;
+    }): void;
+  } | null = null;
+  private ribbonPlate: SlantPlate | null = null;
   private progress: Progress;
   private selected: StarterId;
   private difficulty: Difficulty;
@@ -522,16 +544,20 @@ export class GpuLobby {
     this.tooltip = new GpuTooltip(this.stage);
 
     // Top bar: brand | balance, 研究所, 图鉴, 设置.
-    this.word = new Text({
-      text: "poketone",
-      fontFamily: "Poketone Display",
-      fontWeight: 400,
-      fontSize: 30,
-      letterSpacing: -1,
-      lineHeight: "110%",
-      color: NAVY,
-    });
-    this.brand.add(this.mark, this.word);
+    // The game logo: the display wordmark in white with a navy-deep outline, on the brand mark.
+    this.word = new OutlinedText(
+      {
+        text: "poketone",
+        fontFamily: "Poketone Display",
+        fontWeight: 400,
+        fontSize: 34,
+        letterSpacing: -0.5,
+        lineHeight: "110%",
+        color: "#ffffff",
+      },
+      { width: 6, color: NAVY_DEEP },
+    );
+    this.brand.add(this.mark, this.word.root);
     this.balance = new GpuCurrency(this.stage);
     this.balance.set(state.progress.stardust);
     this.balance.solid();
@@ -600,6 +626,7 @@ export class GpuLobby {
     this.next = this.switchButton(1);
 
     // The decision column: ribbon, tags, roster, backpack, tray.
+    this.roster.add(...this.rosterRows);
     for (const [index, id] of starterOrder.entries()) this.tile(id, index);
     this.launchPlate = new SlantPlate(
       this.launch,
@@ -778,8 +805,26 @@ export class GpuLobby {
     panel.add(stack(pattern.content, 1), stack(portrait, 2), stack(silhouette.content, 2));
     panel.add(stack(progress.content, 3), stack(badge, 4), stack(ball.content, 4));
     panel.add(stack(ring.content, 5));
-    this.roster.add(panel);
     this.medals.push({ panel, ball, badge });
+    // Hover lifts, a press sinks, the pick pops (Back.Out) and holds the medal larger and raised.
+    const pose = { lit: 0, down: 0 };
+    const picked = { pick: id === this.selected ? 1 : 0 };
+    const was = { lit: false, down: false, checked: id === this.selected };
+    const apply = () => {
+      const { lit, down } = pose;
+      const { pick } = picked;
+      const up = 1 - down;
+      panel.setProperties({
+        transformTranslateY: -4 * pick - 3 * lit * up + 3 * down,
+        transformScaleX: 1 + 0.1 * pick + 0.05 * lit * up - 0.03 * down,
+        transformScaleY: 1 + 0.1 * pick + 0.05 * lit * up - 0.05 * down,
+      });
+      shadow.set([
+        { y: 3 + 2 * pick + 2 * lit * up - 3 * down, blur: 0, color: NAVY_DEEP, alpha: 1 },
+        { y: 6 + 4 * lit * up, blur: 12, color: NAVY_DEEP, alpha: 0.22 * up },
+      ]);
+      this.stage.invalidate();
+    };
     const control: Control = {
       kind: "tile",
       panel,
@@ -787,23 +832,43 @@ export class GpuLobby {
       tip: () => starterLock(this.progress, id) ?? form.name,
       locked: () => starterLock(this.progress, id) !== null,
       activate: () => this.pick(id),
-      paint: ({ hovered, focused, focusVisible }) => {
+      paint: ({ hovered, focused, focusVisible, pressed }) => {
         const locked = control.locked();
         const checked = id === this.selected;
         const cleared = !locked && !!this.progress.best[id]?.victory;
         ring.content.setProperties({ display: focused && focusVisible ? "flex" : "none" });
         outer.content.setProperties({ display: checked ? "flex" : "none" });
+        // Only the picked medal carries the ball mark: the party reads at a glance.
+        ball.content.setProperties({ display: checked ? "flex" : "none" });
         ball.set(checked, true);
         panel.setProperties({
           borderWidth: checked ? 4 : 3,
           borderColor: checked ? YELLOW : hovered && !locked ? BLUE : NAVY,
-          transformTranslateY: checked ? -3 : 0,
           backgroundColor: locked ? "#c9d6e2" : undefined,
         });
-        shadow.set([
-          { y: checked ? 5 : 3, blur: 0, color: NAVY_DEEP, alpha: 1 },
-          { y: 6, blur: 12, color: NAVY_DEEP, alpha: 0.22 },
-        ]);
+        const lit = hovered && !locked && !checked;
+        const down = pressed && !locked && !checked;
+        if (lit !== was.lit || down !== was.down)
+          this.stage.motion.animate(
+            pose,
+            { lit: lit ? 1 : 0, down: down ? 1 : 0 },
+            down ? 60 : 140,
+            apply,
+            ease,
+          );
+        if (checked !== was.checked) {
+          // A pick pops in with a small overshoot; the medal left behind settles back.
+          this.stage.motion.animate(
+            picked,
+            { pick: checked ? 1 : 0 },
+            checked ? 320 : 160,
+            apply,
+            checked ? Easing.Back.Out : ease,
+          );
+        }
+        was.lit = lit;
+        was.down = down;
+        was.checked = checked;
         pattern.setFocused(hovered && !locked && !checked);
         face.content.setProperties({ display: locked ? "none" : "flex" });
         hatch.content.setProperties({ display: locked ? "flex" : "none" });
@@ -824,6 +889,8 @@ export class GpuLobby {
         pattern.update(deltaMs);
       },
       dispose: () => {
+        this.stage.motion.cancel(pose);
+        this.stage.motion.cancel(picked);
         shadow.dispose();
         outer.dispose();
         ring.dispose();
@@ -837,6 +904,7 @@ export class GpuLobby {
     };
     this.controls.push(control);
     this.tiles.push(control);
+    apply();
   }
 
   // ── Tray: difficulty and 出发 ─────────────────────────────────────────────────────────────────
@@ -887,6 +955,7 @@ export class GpuLobby {
         this.launchPlate.set({ focus: focused && focusVisible && !this.departing ? 1 : 0 });
         if (lit !== this.litOn) {
           this.litOn = lit;
+          if (lit && this.elapsed - this.shineAt > SHINE_MS) this.shineAt = this.elapsed;
           this.stage.motion.animate(
             this.lit,
             { value: lit ? 1 : 0 },
@@ -913,6 +982,7 @@ export class GpuLobby {
   private depart(): void {
     if (this.departing) return;
     this.departing = true;
+    this.shineAt = this.elapsed;
     this.spin.value = 0;
     this.stage.motion.animate(
       this.spin,
@@ -1016,7 +1086,13 @@ export class GpuLobby {
     this.scene?.show(form.id, form.types[0]!);
     this.slide.value = 0;
     this.applySlide();
-    this.stage.motion.animate(this.slide, { value: 1 }, 200, () => this.applySlide(), uiEaseOut);
+    this.stage.motion.animate(
+      this.slide,
+      { value: 1 },
+      340,
+      () => this.applySlide(),
+      (t) => t,
+    );
     this.changed();
   }
 
@@ -1033,10 +1109,20 @@ export class GpuLobby {
     this.repaint();
   }
 
+  /** A switch: the ribbon and tags sweep in from the right, the 出发 crest pops (Back.Out). */
   private applySlide(): void {
     const t = this.slide.value;
-    for (const node of [this.ribbon, this.tags])
-      fade(node, t).setProperties({ transformTranslateX: 12 * (1 - t) });
+    const sweep = Easing.Back.Out(t);
+    const shown = uiEaseOut(Math.min(1, t * 1.8));
+    fade(this.ribbon, shown).setProperties({ transformTranslateX: 40 * (1 - sweep) });
+    const late = Math.max(0, (t - 0.15) / 0.85);
+    fade(this.tags, uiEaseOut(Math.min(1, late * 1.8))).setProperties({
+      transformTranslateX: 40 * (1 - Easing.Back.Out(late)),
+    });
+    // The new ribbon catches one sweep of light as it lands.
+    this.ribbonPlate?.set({ shine: t < 1 ? Math.max(0, (t - 0.25) / 0.75) : -1 });
+    const pop = 0.55 + 0.45 * sweep;
+    this.emblemImage?.setProperties({ transformScaleX: pop, transformScaleY: pop });
     this.stage.invalidate();
   }
 
@@ -1059,6 +1145,7 @@ export class GpuLobby {
     // The ribbon: the theme band slanted; the outlined name; the crest over its top right corner.
     const plate = new SlantPlate(this.ribbon, { fill: theme, theme: { type, deep } }, 10);
     this.plateParts.push(plate);
+    this.ribbonPlate = plate;
     const name = new OutlinedText(
       {
         text: form.name,
@@ -1114,9 +1201,13 @@ export class GpuLobby {
     // Desktop keeps the row's height even when empty, so the column never jumps (§3.2).
     this.backpack.setProperties({ display: carried.length || !this.compact ? "flex" : "none" });
     if (carried.length > 0) {
+      // Compact slots grow to the touch minimum: the badge keeps pace so the row reads as one.
+      const side = this.compact
+        ? Math.round(0.8 * Math.max(t.slot, this.stage.viewport.minTarget))
+        : t.slot;
       const badge = new Container({
-        width: t.slot,
-        height: t.slot,
+        width: side,
+        height: side,
         borderRadius: 999,
         borderWidth: 2,
         borderColor: NAVY,
@@ -1254,13 +1345,41 @@ export class GpuLobby {
     this.repaint();
   }
 
+  /** §3.2 名册: medal size and rows for `starterOrder`'s length (see the surface brief). */
+  private rosterLayout(colW: number): { rows: number; medal: number; gap: number } {
+    const t = tokens(this.compact);
+    const min = this.stage.viewport.minTarget;
+    const n = this.medals.length;
+    const room = colW - 12;
+    const fit = (perRow: number, gap: number) => Math.floor((room - (perRow - 1) * gap) / perRow);
+    if (this.compact) {
+      const gap = Math.max(
+        COMPACT_ROSTER_GAP,
+        Math.min(t.medalGap, Math.floor((room - n * min) / Math.max(1, n - 1))),
+      );
+      return { rows: 1, medal: Math.max(min, Math.min(t.medalMax, fit(n, gap))), gap };
+    }
+    if (fit(n, t.medalGap) >= ROW_MEDAL_MIN)
+      return {
+        rows: 1,
+        medal: Math.max(min, Math.min(t.medalMax, fit(n, t.medalGap))),
+        gap: t.medalGap,
+      };
+    const perRow = Math.ceil(n / 2);
+    const medal = Math.max(min, Math.min(STAGGER_MEDAL_MAX, fit(perRow, t.medalGap)));
+    return { rows: 2, medal, gap: t.medalGap };
+  }
+
   private colW(): number {
     const v = this.stage.viewport;
     const vw = v.width;
     const preferred = this.compact
       ? Math.min(340, Math.max(296, Math.round(0.38 * vw)))
       : Math.min(420, Math.max(360, Math.round(0.31 * vw)));
-    return preferred;
+    if (!this.compact) return preferred;
+    // The compact roster stays one row of touch-sized medals: the column widens to hold them.
+    const n = this.medals.length;
+    return Math.max(preferred, n * v.minTarget + (n - 1) * COMPACT_ROSTER_GAP + 12);
   }
 
   private pads() {
@@ -1289,7 +1408,7 @@ export class GpuLobby {
       gap: t.gap,
     });
     this.mark.setProperties({ width: this.compact ? 36 : 48, height: this.compact ? 36 : 48 });
-    this.word.setProperties({ fontSize: this.compact ? 22 : 30 });
+    this.word.set({ fontSize: this.compact ? 25 : 34 });
     for (const button of this.buttons) button.fitTouch();
     const side = Math.max(t.switchKey, v.minTarget);
     for (const button of [this.prev, this.next])
@@ -1320,11 +1439,31 @@ export class GpuLobby {
       gap: 12,
     });
     this.tags.setProperties({ marginTop: t.tagsGap, marginLeft: this.compact ? 6 : 8, gap: 8 });
-    const medal = Math.min(t.medalMax, Math.floor((colW - 12 - 3 * t.medalGap) / 4));
-    const medalSide = Math.max(medal, v.minTarget);
-    this.roster.setProperties({ marginTop: t.rosterGap, paddingTop: 3 });
+    const { rows, medal, gap } = this.rosterLayout(colW);
+    this.roster.setProperties({ marginTop: t.rosterGap, paddingTop: 3 + (rows > 1 ? 3 : 0) });
+    const perRow = Math.ceil(this.medals.length / rows);
+    this.rosterPerRow = perRow;
+    const rowsKey = `${rows}`;
+    if (rowsKey !== this.rosterRowsKey) {
+      this.rosterRowsKey = rowsKey;
+      // Top row first, in roster order.
+      for (const [i, { panel }] of this.medals.entries())
+        this.rosterRows[Math.floor(i / perRow)]!.add(panel);
+    }
+    const [top, second] = this.rosterRows as [Container, Container];
+    const counts = [Math.min(perRow, this.medals.length), this.medals.length - perRow];
+    if (rows === 1) top.setProperties({ justifyContent: "space-between", gap, paddingX: 6 });
+    else top.setProperties({ justifyContent: "center", gap, paddingX: 0 });
+    second.setProperties({
+      display: rows > 1 ? "flex" : "none",
+      justifyContent: "center",
+      gap,
+      // Honeycomb: the second row sits half a medal over, 0.87 of a step down.
+      marginTop: Math.round(0.87 * (medal + gap) - medal),
+      paddingLeft: counts[1] === counts[0] ? medal + gap : 0,
+    });
     for (const { panel, ball, badge } of this.medals) {
-      panel.setProperties({ width: medalSide, height: medalSide });
+      panel.setProperties({ width: medal, height: medal });
       ball.content.setProperties({ width: this.compact ? 18 : 22, height: this.compact ? 18 : 22 });
       badge.setProperties({ width: this.compact ? 20 : 24, height: this.compact ? 20 : 24 });
     }
@@ -1473,6 +1612,7 @@ export class GpuLobby {
       podium: { x: (cx - podW / 2) * k, y: podTop * k, w: podW * k, h: podH * k },
       feet: { x: cx * k, y: feetY * k },
       heroH: heroH * k,
+      column: { x: colX * k, y: (contentBottom - colH) * k, w: colW * k, h: colH * k },
     });
   }
 
@@ -1697,6 +1837,19 @@ export class GpuLobby {
       return;
     }
     const up = action === "up";
+    if (group === this.tiles && this.rosterPerRow < this.tiles.length) {
+      // Two roster rows: up and down cross between them (and pick), then leave the roster.
+      const at = this.tiles.indexOf(current);
+      const row = Math.floor(at / this.rosterPerRow);
+      const lastRow = Math.floor((this.tiles.length - 1) / this.rosterPerRow);
+      if (up ? row > 0 : row < lastRow) {
+        const to = Math.min(this.tiles.length - 1, at + (up ? -1 : 1) * this.rosterPerRow);
+        const next = this.tiles[to]!;
+        this.focus(this.controls.indexOf(next));
+        next.activate();
+        return;
+      }
+    }
     const targets: Record<ControlKind, [number, number]> = {
       start: [segment, this.focused],
       difficulty: [infos.at(-1) ?? tile, this.index("start")],
@@ -1844,6 +1997,17 @@ export class GpuLobby {
       this.arrowBox.setProperties({ transformTranslateX: 6 * lit });
     }
     const easing = lit > 0 && lit < 1;
+    // The light sweep: one pass every SHINE_EVERY, stepped on the scene's 30Hz clock while it runs.
+    if (!hold) {
+      if (this.elapsed - this.shineAt > SHINE_EVERY) this.shineAt = this.elapsed;
+      const k = (this.elapsed - this.shineAt) / SHINE_MS;
+      const shine = k < 1 ? k : -1;
+      if (shine !== this.shineShown && (shine < 0 || idleTicked(30))) {
+        this.shineShown = shine;
+        this.launchPlate.set({ shine });
+        this.stage.invalidate();
+      }
+    }
     // Idle loops step on the 15Hz clock only, so the lobby redraws with its scene, not every frame.
     if (hold || !(tick || easing)) return;
     // The wedges light in turn, 0.4 → 1 (1.2s; 0.6s and all lit under a pointer or focus).

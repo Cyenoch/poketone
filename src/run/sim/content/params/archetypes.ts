@@ -162,6 +162,18 @@ export const STRIKE = {
   knock: 1.5,
 } as const;
 
+/** Forward melee chain: seconds per beat and final punch damage/knockback multipliers. */
+export const COMBO = {
+  delay: 0.08,
+  stagger: 0.14,
+  swing: 0.16,
+  angle: 0.8,
+  aimPadding: 0.5,
+  knock: 0.4,
+  finisherKnock: 5,
+  finisherDamage: 1.6,
+} as const;
+
 /**
  * `pull`: the vortex drags enemies in from this many radii away at `drag` units / s (times the enemy's
  * yield, sim/poise.ts); `burst`: the collapse's share of a tick.

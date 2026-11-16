@@ -9,7 +9,20 @@ import { CHEST } from "../../sim/content/params/combat";
 import { Decal } from "./decals";
 import { perFrame, rand, seedOf, spray, type AreaLook, type Fx, type ShotLook } from "./fx";
 import { rgb, type Rgb } from "./gl";
-import { electric, fire, grass, poison, powder, stone, water, white, wind } from "./palette";
+import {
+  dragon,
+  electric,
+  fighting,
+  fire,
+  ghost,
+  grass,
+  poison,
+  powder,
+  stone,
+  water,
+  white,
+  wind,
+} from "./palette";
 import { Shape, sprite, type SpriteSpec } from "./sprites";
 
 interface Tint {
@@ -30,12 +43,12 @@ const tints: Record<ElementType, Tint> = {
   poison: { light: poison.light, mid: poison.purple, deep: poison.deep },
   rock: { light: stone.light, mid: rgb("#9a8a74"), deep: stone.dark },
   ground: { light: wind.dust, mid: rgb("#b08850"), deep: stone.dark },
-  fighting: { light: rgb("#ffd2b8"), mid: rgb("#d0583a"), deep: rgb("#7a2416") },
+  fighting: { light: fighting.cream, mid: fighting.amber, deep: fighting.deep },
   psychic: { light: powder.pink, mid: rgb("#ff5fa0"), deep: rgb("#9c1f5c") },
-  ghost: { light: powder.lilac, mid: rgb("#7d63c4"), deep: rgb("#2f2257") },
+  ghost: { light: ghost.light, mid: ghost.veil, deep: ghost.ink },
   fairy: { light: white, mid: powder.pink, deep: rgb("#d0609e") },
   steel: { light: rgb("#eef4f8"), mid: rgb("#9fb6c6"), deep: rgb("#4b6476") },
-  dragon: { light: rgb("#c2b6ff"), mid: rgb("#6b4cff"), deep: rgb("#2c1a8a") },
+  dragon: { light: dragon.light, mid: dragon.teal, deep: dragon.deep },
 };
 
 /** The sprites one tint draws with. */
@@ -116,6 +129,7 @@ const shotDefaults: Record<Archetype, Factory<ShotLook> | null> = {
   cone: null,
   vortex: null,
   strike: null,
+  combo: null,
   beam: null,
   spin: null,
   // Drawn from its `chain` event.
@@ -206,6 +220,7 @@ function lane(t: Tint): AreaLook {
 const areaDefaults: Record<AreaKind, Factory<AreaLook>> = {
   cone: sector,
   strike: sector,
+  combo: sector,
   beam: lane,
   bloom: lane,
   spin: disc,

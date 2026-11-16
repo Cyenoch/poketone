@@ -1,0 +1,328 @@
+{
+  "createdAt": "2026-11-16",
+  "generator": "Tripo CLI, TRIPO_CLIENT_APP=claude",
+  "model": "v3.1-20260211",
+  "parameters": {
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "workflow": "Official PokeAPI artwork → Magpie openrouter/google/gemini-nano-banana-2.1 2x2 sheet → split-sheet.py → dry-run quote 40 → multiview_to_model → rig-new-lines.py → bun run assets:game player-<form>",
+  "creditsTotal": 400,
+  "tasks": [
+    {
+      "asset": "gastly",
+      "taskId": "8110becc-2a87-46fb-99e6-8007ebf55e23",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "status": "shipped"
+    },
+    {
+      "asset": "haunter",
+      "taskId": "d39beb56-cd25-482c-911e-06a64168fb02",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "status": "shipped"
+    },
+    {
+      "asset": "gengar",
+      "taskId": "6cf1c0f8-e41a-445d-9c40-c37dd5859cfd",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "status": "shipped"
+    },
+    {
+      "asset": "dratini",
+      "taskId": "b3944f11-8d5c-4bf6-ac45-5fd3133ba08d",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "status": "shipped"
+    },
+    {
+      "asset": "dragonair",
+      "taskId": "f3e329b9-c1d4-424a-bc75-8241f5900967",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "status": "shipped"
+    },
+    {
+      "asset": "dragonite",
+      "taskId": "db0f84da-c487-4518-aca6-7da6745544b4",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "status": "shipped"
+    },
+    {
+      "asset": "machop",
+      "taskId": "18532a21-ca50-4089-b3c9-cd978eb742f1",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "status": "shipped"
+    },
+    {
+      "asset": "machoke",
+      "taskId": "7595eaf8-9d1b-423f-98ba-b43bea863efa",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "status": "shipped"
+    },
+    {
+      "asset": "machamp",
+      "taskId": "13e2edd2-681b-4b91-93f8-d09d15571f7d",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "status": "shipped"
+    },
+    {
+      "asset": "gastly",
+      "taskId": "ac8b0659-4f4c-4bc2-bce3-1268221c6ff2",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "status": "rejected",
+      "reason": "Side references were three-quarter views; texture contained duplicate pupils. Preserved, never resubmitted. New generation used corrected orthographic reference."
+    }
+  ],
+  "processing": "Blender 5.3.0 installed executable; custom regional weights and idle/run clips using existing quadruped keying and two-bone foot IK. Ghosts float; serpents are straightened into a body-behind rest pose (smooth ring blend along the geodesic centreline) and slither with a head-to-tail lateral wave fixed to the ground; Machop line has a Chest bone, elbow-blended arm weights and an aimed guard/pump fighter run (planted feet, counter-rotating hips and shoulders); Machamp has separate upper/lower arm chains; Dragonite wing/tail bones animate. Player meshes not decimated; 1024px base color only, self-contained GLB. New player preparation imports at 30fps to preserve authored loop endpoint durations. Dragonite antenna islands translated intact to close their generated scalp gaps; raw source preserved.",
+  "facing": "Raw front/left/right renders inspected for all nine forms: +X, uses existing default yaw -PI/2. Enemy GLBs unchanged.",
+  "assets": [
+    {
+      "form": "gastly",
+      "source": "assets/characters/gastly/generation/tripo-out/tripo-out/gastly-player-orthographic-8110becc/model.glb",
+      "sourceSha256": "64cf16c52460e3c10084392e53badceb806c40143c76b62fb776f36853a76dcc",
+      "output": "public/models/gastly.glb",
+      "outputSha256": "e08d8f9dc0eab1761696a0750f4107f3bb61cd307b08966f75f4a7b683a22b12",
+      "bytes": 273264,
+      "rig": {
+        "form": "gastly",
+        "bones": 4,
+        "vertices": 3239,
+        "triangles": 2456,
+        "runSeconds": 1,
+        "runCycles": 1,
+        "plantedSpeedPerHeight": 2.6,
+        "credits": 0
+      },
+      "reference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/92.png",
+      "clips": ["idle", "run"],
+      "triangles": 2456,
+      "clipSeconds": {
+        "idle": 2.4,
+        "run": 1
+      }
+    },
+    {
+      "form": "haunter",
+      "source": "assets/characters/haunter/generation/tripo-out/tripo-out/haunter-player-mv-d39beb56/model.glb",
+      "sourceSha256": "11dc2011d4d93c667f27c3f4f4e1f3ef80af4437bd704f00a0a9a47a973a61cd",
+      "output": "public/models/haunter.glb",
+      "outputSha256": "71e994bab7700773662a59b4c40f270fb343e016100ba8399c787cc70e4958f7",
+      "bytes": 242908,
+      "rig": {
+        "form": "haunter",
+        "bones": 5,
+        "vertices": 3024,
+        "triangles": 2112,
+        "runSeconds": 1,
+        "runCycles": 1,
+        "plantedSpeedPerHeight": 2.6,
+        "credits": 0
+      },
+      "reference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/93.png",
+      "clips": ["idle", "run"],
+      "triangles": 2112,
+      "clipSeconds": {
+        "idle": 2.4,
+        "run": 1
+      }
+    },
+    {
+      "form": "gengar",
+      "source": "assets/characters/gengar/generation/tripo-out/tripo-out/gengar-player-mv-6cf1c0f8/model.glb",
+      "sourceSha256": "feb085b426494027cd3925ac187fd94abd8f86a9f1a413c5fdb9934ccea98966",
+      "output": "public/models/gengar.glb",
+      "outputSha256": "fe812587fcfad74cdd562a47caf79b6b1456c5dc69e3303734ba012d59a8ad1a",
+      "bytes": 318660,
+      "rig": {
+        "form": "gengar",
+        "bones": 14,
+        "vertices": 3338,
+        "triangles": 2470,
+        "runSeconds": 0.6666666666666666,
+        "runCycles": 1,
+        "plantedSpeedPerHeight": 2.333333333333334,
+        "credits": 0
+      },
+      "reference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png",
+      "clips": ["idle", "run"],
+      "triangles": 2470,
+      "clipSeconds": {
+        "idle": 2.4,
+        "run": 0.6666666666666666
+      }
+    },
+    {
+      "form": "dratini",
+      "source": "assets/characters/dratini/generation/tripo-out/tripo-out/dratini-player-mv-b3944f11/model.glb",
+      "sourceSha256": "0df9f4a7987a738464b8d9e945f6b11c607d5de2628a62e30a51ca1f60757fcb",
+      "output": "public/models/dratini.glb",
+      "outputSha256": "2845658f46956032b48ac06ec58484a982e135afaf7d095452b37e1acc997720",
+      "bytes": 241868,
+      "rig": {
+        "form": "dratini",
+        "bones": 13,
+        "vertices": 2015,
+        "triangles": 1729,
+        "runSeconds": 1,
+        "runCycles": 1,
+        "plantedSpeedPerHeight": 1.32,
+        "credits": 0
+      },
+      "reference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/147.png",
+      "clips": ["idle", "run"],
+      "triangles": 1729,
+      "clipSeconds": {
+        "idle": 2.4,
+        "run": 1
+      }
+    },
+    {
+      "form": "dragonair",
+      "source": "assets/characters/dragonair/generation/tripo-out/tripo-out/dragonair-player-mv-f3e329b9/model.glb",
+      "sourceSha256": "0903b8aca60914346736106fe6f30f8741e8fd6df04c4f46da48c2de6e28fdd1",
+      "output": "public/models/dragonair.glb",
+      "outputSha256": "df2293e96a7bdbff7f50f8fa5501ad95f43107e16e24f8ab0557d59fcff8668a",
+      "bytes": 257980,
+      "rig": {
+        "form": "dragonair",
+        "bones": 13,
+        "vertices": 2378,
+        "triangles": 2040,
+        "runSeconds": 1,
+        "runCycles": 1,
+        "plantedSpeedPerHeight": 1.42,
+        "credits": 0
+      },
+      "reference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/148.png",
+      "clips": ["idle", "run"],
+      "triangles": 2040,
+      "clipSeconds": {
+        "idle": 2.4,
+        "run": 1
+      }
+    },
+    {
+      "form": "dragonite",
+      "source": "assets/characters/dragonite/generation/tripo-out/tripo-out/dragonite-player-mv-db0f84da/model.glb",
+      "sourceSha256": "37267f4dfed1a0e1941c9df7cf34bece54a024dfc72e02beb15bfe2a0addfd92",
+      "output": "public/models/dragonite.glb",
+      "outputSha256": "c5834774c9dd3501c74e95e93caa045344a90d78eb814d3d328d78b333f95adf",
+      "bytes": 335576,
+      "rig": {
+        "form": "dragonite",
+        "bones": 16,
+        "vertices": 3395,
+        "triangles": 2345,
+        "runSeconds": 1,
+        "runCycles": 1,
+        "plantedSpeedPerHeight": 2.3,
+        "credits": 0
+      },
+      "reference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/149.png",
+      "clips": ["idle", "run"],
+      "triangles": 2345,
+      "clipSeconds": {
+        "idle": 2.4,
+        "run": 1
+      }
+    },
+    {
+      "form": "machop",
+      "source": "assets/characters/machop/generation/tripo-out/tripo-out/machop-player-mv-18532a21/model.glb",
+      "sourceSha256": "25c8ef6f6637865442a200410ad8b007f3934c0fd0192d5f442652c14d449301",
+      "output": "public/models/machop.glb",
+      "outputSha256": "18c671a9c559b7204f75cef85f507e9a6444ab7e672871e5c12acbf816aa43c6",
+      "bytes": 284944,
+      "rig": {
+        "form": "machop",
+        "bones": 14,
+        "vertices": 3179,
+        "triangles": 2466,
+        "runSeconds": 0.8,
+        "runCycles": 1,
+        "plantedSpeedPerHeight": 1.6666666666666667,
+        "credits": 0
+      },
+      "reference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/66.png",
+      "clips": ["idle", "run"],
+      "triangles": 2466,
+      "clipSeconds": {
+        "idle": 2.4,
+        "run": 0.8
+      }
+    },
+    {
+      "form": "machoke",
+      "source": "assets/characters/machoke/generation/tripo-out/tripo-out/machoke-player-mv-7595eaf8/model.glb",
+      "sourceSha256": "1f31e1d36a8ae94a52abd525316a606228fbdbbf55265a7cb59ee26fe2a6cf4d",
+      "output": "public/models/machoke.glb",
+      "outputSha256": "33df8341b9acc3cfd2ce8168fedb27c98df4215f9367accb19c4ede0991de09b",
+      "bytes": 373744,
+      "rig": {
+        "form": "machoke",
+        "bones": 13,
+        "vertices": 4266,
+        "triangles": 3172,
+        "runSeconds": 0.8,
+        "runCycles": 1,
+        "plantedSpeedPerHeight": 1.6666666666666665,
+        "credits": 0
+      },
+      "reference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/67.png",
+      "clips": ["idle", "run"],
+      "triangles": 3172,
+      "clipSeconds": {
+        "idle": 2.4,
+        "run": 0.8
+      }
+    },
+    {
+      "form": "machamp",
+      "source": "assets/characters/machamp/generation/tripo-out/tripo-out/machamp-player-mv-13e2edd2/model.glb",
+      "sourceSha256": "974eac2ab6b325b46412536e9d8187d5753a02f555b9347a9783f11db2750cb3",
+      "output": "public/models/machamp.glb",
+      "outputSha256": "5c2860cebf23574a71154c7ab717e17739f17a7d2e9ac8968e9b0f940e18055f",
+      "bytes": 373164,
+      "rig": {
+        "form": "machamp",
+        "bones": 17,
+        "vertices": 4510,
+        "triangles": 3098,
+        "runSeconds": 0.8,
+        "runCycles": 1,
+        "plantedSpeedPerHeight": 1.6346153846153846,
+        "credits": 0
+      },
+      "reference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/68.png",
+      "clips": ["idle", "run"],
+      "triangles": 3098,
+      "clipSeconds": {
+        "idle": 2.4,
+        "run": 0.8
+      }
+    }
+  ],
+  "rights": "Generated for noncommercial Pokémon fan project using official Pokémon design references. Designs belong to their rights holders.",
+  "revisions": [
+    {
+      "date": "2026-11-16",
+      "forms": ["dratini", "dragonair", "machop", "machoke", "machamp"],
+      "credits": 0,
+      "change": "Run/idle reauthored in assets/characters/rig-new-lines.py from the existing Tripo meshes (no regeneration): serpent slither + breathing/tail-curl idle; fighter run/guard idle. Speeds in src/run/view/assets.ts formModels."
+    },
+    {
+      "date": "2026-11-16",
+      "forms": ["dratini", "dragonair", "dragonite", "gengar", "gastly", "haunter"],
+      "credits": 0,
+      "change": "Second pass in rig-new-lines.py, same meshes: Dragonite glides low with wing beats when moving; Gengar hop-run with landing squash; Gastly/Haunter drift on a 2.6-height bob wavelength (Haunter's hands trail and catch up); Dratini body girth taper for the mid-body step. Speeds/lifts in src/run/view/assets.ts formModels."
+    }
+  ]
+}

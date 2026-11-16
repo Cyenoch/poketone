@@ -1,0 +1,10 @@
+{
+  "form": "dragonite",
+  "bones": 16,
+  "vertices": 3395,
+  "triangles": 2345,
+  "runSeconds": 1,
+  "runCycles": 1,
+  "plantedSpeedPerHeight": 2.3,
+  "credits": 0
+}

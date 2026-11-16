@@ -11,7 +11,7 @@ import { cubicBezier } from "./focus-mark";
 import { stack } from "./layer";
 import { breakLines } from "./line-break";
 import type { RunOverlayControl } from "./run-overlays-control";
-import { typeColors } from "./run-choice-surface";
+import { typeColors } from "./run-theme";
 import type { UiStage } from "./stage";
 import { gameTag, typeTag } from "./tag";
 

@@ -240,7 +240,8 @@ test("each fusion casts, damages enemies and ends with its finale", () => {
     const w = world();
     const player = w.players[0];
     player.x = player.z = 0;
-    const enemies = [3, 5].flatMap((d) =>
+    const melee = result === "hundred-fists";
+    const enemies = (melee ? [1.5, 2] : [3, 5]).flatMap((d) =>
       [0, 2].map((a) => {
         const enemy = spawnEnemy(w, "caterpie", Math.cos(a) * d, Math.sin(a) * d);
         enemy.hp = enemy.maxHp = 1e6;
@@ -263,7 +264,13 @@ test("each fusion casts, damages enemies and ends with its finale", () => {
       enemies.some((e) => e.hp < e.maxHp),
       `${result} hit nothing`,
     );
-    assert.ok(finale, `${result} had no finale`);
+    if (melee) {
+      const hits = w.events.filter((event) => event.t === "hit");
+      assert.ok(
+        hits.at(-1).amount > hits[0].amount,
+        "the final punch is the fusion's heavier finish",
+      );
+    } else assert.ok(finale, `${result} had no finale`);
     assert.equal(w.areas.length, 0, `${result} left areas behind`);
   }
 });

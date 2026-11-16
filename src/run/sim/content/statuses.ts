@@ -68,7 +68,7 @@ const table = {
     stacking: "refresh",
     move: { kind: "factor", factor: 0.85 },
   },
-  /** Enemies: a weaker, longer burn (no move applies it yet). Players: a drain that never kills. */
+  /** Enemies: a weaker, longer burn. Players: a drain that never kills. */
   poison: {
     name: "中毒",
     appliesTo: "both",

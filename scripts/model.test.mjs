@@ -21,6 +21,8 @@ import { difficulties } from "../src/run/sim/content/difficulties.ts";
 import { enemies } from "../src/run/sim/content/enemies.ts";
 import { items } from "../src/run/sim/content/items.ts";
 import { moves } from "../src/run/sim/content/moves.ts";
+import { statuses } from "../src/run/sim/content/statuses.ts";
+import { typeNames, typeMultiplier } from "../src/run/sim/content/elements.ts";
 import { LOOT } from "../src/run/sim/content/params/economy.ts";
 import { STARDUST } from "../src/run/sim/content/params/economy.ts";
 import {
@@ -53,6 +55,21 @@ import {
 } from "../src/run/sim/world.ts";
 
 const SECONDS = 20;
+
+test("poison contributes persistent damage but extra applications refresh instead of stacking", () => {
+  const player = createPlayer(0, "gastly", 0);
+  player.moves = [newMoveState("sludge-bomb")];
+  const target = targetFor(fieldAt("forest", 300, 0, false), 20, average);
+  const one = buildOutput(player, target);
+  assert.ok(one.useful > one.direct, "surviving poisoned enemies lose HP between hits");
+  assert.ok(one.bossBurn > 0, "poison continues against a guardian");
+  const max = statuses.poison.dotShare * playerStats(player).statusDamage * one.bossPoisonHit;
+  player.moves[0].mods.cd = 0.5;
+  const two = buildOutput(player, target);
+  assert.ok(two.bossBurn > one.bossBurn, "more applications raise occupancy");
+  assert.ok(two.bossBurn < max, "same-strength poison cannot exceed one full-uptime DoT");
+  assert.ok(two.bossBurn < one.bossBurn * 2, "refreshing is not two independent poison stacks");
+});
 
 test("guardian exposure excludes unfinished fights instead of scoring early death as a cheap kill", () => {
   const options = {
@@ -206,7 +223,7 @@ function modelDamage(move) {
     players: [{ starter: "bulbasaur" }],
   }).players[0];
   const neutral = Object.fromEntries(
-    ["normal", "fire", "water", "grass", "electric", "bug", "flying", "poison"].map((t) => [t, 1]),
+    Object.keys(typeNames).map((t) => [t, typeMultiplier(t, enemies.rattata.types)]),
   );
   const target = {
     density: 0,
@@ -220,7 +237,7 @@ function modelDamage(move) {
     give: [{ share: 1, give: 1 }],
   };
   const out = moveOutput(newMoveState(move), playerStats(player), target);
-  const short = ["strike", "cone", "spin", "nova"].includes(moves[move].archetype);
+  const short = ["strike", "cone", "spin", "nova", "combo"].includes(moves[move].archetype);
   return (out.raw * SECONDS) / (TERRAIN_SIGHT * (short ? MELEE_STEP : 1));
 }
 
@@ -238,6 +255,7 @@ test("modelled move damage on a lone target matches the sim's cast timing, ticks
     ["seed-bomb", 6],
     ["surf", 3],
     ["discharge", 1],
+    ["karate-chop", 1],
   ]) {
     const sim = simDamage(move, distance);
     const model = modelDamage(move);

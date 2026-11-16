@@ -175,7 +175,7 @@ export const whirlpoolBurst: AreaLook = {
   strike(fx, area, x, z) {
     const r = area.radius;
     const y = fx.ground.heightAt(x, z) + 0.3;
-    fx.decals.stamp(Decal.ring, x, z, r, 0.3, water.foam, 0.9, water.mid, 0.5, 0.14, 0.3);
+    fx.decals.stamp(Decal.ring, x, z, r, 0.24, water.foam, 0.9, water.mid, 0.35, 0.05, 1);
     fx.decals.stamp(Decal.ripple, x, z, r, 0.8, water.foam, 0.7, water.light, 0.3);
     fx.sprites.emit(splashRing, x, y, z, 0, 0, 0, r * 0.5);
     fx.sprites.emit(flash, x, y, z, 0, 0, 0, r * 0.3);

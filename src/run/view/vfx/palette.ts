@@ -73,3 +73,36 @@ export const stone = {
   light: rgb("#bcae98"),
   dark: rgb("#6c5f52"),
 };
+
+// Gastly line: near-black indigo bodies with a hot magenta rim. Enemy poison is a bright, saturated
+// violet blob; the player's ghost reads by its dark value and the magenta, never by that violet.
+export const ghost = {
+  ink: rgb("#1d1433"),
+  shade: rgb("#3d2970"),
+  veil: rgb("#7650cc"),
+  glow: rgb("#ff6fd8"),
+  light: rgb("#ffd9f6"),
+  smog: rgb("#8c7a99"),
+  soot: rgb("#3a2f47"),
+  sludge: rgb("#5e2a72"),
+};
+
+// Dratini line: jade dragon-fire over royal indigo with gold scales; jade stays clear of the
+// cyan-blue XP candy and of the yellow-green grass by its blue-green hue and its indigo ink.
+export const dragon = {
+  deep: rgb("#1b2068"),
+  indigo: rgb("#4b47e6"),
+  teal: rgb("#14c7a5"),
+  light: rgb("#c8fff1"),
+  scale: rgb("#ffcd3c"),
+};
+
+// Machop line: amber force with cream cores and brown ink; shapes (fists, blades, cracks) keep it
+// apart from fire, which never draws them.
+export const fighting = {
+  amber: rgb("#ffa424"),
+  cream: rgb("#fff4d8"),
+  ochre: rgb("#c4660f"),
+  dust: rgb("#cdb58f"),
+  deep: rgb("#5a3418"),
+};

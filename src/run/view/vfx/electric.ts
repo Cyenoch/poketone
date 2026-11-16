@@ -278,7 +278,7 @@ export const electroBall: ShotLook = {
     burstSparks(fx, x, y, z, 6, 2);
   },
   fly(fx, shot, x, y, z) {
-    const r = shot.radius * 1.1;
+    const r = shot.radius;
     fx.volumes.orbs.add(
       place(x, y, z, fx.time * 3, r, r, r),
       electric.yellow,
@@ -329,7 +329,7 @@ export const electroBurst: AreaLook = {
     const y = fx.ground.heightAt(x, z) + 0.5;
     fx.sprites.emit(bloom, x, y, z, 0, 0, 0, r * 0.5);
     fx.sprites.emit(flash, x, y, z, 0, 0, 0, r * 0.35);
-    fx.decals.stamp(Decal.ring, x, z, r, 0.3, electric.yellow, 0.9, white, 0.7, 0.14, 0.3);
+    fx.decals.stamp(Decal.ring, x, z, r, 0.24, electric.yellow, 0.9, white, 0.4, 0.05, 1);
     fx.decals.stamp(Decal.glow, x, z, r * 0.8, 0.25, electric.yellow, 0.5, white, 1);
     fx.echoes.add(drawRadial, 0.25, x, y, z, r);
     burstSparks(fx, x, y, z, 16, r * 2.5);
@@ -365,7 +365,7 @@ export const thunder: AreaLook = {
     fx.echoes.add(drawSkyBolt, 0.26, x, 0, z, h);
     fx.sprites.emit(bloom, x, h + 0.5, z, 0, 0, 0, r * 0.6);
     fx.sprites.emit(flash, x, h + 0.4, z, 0, 0, 0, r * 0.55);
-    fx.decals.stamp(Decal.ring, x, z, r, 0.35, white, 1, electric.yellow, 0.7, 0.16, 0.3);
+    fx.decals.stamp(Decal.ring, x, z, r, 0.24, white, 0.9, electric.yellow, 0.4, 0.05, 1);
     fx.decals.stamp(Decal.cracks, x, z, r, 2, electric.yellow, 1, white, 0);
     burstSparks(fx, x, h + 0.3, z, 20, r * 4);
     spray(fx, debris, x, h + 0.2, z, 8, 2, 3, 0.08);

@@ -3,7 +3,7 @@ import { BoxShadow } from "./box-shadow";
 import { Color } from "three";
 import type { ElementType } from "../../run/sim/content/elements";
 import { typeNames } from "../../run/labels";
-import { typeColors } from "./run-choice-surface";
+import { typeColors } from "./run-theme";
 import { stack } from "./layer";
 
 /**

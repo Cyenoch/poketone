@@ -1,0 +1,42 @@
+{
+  "assets": [
+    "shadow-ball",
+    "smog",
+    "hex",
+    "sludge-bomb",
+    "night-shade",
+    "dream-eater",
+    "nightmare-vortex",
+    "dragon-breath",
+    "twister",
+    "dragon-pulse",
+    "dragon-rush",
+    "aqua-tail",
+    "hurricane",
+    "dragon-tempest",
+    "karate-chop",
+    "low-sweep",
+    "brick-break",
+    "focus-blast",
+    "seismic-toss",
+    "cross-chop",
+    "hundred-fists"
+  ],
+  "generator": "Magpie generate_image, ash/gpt-image-2.5-sunburst",
+  "createdAt": "2026-11-16",
+  "prompts": {
+    "moves-sheet-3.png (ghost / poison, 4×2, 1536×1024 requested)": "A sprite sheet of 7 game move icons plus one spare cell, arranged in a perfectly even 4×2 grid of equal square cells separated by wide uniform empty gaps, each icon centered in its cell and filling about 75% of it, on a plain flat warm off-white (#f5f1e8) background, no grid lines. Match the rendering style of the reference image exactly (thick dark navy outline on every shape, flat cel shading, same visual weight); do not copy its subjects. Row by row, left to right: 1) Shadow Ball: a round dark purple sphere with a glowing violet core highlight, a few curling dark wisps trailing behind it; 2) Smog: a puffy toxic violet-green smog cloud made of three round lobes with small bubbles and a few rising wisps; 3) Hex: (first version, replaced below); 4) Sludge Bomb: a thick glob of purple sludge with toxic green highlights, dripping and splashing, with a few droplets flying; 5) Night Shade: a large pale violet ghostly eye with a dark pupil, radiating jagged dark purple rays like a burst; 6) Dream Eater: a violet ghost-like open mouth swallowing a swirl of pink dream mist with two tiny four-point stars; 7) Nightmare Vortex: a swirling dark purple vortex with two glowing yellow ghost eyes in the centre and crescent magenta wisps spiralling around; 8) a small neutral gray star (unused). Colour language: ghost purple and violet, poison violet-green. Clean solid background, no noise and no glow halo. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject.",
+    "moves-sheet-4.png (dragon / flying / water, 4×2)": "A sprite sheet of 7 game move icons plus one spare cell, arranged in a perfectly even 4×2 grid of equal square cells separated by wide uniform empty gaps, each icon centered in its cell and filling about 75% of it, on a plain flat warm off-white (#f5f1e8) background, no grid lines. Match the rendering style of the reference image exactly (thick dark navy outline on every shape, flat cel shading, same visual weight); do not copy its subjects. Row by row, left to right: 1) Dragon Breath: a jet of teal-blue and indigo flame blasting to the right, with small gold sparks along it; 2) Twister: a tall teal and indigo whirlwind funnel with white wind streaks and two small gold swirl accents; 3) Dragon Pulse: a spiralling indigo-teal energy beam with a bright gold core and three concentric shock rings; 4) Dragon Rush: a blue-violet dragon head silhouette with a horn and a gold-edged aura charging forward with speed streaks behind it; 5) Aqua Tail: a curved sweeping swoosh of bright blue water shaped like a tail whip, with white foam and splash droplets; 6) Hurricane: a sky-blue and white storm swirl with a calm round eye in the centre and curved wind arcs around it; 7) Dragon Tempest: a coiled teal-indigo dragon circling inside a storm vortex with gold lightning bolts around it; 8) a small neutral gray star (unused). Colour language: dragon teal and indigo with gold accents, flying sky blue and white, water bright blue. Clean solid background, no noise and no glow halo. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject.",
+    "moves-sheet-5.png (fighting, 4×2)": "A sprite sheet of 7 game move icons plus one spare cell, arranged in a perfectly even 4×2 grid of equal square cells separated by wide uniform empty gaps, each icon centered in its cell and filling about 75% of it, on a plain flat warm off-white (#f5f1e8) background, no grid lines. Match the rendering style of the reference image exactly (thick dark navy outline on every shape, flat cel shading, same visual weight); do not copy its subjects. Row by row, left to right: 1) Karate Chop: a flat open hand striking diagonally downward, with three orange speed lines and a small impact spark; 2) Low Sweep: a low sweeping leg kick shown as a wide curved orange-brown arc with a bare foot at the end and a puff of dust; 3) Brick Break: a clenched orange-brown fist smashing through a stack of three cracked red-brown bricks with flying chips; 4) Focus Blast: a glowing orange-white energy sphere with two circular ripple rings and a short trail; 5) Seismic Toss: a cracked chunk of rocky ground being hurled in a curved arc with an arrow-like swoosh and small flying rocks; 6) Cross Chop: two forearms crossed in an X with a big orange impact burst behind them; 7) Hundred Fists: a burst of many small orange-brown clenched fists radiating outward from a bright star impact in the centre; 8) a small neutral gray star (unused). Colour language: fighting warm orange and terracotta brown with cream highlights. Clean solid background, no noise and no glow halo. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject.",
+    "moves-sheet-6.png (hex redo, 2×2, 1024×1024)": "A sprite sheet of 2 game move icon candidates plus two spare cells, arranged in a perfectly even 2×2 grid ... same reference and wording as above. Top left: Hex, option A: a glowing magenta-violet curse seal, a thick hexagon ring with an inward-spiralling swirl in the centre and three small dark crescent marks on the ring, three dark purple ghostly wisps curling out of it, no star shape, no letters. Top right: Hex, option B: a round violet curse seal, a thick circle ring with three small triangular notches and a single closed ghost eye in the centre, two dark purple wisps curling out of it, no star shape, no letters. Bottom left and bottom right: a small neutral gray star (unused). Clean solid background, no noise and no glow halo. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject."
+  },
+  "sources": [
+    "assets/icons/source/moves-sheet-3.png",
+    "assets/icons/source/moves-sheet-4.png",
+    "assets/icons/source/moves-sheet-5.png",
+    "assets/icons/source/moves-sheet-6.png"
+  ],
+  "references": ["assets/icons/source/moves-sheet.png"],
+  "processing": "Sheets returned RGBA with coloured halo pixels in the transparent area: composited onto #f5f1e8, then python3 assets/icons/slice-sheet.py <flat.png> 4 2 <dir> <7 names> (default tolerance 38; cell 8 unused). Hex: the first sheet's cell 3 (hexagram) was dropped because the six-point star reads as a Star of David; sheet 6 cell 1 (hexagon seal with a spiral) taken via slice-sheet.py <flat.png> 2 2, option B and the stars unused. 128 px WebP q88.",
+  "rights": "Generated for noncommercial Pokémon fan project."
+}

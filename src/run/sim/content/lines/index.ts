@@ -6,6 +6,9 @@ import { bulbasaur } from "./bulbasaur";
 import { charmander } from "./charmander";
 import { pikachu } from "./pikachu";
 import { squirtle } from "./squirtle";
+import { gastly } from "./gastly";
+import { dratini } from "./dratini";
+import { machop } from "./machop";
 
 /** Evolution stage: an index into `LineDef.stages`; 0 is the starting form. */
 export type Stage = number;
@@ -13,7 +16,7 @@ export type Stage = number;
 /**
  * One form of a line. HP, speed and body radius come from the reference base stats (`pokemon.json`)
  * relative to the starting form, damped: HP × √(base HP ratio), speed × (base Spe ratio)^¼, contact
- * radius 0.45 × (height ratio)^¼ (derivation table in docs/BALANCE.md 进化).
+ * radius 0.36 × (height ratio)^¼ (derivation and calibration in docs/BALANCE.md).
  */
 export interface FormDef<Id extends string = FormId> {
   id: Id;
@@ -55,7 +58,7 @@ export interface LineDef<Id extends string = StarterId, F extends string = FormI
   stages: readonly [EvolveStage<F> & { at: 1 }, ...LineStage<F>[]];
 }
 
-const linesTable = { charmander, bulbasaur, squirtle, pikachu };
+const linesTable = { charmander, bulbasaur, squirtle, pikachu, gastly, dratini, machop };
 
 export type StarterId = keyof typeof linesTable;
 export type FormId = Extract<
@@ -109,4 +112,7 @@ export const starterOrder: readonly StarterId[] = [
   "bulbasaur",
   "squirtle",
   "pikachu",
+  "gastly",
+  "dratini",
+  "machop",
 ];

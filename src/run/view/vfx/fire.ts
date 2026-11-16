@@ -83,17 +83,6 @@ const smoke = sprite({
   drag: 2,
   spin: 0.6,
 });
-const jet = sprite({
-  shape: Shape.glow,
-  life: 0.22,
-  grow: 2.2,
-  from: fire.yellow,
-  to: fire.orange,
-  accent: fire.core,
-  alpha: 0.9,
-  add: 1,
-  drag: 1.4,
-});
 const halo = sprite({
   shape: Shape.glow,
   from: fire.orange,
@@ -196,7 +185,7 @@ export const fireBlast: ShotLook = {
     spray(fx, flame, x, y, z, 6, 1.3, 1, 0.18);
   },
   fly(fx, shot, x, y, z) {
-    const r = shot.radius * 1.2;
+    const r = shot.radius;
     fx.volumes.orbs.add(
       place(x, y, z, fx.time * 2, r, r, r),
       fire.yellow,
@@ -262,9 +251,9 @@ export const fireBlastBurst: AreaLook = {
     // The burning 大 is the primary shape: flames and smoke stay small and close so it reads.
     // It faces the camera as it lands and keeps that yaw, so the scorch stays put as the view moves.
     const yaw = fx.viewYaw + Math.PI;
-    fx.decals.stamp(Decal.blast, x, z, r, 1.2, fire.soot, 0.65, fire.orange, 0, 0, 0, yaw);
-    fx.decals.stamp(Decal.blast, x, z, r, 0.9, fire.orange, 1, fire.core, 0, 1, 0, yaw);
-    fx.decals.stamp(Decal.ring, x, z, r, 0.35, fire.yellow, 0.8, fire.red, 0.6, 0.12, 0.3);
+    fx.decals.stamp(Decal.blast, x, z, r * 0.8, 1.2, fire.soot, 0.65, fire.orange, 0, 0, 0, yaw);
+    fx.decals.stamp(Decal.blast, x, z, r * 0.8, 0.28, fire.orange, 1, fire.core, 0, 1, 0, yaw);
+    fx.decals.stamp(Decal.ring, x, z, r, 0.24, fire.yellow, 0.8, fire.orange, 0.4, 0.055, 1);
     fx.sprites.emit(bloom, x, y, z, 0, 0, 0, r * 0.55);
     fx.sprites.emit(flash, x, y + 0.2, z, 0, 0, 0, r * 0.45);
     spray(fx, flame, x, y, z, 12, r * 1.4, 1.3, 0.2);
@@ -292,7 +281,7 @@ export const fireSpinBurst: AreaLook = {
   strike(fx, area, x, z) {
     const r = area.radius;
     const y = fx.ground.heightAt(x, z) + 0.3;
-    fx.decals.stamp(Decal.ring, x, z, r, 0.35, fire.yellow, 0.9, fire.red, 0.7, 0.16, 0.3);
+    fx.decals.stamp(Decal.ring, x, z, r, 0.24, fire.yellow, 0.9, fire.orange, 0.4, 0.055, 1);
     fx.decals.stamp(Decal.scorch, x, z, r * 0.75, 1.1, fire.soot, 0.65, fire.orange, 0);
     fx.sprites.emit(bloom, x, y, z, 0, 0, 0, r * 0.5);
     spray(fx, flame, x, y, z, 12, r * 2, 1.3, 0.2);
@@ -383,68 +372,50 @@ export const flamethrower: AreaLook = {
       .tint(fire.orange, 0.5 * fade, fire.yellow, 0.85)
       .args(0, area.angle, 0);
     fx.sprites.draw(halo, mouthX, y, mouthZ, 0.32, fade);
-    const scale = length / 6;
-    const speed = reach(length * 0.95, stream.life, stream.drag);
-    for (let i = perFrame(fx, 70 * fade); i > 0; i--) {
-      const spread = rand(-1, 1) * area.angle * 0.85;
-      const c = Math.cos(spread);
-      const s = Math.sin(spread);
-      const dx = area.dirX * c - area.dirZ * s;
-      const dz = area.dirX * s + area.dirZ * c;
-      const v = speed * rand(0.8, 1.05);
-      fx.sprites.emit(
-        stream,
-        mouthX,
-        y + rand(-0.05, 0.05),
-        mouthZ,
-        dx * v,
-        rand(0.15, 0.6),
-        dz * v,
-        rand(0.17, 0.25) * scale,
-      );
+    // Bound the flame body to the live fan; persistent jets outran its tip and lingered after it.
+    for (let lane = -1; lane <= 1; lane++) {
+      for (let i = 0; i < 8; i++) {
+        const seed = seedOf(area.id + i + (lane + 1) * 8);
+        const travel = (i / 8 + fx.time * 2.4 + seed * 0.11) % 1;
+        const angle = yaw + (lane * 0.55 + Math.sin(travel * 9 + seed * 6) * 0.13) * area.angle;
+        const d = length * (0.12 + travel * 0.72);
+        const size = length * (0.035 + travel * 0.1) * (0.8 + seed * 0.2) * fade;
+        const px = x + Math.sin(angle) * d;
+        const pz = z + Math.cos(angle) * d;
+        fx.sprites.draw(
+          stream,
+          px,
+          fx.ground.heightAt(px, pz) + 0.3 + (1 - travel) * 0.3,
+          pz,
+          size,
+          fade * (0.9 - travel * 0.35),
+          0,
+          0,
+          0,
+          seed,
+          travel * 0.65,
+        );
+      }
     }
-    for (let i = perFrame(fx, 40 * fade); i > 0; i--) {
-      const spread = rand(-1, 1) * area.angle * 0.3;
-      const v = speed * rand(0.9, 1.1);
-      fx.sprites.emit(
-        jet,
-        mouthX,
-        y,
-        mouthZ,
-        (area.dirX + Math.sin(spread) * area.dirZ) * v,
-        0,
-        (area.dirZ - Math.sin(spread) * area.dirX) * v,
-        0.22 * scale,
-      );
+    for (let i = perFrame(fx, 12 * fade); i > 0; i--) {
+      const d = length * rand(0.3, 0.8);
+      const spread = rand(-0.65, 0.65) * area.angle;
+      const px = x + Math.sin(yaw + spread) * d;
+      const pz = z + Math.cos(yaw + spread) * d;
+      fx.sprites.emit(emberSpark, px, h + 0.35, pz, 0, 0.6, 0, 0.035, h);
     }
-    for (let i = perFrame(fx, 22 * fade); i > 0; i--) {
-      const v = speed * rand(0.6, 1.1);
-      const spread = rand(-1, 1) * area.angle;
-      fx.sprites.emit(
-        emberSpark,
-        mouthX,
-        y,
-        mouthZ,
-        (area.dirX + Math.sin(spread) * area.dirZ) * v,
-        rand(0.5, 1.5),
-        (area.dirZ - Math.sin(spread) * area.dirX) * v,
-        0.05,
-        h,
-      );
-    }
-    for (let i = perFrame(fx, 3 * fade); i > 0; i--) {
-      const d = length * rand(0.6, 0.9);
-      fx.sprites.emit(
-        smoke,
-        x + area.dirX * d,
-        y + 0.25,
-        z + area.dirZ * d,
-        area.dirX,
-        rand(0.5, 1),
-        area.dirZ,
-        0.32 * scale,
-      );
-    }
+  },
+  strike(fx, area, x, z) {
+    fx.sprites.emit(
+      flash,
+      x + area.dirX * 0.45,
+      fx.ground.heightAt(x, z) + 0.65,
+      z + area.dirZ * 0.45,
+      0,
+      0,
+      0,
+      0.22,
+    );
   },
 };
 

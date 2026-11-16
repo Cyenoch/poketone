@@ -369,6 +369,90 @@
         0,
         20
       ]
+    },
+    "cast-ghost": {
+      "files": [
+        "sfx/cast-ghost-1.flac",
+        "sfx/cast-ghost-2.flac"
+      ],
+      "hitMs": [
+        125,
+        95
+      ]
+    },
+    "cast-poison": {
+      "files": [
+        "sfx/cast-poison-1.flac",
+        "sfx/cast-poison-2.flac"
+      ],
+      "hitMs": [
+        60,
+        75
+      ]
+    },
+    "cast-dragon": {
+      "files": [
+        "sfx/cast-dragon-1.flac",
+        "sfx/cast-dragon-2.flac"
+      ],
+      "hitMs": [
+        145,
+        100
+      ]
+    },
+    "cast-fighting": {
+      "files": [
+        "sfx/cast-fighting-1.flac",
+        "sfx/cast-fighting-2.flac"
+      ],
+      "hitMs": [
+        15,
+        5
+      ]
+    },
+    "hit-ghost": {
+      "files": [
+        "sfx/hit-ghost-1.flac",
+        "sfx/hit-ghost-2.flac"
+      ],
+      "hitMs": [
+        35,
+        10
+      ]
+    },
+    "hit-poison": {
+      "files": [
+        "sfx/hit-poison-1.flac",
+        "sfx/hit-poison-2.flac",
+        "sfx/hit-poison-3.flac"
+      ],
+      "hitMs": [
+        0,
+        0,
+        0
+      ]
+    },
+    "hit-dragon": {
+      "files": [
+        "sfx/hit-dragon-1.flac",
+        "sfx/hit-dragon-2.flac"
+      ],
+      "hitMs": [
+        15,
+        0
+      ]
+    },
+    "hit-fighting": {
+      "files": [
+        "sfx/hit-fighting-1.flac",
+        "sfx/hit-fighting-2.flac",
+        "sfx/hit-fighting-3.flac"
+      ],
+      "hitMs": [
+        15,
+        5,
+        15
+      ]
     }
   },
   "music": {

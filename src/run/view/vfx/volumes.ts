@@ -76,7 +76,10 @@ void main() {
 }
 `;
 
-/** Fire (style 0): boiling two-tone flame with an inked rim. Electric (1): crackle web and a hot rim. */
+/**
+ * Fire (style 0): boiling two-tone flame with an inked rim. Electric (1): crackle web and a hot rim.
+ * Shadow (2): dark core B with coiling wisps and a glowing rim of A.
+ */
 const ORB = /* glsl */ `
 vec4 shade() {
   float f = fresnel();
@@ -88,6 +91,15 @@ vec4 shade() {
     c = mix(c, vec3(1.0, 0.97, 0.84), smoothstep(0.82, 0.9, heat));
     return over(layer(INK, smoothstep(0.82, 0.97, f) * 0.8, 0.0), layer(c, 1.0, 0.15));
   }
+  if (vP.x > 1.5) {
+    // Shadow (2): dark swirling core, wisps of A coiling over it, a glowing A rim.
+    vec3 s = vObj * 2.2 + seed * 9.0;
+    float n = noise3(s + vec3(uTime * 0.9, -uTime * 1.6, uTime * 0.7)) * 0.7 + noise3(s * 2.3) * 0.3;
+    float coil = fract(atan(vObj.z, vObj.x) * 0.4775 + vObj.y * 1.4 - uTime * 2.2 + n * 0.5);
+    float wisp = smoothstep(0.62, 0.78, coil) * smoothstep(1.0, 0.9, coil);
+    vec3 c = mix(vB.rgb, vA.rgb, clamp(wisp * 0.7 + smoothstep(0.5, 0.95, f), 0.0, 1.0));
+    return layer(mix(c, vec3(1.0), smoothstep(0.9, 1.0, f) * 0.35), 1.0, smoothstep(0.55, 1.0, f) * 0.6);
+  }
   vec3 o = vObj * 2.1 + seed * 9.0 + vec3(uTime * 1.7, uTime * 2.3, -uTime * 1.1);
   float n = noise3(o) * 0.6 + noise3(o * 2.3) * 0.4;
   // Crisp arcs a couple of pixels wide wherever the noise crosses its midline.
@@ -97,10 +109,19 @@ vec4 shade() {
 }
 `;
 
-/** Fire Spin's tornado: twisted, two-tone flame tongues with dark-red ink edges. */
+/** Style 0: Fire Spin's tornado, twisted two-tone flame tongues with dark-red ink edges. Style 1: wind, inked streaks of A over B. */
 const FUNNEL = /* glsl */ `
 vec4 shade() {
   float h = vObj.y;
+  if (vP.x > 0.5) {
+    float coil = fract(atan(vObj.z, vObj.x) * 0.4775 + h * 1.4 - uTime * 4.2 + vP.y);
+    float n = noise3(vec3(vObj.xz * 2.0, h * 3.0 - uTime * 3.0) + vP.y * 7.0);
+    float band = smoothstep(0.3, 0.55, coil) * smoothstep(1.0, 0.86, coil) * smoothstep(0.25, 0.5, n + 0.15);
+    float head = smoothstep(0.8, 0.88, coil) * smoothstep(1.0, 0.92, coil);
+    float ends = smoothstep(0.0, 0.12, h) * smoothstep(1.0, 0.72, h);
+    vec4 w = layer(mix(vB.rgb, vA.rgb, clamp(head + n * 0.35, 0.0, 1.0)), band * 0.9, 0.15);
+    return over(layer(INK, head * band * 0.6, 0.0), w) * ends;
+  }
   float twist = h * 2.6 - uTime * 3.4;
   vec2 xz = mat2(cos(twist), -sin(twist), sin(twist), cos(twist)) * vObj.xz;
   vec3 o = vec3(xz * 2.3, h * 3.2 - uTime * 2.6) + vP.y * 7.0;

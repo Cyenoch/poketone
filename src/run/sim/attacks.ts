@@ -159,5 +159,5 @@ function strikeZone(ctx: Ctx, a: Area, owner: Player, zone: Zone, dt: number): v
       targets.push(enemy);
   });
   for (const enemy of targets)
-    damageEnemy(ctx, enemy, hitFrom(owner, def, a, a.x, a.z, zone.knock));
+    damageEnemy(ctx, enemy, hitFrom(owner, def, a, a.x, a.z, zone.knockFor?.(a) ?? zone.knock));
 }

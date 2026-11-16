@@ -8,6 +8,7 @@ import {
   BLOOM,
   BOLT,
   CONE,
+  COMBO,
   FIRESTORM,
   SHOT_KNOCK,
   LOB,
@@ -136,6 +137,9 @@ export interface MoveOutput {
   /** Burn-capable damage per hit on the guardian, and burn applications per second on it. */
   bossBurnHit: number;
   bossBurnRate: number;
+  /** Poison refreshes independently of burn and keeps its own strongest hit. */
+  bossPoisonHit: number;
+  bossPoisonRate: number;
   /** Swarm targets per cast (enemies struck at least once). */
   targets: number;
   /** Swarm hits per second by the knockback they carry (stagger, sim/poise.ts). */
@@ -162,6 +166,8 @@ export const blankOutput = (): MoveOutput => ({
   control: 0,
   bossBurnHit: 0,
   bossBurnRate: 0,
+  bossPoisonHit: 0,
+  bossPoisonRate: 0,
   targets: 0,
   knocks: [],
 });
@@ -446,6 +452,23 @@ const volleyModels: Record<Archetype, (cast: Cast) => Volley[]> = {
         onBoss: Math.ceil(n / 2) / n,
         bossTicks: 1,
         knock: strikeArea.knock,
+      },
+    ];
+  },
+  combo({ p, rE }) {
+    const n = Math.ceil(p.count);
+    const crowd = (d: number) => Math.max(1, d * COMBO.angle * (p.area + rE) ** 2);
+    return [
+      // Every punch strikes the same locked sector, so the ordinary ones are repeat hits, not more targets.
+      { copies: 1, ticks: n - 1, scale: 1, crowd, onBoss: 1, bossTicks: n - 1, knock: COMBO.knock },
+      {
+        copies: 1,
+        ticks: 1,
+        scale: COMBO.finisherDamage,
+        crowd,
+        onBoss: 1,
+        bossTicks: 1,
+        knock: COMBO.finisherKnock,
       },
     ];
   },
@@ -770,10 +793,10 @@ export function moveOutput(
   const crit = Math.min(1, p.crit + stats.crit);
   const out = blankOutput();
   out.bossBurnHit = def.status === "burn" ? bossHit : 0;
-  const burnPerHit =
-    def.status === "burn"
-      ? statuses.burn.dotShare * stats.statusDamage * statuses.burn.duration * stats.duration * hit
-      : 0;
+  const dot = def.status ? (statuses[def.status] as StatusDef) : undefined;
+  const dotPerHit = dot?.dotShare
+    ? dot.dotShare * stats.statusDamage * dot.duration * stats.duration * hit
+    : 0;
   const density = Math.min(MAX_DENSITY, target.density);
   // Distinct swarm enemies each volley strikes per cast, never more than are engaged.
   const available = Math.max(1, target.living);
@@ -798,10 +821,15 @@ export function moveOutput(
       out,
       target,
       rate,
-      { targets: width, dmg, hits, dot: burnPerHit * strongest * applied, crit },
+      { targets: width, dmg, hits, dot: dotPerHit * strongest * applied, crit },
       def.status ? { id: def.status, chance } : undefined,
     );
   }
+  // A stronger poison is never overwritten by weaker ticks (the vortex's collapse), so the guardian's
+  // poison follows the strongest hit that lands on it.
+  if (def.status === "poison")
+    out.bossPoisonHit =
+      bossHit * Math.max(0, ...struck.filter((s) => s.v.onBoss > 0).map((s) => s.v.scale));
   const reachedHits = struck.reduce((sum, s) => sum + rate * s.n * s.ticks, 0);
   const landedShare = reachedHits > 0 ? out.hits / reachedHits : 0;
   for (const s of struck)
@@ -810,7 +838,8 @@ export function moveOutput(
     const onBoss = bossRate * v.copies * v.onBoss * v.bossTicks;
     out.single += onBoss * v.scale * bossHit;
     out.bossHits += onBoss;
-    out.bossBurnRate += onBoss * chance;
+    if (def.status === "burn") out.bossBurnRate += onBoss * chance;
+    if (def.status === "poison") out.bossPoisonRate += onBoss * chance;
     if (def.status) addApply(out, def.status, 0, onBoss * chance);
   }
   out.targets = Math.max(0, ...struck.map((s) => s.n));

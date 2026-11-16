@@ -15,6 +15,9 @@ export const fusionRecipes: readonly FusionRecipe[] = [
   { result: "floral-beam", match: { pair: ["razor-leaf", "solar-beam"] } },
   { result: "hydro-spiral", match: { pair: ["rapid-spin", "hydro-pump"] } },
   { result: "ball-storm", match: { pair: ["electro-ball", "thunder"] } },
+  { result: "nightmare-vortex", match: { pair: ["smog", "hex"] } },
+  { result: "dragon-tempest", match: { pair: ["twister", "dragon-pulse"] } },
+  { result: "hundred-fists", match: { pair: ["karate-chop", "brick-break"] } },
 ];
 for (const { result } of fusionRecipes)
   if (!moves[result].fusion)

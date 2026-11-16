@@ -1,0 +1,45 @@
+{
+  "dry_run": true,
+  "valid": true,
+  "input": "/private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/gengar/split/v-front.png /private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/gengar/split/v-left.png /private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/gengar/split/v-back.png /private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/gengar/split/v-right.png",
+  "model": "v3.1-20260211",
+  "model_reason": "explicit --model",
+  "steps": [
+    {
+      "name": "multiview-to-model",
+      "endpoint": "/v3/generation/multiview-to-model",
+      "task_type": "multiview_to_model",
+      "payload": {
+        "inputs": [
+          {
+            "front": "<upload:/private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/gengar/split/v-front.png>"
+          },
+          {
+            "left": "<upload:/private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/gengar/split/v-left.png>"
+          },
+          {
+            "back": "<upload:/private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/gengar/split/v-back.png>"
+          },
+          {
+            "right": "<upload:/private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/gengar/split/v-right.png>"
+          }
+        ],
+        "smart_low_poly": true,
+        "face_limit": 1500,
+        "model": "v3.1-20260211"
+      }
+    }
+  ],
+  "pending_uploads": [
+    "/private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/gengar/split/v-front.png",
+    "/private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/gengar/split/v-left.png",
+    "/private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/gengar/split/v-back.png",
+    "/private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/gengar/split/v-right.png"
+  ],
+  "deliverables": ["GLB"],
+  "candidates": 1,
+  "warnings": [],
+  "errors": [],
+  "generation_credits_estimate": 40,
+  "cost_notes": ["estimated generation cost: 40 credits (official list price)"]
+}

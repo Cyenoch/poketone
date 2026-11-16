@@ -5,6 +5,10 @@ import test from "node:test";
 import { updateAreas, updateMoves, updateProjectiles } from "../src/run/sim/attacks.ts";
 import { acquire, chestOf, nearest } from "../src/run/sim/archetypes/kit.ts";
 import { moves } from "../src/run/sim/content/moves.ts";
+import { COMBO } from "../src/run/sim/content/params/archetypes.ts";
+import { combo } from "../src/run/sim/archetypes/combo.ts";
+import { moveParams } from "../src/run/sim/attacks.ts";
+import { playerStats } from "../src/run/sim/stats.ts";
 import { spawnEnemy } from "../src/run/sim/director.ts";
 import { EnemyGrid } from "../src/run/sim/grid.ts";
 import { TERRAIN_HALF } from "../src/run/sim/terrain.ts";
@@ -248,6 +252,47 @@ test("every move casts through its archetype and damages an enemy in front of th
     fight(world, [id], 2);
     assert.ok(hurt(target), id);
   }
+});
+
+test("a melee combo waits, follows position without turning, and finishes with a heavier forward hit", () => {
+  const world = arena();
+  const player = world.players[0];
+  player.x = player.z = 0;
+  const front = dummy(world, 1.5, 0);
+  const back = dummy(world, -2, 0);
+  const touchingBack = dummy(world, -0.2, 0);
+  const above = dummy(world, 1.5, 1.5);
+  const ctx = { world, grid: new EnemyGrid() };
+  const def = moves["karate-chop"];
+  const p = { ...moveParams(newMoveState(def.id), playerStats(player)), crit: -1 };
+  touchingBack.hp = 0;
+  assert.equal(combo.cast(ctx, player, def, p), true);
+  touchingBack.hp = touchingBack.maxHp;
+  // The caster shifts sideways and turns away after committing; the original front target follows.
+  player.z = front.z = 1;
+  touchingBack.z = 1;
+  player.faceX = -1;
+  player.faceZ = 0;
+  above.x = 6;
+  ctx.grid.rebuild(world.enemies);
+  const damage = [];
+  const pushes = [];
+  for (let tick = 0; tick < 20; tick++) {
+    const hp = front.hp;
+    const knock = front.knockX;
+    updateAreas(ctx, TICK);
+    if ((tick + 1) * TICK <= COMBO.delay) assert.equal(front.hp, front.maxHp, "no windup hit");
+    if (front.hp < hp) {
+      damage.push(hp - front.hp);
+      pushes.push(front.knockX - knock);
+    }
+  }
+  assert.equal(damage.length, 2, "each punch hits once");
+  assert.ok(Math.abs(damage[1] / damage[0] - COMBO.finisherDamage) < 1e-8);
+  assert.ok(pushes[1] > pushes[0] * 5, "the last punch opens breathing room");
+  assert.equal(back.hp, back.maxHp, "turning never redirects the committed chain behind");
+  assert.equal(touchingBack.hp, touchingBack.maxHp, "even a touching enemy behind stays outside");
+  assert.equal(above.hp, above.maxHp, "out-of-reach targets stay untouched");
 });
 
 test("a ready move with nothing in range waits ready, and casts when a target arrives", () => {

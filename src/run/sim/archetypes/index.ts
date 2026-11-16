@@ -24,6 +24,7 @@ import { sprinkler, sprinklerArea } from "./sprinkler";
 import { strike, strikeArea } from "./strike";
 import { vortex, vortexArea } from "./vortex";
 import { wave } from "./wave";
+import { combo, comboArea } from "./combo";
 
 export const archetypes: Record<Archetype, ArchetypeDef> = {
   bolt,
@@ -46,6 +47,7 @@ export const archetypes: Record<Archetype, ArchetypeDef> = {
   firestorm,
   sprinkler,
   rod,
+  combo,
 };
 
 export const areaRules = {
@@ -61,6 +63,7 @@ export const areaRules = {
   firestorm: firestormArea,
   sprinkler: sprinklerArea,
   rod: rodArea,
+  combo: comboArea,
 } as const satisfies Record<string, AreaRule>;
 
 export type AreaKind = keyof typeof areaRules;

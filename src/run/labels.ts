@@ -30,6 +30,7 @@ export const archetypeNames: Record<Archetype, string> = {
   firestorm: "融合",
   sprinkler: "融合",
   rod: "融合",
+  combo: "连击",
 };
 
 export function formatTime(seconds: number): string {

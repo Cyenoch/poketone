@@ -29,6 +29,16 @@
     "hitMs": 0,
     "peakMs": 226
   },
+  "cast-dragon-1.flac": {
+    "lenMs": 722,
+    "hitMs": 145,
+    "peakMs": 296
+  },
+  "cast-dragon-2.flac": {
+    "lenMs": 767,
+    "hitMs": 100,
+    "peakMs": 291
+  },
   "cast-electric-1.flac": {
     "lenMs": 722,
     "hitMs": 175,
@@ -38,6 +48,16 @@
     "lenMs": 722,
     "hitMs": 5,
     "peakMs": 431
+  },
+  "cast-fighting-1.flac": {
+    "lenMs": 661,
+    "hitMs": 15,
+    "peakMs": 30
+  },
+  "cast-fighting-2.flac": {
+    "lenMs": 616,
+    "hitMs": 5,
+    "peakMs": 5
   },
   "cast-fire-1.flac": {
     "lenMs": 481,
@@ -49,6 +69,16 @@
     "hitMs": 110,
     "peakMs": 200
   },
+  "cast-ghost-1.flac": {
+    "lenMs": 566,
+    "hitMs": 125,
+    "peakMs": 180
+  },
+  "cast-ghost-2.flac": {
+    "lenMs": 501,
+    "hitMs": 95,
+    "peakMs": 165
+  },
   "cast-grass-1.flac": {
     "lenMs": 321,
     "hitMs": 70,
@@ -58,6 +88,16 @@
     "lenMs": 656,
     "hitMs": 185,
     "peakMs": 220
+  },
+  "cast-poison-1.flac": {
+    "lenMs": 481,
+    "hitMs": 60,
+    "peakMs": 60
+  },
+  "cast-poison-2.flac": {
+    "lenMs": 471,
+    "hitMs": 75,
+    "peakMs": 110
   },
   "cast-water-1.flac": {
     "lenMs": 486,
@@ -164,6 +204,16 @@
     "hitMs": 5,
     "peakMs": 10
   },
+  "hit-dragon-1.flac": {
+    "lenMs": 155,
+    "hitMs": 15,
+    "peakMs": 30
+  },
+  "hit-dragon-2.flac": {
+    "lenMs": 160,
+    "hitMs": 0,
+    "peakMs": 0
+  },
   "hit-electric-1.flac": {
     "lenMs": 100,
     "hitMs": 20,
@@ -178,6 +228,21 @@
     "lenMs": 160,
     "hitMs": 30,
     "peakMs": 30
+  },
+  "hit-fighting-1.flac": {
+    "lenMs": 135,
+    "hitMs": 15,
+    "peakMs": 30
+  },
+  "hit-fighting-2.flac": {
+    "lenMs": 160,
+    "hitMs": 5,
+    "peakMs": 15
+  },
+  "hit-fighting-3.flac": {
+    "lenMs": 125,
+    "hitMs": 15,
+    "peakMs": 15
   },
   "hit-fire-1.flac": {
     "lenMs": 160,
@@ -194,6 +259,16 @@
     "hitMs": 0,
     "peakMs": 0
   },
+  "hit-ghost-1.flac": {
+    "lenMs": 155,
+    "hitMs": 35,
+    "peakMs": 35
+  },
+  "hit-ghost-2.flac": {
+    "lenMs": 120,
+    "hitMs": 10,
+    "peakMs": 10
+  },
   "hit-grass-1.flac": {
     "lenMs": 160,
     "hitMs": 0,
@@ -208,6 +283,21 @@
     "lenMs": 160,
     "hitMs": 50,
     "peakMs": 65
+  },
+  "hit-poison-1.flac": {
+    "lenMs": 160,
+    "hitMs": 0,
+    "peakMs": 25
+  },
+  "hit-poison-2.flac": {
+    "lenMs": 120,
+    "hitMs": 0,
+    "peakMs": 25
+  },
+  "hit-poison-3.flac": {
+    "lenMs": 160,
+    "hitMs": 0,
+    "peakMs": 0
   },
   "hit-water-1.flac": {
     "lenMs": 160,

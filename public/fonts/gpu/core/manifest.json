@@ -8,51 +8,51 @@
     "libwebp": "1.6.0"
   },
   "ui-500": {
-    "json": "ui-500.63ba060879f0bc64.json",
-    "sha256": "63ba060879f0bc647b47f78d276c68127ab5935768fcdb4d2112e33bfea3b5b4",
+    "json": "ui-500.3d6c857f6c6da771.json",
+    "sha256": "3d6c857f6c6da771be327f49ec4afae54f1b6a35f9350576084cb0869f8c2164",
     "weight": 500,
-    "glyphs": 1168,
+    "glyphs": 1188,
     "pages": 2,
     "unavailable": "−",
     "chromePages": 1,
     "source": "public/fonts/noto-sans-sc-game.woff2",
     "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
-    "jsonBytes": 47937,
+    "jsonBytes": 48770,
     "pageBytes": [
-      1373754,
-      1174332
+      1409946,
+      1188944
     ]
   },
   "ui-700": {
-    "json": "ui-700.6ead14e7beb2f258.json",
-    "sha256": "6ead14e7beb2f25808f3f4903ec6abfe45be988b332813fa76e476057d6629fb",
+    "json": "ui-700.ad4b726ebfec113c.json",
+    "sha256": "ad4b726ebfec113cb373391d128f283179c340e249b250e5614410f2e95e004c",
     "weight": 700,
-    "glyphs": 1168,
+    "glyphs": 1188,
     "pages": 2,
     "unavailable": "−",
     "chromePages": 1,
     "source": "public/fonts/noto-sans-sc-game.woff2",
     "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
-    "jsonBytes": 48001,
+    "jsonBytes": 48826,
     "pageBytes": [
-      1382532,
-      1181536
+      1417186,
+      1195958
     ]
   },
   "ui-800": {
-    "json": "ui-800.c9b710c6c9b6d188.json",
-    "sha256": "c9b710c6c9b6d188ec10627df091279d21cb616493c628140f08451ef52cc721",
+    "json": "ui-800.d8a270204ebd5c48.json",
+    "sha256": "d8a270204ebd5c487025c62586d03ad0bf0806f24e3f53120bf31fb580706367",
     "weight": 800,
-    "glyphs": 1168,
+    "glyphs": 1188,
     "pages": 2,
     "unavailable": "−",
     "chromePages": 1,
     "source": "public/fonts/noto-sans-sc-game.woff2",
     "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
-    "jsonBytes": 48022,
+    "jsonBytes": 48844,
     "pageBytes": [
-      1380156,
-      1178970
+      1417832,
+      1192878
     ]
   },
   "display": {

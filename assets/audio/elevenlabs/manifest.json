@@ -1361,6 +1361,252 @@
       ],
       "pick": ["sfx-freeze-3.mp3", "sfx-freeze-1.mp3"],
       "ship": "freeze"
+    },
+    "cast-ghost": {
+      "kind": "sfx",
+      "tier": "medium",
+      "maxMs": 800,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.8,
+        "prompt_influence": 0.5
+      },
+      "node": "UD1Tfburo8IgXoDOJ7gm",
+      "prompt": "Hollow dark airy whoosh, a soft muffled ghostly breath sweeping outward and fading, rounded and dull, no wail, no scream, no high-pitched squeal, no pitched tone, short, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-cast-ghost-2.mp3",
+          "generationId": "eao78L9qAnA8aopeYnNK"
+        },
+        {
+          "file": "sfx-cast-ghost-4.mp3",
+          "generationId": "ZOoijs9LaJyCq7NMSOmg"
+        }
+      ],
+      "pick": ["sfx-cast-ghost-2.mp3", "sfx-cast-ghost-4.mp3"],
+      "ship": "cast-ghost",
+      "spend": {
+        "credits": 10.67,
+        "date": "2026-11-16"
+      }
+    },
+    "cast-poison": {
+      "kind": "sfx",
+      "tier": "medium",
+      "maxMs": 800,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.8,
+        "prompt_influence": 0.5
+      },
+      "node": "rff90ptBMtjqICsI6XNK",
+      "prompt": "Wet bubbling sludge gurgle ending in a soft slimy splat, muted and rounded, no hiss, no sizzle, no high-pitched squeal, short, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-cast-poison-1.mp3",
+          "generationId": "gc8uJZLKsBfFIq24tvAv"
+        },
+        {
+          "file": "sfx-cast-poison-2.mp3",
+          "generationId": "1L49eDEdS52TZvokspsJ"
+        }
+      ],
+      "pick": ["sfx-cast-poison-1.mp3", "sfx-cast-poison-2.mp3"],
+      "ship": "cast-poison",
+      "spend": {
+        "credits": 10.67,
+        "date": "2026-11-16"
+      }
+    },
+    "cast-dragon": {
+      "kind": "sfx",
+      "tier": "medium",
+      "maxMs": 800,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.8,
+        "prompt_influence": 0.5
+      },
+      "node": "gO8DO5uxKqvgsFfQH8mP",
+      "prompt": "Deep rolling gust whoosh, a muted low rush of wind with a soft airy thump, rounded and warm, no roar, no scream, no high-pitched squeal, no sparkle, short, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-cast-dragon-6.mp3",
+          "generationId": "EljCidcYoKLP82mwb7EA",
+          "prompt": "Airy mid-range wind rush, a quick breathy gust of air sweeping forward with a light papery flutter, thin and soft, mid-range audible on a small speaker, no bass, no rumble, no roar, no scream, no high-pitched squeal, short, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-cast-dragon-8.mp3",
+          "generationId": "UTjHWqquyfN8H7xRHDsP",
+          "prompt": "Airy mid-range wind rush, a quick breathy gust of air sweeping forward with a light papery flutter, thin and soft, mid-range audible on a small speaker, no bass, no rumble, no roar, no scream, no high-pitched squeal, short, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-cast-dragon-6.mp3", "sfx-cast-dragon-8.mp3"],
+      "ship": "cast-dragon",
+      "spend": {
+        "credits": 21.34,
+        "date": "2026-11-16"
+      },
+      "note": "Batch 1 takes all LOW/SILENT; regenerated airy mid-range (takes 5-8). Fairly bright (centroid ~5 kHz): unheard, watch for shrillness."
+    },
+    "cast-fighting": {
+      "kind": "sfx",
+      "tier": "medium",
+      "maxMs": 800,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.8,
+        "prompt_influence": 0.5
+      },
+      "node": "bcdoc50wo9nXtew88pRC",
+      "prompt": "Heavy dull martial-arts stomp with a short cloth whip swish and a wooden knock, mid-range audible on a small speaker, rounded, no ring, no pitched tone, short, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-cast-fighting-2.mp3",
+          "generationId": "XEwka8uTSWGpNDueAgUm"
+        },
+        {
+          "file": "sfx-cast-fighting-4.mp3",
+          "generationId": "6o6iig6xCl9l0qKP2wHS"
+        }
+      ],
+      "pick": ["sfx-cast-fighting-2.mp3", "sfx-cast-fighting-4.mp3"],
+      "ship": "cast-fighting",
+      "spend": {
+        "credits": 10.67,
+        "date": "2026-11-16"
+      }
+    },
+    "hit-ghost": {
+      "kind": "sfx",
+      "tier": "small",
+      "frequent": true,
+      "maxMs": 160,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "LzLgWILlDXSIaE5eqZ9Q",
+      "prompt": "Single short hollow ghostly thud, a quick muffled airy puff hitting a body, dull and rounded, mid-range audible on a small speaker, no wail, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-hit-ghost-5.mp3",
+          "generationId": "frx0UPplBzx3L5pGVqfW",
+          "prompt": "Single short soft muffled knock on a hollow wooden box with a quick airy puff, dull and rounded, mid-range audible on a small speaker, no bass, no boom, no wail, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-hit-ghost-8.mp3",
+          "generationId": "wlBQXyGa9BSFHcWfvFdD",
+          "prompt": "Single short soft muffled knock on a hollow wooden box with a quick airy puff, dull and rounded, mid-range audible on a small speaker, no bass, no boom, no wail, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-hit-ghost-5.mp3", "sfx-hit-ghost-8.mp3"],
+      "ship": "hit-ghost",
+      "spend": {
+        "credits": 13.34,
+        "date": "2026-11-16"
+      },
+      "note": "Batch 1 takes were all under 300 Hz (silent on phones); regenerated with a mid-range prompt (takes 5-8)."
+    },
+    "hit-poison": {
+      "kind": "sfx",
+      "tier": "small",
+      "frequent": true,
+      "maxMs": 160,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "swENcAzw14xVvEshHEkH",
+      "prompt": "Single short wet squelchy slap, a quick soft sludge splat hitting a body, dull and rounded, mid-range audible on a small speaker, no bubbling tail, no hiss, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-hit-poison-1.mp3",
+          "generationId": "1SkIcGMEMc0CBwyaisyX"
+        },
+        {
+          "file": "sfx-hit-poison-3.mp3",
+          "generationId": "jGEhQp2ZT148wBoTMyxF"
+        },
+        {
+          "file": "sfx-hit-poison-4.mp3",
+          "generationId": "wW3X7CDzFWOpXnmn440s"
+        }
+      ],
+      "pick": ["sfx-hit-poison-1.mp3", "sfx-hit-poison-3.mp3", "sfx-hit-poison-4.mp3"],
+      "ship": "hit-poison",
+      "spend": {
+        "credits": 6.67,
+        "date": "2026-11-16"
+      },
+      "note": "Hit of a move of this element (the hit event carries the element); other elements use the plain `hit`."
+    },
+    "hit-dragon": {
+      "kind": "sfx",
+      "tier": "small",
+      "frequent": true,
+      "maxMs": 160,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "0VJ2A0EVL7XiAPzcuN2o",
+      "prompt": "Single short muffled low gust thump, a quick dull airy whap hitting a body, rounded and soft, mid-range audible on a small speaker, no roar, no hiss, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-hit-dragon-1.mp3",
+          "generationId": "lFxEnr1nUyeyJH81Jt7I"
+        },
+        {
+          "file": "sfx-hit-dragon-6.mp3",
+          "generationId": "Fm9LqTaWkp7tDss1P1zf",
+          "prompt": "Single short dull leathery flap hitting a body, a quick soft whap with a breath of air, mid-range audible on a small speaker, no bass, no boom, no roar, no ring, no pitched tone, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-hit-dragon-1.mp3", "sfx-hit-dragon-6.mp3"],
+      "ship": "hit-dragon",
+      "spend": {
+        "credits": 13.34,
+        "date": "2026-11-16"
+      },
+      "note": "Batch 1 mostly under 300 Hz; regenerated (takes 5-8). Two takes pass the attack limit."
+    },
+    "hit-fighting": {
+      "kind": "sfx",
+      "tier": "small",
+      "frequent": true,
+      "maxMs": 160,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "eRLHLe34XMHWWqbYvClg",
+      "prompt": "Single short dull punch thud, a quick fist hitting a body with a soft cloth slap, rounded, mid-range audible on a small speaker, no ring, no pitched tone, no crunch, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-hit-fighting-1.mp3",
+          "generationId": "aXHguhMCSxTMsEYZqBHi"
+        },
+        {
+          "file": "sfx-hit-fighting-2.mp3",
+          "generationId": "TxrD4sX2w4ETE4C8tgAd"
+        },
+        {
+          "file": "sfx-hit-fighting-4.mp3",
+          "generationId": "oUDExY4Tytbi6xoDzlqO"
+        }
+      ],
+      "pick": ["sfx-hit-fighting-1.mp3", "sfx-hit-fighting-2.mp3", "sfx-hit-fighting-4.mp3"],
+      "ship": "hit-fighting",
+      "spend": {
+        "credits": 6.67,
+        "date": "2026-11-16"
+      },
+      "note": "Hit of a move of this element (the hit event carries the element); other elements use the plain `hit`."
     }
   }
 }

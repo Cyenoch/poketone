@@ -1,6 +1,7 @@
 // Nova moves (Lava Plume, Discharge): one hit on everything within `area.radius` of the caster on
-// the area's first tick. The impact is the whole effect: a ring that sweeps out to the hit radius
-// in the area's 0.3 s life, a few things thrown to the rim, a short dark residue. No 准备 (no delay).
+// the area's first tick. The impact is the whole effect: a full-radius edge at impact
+// that thins during the area's 0.3 s life, a few things thrown to the rim, a short dark residue.
+// No 准备 (no delay).
 
 import { CHEST } from "../../sim/content/params/combat";
 import { Decal } from "./decals";
@@ -83,10 +84,10 @@ export const lavaPlume: AreaLook = {
       area.maxLife,
       fire.yellow,
       0.9,
-      fire.deep,
-      0.5,
-      0.14,
+      fire.orange,
       0.35,
+      0.055,
+      1,
     );
     fx.decals.stamp(Decal.glow, x, z, r * 0.9, 0.25, fire.orange, 0.4, fire.yellow, 1);
     fx.decals.stamp(Decal.scorch, x, z, r * 0.75, 1.2, fire.soot, 0.55, fire.orange, 0);
@@ -99,9 +100,9 @@ export const lavaPlume: AreaLook = {
 /** Arcs from the caster out to the hit radius. a = radius, b = chest height. */
 function drawDischarge(fx: Fx, echo: Echo, t: number): void {
   const seed = flicker(fx, echo.seed, 24);
-  const alpha = 1 - t * t;
+  const alpha = (1 - t) ** 2;
   const count = 6;
-  const out = 0.35 + 0.65 * Math.min(1, t * 3);
+  const out = 1 - t * 0.2;
   for (let i = 0; i < count; i++) {
     const angle = (i / count) * Math.PI * 2 + echo.seed;
     const d = echo.a * out * (0.85 + 0.15 * Math.sin(seed * 1.7 + i));
@@ -126,19 +127,7 @@ export const discharge: AreaLook = {
   strike(fx, area, x, z) {
     const r = area.radius;
     const h = fx.ground.heightAt(x, z);
-    fx.decals.stamp(
-      Decal.ring,
-      x,
-      z,
-      r,
-      area.maxLife,
-      electric.yellow,
-      0.95,
-      white,
-      0.7,
-      0.12,
-      0.35,
-    );
+    fx.decals.stamp(Decal.ring, x, z, r, area.maxLife, electric.yellow, 0.95, white, 0.7, 0.05, 1);
     fx.decals.stamp(Decal.glow, x, z, r * 0.85, 0.2, electric.yellow, 0.2, electric.gold, 0.6);
     fx.echoes.add(drawDischarge, 0.24, x, 0, z, r, h + CHEST);
     fx.sprites.emit(flash, x, h + CHEST, z, 0, 0, 0, 0.28);

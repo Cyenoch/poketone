@@ -1,0 +1,10 @@
+{
+  "assets": ["ghost", "dragon", "fighting", "poison", "flying"],
+  "generator": "Magpie generate_image, openrouter/google/gemini-nano-banana-2.1",
+  "createdAt": "2026-11-16",
+  "prompt": "A sprite sheet of 6 game type crest icons arranged in perfectly even 3x2 grid equal square cells separated by wide uniform empty gaps, each icon centered on plain flat warm off-white (#f5f1e8) background. Row by row left to right: GHOST purple playful ghost silhouette with two dark eyes and curling wisps; DRAGON blue violet dragon head silhouette with horn and curved neck; FIGHTING terracotta orange clenched fist with two impact sparks; POISON magenta poison droplet with two smaller bubbles; FLYING pale blue feathered wing with three clear feathers; a small neutral gray star (unused). Match visual weight and thick outline of reference crests. Clean solid background, no noise and no glow halo. Bright clean cartoon game art for a low-poly Pok\u00e9mon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject.",
+  "source": "/private/tmp/claude-501/-Users-jgbingzi-workspace-sp-poketone/8600f0d6-6a97-476b-8a57-95d549365f91/scratchpad/models/crests.jpg",
+  "references": ["public/art/icons/crests/fire.webp", "public/art/icons/crests/water.webp"],
+  "processing": "Returned 3x3 sheet with duplicated last row; first five cells via assets/icons/slice-sheet.py at 128px, transparent border flood fill, WebP q88.",
+  "rights": "Generated for noncommercial Pok\u00e9mon fan project."
+}

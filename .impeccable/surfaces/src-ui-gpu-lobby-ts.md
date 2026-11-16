@@ -25,6 +25,15 @@ STORY: picking a partner rebuilds the scene's type light: the podium ring, the a
 
 FIRST VIEWPORT: desktop 1280×800 and phone 844×390 use one structure. The hero zone is on the left and the decision column on the right, anchored bottom-right. The legal notice is centered along the bottom on wide screens and right-aligned below the decision column on compact screens. Nothing interactive goes in the phone's bottom-left. A short screen (logical height ≤ 600) uses the lobby's compact sizes.
 
+ROSTER: the medals derive from `starterOrder`, never a fixed count. The compact tier keeps one row (touch-minimum medals; the column widens to hold them before the hero zone gives way). Desktop keeps one row while a medal stays ≥ 64; past that, two staggered rows (top row first, the second offset by half a medal, honeycomb spacing). Only the picked medal carries the Poké Ball mark; it sits larger and lifted, so the party reads at a glance.
+
+FEEL (one authored moment per action, all on the shared motion clock):
+- Switching partner is the lobby's moment: a type light pillar flashes up from the podium, a shockwave runs across the podium's top face, the new partner pops in with a small overshoot while the old one sinks; the ribbon sweeps in from the right, the picked medal pops.
+- Idle life: three soft type-light rays turn slowly behind the partner, the ground pool breathes, the crests rise (scene clock, 30Hz). 出发 carries a light sweep every few seconds (30Hz while it runs, nothing between).
+- Controls: medals lift on hover and sink on press; 出发 lifts, its wedges run, a press squashes it onto its base.
+
+LIGHT: the scene grounds the column with a soft navy-deep shade behind its bottom right, so loose medals and the tray stay legible on any backdrop crop. The brand is a game logo (outlined display wordmark on the Charmander mark), not a web header.
+
 FORM: no framed card around the stage, no white info box, no gradient buttons, no one-side accent borders, no explanatory copy. Roster medals stand loose on the scene. Only the 出发 group has a tray. Tooltips for column controls open to the column's left.
 
 ## Historical design comps

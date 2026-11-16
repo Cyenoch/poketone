@@ -42,6 +42,9 @@ import * as guardians from "./vfx/guardianSkills";
 import { PSYBEAM, VINE, ROCKFALL } from "../sim/content/params/enemy-skills";
 
 import { Decals } from "./vfx/decals";
+import { lineShotLooks, lineAreaLooks, lineBurstLooks } from "./vfx/lines";
+import { dreamReturn, shadowPhase } from "./vfx/ghost";
+import { starters } from "../sim/content/lines/index";
 import { defaultAreaLook, defaultShotLook } from "./vfx/defaults";
 import {
   chain,
@@ -90,6 +93,7 @@ import {
 
 /** Bespoke looks by move; the rest fall back to their archetype's default (vfx/defaults.ts). */
 const shotLooks: Partial<Record<MoveId, ShotLook>> = {
+  ...lineShotLooks,
   "will-o-wisp": willOWisp,
   "shock-wave": shockWave,
   "giga-drain": gigaDrain,
@@ -107,6 +111,7 @@ const shotLooks: Partial<Record<MoveId, ShotLook>> = {
 };
 
 const areaLooks: Partial<Record<MoveId, AreaLook>> = {
+  ...lineAreaLooks,
   "fire-spin": fireSpin,
   flamethrower,
   "vine-whip": vineWhip,
@@ -126,6 +131,7 @@ const areaLooks: Partial<Record<MoveId, AreaLook>> = {
 
 /** The `burst` areas that orbs and vortices leave behind, by the move that made them. */
 const burstLooks: Partial<Record<MoveId, AreaLook>> = {
+  ...lineBurstLooks,
   "fire-spin": fireSpinBurst,
   "fire-blast": fireBlastBurst,
   "electro-ball": electroBurst,
@@ -182,7 +188,20 @@ interface WarnTrack {
 /** Events drawn at the player, who is only known once `update` sees the world. */
 type PlayerEvent = Extract<
   RunEvent,
-  { t: "dash" | "level" | "revive" | "player-hit" | "drain" | "evolve" | "ult" | "heal" | "buff" }
+  {
+    t:
+      | "dash"
+      | "level"
+      | "revive"
+      | "player-hit"
+      | "drain"
+      | "evolve"
+      | "ult"
+      | "heal"
+      | "buff"
+      | "evade"
+      | "ult-pulse";
+  }
 >;
 
 const dummy = new Object3D();
@@ -369,10 +388,10 @@ export class Vfx {
       case "ult":
       case "heal":
       case "buff":
-        this.playerEvents.push(event);
-        break;
+      case "evade":
+      // The new lines' ultimates share looks with older ones; the caster's line picks the drawing.
       case "ult-pulse":
-        ultPulse(fx, event);
+        this.playerEvents.push(event);
         break;
       case "item-burst":
         itemBurst(fx, event);
@@ -464,10 +483,14 @@ export class Vfx {
       if (!player) continue;
       const x = lerp(player.px, player.x, alpha);
       const z = lerp(player.pz, player.z, alpha);
-      if (event.t === "dash") common.dash(this.fx, x, z, player.dashX, player.dashZ);
+      if (event.t === "ult-pulse") ultPulse(this.fx, event, starters[player.starter].ultimate);
+      else if (event.t === "dash") common.dash(this.fx, x, z, player.dashX, player.dashZ);
       else if (event.t === "level" || event.t === "revive") common.levelUp(this.fx, x, z);
-      else if (event.t === "drain") drainBack(this.fx, event.x, event.z, x, z);
-      else if (event.t === "evolve") evolveColumn(this.fx, x, z);
+      else if (event.t === "drain")
+        (player.starter === "gastly" ? dreamReturn : drainBack)(this.fx, event.x, event.z, x, z);
+      else if (event.t === "evade") {
+        if (player.starter === "gastly") shadowPhase(this.fx, x, z);
+      } else if (event.t === "evolve") evolveColumn(this.fx, x, z);
       else if (event.t === "ult") ultCast(this.fx, event.line, x, z);
       else if (event.t === "heal") healCue(this.fx, x, z, formOf(player).radius, event.share);
       else if (event.t === "buff") {

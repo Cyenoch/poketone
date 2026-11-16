@@ -7,6 +7,7 @@ import { CHEST } from "../../sim/content/params/combat";
 import type { UltPulseEvent } from "../../sim/state/events";
 import type { UltimateId } from "../../sim/content/ultimates";
 import { Decal } from "./decals";
+import { lineUltColour, lineUltPulse } from "./lines";
 import { flicker, rand, skyTop, spray, type Echo, type Fx } from "./fx";
 import type { Rgb } from "./gl";
 import { electric, fire, gold, grass, powder, water, white } from "./palette";
@@ -95,6 +96,12 @@ const foam = sprite({
   alpha: 0.8,
   drag: 3,
 });
+const cannonJet = sprite({
+  shape: Shape.spark,
+  from: water.mid,
+  accent: water.foam,
+  stretch: 0.06,
+});
 const spark = sprite({
   shape: Shape.spark,
   life: 0.25,
@@ -109,6 +116,7 @@ const spark = sprite({
 });
 
 const ultColour: Record<UltimateId, readonly [Rgb, Rgb]> = {
+  ...lineUltColour,
   "frenzy-plant": [grass.leaf, grass.sun],
   "blast-burn": [fire.orange, fire.core],
   "hydro-cannon": [water.mid, water.foam],
@@ -161,17 +169,18 @@ export function ultCast(fx: Fx, line: StarterId, x: number, z: number): void {
   if (starters[line].ultimate === "blast-burn") return;
   const [colour, core] = ultColour[starters[line].ultimate];
   const y = fx.ground.heightAt(x, z) + CHEST;
-  fx.sprites.emit(flash, x, y, z, 0, 0, 0, 1.4);
+  fx.sprites.emit(flash, x, y, z, 0, 0, 0, 0.55);
   fx.decals.stamp(Decal.ring, x, z, 1.4, 0.35, colour, 1, core, 0.8, 0.3, 0.1);
 }
 
-export function ultPulse(fx: Fx, e: UltPulseEvent): void {
+export function ultPulse(fx: Fx, e: UltPulseEvent, ultimate?: UltimateId): void {
+  if (ultimate && lineUltPulse(fx, e, ultimate)) return;
   const { x, z, radius: r } = e;
   const h = fx.ground.heightAt(x, z);
   switch (e.look) {
     case "roots":
-      fx.echoes.add(drawRootLane, 0.7, x, r, z, e.dirX, e.dirZ, e.length);
-      fx.echoes.add(drawRoot, 0.55, x, h, z, e.dirX, e.dirZ, e.length);
+      fx.echoes.add(drawRootLane, 0.45, x, r, z, e.dirX, e.dirZ, e.length);
+      fx.echoes.add(drawRoot, 0.4, x, h, z, e.dirX, e.dirZ, e.length);
       along(e, (px, pz) => spray(fx, leaf, px, h + 0.3, pz, 2, 2, 3, 0.18));
       return;
     case "sun":
@@ -189,11 +198,11 @@ export function ultPulse(fx: Fx, e: UltPulseEvent): void {
         );
       return;
     case "spores":
-      fx.decals.stamp(Decal.ring, x, z, r, 0.5, powder.lilac, 0.8, white, 0.4, 0.15, 0.3);
+      fx.decals.stamp(Decal.ring, x, z, r, 0.25, powder.lilac, 0.65, white, 0.25, 0.045, 1);
       spray(fx, spore, x, h + 0.5, z, 14, r * 1.6, 0.6, 0.6);
       return;
     case "petals":
-      fx.decals.stamp(Decal.ring, x, z, r, 0.45, powder.pink, 0.9, white, 0.6, 0.12, 0.6);
+      fx.decals.stamp(Decal.ring, x, z, r, 0.26, powder.pink, 0.75, white, 0.3, 0.045, 1);
       spray(fx, petal, x, h + 0.6, z, 22, r * 2.2, 1.5, 0.22);
       return;
     case "pillar":
@@ -224,7 +233,7 @@ export function ultPulse(fx: Fx, e: UltPulseEvent): void {
       );
       return;
     case "wave":
-      fx.decals.stamp(Decal.ring, x, z, r, 0.45, water.light, 1, water.foam, 0.6, 0.14, 0.2);
+      fx.decals.stamp(Decal.ring, x, z, r, 0.25, water.light, 0.85, water.foam, 0.35, 0.045, 1);
       fx.decals.stamp(Decal.ripple, x, z, r, 0.7, water.mid, 0.6, water.foam, 0.3);
       rim(x, z, r, 22, (px, pz, a) =>
         fx.sprites.emit(
@@ -261,29 +270,16 @@ export function ultPulse(fx: Fx, e: UltPulseEvent): void {
       return;
     case "cannon":
       fx.echoes.add(drawCannon, 0.16, x, r, z, e.dirX, e.dirZ, e.length);
-      // The strip alone is lost on grass; a line of drops along the beam carries its direction.
-      along(e, (px, pz) =>
-        fx.sprites.emit(
-          drop,
-          px,
-          fx.ground.heightAt(px, pz) + 0.6,
-          pz,
-          e.dirX * 4,
-          1.5,
-          e.dirZ * 4,
-          0.16,
-        ),
-      );
       return;
     case "storm":
       fx.echoes.add(drawSkyBolt, 0.18, x, h, z, 0.07);
-      fx.decals.stamp(Decal.ring, x, z, r, 0.25, electric.yellow, 0.9, white, 0.8, 0.2, 0.2);
+      fx.decals.stamp(Decal.ring, x, z, r, 0.22, electric.yellow, 0.8, white, 0.4, 0.05, 1);
       spray(fx, spark, x, h + 0.3, z, 6, 4, 3, 0.18);
       return;
     case "bolt":
       fx.echoes.add(drawSkyBolt, 0.3, x, h, z, 0.16);
-      fx.sprites.emit(flash, x, h + 0.8, z, 0, 0, 0, r * 1.1);
-      fx.decals.stamp(Decal.ring, x, z, r, 0.35, electric.yellow, 1, white, 0.8, 0.15, 0.1);
+      fx.sprites.emit(flash, x, h + 0.5, z, 0, 0, 0, r * 0.45);
+      fx.decals.stamp(Decal.ring, x, z, r, 0.24, electric.yellow, 0.9, white, 0.4, 0.05, 1);
       fx.decals.stamp(Decal.cracks, x, z, r * 0.8, 1.2, electric.gold, 0.6, white, 0.5);
       spray(fx, spark, x, h + 0.4, z, 14, 7, 5, 0.22);
       return;
@@ -298,9 +294,9 @@ export function ultPulse(fx: Fx, e: UltPulseEvent): void {
         electric.yellow,
         0.9,
         white,
-        0.8,
-        0.2,
-        0.2,
+        0.4,
+        0.05,
+        1,
       );
       return;
   }
@@ -316,7 +312,7 @@ function strip(fx: Fx, echo: Echo, colour: Rgb, edge: Rgb, alpha: number, style:
 }
 
 function drawRootLane(fx: Fx, echo: Echo, t: number): void {
-  strip(fx, echo, grass.deep, grass.leaf, 0.7 * (1 - t * t), 2);
+  strip(fx, echo, grass.deep, grass.leaf, 0.55 * (1 - t) ** 2, 1);
 }
 
 function drawMagmaLane(fx: Fx, echo: Echo, t: number): void {
@@ -357,9 +353,9 @@ function rim(
   }
 }
 
-/** A root rope that pushes out along the lane, then sinks. a, b: heading; c: length. */
+/** Roots erupt across the instant-hit lane, then sink. a, b: heading; c: length. */
 function drawRoot(fx: Fx, echo: Echo, t: number): void {
-  const reach = Math.min(1, t / 0.25) * echo.c;
+  const reach = echo.c;
   const sink = t < 0.6 ? 0 : (t - 0.6) / 0.4;
   for (let i = 0; i <= 10; i++) {
     const s = (reach * i) / 10;
@@ -490,5 +486,22 @@ function drawHop(fx: Fx, echo: Echo, t: number): void {
 
 /** One cannon beam; y: half-width, a, b: heading, c: length. Each tick's beam is drawn briefly. */
 function drawCannon(fx: Fx, echo: Echo, t: number): void {
-  strip(fx, echo, water.mid, water.foam, 0.85 * (1 - t), 1);
+  strip(fx, echo, water.deep, water.foam, 0.8 * (1 - t) ** 2, 1);
+  // Eight short jets share the existing sprite batch and replace each tick's lingering drops.
+  const step = echo.c / 8;
+  for (let i = 0; i < 8; i++) {
+    const d = (i + 0.5) * step;
+    const px = echo.x + echo.a * d;
+    const pz = echo.z + echo.b * d;
+    fx.sprites.draw(
+      cannonJet,
+      px,
+      fx.ground.heightAt(px, pz) + 0.4,
+      pz,
+      echo.y * 0.45 * (1 - t),
+      0.8 * (1 - t),
+      echo.a * step * 3,
+      echo.b * step * 3,
+    );
+  }
 }

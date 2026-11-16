@@ -11,7 +11,7 @@ import {
 import { images } from "../../prepare/images";
 import type { ElementType } from "../../run/sim/content/elements";
 import { crispLineGlsl } from "./crisp-line";
-import { themeGrain } from "./run-overlays-surface";
+import { themeGrain, typeColors } from "./run-theme";
 
 /**
  * GPU paint for the choice window (run-screen.css `.run-card`, `.choice-banner`, `.game-button`).
@@ -27,58 +27,6 @@ export interface ChoiceCardStyle {
   kind: CardKind;
   tone: CardTone;
   type: ElementType | null;
-}
-
-/** Element accents (DESIGN.md › type-*): the type colour and its soft face. */
-export const typeColors: Record<ElementType, { type: string; soft: string }> = {
-  fire: { type: "#f0702e", soft: "#ffe2cf" },
-  water: { type: "#2f8fe0", soft: "#d6ecff" },
-  grass: { type: "#3e9e3a", soft: "#dcf3d2" },
-  electric: { type: "#d9a400", soft: "#fff2c2" },
-  normal: { type: "#8a8574", soft: "#efece4" },
-  poison: { type: "#9a4fc7", soft: "#f0dcfa" },
-  bug: { type: "#7f9a1c", soft: "#eef3cf" },
-  flying: { type: "#6f86d0", soft: "#e3e9fa" },
-  rock: { type: "#a8913a", soft: "#f2ebcf" },
-  ground: { type: "#c07a3e", soft: "#f8e6d4" },
-  fighting: { type: "#c4402f", soft: "#f8dcd6" },
-  psychic: { type: "#e5487a", soft: "#fde0ea" },
-  ghost: { type: "#6b5a9e", soft: "#e6e0f4" },
-  fairy: { type: "#e07cb4", soft: "#fce4f1" },
-  steel: { type: "#62869c", soft: "#e1e9ef" },
-  ice: { type: "#5caab8", soft: "#e3f7fa" },
-  dragon: { type: "#5640d8", soft: "#e1dcfb" },
-};
-
-export interface ThemeColors {
-  theme: string;
-  deep: string;
-  light: string;
-  soft: string;
-}
-/**
- * The run themes (DESIGN.md › 主题): a starter type's colour and soft face (`typeColors`) with its
- * deep and light steps. Normal and poison are the steps a station paints move types with.
- */
-const themeSteps: Partial<Record<ElementType, { deep: string; light: string }>> = {
-  fire: { deep: "#9c3412", light: "#ffb36b" },
-  grass: { deep: "#1f5e22", light: "#9be07a" },
-  water: { deep: "#164f8c", light: "#8fd0ff" },
-  electric: { deep: "#7d5a00", light: "#ffe45c" },
-  normal: { deep: "#5f5a4e", light: "#d1cabb" },
-  poison: { deep: "#60307e", light: "#ddb5ed" },
-};
-const runThemes = new Map<ElementType, ThemeColors>();
-
-/** A type's theme steps; types without their own use normal's. */
-export function themeColors(type: ElementType): ThemeColors {
-  const own: ElementType = themeSteps[type] ? type : "normal";
-  let theme = runThemes.get(own);
-  if (!theme) {
-    const { type: colour, soft } = typeColors[own];
-    runThemes.set(own, (theme = { theme: colour, soft, ...themeSteps[own]! }));
-  }
-  return theme;
 }
 
 /** A move type's soft face (`--type-soft`). */
@@ -109,11 +57,25 @@ function mixHex(a: string, b: string, amountA: number): Vector3 {
     .add(srgb(b).multiplyScalar(1 - amountA));
 }
 
+/** Type faces in `public/art/cards`; a move of any other type takes the normal face. */
+export const cardFaces: ReadonlySet<ElementType> = new Set<ElementType>([
+  "fire",
+  "water",
+  "grass",
+  "electric",
+  "normal",
+  "ghost",
+  "dragon",
+  "fighting",
+  "poison",
+  "flying",
+]);
+
 /** Card art (public/art/cards), loaded once per overlay layer so a deal never shows an empty face. */
 export class ChoiceArt {
   private readonly textures = new Map<string, Texture>();
   constructor(onLoad: () => void) {
-    for (const name of ["fire", "water", "grass", "electric", "normal", "item", "train"])
+    for (const name of [...cardFaces, "item", "train"])
       this.textures.set(name, images().texture(`/art/cards/${name}.webp`, "art", onLoad));
   }
   get(name: string): Texture {

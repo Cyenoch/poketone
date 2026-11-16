@@ -1,43 +1,7 @@
 import { Content } from "@pmndrs/uikit";
 import { Color, Mesh, MeshBasicMaterial, PlaneGeometry, Vector2 } from "three";
 import type { ElementType } from "../../run/sim/content/elements";
-
-/** The theme's `--theme-grain` (run-theme.css) as GLSL: sets `grain` (0–1) at padding-box point `p`. */
-export function themeGrain(theme: ElementType | "chest"): {
-  kind: number;
-  color: string;
-  glsl: string;
-} {
-  const kind =
-    theme === "fire"
-      ? 0
-      : theme === "grass"
-        ? 1
-        : theme === "water"
-          ? 2
-          : theme === "chest"
-            ? 4
-            : 3;
-  const glsl =
-    kind === 0
-      ? `
-          float a=length(mod(p,vec2(11.,9.))-vec2(2.75,6.75));
-          float b=length(mod(p,vec2(7.))-vec2(4.9,2.1));
-          grain=max((1.-smoothstep(1.5-aa,2.+aa,a))*.55,(1.-smoothstep(1.-aa,1.5+aa,b))*.35);
-        `
-      : kind === 1
-        ? `grain=(1.-smoothstep(2.-aa,2.+aa,mod(-p.x*.819152+p.y*.573576,9.)))*.3;`
-        : kind === 2
-          ? `float d=length(mod(p,vec2(12.,7.))-vec2(6.,9.1));grain=(1.-smoothstep(.5-aa,1.+aa,abs(d-5.5)))*.4;`
-          : kind === 4
-            ? `grain=(1.-smoothstep(1.5-aa,2.+aa,length(mod(p,vec2(10.,9.))-vec2(3.,6.3))))*.45;`
-            : `vec2 q=mod(p+vec2(4.,0.),8.);grain=max(step(q.x+q.y,4.),step(8.,q.x-q.y+4.))*.34;`;
-  return {
-    kind,
-    color: ["#ffecaa", "#e8ffd6", "#e1f5ff", "#fffcdc", "#ffffff"][kind]!,
-    glsl,
-  };
-}
+import { themeEdge, themeGrain } from "./run-theme";
 
 /** The existing run-theme.css band's grain and bottom silhouettes, evaluated in logical pixels. */
 export class RunHeaderSurface {
@@ -49,7 +13,7 @@ export class RunHeaderSurface {
     depthWrite: false,
   });
   private readonly size = { value: new Vector2(1, 1) };
-  constructor(theme: ElementType | "chest", top: string, bottom: string, edge: boolean) {
+  constructor(theme: ElementType, top: string, bottom: string, edge: boolean) {
     const grain = themeGrain(theme),
       kind = grain.kind;
     this.material.customProgramCacheKey = () => `poketone-run-header-${kind}-${edge}`;
@@ -76,19 +40,11 @@ export class RunHeaderSurface {
         float aa=.5*max(fwidth(p.x),fwidth(p.y));
         vec3 ink=mix(bandTop,bandBottom,clamp(p.y/bandSize.y,0.,1.));
         float grain=0.;
-        ${grain.glsl}
+        {${grain.glsl}}
         ink=mix(ink,bandGrain,grain);
         float depth=bandSize.y-2.-p.y;
         float edge=0.;
-        ${
-          kind === 0
-            ? `vec2 q=vec2((mod(p.x,9.)-4.5)/3.6,depth/8.);edge=step(dot(q,q),1.);`
-            : kind === 1
-              ? `vec2 q=vec2(mod(p.x,14.)/14.,depth/6.4);edge=step(dot(q,q),.49);`
-              : kind === 2
-                ? `vec2 q=vec2((mod(p.x,16.)-8.)/9.6,depth/5.6);edge=step(dot(q,q),1.);`
-                : `edge=step(depth,8.-abs(mod(p.x,14.)-7.));`
-        }
+        ${themeEdge(theme, "p.x", "depth")}
         ink=mix(ink,vec3(1.),edge*step(0.,depth)*step(depth,8.)*${edge ? ".3" : "0."});
         ink=mix(ink,vec3(.004025,.016807,.049707),step(bandSize.y-2.,p.y)*${edge ? "1." : "0."});
         float radius=p.y<bandSize.y*.5?6.:3.;

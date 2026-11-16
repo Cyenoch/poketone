@@ -35,6 +35,12 @@ export const Shape = {
   needle: 15,
   /** Singing uses a note, never the sleep Z. */
   note: 16,
+  /** Inked ghost: round head, wavy hem, two eye holes; sways with time. */
+  spirit: 17,
+  /** Inked fist seen from the front: four knuckles over a thumb. */
+  fist: 18,
+  /** Inked dragon scale: an almond along its motion (+x) with curved scallop bands. */
+  scale: 19,
 } as const;
 
 /** A particle or sprite recipe. Sizes are half-extents in world units, scaled by the size passed in. */
@@ -303,6 +309,50 @@ vec4 note(vec2 p) {
   return layer(mix(vBody.rgb,INK,smoothstep(0.72,1.0,d)),1.0-smoothstep(0.9,1.1,d),0.0);
 }
 
+vec4 spirit(vec2 p, float seed) {
+  float t = uTime * 6.0 + seed * 20.0;
+  p.x += sin(p.y * 3.0 + t) * 0.07 * (0.5 - p.y);
+  float head = (length((p - vec2(0.0, 0.16)) / vec2(0.6, 0.62)) - 1.0) * 0.6;
+  float hem = -0.8 + 0.14 * sin(p.x * 11.0 + t * 1.3);
+  float skirt = max(max(abs(p.x) - 0.6 + 0.12 * (0.16 - p.y), hem - p.y), p.y - 0.16);
+  float d = min(head, skirt);
+  float a = smoothstep(0.03, -0.03, d);
+  float rim = smoothstep(-0.13, -0.06, d);
+  float light = smoothstep(-0.8, 0.8, dot(p, vec2(-0.5, 0.8)));
+  vec3 c = mix(vAccent.rgb, vBody.rgb, light);
+  float eyes = smoothstep(0.12, 0.07, length((vec2(abs(p.x), p.y) - vec2(0.23, 0.2)) / vec2(0.75, 1.0)));
+  return layer(mix(c, INK, max(rim * 0.85, eyes)), a, 0.0);
+}
+
+vec4 fist(vec2 p) {
+  // Front view: four knuckle bumps on top, the curled fingers, a thumb across them and a wrist cuff.
+  float body = boxDistance(p - vec2(0.0, 0.02), vec2(0.5, 0.36)) - 0.2;
+  float knuckles = 1e3;
+  for (int i = 0; i < 4; i++) knuckles = min(knuckles, length(p - vec2(-0.48 + float(i) * 0.32, 0.52)) - 0.19);
+  float thumb = boxDistance(p - vec2(-0.12, -0.32), vec2(0.4, 0.05)) - 0.13;
+  float wrist = boxDistance(p - vec2(0.04, -0.68), vec2(0.34, 0.1)) - 0.06;
+  float d = min(min(body, knuckles), min(thumb, wrist));
+  float a = smoothstep(0.03, -0.03, d);
+  float rim = smoothstep(-0.12, -0.05, d);
+  float cx = min(min(abs(p.x + 0.32), abs(p.x)), abs(p.x - 0.32));
+  float crease = smoothstep(0.04, 0.015, cx) * smoothstep(-0.2, -0.1, p.y) * smoothstep(0.62, 0.45, p.y);
+  float fold = smoothstep(0.05, 0.015, abs(thumb)) * step(-0.62, p.y);
+  float cuff = smoothstep(0.05, 0.015, abs(p.y + 0.56)) * step(abs(p.x - 0.04), 0.42);
+  float light = smoothstep(-0.8, 0.8, dot(p, vec2(-0.5, 0.8)));
+  vec3 c = mix(vAccent.rgb, vBody.rgb, light);
+  return layer(mix(c, INK, max(rim * 0.9, max(max(crease, fold), cuff) * 0.75)), a, 0.0);
+}
+
+vec4 scale(vec2 p) {
+  float w = 0.58 * sqrt(max(0.0, 1.0 - p.x * p.x)) * (1.0 - 0.3 * p.x);
+  float d = w - abs(p.y);
+  float a = smoothstep(0.0, 0.05, d) * step(abs(p.x), 1.0);
+  float q = abs(p.y) / max(w, 1e-3);
+  float bands = smoothstep(0.5, 0.62, fract(length(p - vec2(-1.2, 0.0)) * 2.4));
+  vec3 c = mix(vBody.rgb, vAccent.rgb, bands * 0.55);
+  return layer(mix(c, INK, smoothstep(0.62, 0.8, q)), a, 0.0);
+}
+
 void main() {
   float shape = vMeta.x;
   float age = vMeta.y;
@@ -326,7 +376,10 @@ void main() {
   else if (shape < 13.5) c = zed(p);
   else if (shape < 14.5) c = bang(p);
   else if (shape < 15.5) c = needle(p);
-  else c = note(p);
+  else if (shape < 16.5) c = note(p);
+  else if (shape < 17.5) c = spirit(p, seed);
+  else if (shape < 18.5) c = fist(p);
+  else c = scale(p);
   c *= vBody.a;
   if (c.r + c.g + c.b + c.a < 0.004) discard;
   gl_FragColor = c;

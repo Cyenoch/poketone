@@ -5,7 +5,8 @@ import { FullscreenIcon } from "./fullscreen-icon";
 import { type NavigationAction } from "../../platform/input";
 import { InputGlyph } from "./input-glyph";
 import { GpuDamageNumbers } from "./run-damage-numbers";
-import { softOf, themeColors } from "./run-choice-surface";
+import { softOf } from "./run-choice-surface";
+import { crestPose, themeColors, themeGrain } from "./run-theme";
 import { GpuEdgeGlow } from "./run-edge-glow";
 import { GpuEdgeIndicators } from "./run-edge-indicators";
 import type { World } from "../../run/sim/state/world";
@@ -29,7 +30,7 @@ import type { StarterId } from "../../run/sim/content/lines/index";
 import { UiStage } from "./stage";
 import type { UiInsets } from "./viewport";
 import { RunHudArt, RunHudSurface } from "./run-hud-surface";
-import { RunHeaderSurface, themeGrain } from "./run-overlays-surface";
+import { RunHeaderSurface } from "./run-overlays-surface";
 import { RunHudInteract } from "./run-hud-interact";
 import { OutlinedText } from "./outlined-text";
 import { uiEaseOut, cubicBezier } from "./focus-mark";
@@ -1152,14 +1153,14 @@ export class GpuRunHud {
     this.medalFace.uniforms.hudLight.value.set(palette[2]);
     const grain = themeGrain(state.theme);
     this.medalFace.uniforms.hudGrain.value.set(grain.color);
-    this.medalFace.uniforms.hudKind.value = Math.min(3, grain.kind);
+    this.medalFace.uniforms.hudKind.value = grain.kind;
     this.xp.uniforms.hudColor.value.set("#59c8ff");
     this.ultimate.uniforms.hudColor.value.set(palette[2]);
     this.ultimate.uniforms.hudLight.value.set(palette[2]);
     this.ultimate.uniforms.hudTheme.value.set(palette[0]);
     this.ultimate.uniforms.hudThemeDeep.value.set(palette[1]);
     this.ultimate.uniforms.hudGrain.value.set(grain.color);
-    this.ultimate.uniforms.hudKind.value = Math.min(3, grain.kind);
+    this.ultimate.uniforms.hudKind.value = grain.kind;
     this.halo.uniforms.hudColor.value.set(palette[2]);
     this.crest.setProperties({ src: `/art/icons/crests/${state.theme}.webp` });
     this.plateFace.uniforms.hudDeep.value.set(palette[1]);
@@ -1650,19 +1651,7 @@ export class GpuRunHud {
       this.halo.uniforms.hudTime.value = (this.elapsed % 1.2) / 1.2;
       this.stage.invalidate();
     }
-    const theme = this.state.theme;
-    const duration = theme === "grass" ? 2.6 : theme === "water" ? 2.2 : 1.4;
-    const progress = (this.elapsed % (duration * 2)) / duration;
-    const phase = cubicBezier(progress < 1 ? progress : 2 - progress, 0.42, 0, 0.58, 1);
-    const zapPhase = (this.elapsed % 2.4) / 2.4;
-    const zap = theme === "electric" && ((zapPhase >= 0.9 && zapPhase < 0.94) || zapPhase >= 0.97);
-    const scale =
-      theme === "fire" ? 1 + phase * 0.08 : theme === "water" ? 1 + phase * 0.04 : zap ? 1.12 : 1;
-    const pose = [
-      theme === "grass" ? -9 + phase * 16 : theme === "fire" ? -3 + phase * 6 : zap ? -6 : 0,
-      scale,
-      theme === "water" ? 1 - phase * 3 : theme === "fire" ? -phase : 0,
-    ] as const;
+    const pose = crestPose(this.state.theme, this.elapsed);
     if (pose.some((value, i) => value !== this.crestPose[i])) {
       this.crestPose = pose;
       this.crest.setProperties({

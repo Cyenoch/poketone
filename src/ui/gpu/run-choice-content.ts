@@ -32,8 +32,8 @@ import {
   toneColor,
   type CardKind,
   type ChoiceCardStyle,
-  themeColors,
 } from "./run-choice-surface";
+import { themeColors } from "./run-theme";
 import { HoverPattern } from "./hover-pattern";
 import { gameTag, rarityTag, typeTag } from "./tag";
 import { balanceLines, breakLines, textWidth } from "./line-break";
@@ -217,6 +217,8 @@ interface Card {
   tagRow: Container | null;
   lines: Text[];
   kind: Container;
+  /** The kind chip's word; narrow dock cards keep only its glyph. */
+  kindLabel: Component;
   glyph: Content;
   key: Container;
   lift: { value: number };
@@ -301,6 +303,9 @@ export class GpuChoiceContent {
     alignItems: "stretch",
     flexShrink: 0,
   });
+  /** The dock's scroller: the card row inside keeps its full height, so every card grows with the
+   *  longest effect and the row scrolls (a capped row would clamp its cards and spill the text). */
+  private readonly dockScroll = new Container({ flexDirection: "column", flexShrink: 1 });
   private readonly actionsBox = new Container({
     flexDirection: "row",
     flexWrap: "wrap",
@@ -357,7 +362,7 @@ export class GpuChoiceContent {
     return this.state.dismissible === true;
   }
   get scrollBody(): Container {
-    return this.docked ? this.cardsBox : this.root;
+    return this.docked ? this.dockScroll : this.root;
   }
   /** A pick is flying (or has landed and waits for the run to answer); nothing else can happen. */
   get picking(): boolean {
@@ -742,7 +747,7 @@ export class GpuChoiceContent {
         item ? undefined : { color: "#142f50", width: 1.5 },
       );
       const glyph = stack(this.kindGlyph(copy.kind, 14), 1);
-      const label = chip.children[0]!;
+      const label = chip.children[0]! as Component;
       label.removeFromParent();
       chip.add(glyph, label);
       const kind = stack(item ? this.ringed(chip, "#4a3218", 6) : chip, 2);
@@ -800,6 +805,7 @@ export class GpuChoiceContent {
         tagRow,
         lines,
         kind,
+        kindLabel: label,
         glyph,
         key,
         lift: { value: 0 },
@@ -1223,7 +1229,8 @@ export class GpuChoiceContent {
       for (const box of [this.bannerBox, this.cardsBox, this.actionsBox, this.rail])
         box.removeFromParent();
       this.rail.add(this.bannerBox, this.actionsBox);
-      this.page.add(this.rail, this.cardsBox);
+      this.dockScroll.add(this.cardsBox);
+      this.page.add(this.rail, this.dockScroll);
       this.arranged = "dock";
     }
     this.root.setProperties({
@@ -1271,61 +1278,82 @@ export class GpuChoiceContent {
       action.badge.setProperties({ marginLeft: 0 });
     }
     // Only the cards scroll when a long description needs room; Later and reroll stay visible.
+    this.dockScroll.setProperties({
+      width: "100%",
+      overflow: "scroll",
+      scrollbarWidth: 2,
+      maxHeight: cardHeight,
+    });
     this.cardsBox.setProperties({
       width: "100%",
       gap,
       paddingTop: 4,
       paddingBottom: 4,
-      overflow: "scroll",
       alignItems: "stretch",
-      scrollbarWidth: 2,
-      maxHeight: cardHeight,
-      flexShrink: 1,
     });
     const cardWidth = (width - gap * (this.cards.length - 1)) / this.cards.length;
-    const inner = cardWidth - 16;
-    const detailSize = 12;
+    // Read mid-fight: the card's room goes to the name, icon and effect, on the run's own sizes.
+    const frame = 2,
+      band = compactHeader ? 22 : 28,
+      padX = compactHeader ? 8 : 12,
+      icon = compactHeader ? 28 : 40,
+      title = compactHeader ? 16 : 18,
+      detail = compactHeader ? 14 : 15;
+    const inner = cardWidth - 2 * padX;
     const font = this.cards[0]?.title.fontSignal.value;
     if (!font) this.layoutKey = "";
     for (const card of this.cards) {
-      card.surface.setMetrics(22, 2);
+      const ring = card.copy.kind === "item" ? 2 : 0;
+      card.surface.setMetrics(band, frame);
       card.panel.setProperties({
         width: cardWidth,
         minHeight: Math.min(150, cardHeight - 8),
-        paddingTop: 28,
-        paddingX: 8,
-        paddingBottom: this.coarse ? 12 : 26,
-        gap: 4,
+        paddingTop: band + 6,
+        paddingX: padX,
+        paddingBottom: this.coarse ? 10 : 26,
+        gap: compactHeader ? 2 : 4,
         flexShrink: 0,
       });
+      // Below 160 the chip's word would run into the rarity and type tags across the band.
+      card.kindLabel.setProperties({ display: cardWidth < 160 ? "none" : "flex" });
       card.kind.setProperties({
         display: "flex",
-        positionLeft: 4,
-        positionTop: 2,
+        positionLeft: frame + 4 - ring,
+        positionTop: frame + Math.ceil((band - 21) / 2) - ring,
       });
       card.key.setProperties({ positionRight: 5, positionTop: undefined, positionBottom: 5 });
-      card.icon.setProperties({ width: 24, height: 24, padding: 2 });
-      card.head.setProperties({ flexDirection: "row", alignItems: "center", gap: 4 });
+      card.icon.setProperties({ width: icon, height: icon, padding: compactHeader ? 2 : 4 });
+      card.head.setProperties({ flexDirection: "row", alignItems: "center", gap: 6 });
+      // Narrow cards (four on a phone) step the name down before it would wrap beside the icon.
+      let titleSize = title;
+      while (
+        font &&
+        titleSize > 14 &&
+        textWidth(card.copy.title, titleSize, font) > inner - icon - 6
+      )
+        titleSize -= 1;
       card.title.setProperties({
-        text: font ? balanceLines(card.copy.title, inner - 28, 14, font) : card.copy.title,
-        fontSize: 14,
-        lineHeight: 1.2,
+        text: font
+          ? balanceLines(card.copy.title, inner - icon - 6, titleSize, font)
+          : card.copy.title,
+        fontSize: titleSize,
+        lineHeight: lineHeight(titleSize, Math.round(titleSize * 1.2)),
         flexGrow: 1,
         flexBasis: 0,
       });
       card.tagRow?.setProperties({
         positionType: "absolute",
-        positionRight: 4,
-        positionTop: 2,
+        positionRight: frame + 4,
+        positionTop: frame + Math.ceil((band - 21) / 2),
         paddingLeft: 0,
       });
       card.lines.forEach((line, index) =>
         line.setProperties({
           text: font
-            ? breakLines(card.copy.lines[index]!, inner, detailSize, font)
+            ? breakLines(card.copy.lines[index]!, inner, detail, font)
             : card.copy.lines[index]!,
-          fontSize: detailSize,
-          lineHeight: 1.25,
+          fontSize: detail,
+          lineHeight: lineHeight(detail, Math.round(detail * 1.3)),
         }),
       );
     }
@@ -1695,7 +1723,14 @@ export class GpuChoiceContent {
     this.clearBanner();
     this.controls = [];
     // Boxes the current arrangement left detached (or not yet placed) are disposed on their own.
-    for (const box of [this.rail, this.bannerBox, this.cardsBox, this.actionsBox, this.page])
+    for (const box of [
+      this.rail,
+      this.bannerBox,
+      this.cardsBox,
+      this.dockScroll,
+      this.actionsBox,
+      this.page,
+    ])
       if (!box.parent) this.disposeTree(box);
     this.disposeTree(this.root);
   }

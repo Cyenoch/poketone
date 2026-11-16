@@ -422,6 +422,7 @@ try {
       podium: { x: 40, y: 500, w: 400, h: 140 },
       feet: { x: 240, y: 550 },
       heroH: 300,
+      column: { x: 860, y: 300, w: 392, h: 476 },
     });
     try {
       scene.show("charmander", "fire");

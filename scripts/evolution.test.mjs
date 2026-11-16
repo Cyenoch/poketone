@@ -82,6 +82,31 @@ test("maturity raises the stage but keeps the form; the next stage evolves", () 
   assert.equal(formOf(player).id, "raichu");
 });
 
+test("new player lines keep their build through both evolutions and can finish each ultimate tier", () => {
+  for (const starter of ["gastly", "dratini", "machop"]) {
+    const w = world(starter);
+    w.map.terrain = flatTerrain();
+    w.map.obstacles = [];
+    const player = w.players[0];
+    player.x = player.z = 0;
+    const target = dummy(w, 1.5, 0);
+    player.moves[0].level = 3;
+    player.moves[0].mods.dmg = 0.4;
+    const build = structuredClone(player.moves);
+    for (const stage of starters[starter].stages) {
+      player.level = stage.at;
+      evolve(player);
+      assert.equal(formOf(player).id, stage.form.id);
+      assert.deepEqual(player.moves, build, `${starter} keeps learned upgrades`);
+      const hp = target.hp;
+      cast(w);
+      assert.ok(target.hp < hp, `${stage.form.id} deals ultimate damage`);
+      assert.equal(player.ult.elapsed, -1, "the pulse sequence completes");
+      assert.equal(player.ult.charge, 0, "the sequence never recharges itself");
+    }
+  }
+});
+
 test("an evolution move is offered only once its stage is reached", () => {
   const w = world("charmander");
   const player = w.players[0];

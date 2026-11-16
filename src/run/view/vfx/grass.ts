@@ -2,7 +2,6 @@ import { Decal } from "./decals";
 import {
   perFrame,
   rand,
-  reach,
   seedOf,
   spray,
   type AreaLook,
@@ -141,53 +140,56 @@ export const razorLeaf: ShotLook = {
 /** One lash: a vine whips across the fan and a pale smear trails its tip. a = yaw, b = reach, c = signed half-angle. */
 function drawLash(fx: Fx, echo: Echo, t: number): void {
   const { x, z } = echo;
-  const sweep = 1 - (1 - Math.min(1, t / 0.6)) ** 3;
+  const sweep = 1 - (1 - Math.min(1, t / 0.35)) ** 3;
   const half = Math.abs(echo.c) * 0.95;
   const turn = Math.sign(echo.c);
   const tipAngle = turn * (-half + 2 * half * sweep);
-  const length = echo.b * (1 - 0.75 * Math.max(0, (t - 0.65) / 0.35) ** 2);
+  const length = echo.b * 0.95 * (1 - 0.75 * Math.max(0, (t - 0.65) / 0.35) ** 2);
   const alpha = 1 - Math.max(0, (t - 0.8) / 0.2);
   const lag = 0.9 * (1 - sweep);
-  const segments = 14;
-  for (let k = 0; k < segments; k++) {
-    const f = k / (segments - 1);
-    const r = 0.3 + (length - 0.3) * f;
-    const angle = echo.a + tipAngle - turn * lag * f * f;
-    const px = x + Math.sin(angle) * r;
-    const pz = z + Math.cos(angle) * r;
-    fx.ribbons.point(
-      px,
-      fx.ground.heightAt(px, pz) + 0.4 + Math.sin(f * Math.PI) * 0.2,
-      pz,
-      0.18 - 0.11 * f,
-      grass.leaf,
-      alpha,
-    );
+  const segments = 8;
+  for (let vine = 0; vine < 2; vine++) {
+    for (let k = 0; k < segments; k++) {
+      const f = k / (segments - 1);
+      const r = 0.25 + (length * (1 - vine * 0.12) - 0.25) * f;
+      const angle =
+        echo.a + Math.max(-half, Math.min(half, tipAngle - turn * (lag * f * f + vine * 0.18)));
+      const px = x + Math.sin(angle) * r;
+      const pz = z + Math.cos(angle) * r;
+      fx.ribbons.point(
+        px,
+        fx.ground.heightAt(px, pz) + 0.4 + Math.sin(f * Math.PI) * 0.2,
+        pz,
+        0.12 - 0.07 * f,
+        grass.leaf,
+        alpha,
+      );
+    }
+    fx.ribbons.flush(Ribbon.vine, 0);
   }
-  fx.ribbons.flush(Ribbon.vine, 0);
-  if (sweep < 0.98) {
-    const steps = 16;
-    const from = turn * -half;
+  if (t < 0.45) {
+    const steps = 10;
+    const impact = (1 - t / 0.45) ** 2;
     for (let k = 0; k < steps; k++) {
       const f = k / (steps - 1);
-      const angle = echo.a + from + (tipAngle - from) * f;
-      const r = length * 0.9;
+      const angle = echo.a - half + 2 * half * f;
+      const r = echo.b * 0.94;
       const px = x + Math.sin(angle) * r;
       const pz = z + Math.cos(angle) * r;
       fx.ribbons.point(
         px,
         fx.ground.heightAt(px, pz) + 0.45,
         pz,
-        0.03 + 0.4 * f,
+        Math.min(0.1, echo.b * 0.05) * (0.5 + 0.5 * Math.sin(f * Math.PI)),
         grass.light,
-        (1 - sweep) * 0.8 + 0.4,
+        impact * 0.85,
       );
     }
     fx.ribbons.flush(Ribbon.streak, 0.5);
     const tipX = x + Math.sin(echo.a + tipAngle) * length;
     const tipZ = z + Math.cos(echo.a + tipAngle) * length;
     const tipY = fx.ground.heightAt(tipX, tipZ) + 0.45;
-    fx.sprites.draw(tipFlash, tipX, tipY, tipZ, 0.3, 1 - sweep, 0, 0, fx.time * 9);
+    fx.sprites.draw(tipFlash, tipX, tipY, tipZ, 0.16, 1 - sweep, 0, 0, fx.time * 9);
     for (let i = perFrame(fx, 50); i > 0; i--) {
       fx.sprites.emit(
         shred,
@@ -209,7 +211,7 @@ export const vineWhip: AreaLook = {
     const turn = area.id % 2 === 0 ? 1 : -1;
     fx.echoes.add(
       drawLash,
-      0.34,
+      area.life,
       x,
       0,
       z,
@@ -221,6 +223,19 @@ export const vineWhip: AreaLook = {
 };
 
 export const sleepPowder: AreaLook = {
+  strike(fx, area, x, z) {
+    spray(
+      fx,
+      twinkle,
+      x + area.dirX * 0.35,
+      fx.ground.heightAt(x, z) + 0.65,
+      z + area.dirZ * 0.35,
+      3,
+      0.35,
+      0.2,
+      0.06,
+    );
+  },
   live(fx, area, x, z) {
     const length = area.length;
     const fade = Math.min(1, area.life / 0.35);
@@ -232,25 +247,30 @@ export const sleepPowder: AreaLook = {
       .tint(powder.lilac, 0.42 * fade, powder.pink, 0)
       .args(0, area.angle, 1);
     const h = fx.ground.heightAt(x, z);
-    const scale = length / 5;
-    const speed = reach(length * 0.85, powderCloud.life, powderCloud.drag);
-    for (let i = perFrame(fx, 30 * fade); i > 0; i--) {
-      const spread = rand(-1, 1) * area.angle * 0.85;
-      const dx = Math.sin(yaw + spread);
-      const dz = Math.cos(yaw + spread);
-      const v = speed * rand(0.35, 1.05);
-      fx.sprites.emit(
+    // Slow motes drift within the current cone and erode with it, leaving the sleeping bodies clear.
+    for (let i = 0; i < 12; i++) {
+      const seed = seedOf(area.id + i * 13);
+      const travel = (fx.time * 0.65 + seed) % 1;
+      const angle = yaw + (seed * 2 - 1) * area.angle * 0.65;
+      const d = length * (0.15 + travel * 0.68);
+      const size = length * (0.06 + travel * 0.055) * fade;
+      const px = x + Math.sin(angle) * d;
+      const pz = z + Math.cos(angle) * d;
+      fx.sprites.draw(
         powderCloud,
-        x + dx * 0.4,
-        h + rand(0.25, 0.55),
-        z + dz * 0.4,
-        dx * v,
-        rand(0, 0.2),
-        dz * v,
-        rand(0.3, 0.45) * scale,
+        px,
+        h + 0.35 + travel * 0.2,
+        pz,
+        size,
+        Math.sin(travel * Math.PI) * fade,
+        0,
+        0,
+        0,
+        seed,
+        travel,
       );
     }
-    for (let i = perFrame(fx, 26 * fade); i > 0; i--) {
+    for (let i = perFrame(fx, 14 * fade); i > 0; i--) {
       const spread = rand(-1, 1) * area.angle;
       const d = length * Math.sqrt(Math.random());
       const px = x + Math.sin(yaw + spread) * d;

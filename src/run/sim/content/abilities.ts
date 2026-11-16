@@ -1,5 +1,5 @@
-// Ids are the Pokébonk 0.8.83 keys the entries were modelled on (see src/run/sim/content/README.md); numbers
-// are our own tuning, not copied runtime values.
+// Player passives: the original four follow Pokébonk 0.8.83 references; new lines use their own
+// effects. All numbers are our own tuning, not copied runtime values.
 
 import { modifierText, type EffectDef, type PerStage } from "./effects";
 import { resolveTrigger, triggerText, type TriggerDef } from "./triggers";
@@ -60,6 +60,24 @@ const abilitiesTable = {
         type: "electric",
         status: "paralysis",
       },
+    ],
+  }),
+  "shadow-shroud": ability("shadow-shroud", "幽影", {
+    modifiers: [
+      { stat: "evasion", op: "add", value: [0.2, 0.24, 0.28] },
+      { stat: "statusDamage", op: "add", value: [0.2, 0.35, 0.5] },
+    ],
+  }),
+  "dragon-scale": ability("dragon-scale", "龙鳞", {
+    modifiers: [
+      { stat: "damage", op: "mul", value: [0.9, 1.15, 1.45], when: "dragon" },
+      { stat: "armor", op: "add", value: [3, 6, 10] },
+    ],
+  }),
+  guts: ability("guts", "毅力", {
+    modifiers: [
+      { stat: "armor", op: "add", value: [20, 24, 28] },
+      { stat: "damage", op: "mul", value: [1.08, 1.35, 1.7], when: "physical" },
     ],
   }),
 };

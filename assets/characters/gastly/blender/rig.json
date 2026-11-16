@@ -1,0 +1,10 @@
+{
+  "form": "gastly",
+  "bones": 4,
+  "vertices": 3239,
+  "triangles": 2456,
+  "runSeconds": 1,
+  "runCycles": 1,
+  "plantedSpeedPerHeight": 2.6,
+  "credits": 0
+}

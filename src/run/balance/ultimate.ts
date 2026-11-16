@@ -23,8 +23,12 @@ export function ultCast(player: Player, target: Target): UltCast {
   const { ultimate } = starters[player.starter];
   const { type } = ultimates[ultimate];
   const scale = ultScale(player);
+  // Ultimate hits carry no move, so only the type multiplier applies (combat.ts), not a category one.
   const base =
-    ultDamage(player, player.stage) * stats.damage * critFactor(stats.crit, stats.critDamage);
+    ultDamage(player, player.stage) *
+    stats.damage *
+    (stats.hit[type] ?? 1) *
+    critFactor(stats.crit, stats.critDamage);
   const density = Math.min(MAX_DENSITY, target.density);
   const rE = target.radius;
   const rB = target.boss.radius;

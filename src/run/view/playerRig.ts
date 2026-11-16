@@ -16,6 +16,7 @@ import { formModels, type PlayerModel } from "./assets";
 import { shadeUnderClouds } from "./environment/clouds";
 import type { WindUniforms } from "./environment/wind";
 import { creatureLook, lambertCopy, ownShadowDepth } from "./materials";
+import { createSpineFollow } from "./spine";
 import { createTailSpring, type TailSpring } from "./tail";
 
 /** One form's model mounted under the avatar: its looks, x-ray silhouette and clips. */
@@ -29,7 +30,7 @@ export interface PlayerRig {
   runCycles: number;
   /** Rise that puts each clip's lowest point on the ground (`FormModel.lift`); blend by the clips' weights. */
   lift: { run: number; idle: number };
-  /** Tail secondary motion, posed after the mixer; null without a tail chain. */
+  /** Tail secondary motion or a long body's path follow, posed after the mixer; null without either. */
   tail: TailSpring | null;
   /** Lowest foot/toe surface in avatar space after mixing; excludes shells and procedural tails. */
   footFloor(): number;
@@ -111,12 +112,16 @@ export function mountRig(avatar: Group, player: PlayerModel, wind: WindUniforms)
       );
     return mixer.clipAction(clip).setLoop(LoopRepeat, Infinity);
   };
-  const { runClipSpeed: clipSpeed, runCycles, lift } = formModels[player.form];
+  const { runClipSpeed: clipSpeed, runCycles, lift, spine } = formModels[player.form];
   const run = action("run");
   const idle = action("idle");
   run.play();
   idle.play();
-  const tail = player.tail.length === 0 ? null : createTailSpring(player.tail);
+  const tail = spine
+    ? createSpineFollow(avatar, player.model.root, spine)
+    : player.tail.length === 0
+      ? null
+      : createTailSpring(player.tail);
   return {
     mixer,
     run,

@@ -1,0 +1,10 @@
+{
+  "form": "haunter",
+  "bones": 5,
+  "vertices": 3024,
+  "triangles": 2112,
+  "runSeconds": 1,
+  "runCycles": 1,
+  "plantedSpeedPerHeight": 2.6,
+  "credits": 0
+}

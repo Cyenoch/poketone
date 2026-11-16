@@ -347,7 +347,8 @@ const CASES = [
     STARTERS.map((starter, i) => {
       const difficulty = (i + s) % 3;
       // Durable enemies and adaptive supply move the loot path; keep evolution/capture in real runs.
-      const seed = s === 1 && starter === "squirtle" ? 41 : baseSeed;
+      const seed =
+        s === 1 && starter === "squirtle" ? 41 : s === 0 && starter === "gastly" ? 11 : baseSeed;
       const name = `solo/${starter}/d${difficulty}/s${seed}`;
       const full = name === FULL_RUN;
       return {

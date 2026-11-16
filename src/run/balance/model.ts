@@ -573,7 +573,7 @@ export interface BuildOutput extends MoveOutput {
   primary: MoveOutput;
   /** Landed hits per second by the type of the move that landed them (kit moves, swarm and guardian). */
   typeHits: Partial<Record<ElementType, number>>;
-  /** Burn DPS a guardian keeps under this build's burn applications. */
+  /** Sustained status DPS a guardian keeps (burn, poison and trigger DoTs). */
   bossBurn: number;
   perMove: { move: MoveId; out: MoveOutput }[];
 }
@@ -596,12 +596,14 @@ const SUMMED = [
   "survivorRoom",
   "control",
   "bossBurnRate",
+  "bossPoisonRate",
   "targets",
 ] as const;
 
 function merge(into: MoveOutput, out: MoveOutput): void {
   for (const key of SUMMED) into[key] += out[key];
   into.bossBurnHit = Math.max(into.bossBurnHit, out.bossBurnHit);
+  into.bossPoisonHit = Math.max(into.bossPoisonHit, out.bossPoisonHit);
   into.knocks.push(...out.knocks);
   for (const a of out.apply) {
     const entry = into.apply.find((b) => b.status === a.status);
@@ -665,7 +667,11 @@ export function buildOutput(player: Player, full: Target): BuildOutput {
     statuses.burn.dotShare *
       stats.statusDamage *
       total.bossBurnHit *
-      (1 - Math.exp(-total.bossBurnRate * statuses.burn.duration * stats.duration));
+      (1 - Math.exp(-total.bossBurnRate * statuses.burn.duration * stats.duration)) +
+    statuses.poison.dotShare *
+      stats.statusDamage *
+      total.bossPoisonHit *
+      (1 - Math.exp(-total.bossPoisonRate * statuses.poison.duration * stats.duration));
   return total;
 }
 
@@ -681,6 +687,19 @@ function applyScales(total: BuildOutput, target: Target, player: Player): void {
   });
   for (const s of scales) if (s.add) merge(total, s.add);
   for (const s of scales) scaleDamage(total, s.swarm ?? 1, s.single ?? 1);
+  const curse = total.apply.find((entry) => entry.status === "curse");
+  if (curse) {
+    const duration = statuses.curse.duration * total.stats.duration;
+    const swarmFactor =
+      1 +
+      statuses.curse.vulnerable *
+        (1 - Math.exp((-curse.swarm / Math.max(1, target.living)) * duration));
+    const bossFactor = 1 + statuses.curse.vulnerable * (1 - Math.exp(-curse.boss * duration));
+    scaleDamage(total, swarmFactor, bossFactor);
+    total.bossBurnHit *= bossFactor;
+    total.bossPoisonHit *= bossFactor;
+    total.bossDot *= bossFactor;
+  }
   const { held, perStatus } = total.stats.hit;
   if (held === undefined && perStatus === undefined) return;
   const occ = occupancy(total, total.stats, target);
@@ -690,6 +709,7 @@ function applyScales(total: BuildOutput, target: Target, player: Player): void {
   scaleDamage(total, factor(occ.controlled, occ.count), bossFactor);
   // Native burn and on-hit DoTs inherit the applying hit's conditional damage once.
   total.bossBurnHit *= bossFactor;
+  total.bossPoisonHit *= bossFactor;
   total.bossDot *= bossFactor;
 }
 

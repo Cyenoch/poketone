@@ -1,9 +1,10 @@
-import { themeColors } from "./run-choice-surface";
+import { themeColors, themeGrain } from "./run-theme";
 import { Component, Container, Content, Image, Text } from "@pmndrs/uikit";
 import { Color, Mesh, MeshBasicMaterial, PlaneGeometry, Vector2 } from "three";
 import { starters, type StarterId } from "../../run/sim/content/lines/index";
 import { MAX_MOVE_LEVEL } from "../../run/sim/content/params/cards";
 import { stageDefs, type StageId } from "../../run/sim/content/stages/index";
+import type { ElementType } from "../../run/sim/content/elements";
 import { stageThemes } from "../../run/view/stageThemes";
 import type { UiStage } from "./stage";
 import { cubicBezier } from "./focus-mark";
@@ -39,7 +40,7 @@ class LoadingSurface {
   constructor(
     kind: "floor" | "portrait" | "gauge" | "shadow",
     colors: [string, string, string, string],
-    theme: string,
+    theme: ElementType,
   ) {
     this.material.customProgramCacheKey = () => `run-loading-${kind}-${theme}`;
     this.material.onBeforeCompile = (shader) => {
@@ -72,7 +73,7 @@ class LoadingSurface {
         vec2 p=vec2(loadingUv.x,1.-loadingUv.y)*loadingSize;
         float radius=length((loadingUv-vec2(.5,.65))*vec2(1.,1.));
         vec3 ink=radius<.35?mix(loadingSoft,loadingLight,radius/.35):mix(loadingLight,loadingColor,clamp((radius-.35)/.25,0.,1.));
-        float grain=${theme === "fire" ? "(1.-smoothstep(1.5,2.,length(mod(p,vec2(11.,9.))-vec2(2.75,6.75))))*.55" : theme === "grass" ? "(1.-step(2.,mod(-p.x*.819152+p.y*.573576,9.)))*.3" : theme === "water" ? "(1.-smoothstep(.5,1.,abs(length(mod(p,vec2(12.,7.))-vec2(6.,9.1))-5.5)))*.4" : "step(mod(p.x+p.y,8.),2.)*.34"};
+        float grain=0.;{${themeGrain(theme).glsl}}
         ink=mix(ink,vec3(1.),grain);float r=length((loadingUv-.5)*loadingSize);
         float outer=min(loadingSize.x,loadingSize.y)*.5;
         ink=mix(ink,vec3(.004025,.016807,.049707),step(outer-3.,r));

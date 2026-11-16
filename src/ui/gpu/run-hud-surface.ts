@@ -1,6 +1,6 @@
 import { Content } from "@pmndrs/uikit";
 import { crispLineGlsl } from "./crisp-line";
-import { themeGrain } from "./run-overlays-surface";
+import { themeGrainSwitch } from "./run-theme";
 import { images } from "../../prepare/images";
 import {
   Color,
@@ -120,10 +120,7 @@ export class RunHudSurface {
           vec3 face=t<.55?mix(l,m,t/.55):mix(m,dk,(t-.55)/.45);
           {
             vec2 p=vec2(hudUv.x,1.-hudUv.y)*hudSize;float pa=fwidth(p.x);float grain=0.;
-            if(hudKind<.5){float aa=pa;${themeGrain("fire").glsl}}
-            else if(hudKind<1.5){float aa=pa;${themeGrain("grass").glsl}}
-            else if(hudKind<2.5){float aa=pa;${themeGrain("water").glsl}}
-            else{float aa=pa;${themeGrain("electric").glsl}}
+            {float aa=pa;${themeGrainSwitch("hudKind")}}
             face=mix(face,sRGBTransferOETF(vec4(hudGrain,1.)).rgb,grain);
           }
           face=mix(face,vec3(.051,.137,.247),smoothstep(.79-4./hudSize.x-aa,.79-4./hudSize.x+aa,r));
@@ -192,7 +189,7 @@ export class RunHudSurface {
         diffuseColor=vec4(sRGBTransferEOTF(vec4(c.rgb,1.)).rgb,c.a*inside*opacity);
       `;
       // `.run-level__face`: theme grain over radial-gradient(circle at 50% 30%, theme-light, theme
-      // 55%, theme-deep) inside a 2px navy-deep ring. All four themes' grain in one program.
+      // 55%, theme-deep) inside a 2px navy-deep ring. Every theme's grain in one program.
       const medal = `
         vec2 p=vec2(hudUv.x,1.-hudUv.y)*hudSize;
         float R=hudSize.x*.5;float r=length(p-vec2(R));float pa=.5*fwidth(r);
@@ -201,10 +198,7 @@ export class RunHudSurface {
         vec3 l=sRGBTransferOETF(vec4(hudLight,1.)).rgb,m=sRGBTransferOETF(vec4(hudColor,1.)).rgb,dk=sRGBTransferOETF(vec4(hudDeep,1.)).rgb;
         vec3 ink=t<.55?mix(l,m,t/.55):mix(m,dk,(t-.55)/.45);
         float grain=0.;
-        if(hudKind<.5){float aa=pa;${themeGrain("fire").glsl}}
-        else if(hudKind<1.5){float aa=pa;${themeGrain("grass").glsl}}
-        else if(hudKind<2.5){float aa=pa;${themeGrain("water").glsl}}
-        else{float aa=pa;${themeGrain("electric").glsl}}
+        {float aa=pa;${themeGrainSwitch("hudKind")}}
         ink=mix(ink,sRGBTransferOETF(vec4(hudGrain,1.)).rgb,grain);
         ink=mix(ink,vec3(.051,.137,.247),smoothstep(R-2.-pa,R-2.+pa,r));
         diffuseColor=vec4(sRGBTransferEOTF(vec4(ink,1.)).rgb,inside*opacity);

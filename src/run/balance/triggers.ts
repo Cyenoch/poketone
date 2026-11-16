@@ -190,6 +190,9 @@ export const triggerModels: { [K in TriggerKind]: TriggerModel<K> } = {
         if (t.status === "burn") {
           add.bossBurnHit = perHit;
           add.bossBurnRate = primary.bossHits * odds;
+        } else if (t.status === "poison") {
+          add.bossPoisonHit = perHit;
+          add.bossPoisonRate = primary.bossHits * odds;
         } else add.bossDot = power * perHit * (1 - Math.exp(-primary.bossHits * odds * seconds));
       }
       return { add };

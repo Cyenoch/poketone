@@ -3,7 +3,8 @@ import { Color, Mesh, MeshBasicMaterial, PlaneGeometry, Vector2 } from "three";
 import { images } from "../../prepare/images";
 import type { ElementType } from "../../run/sim/content/elements";
 import { stack } from "./layer";
-import { themeColors } from "./run-choice-surface";
+import { srgb } from "./run-choice-surface";
+import { themeColors, themeGrain } from "./run-theme";
 
 export type StationSurfaceKind =
   | "tile"
@@ -52,6 +53,9 @@ export class StationSurface {
       this.uniforms.stationLight.value.set(p.light);
       this.uniforms.stationSoft.value.set(p.soft);
     }
+    const grain = themeGrain(type ?? "normal");
+    const ink = srgb(grain.color);
+    const grainInk = [ink.x, ink.y, ink.z].map((c) => c.toFixed(5)).join(",");
     this.material.onBeforeCompile = (shader) => {
       Object.assign(shader.uniforms, this.uniforms);
       shader.vertexShader = "varying vec2 stationUv;\n" + shader.vertexShader;
@@ -114,8 +118,8 @@ export class StationSurface {
           vec3 fill=mix(linearInk(vec3(.09020,.24706,.43922)),deep,clamp(t/.75,0.,1.));
           if(stationOn>.5){float u=clamp(t/.55,0.,1.);fill=mix(stationLight,stationTint,u);fill=mix(fill,stationDeep,clamp((t-.55)/.45,0.,1.));
             float grain=0.;
-            ${type === "fire" ? "float a=length(mod(p,vec2(11.,9.))-vec2(2.75,6.75));float b=length(mod(p,vec2(7.))-vec2(4.9,2.1));grain=max((1.-smoothstep(1.5-aa,2.+aa,a))*.55,(1.-smoothstep(1.-aa,1.5+aa,b))*.35);" : type === "grass" ? "grain=(1.-smoothstep(2.-aa,2.+aa,mod(-p.x*.819152+p.y*.573576,9.)))*.3;" : type === "water" ? "float d=length(mod(p,vec2(12.,7.))-vec2(6.,9.1));grain=(1.-smoothstep(.5-aa,1.+aa,abs(d-5.5)))*.4;" : "vec2 g=mod(p+vec2(4.,0.),8.);grain=max(step(g.x+g.y,4.),step(8.,g.x-g.y+4.))*.34;"}
-            fill=mix(fill,linearInk(vec3(${type === "fire" ? "1.,.92549,.66667" : type === "grass" ? ".90980,1.,.83922" : type === "water" ? ".88235,.96078,1." : "1.,.98824,.86275"})),grain);
+            {${grain.glsl}}
+            fill=mix(fill,linearInk(vec3(${grainInk})),grain);
           }
           color=mix(color,fill,1.-smoothstep(inner-aa,inner+aa,r));
           color=mix(color,linearInk(vec3(.62353,.71373,.77647)),smoothstep(radius-aa,radius+aa,r)*(1.-smoothstep(radius+4.-aa,radius+4.+aa,r)));
@@ -133,7 +137,8 @@ export class StationSurface {
         vec3 color=navy;float alpha=opacity;${paint[kind]}diffuseColor=vec4(color,alpha);`,
       );
     };
-    this.material.customProgramCacheKey = () => `run-station-${kind}`;
+    this.material.customProgramCacheKey = () =>
+      `run-station-${kind}${kind === "port" ? `-${grain.kind}` : ""}`;
     this.content.add(new Mesh(this.geometry, this.material));
     this.content.notifyAncestorsChanged();
   }

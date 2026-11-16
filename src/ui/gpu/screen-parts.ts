@@ -12,7 +12,7 @@ import {
   type Texture,
 } from "three";
 import type { ElementType } from "../../run/sim/content/elements";
-import { themeGrain } from "./run-overlays-surface";
+import { themeGrain } from "./run-theme";
 import { fade } from "./layer";
 import { crispLineGlsl } from "./crisp-line";
 import { UiShaderMaterial } from "./ui-shader";

@@ -2001,5 +2001,122 @@
     "texture": 256,
     "clips": [],
     "bytes": 7808
+  },
+  "player-gastly": {
+    "name": "player-gastly",
+    "source": "characters/gastly/blender/model.glb",
+    "output": "public/models/gastly.glb",
+    "trianglesBefore": 2536,
+    "trianglesAfter": 2536,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 273264
+  },
+  "player-haunter": {
+    "name": "player-haunter",
+    "source": "characters/haunter/blender/model.glb",
+    "output": "public/models/haunter.glb",
+    "trianglesBefore": 2192,
+    "trianglesAfter": 2192,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 242908
+  },
+  "player-gengar": {
+    "name": "player-gengar",
+    "source": "characters/gengar/blender/model.glb",
+    "output": "public/models/gengar.glb",
+    "trianglesBefore": 2550,
+    "trianglesAfter": 2550,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 318660
+  },
+  "player-dratini": {
+    "name": "player-dratini",
+    "source": "characters/dratini/blender/model.glb",
+    "output": "public/models/dratini.glb",
+    "trianglesBefore": 1809,
+    "trianglesAfter": 1809,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 241868
+  },
+  "player-dragonair": {
+    "name": "player-dragonair",
+    "source": "characters/dragonair/blender/model.glb",
+    "output": "public/models/dragonair.glb",
+    "trianglesBefore": 2120,
+    "trianglesAfter": 2120,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 257980
+  },
+  "player-dragonite": {
+    "name": "player-dragonite",
+    "source": "characters/dragonite/blender/model.glb",
+    "output": "public/models/dragonite.glb",
+    "trianglesBefore": 2425,
+    "trianglesAfter": 2425,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 335576
+  },
+  "player-machop": {
+    "name": "player-machop",
+    "source": "characters/machop/blender/model.glb",
+    "output": "public/models/machop.glb",
+    "trianglesBefore": 2546,
+    "trianglesAfter": 2546,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 284944
+  },
+  "player-machoke": {
+    "name": "player-machoke",
+    "source": "characters/machoke/blender/model.glb",
+    "output": "public/models/machoke.glb",
+    "trianglesBefore": 3252,
+    "trianglesAfter": 3252,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 373744
+  },
+  "player-machamp": {
+    "name": "player-machamp",
+    "source": "characters/machamp/blender/model.glb",
+    "output": "public/models/machamp.glb",
+    "trianglesBefore": 3178,
+    "trianglesAfter": 3178,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 373164
   }
 }
