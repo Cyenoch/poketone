@@ -61,7 +61,12 @@ const TONAL_SHARE = 0.7;
 const PEAK_HEADROOM = 3.2;
 const TONAL_FROM_HZ = 100;
 /** Sounds that play many times a second must be short, snappy and not bright, or they tire the ear. */
-const FREQUENT_LIMITS = { attackMs: 40, decayMs: 160, centroidHz: 5000 };
+const FREQUENT_LIMITS = { attackMs: 40, decayMs: 160 };
+/**
+ * A take whose spectral centre sits above this reads as hiss that sticks out of the mix, even when its
+ * >4 kHz share passes (the airy dragon casts sat at 4.7-5.4 kHz with 18-29%).
+ */
+const BRIGHT_HZ = 3000;
 /** Phone speakers reproduce almost nothing below ~300 Hz (docs/LESSONS.md). */
 const LOW_CENTROID_HZ = 300;
 const NEAR_SILENT_LUFS = -45;
@@ -287,7 +292,7 @@ function flagsFor(asset, m) {
   if (m.peakDb < SILENT_PEAK_DB) flags.push("SILENT");
   if (asset.frequent && m.attackMs > FREQUENT_LIMITS.attackMs) flags.push("SLOW-ATTACK");
   if (asset.frequent && m.decayMs > FREQUENT_LIMITS.decayMs) flags.push("LONG-DECAY");
-  if (asset.frequent && m.centroidHz > FREQUENT_LIMITS.centroidHz) flags.push("BRIGHT");
+  if (m.centroidHz > BRIGHT_HZ) flags.push("BRIGHT");
   if (m.share > (asset.frequent ? HARSH_SHARE.frequent : HARSH_SHARE.other)) flags.push("HARSH");
   if (asset.frequent && m.tonal > TONAL_SHARE) flags.push("TONAL");
   if (m.centroidHz < LOW_CENTROID_HZ) flags.push("LOW");

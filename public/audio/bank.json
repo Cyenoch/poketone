@@ -396,8 +396,8 @@
         "sfx/cast-dragon-2.flac"
       ],
       "hitMs": [
-        145,
-        100
+        30,
+        145
       ]
     },
     "cast-fighting": {

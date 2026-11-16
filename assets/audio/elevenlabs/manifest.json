@@ -1428,26 +1428,26 @@
         "prompt_influence": 0.5
       },
       "node": "gO8DO5uxKqvgsFfQH8mP",
-      "prompt": "Deep rolling gust whoosh, a muted low rush of wind with a soft airy thump, rounded and warm, no roar, no scream, no high-pitched squeal, no sparkle, short, dry close-mic, no reverb, no music, no voice",
+      "prompt": "Warm heavy energy whoosh burst, a full-bodied rounded thrust of force like a large flag snapping in a soft gust, mid-range audible on a small speaker, muffled and dull, no hiss, no wind whistle, no thin airy noise, no crackle, no roar, no scream, no ring, no pitched tone, short, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
-          "file": "sfx-cast-dragon-6.mp3",
-          "generationId": "EljCidcYoKLP82mwb7EA",
-          "prompt": "Airy mid-range wind rush, a quick breathy gust of air sweeping forward with a light papery flutter, thin and soft, mid-range audible on a small speaker, no bass, no rumble, no roar, no scream, no high-pitched squeal, short, dry close-mic, no reverb, no music, no voice"
+          "file": "sfx-cast-dragon-15.mp3",
+          "generationId": "kD04HO1gn5xt5V456tmx",
+          "prompt": "Warm heavy energy whoosh burst, a full-bodied rounded thrust of force like a large flag snapping in a soft gust, mid-range audible on a small speaker, muffled and dull, no hiss, no wind whistle, no thin airy noise, no crackle, no roar, no scream, no ring, no pitched tone, short, dry close-mic, no reverb, no music, no voice"
         },
         {
-          "file": "sfx-cast-dragon-8.mp3",
-          "generationId": "UTjHWqquyfN8H7xRHDsP",
-          "prompt": "Airy mid-range wind rush, a quick breathy gust of air sweeping forward with a light papery flutter, thin and soft, mid-range audible on a small speaker, no bass, no rumble, no roar, no scream, no high-pitched squeal, short, dry close-mic, no reverb, no music, no voice"
+          "file": "sfx-cast-dragon-16.mp3",
+          "generationId": "U3eq3Z9xX20RjzePstTS",
+          "prompt": "Warm heavy energy whoosh burst, a full-bodied rounded thrust of force like a large flag snapping in a soft gust, mid-range audible on a small speaker, muffled and dull, no hiss, no wind whistle, no thin airy noise, no crackle, no roar, no scream, no ring, no pitched tone, short, dry close-mic, no reverb, no music, no voice"
         }
       ],
-      "pick": ["sfx-cast-dragon-6.mp3", "sfx-cast-dragon-8.mp3"],
+      "pick": ["sfx-cast-dragon-15.mp3", "sfx-cast-dragon-16.mp3"],
       "ship": "cast-dragon",
       "spend": {
-        "credits": 21.34,
-        "date": "2026-11-16"
+        "credits": 42.67,
+        "date": "2026-11-17"
       },
-      "note": "Batch 1 takes all LOW/SILENT; regenerated airy mid-range (takes 5-8). Fairly bright (centroid ~5 kHz): unheard, watch for shrillness."
+      "note": "User called takes 6/8 (airy wind, centroid ~5 kHz) shrill and sticking out (2026-11-17). Low 'pressure wave' prompt gave sub-bass only (9-12, LOW). Picked 15/16: centroid 1.1-1.6 kHz, ~0% above 4 kHz."
     },
     "cast-fighting": {
       "kind": "sfx",

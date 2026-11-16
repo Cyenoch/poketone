@@ -30,14 +30,14 @@
     "peakMs": 226
   },
   "cast-dragon-1.flac": {
-    "lenMs": 722,
-    "hitMs": 145,
-    "peakMs": 296
+    "lenMs": 406,
+    "hitMs": 30,
+    "peakMs": 65
   },
   "cast-dragon-2.flac": {
-    "lenMs": 767,
-    "hitMs": 100,
-    "peakMs": 291
+    "lenMs": 451,
+    "hitMs": 145,
+    "peakMs": 185
   },
   "cast-electric-1.flac": {
     "lenMs": 722,

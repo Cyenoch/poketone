@@ -48,12 +48,15 @@
 
 提示词用词决定了尖不尖（4 kHz 以上能量占比，实测）：
 
-| 提示词                                                                              | 结果          |
-| ----------------------------------------------------------------------------------- | ------------- |
-| `bright / sharp / sparkle / metallic / zap / shimmer`（电属性、会心、复活的第一版） | 52–100%，刺耳 |
-| `muted, rounded, warm, dull, soft` + `no high-pitched squeal / sparkle`（第二版）   | 0–21%         |
+| 提示词                                                                                      | 结果                                         |
+| ------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `bright / sharp / sparkle / metallic / zap / shimmer`（电属性、会心、复活的第一版）         | 52–100%，刺耳                                |
+| `muted, rounded, warm, dull, soft` + `no high-pitched squeal / sparkle`（第二版）           | 0–21%                                        |
+| `airy / wind rush / gust / breathy whoosh`（龙属性施放第一版）                              | 18–29%，质心 4.7–5.4 kHz，用户试听“尖锐突出” |
+| `deep / sub rumble / low pressure wave`（龙第二版）                                         | 质心 110–170 Hz，手机外放听不到（`LOW`）     |
+| `warm heavy whoosh burst, full-bodied` + `mid-range audible on a small speaker`（龙第三版） | 质心 1.1–1.8 kHz，0–1%                       |
 
-检查：`bun run audio:master --report <id>` 的 `>4k` 列和 `HARSH` 标记；`HARSH` 只是告诉你母带会把它压暗多少，压得多的最好换 take。
+检查：`bun run audio:master --report <id>` 的 `>4k` 列和 `HARSH` 标记；`HARSH` 只是告诉你母带会把它压暗多少，压得多的最好换 take。质心超过 3 kHz 的 take 标 `BRIGHT`：4 kHz 占比过关也可能是一片嘶声，新挑的元素施放要落在中低频（质心约 0.4–2 kHz）。
 
 ## 声画同步：重音要落在画面的关键帧上
 
@@ -182,17 +185,17 @@ MCP 工具在 Claude Code 里是延迟加载的：用 `ToolSearch` 以**精确�
 
 ### `manifest.json` 字段
 
-| 字段                                | 含义                                                                                                                    |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `kind`                              | `sfx` / `loop` / `jingle`                                                                                               |
-| `tier`（sfx）                       | `small` / `medium` / `large` / `ui`，决定响度、峰值上限和默认最大长度                                                   |
-| `frequent`（sfx）                   | 高频声音：报告里检查起音 ≤ 40 ms、衰减 ≤ 160 ms、质心 ≤ 5 kHz、纯音占比 ≤ 70%（`TONAL`），并用更严的 4 kHz 以上占比上限 |
-| `maxMs`（sfx，可选）                | 覆盖该层默认的最大长度                                                                                                  |
-| `bpm` `startSec` `loopBars`（loop） | 速度、起点（裁掉前奏）、循环小节数；脚本在名义终点 ±1 拍里找拍型最吻合的位置并烘焙交叉淡入                              |
-| `spend`（可选）                     | 这一条目花的 credits 和日期                                                                                             |
-| `takes[]`                           | `file`、`generationId`，改过提示词的 take 带自己的 `prompt`                                                             |
-| `pick`                              | 选用的 take（空则跳过）                                                                                                 |
-| `note`                              | 备注，例如“已被听感否决”                                                                                                |
+| 字段                                | 含义                                                                                                      |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `kind`                              | `sfx` / `loop` / `jingle`                                                                                 |
+| `tier`（sfx）                       | `small` / `medium` / `large` / `ui`，决定响度、峰值上限和默认最大长度                                     |
+| `frequent`（sfx）                   | 高频声音：报告里检查起音 ≤ 40 ms、衰减 ≤ 160 ms、纯音占比 ≤ 70%（`TONAL`），并用更严的 4 kHz 以上占比上限 |
+| `maxMs`（sfx，可选）                | 覆盖该层默认的最大长度                                                                                    |
+| `bpm` `startSec` `loopBars`（loop） | 速度、起点（裁掉前奏）、循环小节数；脚本在名义终点 ±1 拍里找拍型最吻合的位置并烘焙交叉淡入                |
+| `spend`（可选）                     | 这一条目花的 credits 和日期                                                                               |
+| `takes[]`                           | `file`、`generationId`，改过提示词的 take 带自己的 `prompt`                                               |
+| `pick`                              | 选用的 take（空则跳过）                                                                                   |
+| `note`                              | 备注，例如“已被听感否决”                                                                                  |
 
 ## 接入
 
@@ -220,7 +223,7 @@ MCP 工具在 Claude Code 里是延迟加载的：用 `ToolSearch` 以**精确�
 - 胜负短曲只量了形状（起音、满响时长、衰减），没听过，也没比较音乐引擎和音效引擎哪个更好。
 - 在无头 Chrome 里核对过：素材载入、点击后解锁、各界面音、局内事件触发、守卫时按拍切到头目曲、一局结束停音乐、设置开关挂起 / 恢复，排期数值（`delay` / `offset`）与预期一致。**没有人在游戏里听过混音**：`BUS_GAIN`、压低量、各层响度都是起始值。
 - **没有在 iOS Safari 真机上验证** `decodeAudioData`、AudioContext 解锁和循环无缝。
-- 母带的舒适度规则（峰值上限、4 kHz 占比上限、各层响度）是按指标定的起始值，没有按耳朵校准。仍偏尖的声音：`evolve`、`chest`、`cast-grass-2`（已被压暗，但 2–8 kHz 峰值仍接近 −1 到 −6 dBFS）。
+- 母带的舒适度规则（峰值上限、4 kHz 占比上限、各层响度）是按指标定的起始值，没有按耳朵校准。仍偏尖的声音：`evolve`、`chest`、`cast-grass-2`（已被压暗，但 2–8 kHz 峰值仍接近 −1 到 −6 dBFS）。另有一批已上线的 take 标了 `BRIGHT`（短促命中、`freeze`、`reaction`、`enemy-heal`、电/草施放），没人反馈过，是重做时的候选，不是待修项。
 - 手机外放：`elite-kill`、`ult`、`boss`、`hurt` 已选质心较高的 take，但没有在手机上听过。
 - 部分稀有声音挑不出好坏，两条都留了（`level`、`danger`、`evolve` 等），听完删掉不要的。
 - 循环曲的接缝是按拍型相关度选的（C 0.76、D 0.48、E 0.52），不等于听起来无缝。
