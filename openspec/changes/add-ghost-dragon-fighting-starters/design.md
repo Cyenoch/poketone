@@ -20,7 +20,7 @@ Non-Goals：不新增敌人、存档迁移、抽卡规则或新 UI 系统。模�
 | dratini | 蓄势贯穿；`dragon-scale` 龙鳞：龙属性伤害 ×0.9/1.15/1.45，护甲 +3/6/10 | dragon-breath / twister / dragon-pulse / dragon-rush | aqua-tail / hurricane     | 1/32/60  | draco-meteor：龙息放射，进化后增加落星与终结震荡 |
 | machop  | 近身连打；`guts` 毅力：护甲 +20/24/28，物理伤害 ×1.08/1.12/1.16        | karate-chop / low-sweep / brick-break / focus-blast  | seismic-toss / cross-chop | 1/28/54  | seismic-barrage：近身连续震击，终击击退          |
 
-三个融合配方维持现有站点契约：smog + hex → nightmare-vortex（firestorm）；twister + dragon-pulse → dragon-tempest（bloom）；karate-chop + brick-break → hundred-fists（combo）。不添加新的融合引擎。
+三个融合配方维持现有站点契约：smog + hex → nightmare-vortex（firestorm）；twister + dragon-pulse → dragon-tempest（tempest，2026-11-17 由 bloom 改为专属形态：数量即龙脉束数）；karate-chop + brick-break → hundred-fists（combo）。融合沿用站点契约与 fusionParts 终爆，不添加新的融合引擎。
 
 ### 形态与参考数据
 
@@ -50,29 +50,29 @@ Non-Goals：不新增敌人、存档迁移、抽卡规则或新 UI 系统。模�
 
 以下 ID 已固定，可以据此开始制作。数值为无升级的几何/时间；最终伤害与冷却以源码为准。投射物 life 为发射后寿命；范围 life 包含 delay；升级可改变 area/dur/count，画面读取正式实例。所有命中时点以 30 Hz 模拟事件为准。
 
-| move id（名称）           | archetype / 命中形状            | delay / life / radius 或 length（秒/u）                      | 外观与音频意图                                 |
-| ------------------------- | ------------------------------- | ------------------------------------------------------------ | ---------------------------------------------- |
-| shadow-ball 暗影球        | homing / 球                     | 0；life 1.5；r .24；speed 14                                 | 紫黑压缩幽灵球，短尾，空洞轻击                 |
-| smog 浊雾                 | vortex / 圆                     | delay .25；life 2.25；r 1.5；每 .3 tick                      | 紫绿毒雾涡旋，收缩毒爆，低声气流               |
-| hex 祸不单行              | smite / 圆                      | delay .4；life .65；r 1.5                                    | 地面幽灵咒印后向内刺爆；延迟命中音             |
-| sludge-bomb 污泥炸弹      | lob / 落点圆                    | 飞行 .75；弹r .25；爆r 1.6                                   | 暗紫毒团弧线，落地黏液溅散                     |
-| night-shade 黑夜魔影      | nova / 周身圆                   | delay 0；life .3；r 2.3                                      | 影子向外掠过，短促低频冲击                     |
-| dream-eater 食梦          | drain / 追踪球                  | delay 0；life 1.5；r .23；speed 12                           | 紫红幽光追击；吸取碎光回流                     |
-| dragon-breath 龙息        | bolt / 穿透球                   | delay 0；life 1.2；r .24；speed 18；pierce 2                 | 蓝紫细长龙息，连续贯穿脆响                     |
-| twister 龙卷风            | vortex / 圆                     | delay .25；life 2.05；r 1.45；每 .3 tick                     | 窄风柱卷起碎屑，风切声                         |
-| dragon-pulse 龙之波动     | beam / 直线                     | delay .3；life 1.05；width .65；length 17；每 .15 tick       | 蓝紫龙形窄光束，蓄力后贯穿                     |
-| dragon-rush 龙之俯冲      | wave / 移动带                   | delay 0；life 1；横向半宽1.3；纵深半宽.5；speed 10           | 龙首冲击波向前推进；不移动玩家本体             |
-| aqua-tail 水流尾          | strike / 交替扇形               | 每拳 delay i×.12；life .22+delay；length 2.5；半角1.2        | 尾扫水弧，清脆水鞭                             |
-| hurricane 暴风            | smite / 圆                      | delay .65；life .9；r 1.6；count 2                           | 两处风眼锁定后垂直爆风                         |
-| karate-chop 空手劈        | combo / 前向扇形                | delay .08+i×.14；life delay+.16；length 2.4；半角.8；count 2 | 两记短掌刃，末击更重                           |
-| low-sweep 下盘踢          | spin / 随身圆                   | delay 0；life .65；r 2；每 .3 tick                           | 低位腿扫与土尘环，缠根减速                     |
-| brick-break 劈瓦          | combo / 前向扇形                | 同 combo；length 2.6；count 3                                | 三段橙白拳压，末击破碎感                       |
-| focus-blast 真气弹        | orb / 球与爆炸圆                | delay 0；life 1.4；弹r .3；爆r1.5；speed10                   | 橙白凝气球，沉重气爆                           |
-| seismic-toss 地球上投     | nova / 周身圆                   | delay 0；life .3；r 2.3                                      | 踏地上掀震荡；不移动敌人高度                   |
-| cross-chop 十字劈         | combo / 前向扇形                | 同 combo；length 2.5；count 2                                | 交叉掌刃，末击 X 形短闪                        |
-| nightmare-vortex 噩梦漩涡 | firestorm / 涡旋+喷流+螺旋+爆炸 | delay .3；持续2；r1.1；继承 FIRESTORM 几何                   | 幽灵咒印涡旋，紫色火舌；禁止直接复用火焰橙色   |
-| dragon-tempest 苍龙风暴   | bloom / 光束+叶状弹+终爆        | delay .45；持续 .9×dur；width .9；length10；终爆r2.6         | 龙脉光束、飞鳞碎片和龙星终爆，无草叶           |
-| hundred-fists 百裂拳      | combo / 前向扇形                | 同 combo；length2.8；count4（融合后加继承拳数）              | 密集四臂残影；末击短暂停顿感，避免每拳叠大爆炸 |
+| move id（名称）           | archetype / 命中形状            | delay / life / radius 或 length（秒/u）                                                                                                                                            | 外观与音频意图                                                                             |
+| ------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| shadow-ball 暗影球        | homing / 球                     | 0；life 1.5；r .24；speed 14                                                                                                                                                       | 紫黑压缩幽灵球，短尾，空洞轻击                                                             |
+| smog 浊雾                 | vortex / 圆                     | delay .25；life 2.25；r 1.5；每 .3 tick                                                                                                                                            | 紫绿毒雾涡旋，收缩毒爆，低声气流                                                           |
+| hex 祸不单行              | smite / 圆                      | delay .4；life .65；r 1.5                                                                                                                                                          | 地面幽灵咒印后向内刺爆；延迟命中音                                                         |
+| sludge-bomb 污泥炸弹      | lob / 落点圆                    | 飞行 .75；弹r .25；爆r 1.6                                                                                                                                                         | 暗紫毒团弧线，落地黏液溅散                                                                 |
+| night-shade 黑夜魔影      | nova / 周身圆                   | delay 0；life .3；r 2.3                                                                                                                                                            | 影子向外掠过，短促低频冲击                                                                 |
+| dream-eater 食梦          | drain / 追踪球                  | delay 0；life 1.5；r .23；speed 12                                                                                                                                                 | 紫红幽光追击；吸取碎光回流                                                                 |
+| dragon-breath 龙息        | bolt / 穿透球                   | delay 0；life 1.2；r .24；speed 18；pierce 2                                                                                                                                       | 蓝紫细长龙息，连续贯穿脆响                                                                 |
+| twister 龙卷风            | vortex / 圆                     | delay .25；life 2.05；r 1.45；每 .3 tick                                                                                                                                           | 窄风柱卷起碎屑，风切声                                                                     |
+| dragon-pulse 龙之波动     | beam / 直线                     | delay .3；life 1.05；width .65；length 17；每 .15 tick                                                                                                                             | 蓝紫龙形窄光束，蓄力后贯穿                                                                 |
+| dragon-rush 龙之俯冲      | wave / 移动带                   | delay 0；life 1；横向半宽1.3；纵深半宽.5；speed 10                                                                                                                                 | 龙首冲击波向前推进；不移动玩家本体                                                         |
+| aqua-tail 水流尾          | strike / 交替扇形               | 每拳 delay i×.12；life .22+delay；length 2.5；半角1.2                                                                                                                              | 尾扫水弧，清脆水鞭                                                                         |
+| hurricane 暴风            | smite / 圆                      | delay .65；life .9；r 1.6；count 2                                                                                                                                                 | 两处风眼锁定后垂直爆风                                                                     |
+| karate-chop 空手劈        | combo / 前向扇形                | delay .08+i×.14；life delay+.16；length 2.4；半角.8；count 2                                                                                                                       | 两记短掌刃，末击更重                                                                       |
+| low-sweep 下盘踢          | spin / 随身圆                   | delay 0；life .65；r 2；每 .3 tick                                                                                                                                                 | 低位腿扫与土尘环，缠根减速                                                                 |
+| brick-break 劈瓦          | combo / 前向扇形                | 同 combo；length 2.6；count 3                                                                                                                                                      | 三段橙白拳压，末击破碎感                                                                   |
+| focus-blast 真气弹        | orb / 球与爆炸圆                | delay 0；life 1.4；弹r .3；爆r1.5；speed10                                                                                                                                         | 橙白凝气球，沉重气爆                                                                       |
+| seismic-toss 地球上投     | nova / 周身圆                   | delay 0；life .3；r 2.3                                                                                                                                                            | 踏地上掀震荡；不移动敌人高度                                                               |
+| cross-chop 十字劈         | combo / 前向扇形                | 同 combo；length 2.5；count 2                                                                                                                                                      | 交叉掌刃，末击 X 形短闪                                                                    |
+| nightmare-vortex 噩梦漩涡 | firestorm / 涡旋+喷流+螺旋+爆炸 | delay .3；持续2；r1.1；继承 FIRESTORM 几何                                                                                                                                         | 幽灵咒印涡旋，紫色火舌；禁止直接复用火焰橙色                                               |
+| dragon-tempest 苍龙风暴   | tempest / 多道光束+各自终爆     | delay .45+i×.04；持续 .9×dur；每束 width .7、length8，起于身周 r1.1 风暴缘；束数=⌊数量⌋（基础2，上限12），各指不同敌人（间隔≥.38rad），不足时从风暴缘扇开汇向主目标；每束终爆 r1.4 | 风暴缘龙卷聚气后喷出 N 道龙脉，金/青双股风旋缠绕，束头青光与龙星终爆；数量升级必须多出一束 |
+| hundred-fists 百裂拳      | combo / 前向扇形                | 同 combo；length2.8；count4（融合后加继承拳数）                                                                                                                                    | 密集四臂残影；末击短暂停顿感，避免每拳叠大爆炸                                             |
 
 终极技均复用 `Pulse`，使用既有 look 字段（由 type 区分视觉语言），不增加新事件结构；具体多档时序见 `content/ultimates.ts`：
 

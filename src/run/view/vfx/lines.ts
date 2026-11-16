@@ -24,7 +24,7 @@ import {
   dragonBurst,
   dragonPulse,
   dragonRush,
-  dragonScales,
+  dragonStream,
   hurricane,
   twister,
 } from "./dragon";
@@ -36,7 +36,6 @@ export const lineShotLooks: Partial<Record<MoveId, ShotLook>> = {
   "dream-eater": dreamEater,
   "dragon-breath": dragonBreath,
   "dragon-rush": dragonRush,
-  "dragon-tempest": dragonScales,
   "focus-blast": focusBlast,
 };
 
@@ -47,7 +46,7 @@ export const lineAreaLooks: Partial<Record<MoveId, AreaLook>> = {
   "nightmare-vortex": nightmareVortex,
   twister,
   "dragon-pulse": dragonPulse,
-  "dragon-tempest": dragonPulse,
+  "dragon-tempest": dragonStream,
   "aqua-tail": aquaTail,
   hurricane,
   "karate-chop": combo,

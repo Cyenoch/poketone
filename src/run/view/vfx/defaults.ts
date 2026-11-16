@@ -140,6 +140,7 @@ const shotDefaults: Record<Archetype, Factory<ShotLook> | null> = {
   firestorm: null,
   sprinkler: null,
   rod: null,
+  tempest: null,
 };
 
 /** A disc on the ground: a charging telegraph while it waits, a glow while it acts, a ring when it strikes. */
@@ -223,6 +224,7 @@ const areaDefaults: Record<AreaKind, Factory<AreaLook>> = {
   combo: sector,
   beam: lane,
   bloom: lane,
+  tempest: lane,
   spin: disc,
   nova: disc,
   burst: disc,

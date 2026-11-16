@@ -75,7 +75,14 @@ import { bubbleShot, hydroPump, rapidSpin, steamBurst, waterGun } from "./vfx/wa
 import { drainBack, gigaDrain, shockWave, willOWisp } from "./vfx/homing";
 import { seedBomb, seedBombBurst } from "./vfx/lob";
 import { discharge, lavaPlume } from "./vfx/nova";
-import { evolveColumn, ultCast, ultPulse } from "./vfx/ultimates";
+import {
+  castAura,
+  drawCastAura,
+  evolveColumn,
+  ultCast,
+  ultPulse,
+  type CastAura,
+} from "./vfx/ultimates";
 import { partnerAttack, partnerGuard, partnerMarker } from "./vfx/partners";
 import { PARTNER_ATTACK } from "../sim/content/params/partners";
 import { partnerRadius } from "../sim/partners";
@@ -277,6 +284,8 @@ export class Vfx {
   private readonly playerEvents: PlayerEvent[] = [];
   /** Heal pulses still growing (skills/healPulse.ts). */
   private readonly mends: zone.Mend[] = [];
+  /** Ultimates being cast, drawn at their caster until their timeline has played. */
+  private readonly auras: CastAura[] = [];
   private readonly uniforms = { uTime: { value: 0 } };
   private frame = 0;
 
@@ -445,6 +454,7 @@ export class Vfx {
     fx.ribbons.begin();
     for (const volume of this.volumes) volume.begin();
     this.replayPlayerEvents(world, alpha);
+    this.updateAuras(world, alpha, dt, self.id);
     // Projectile heads and hazards paint over the status marks.
     statusMarks(fx, world, alpha, self);
     skills.skillBodies(fx, world, alpha);
@@ -491,8 +501,11 @@ export class Vfx {
       else if (event.t === "evade") {
         if (player.starter === "gastly") shadowPhase(this.fx, x, z);
       } else if (event.t === "evolve") evolveColumn(this.fx, x, z);
-      else if (event.t === "ult") ultCast(this.fx, event.line, x, z);
-      else if (event.t === "heal") healCue(this.fx, x, z, formOf(player).radius, event.share);
+      else if (event.t === "ult") {
+        const ultimate = starters[event.line].ultimate;
+        ultCast(this.fx, ultimate, x, z);
+        this.auras.push(castAura(event.player, ultimate, event.stage));
+      } else if (event.t === "heal") healCue(this.fx, x, z, formOf(player).radius, event.share);
       else if (event.t === "buff") {
         const form = formOf(player);
         buffCue(this.fx, x, z, form.radius, form.height);
@@ -817,6 +830,24 @@ export class Vfx {
     if (track.struck || hazard.dmg > 0) return false;
     track.struck = true;
     return true;
+  }
+
+  private updateAuras(world: World, alpha: number, dt: number, self: PlayerId): void {
+    let kept = 0;
+    for (const aura of this.auras) {
+      const player = owner(world, aura.player);
+      if (!player?.alive) continue;
+      drawCastAura(
+        this.fx,
+        aura,
+        lerp(player.px, player.x, alpha),
+        lerp(player.pz, player.z, alpha),
+        aura.player === self,
+      );
+      aura.age += dt;
+      if (aura.age < aura.life) this.auras[kept++] = aura;
+    }
+    this.auras.length = kept;
   }
 
   private updateMends(dt: number): void {

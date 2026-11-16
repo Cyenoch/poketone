@@ -154,6 +154,34 @@ export const SPRINKLER = {
   splashChance: 1,
 } as const;
 
+/**
+ * 苍龙风暴: streams leave a storm `rim` round the caster, toward enemies at least `spread` radians apart
+ * (`candidates` enemies per stream are looked at); spare streams converge on the aimed enemy from rim
+ * points fanned at most `fan` radians to each side. Rim and burst × `Area.scale`; `*Dmg` shares of the
+ * cast's hit.
+ */
+export const TEMPEST = {
+  range: 16,
+  /** Stream length before cover: short enough that the burst at its end lands on screen. */
+  reach: 8,
+  delay: 0.45,
+  /** Each further stream erupts this much later. */
+  stagger: 0.04,
+  /** Stream life per second of `dur`. */
+  life: 0.9,
+  tick: 0.15,
+  streamsMax: 12,
+  rim: 1.1,
+  spread: 0.38,
+  fan: 1.5,
+  candidates: 4,
+  streamDmg: 0.35,
+  knock: 0.4,
+  burst: 1.4,
+  burstDmg: 0.5,
+  burstChance: 0.3,
+} as const;
+
 export const STRIKE = {
   angle: 1.2,
   swing: 0.22,

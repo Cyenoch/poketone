@@ -331,7 +331,7 @@ export function createDebugOverlay(
         for (const area of current.areas) {
           if (area.kind === "cone" || area.kind === "strike")
             sector(area.x, area.z, area.dirX, area.dirZ, area.length, area.angle, "area");
-          else if (area.kind === "beam")
+          else if (area.kind === "beam" || area.kind === "tempest")
             lane(area.x, area.z, area.dirX, area.dirZ, area.length, area.radius, "area");
           else circle(area.x, area.z, area.radius, "area");
         }

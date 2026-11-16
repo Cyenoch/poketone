@@ -9,6 +9,7 @@ import {
   perFrame,
   rand,
   seedOf,
+  skyTop,
   spray,
   type AreaLook,
   type Echo,
@@ -134,13 +135,94 @@ export const dragonBreath: ShotLook = {
   },
 };
 
-/** Dragon Tempest's side shots: thrown gold scales with a short jade streak. */
-export const dragonScales: ShotLook = {
-  ...dragonBreath,
-  fly(fx, p, x, y, z) {
-    fx.sprites.draw(halo, x, y, z, p.radius * 2.4, 0.5);
-    fx.sprites.draw(scale, x, y, z, p.radius * 1.4, 1, p.vx, p.vz, fx.time * 12, seedOf(p.id));
-    fx.sprites.draw(streak, x - p.vx * 0.02, y, z - p.vz * 0.02, p.radius * 0.8, 0.8, p.vx, p.vz);
+/**
+ * One stream of Dragon Tempest (sim/archetypes/tempest): a storm eddy gathers on the caster's rim and
+ * draws its lane, then a dragon-pulse core erupts along it inside a widening wind coil, with a jade
+ * light at its head where the burst will land. The streams together are the storm, so each one stays
+ * thin.
+ */
+export const dragonStream: AreaLook = {
+  live(fx, a, x, z, charge) {
+    const yaw = Math.atan2(a.dirX, a.dirZ);
+    const y = fx.ground.heightAt(x, z) + CHEST;
+    const seed = seedOf(a.id);
+    if (a.delay > 0) {
+      fx.decals
+        .put(Decal.strip, x, z, a.length, yaw)
+        .rect(-0.06, 0, 0.06, a.length * charge)
+        .tint(dragon.teal, 0.45 * charge, dragon.light, 0.1)
+        .args(0, 0.06, 2);
+      groundArc(
+        fx,
+        x,
+        z,
+        0.42 * (1 - 0.45 * charge),
+        fx.time * 9 + seed,
+        Math.PI * 1.4,
+        0.15 + 0.45 * charge,
+        0.05,
+        dragon.light,
+        charge,
+      );
+      fx.sprites.draw(halo, x, y, z, 0.15 + charge * 0.35, 0.6 * charge);
+      return;
+    }
+    const fade = Math.min(1, a.life / 0.14);
+    const r = a.radius * fade;
+    fx.volumes.beams.add(
+      place(x, y, z, yaw, r, r, a.length * Math.hypot(1, a.rise), -Math.atan(a.rise)),
+      dragon.teal,
+      0.75 * fade,
+      dragon.indigo,
+      2,
+      seed,
+    );
+    fx.decals
+      .put(Decal.strip, x, z, a.length, yaw)
+      .rect(-a.radius, 0, a.radius, a.length)
+      .tint(dragon.indigo, 0.28 * fade, dragon.teal, 0)
+      .args(0, a.radius, 0);
+    // Twister's coil laid along the pulse: two strands winding out toward the head.
+    for (let strand = 0; strand < 2; strand++) {
+      for (let i = 0; i <= 40; i++) {
+        const k = i / 40;
+        const d = a.length * k;
+        const turn = d * 3.2 - fx.time * 16 + strand * Math.PI;
+        const coil = a.radius * (0.5 + 0.45 * k);
+        const side = Math.sin(turn) * coil;
+        fx.ribbons.point(
+          x + a.dirX * d + a.dirZ * side,
+          y + a.rise * d + Math.cos(turn) * coil,
+          z + a.dirZ * d - a.dirX * side,
+          0.06 * fade * Math.min(1, k * 6),
+          strand ? dragon.light : dragon.scale,
+          0.8 * fade,
+        );
+      }
+      fx.ribbons.flush(Ribbon.solid, 0.2);
+    }
+    const ex = x + a.dirX * a.length;
+    const ez = z + a.dirZ * a.length;
+    fx.sprites.draw(halo, ex, y + a.rise * a.length, ez, a.radius * 3 * fade, 0.85);
+    for (let i = perFrame(fx, 6 * fade); i > 0; i--) {
+      const d = Math.random() * a.length;
+      fx.sprites.emit(
+        scale,
+        x + a.dirX * d,
+        y + a.rise * d,
+        z + a.dirZ * d,
+        a.dirX * 2,
+        0.3,
+        a.dirZ * 2,
+        0.08,
+      );
+    }
+  },
+  strike(fx, a, x, z) {
+    const y = fx.ground.heightAt(x, z) + CHEST;
+    fx.sprites.emit(flash, x, y, z, 0, 0, 0, 0.36);
+    fx.sprites.emit(pop, x, y, z, 0, 0, 0, a.radius * 0.9);
+    spray(fx, scale, x, y, z, 3, 1.4, 0.6, 0.08);
   },
 };
 
@@ -524,7 +606,68 @@ export const aquaTail: AreaLook = {
   },
 };
 
-/** One root lane: a feathered jade band to its full reach, a gold streak racing along it. */
+// Draco Meteor (ultimate): an orb shot into the sky at the cast, jade serpents racing out along the
+// lanes, then meteors slamming down from the sky onto their discs. Every ground shape is the hitbox.
+
+const mote = sprite({
+  shape: Shape.spark,
+  life: 0.55,
+  grow: 0.3,
+  from: dragon.light,
+  to: dragon.teal,
+  accent: dragon.scale,
+  add: 1,
+  gravity: 6,
+  drag: 1.5,
+  stretch: 0.05,
+});
+const starburst = sprite({
+  shape: Shape.star,
+  life: 0.3,
+  grow: 1.4,
+  from: dragon.light,
+  to: dragon.teal,
+  accent: dragon.scale,
+  add: 1,
+});
+
+const SKY_ORB = 7.5;
+
+/** The cast: a dragon-fire orb climbs into the sky behind the caster and bursts where the meteors come from. */
+export function dracoCast(fx: Fx, x: number, h: number, z: number): void {
+  fx.echoes.add(drawSkyOrb, 0.55, x, h, z);
+  spray(fx, scale, x, h + CHEST, z, 14, 4, 4, 0.12);
+}
+
+function drawSkyOrb(fx: Fx, e: Echo, t: number): void {
+  const [tx, rise, tz] = skyTop(fx, e.x, e.z, SKY_ORB);
+  const climb = 1 - (1 - Math.min(1, t / 0.55)) ** 2;
+  const px = e.x + (tx - e.x) * climb;
+  const py = e.y + CHEST + (rise - CHEST) * climb;
+  const pz = e.z + (tz - e.z) * climb;
+  if (t < 0.55) {
+    const s = 0.5 + 0.15 * climb;
+    fx.volumes.orbs.add(place(px, py, pz, 0, s, s, s), dragon.teal, 1, dragon.indigo, 0, e.seed);
+    const lag = Math.max(0, climb - 0.35);
+    fx.ribbons.point(
+      e.x + (tx - e.x) * lag,
+      e.y + CHEST + (rise - CHEST) * lag,
+      e.z + (tz - e.z) * lag,
+      0.05,
+      dragon.indigo,
+      0,
+    );
+    fx.ribbons.point(px, py, pz, 0.45, dragon.teal, 1);
+    fx.ribbons.flush(Ribbon.streak, 0.6);
+    return;
+  }
+  // The burst: a jade star that opens and goes, the meteors' source.
+  const k = (t - 0.55) / 0.45;
+  fx.sprites.draw(halo, px, py, pz, 1.2 + 1.6 * k, 1 - k);
+  fx.sprites.draw(starburst, px, py, pz, 1.4 * (1 - k * 0.5), 1 - k * k, 0, 0, 0, e.seed, k);
+}
+
+/** One lane: a jade band over its full reach at once (the hitbox), a serpent of light racing along it. */
 function drawDragonLane(fx: Fx, e: Echo, t: number): void {
   const fade = (1 - t) ** 2;
   const half = e.y;
@@ -532,70 +675,119 @@ function drawDragonLane(fx: Fx, e: Echo, t: number): void {
   fx.decals
     .put(Decal.strip, e.x, e.z, e.c, Math.atan2(e.a, e.b))
     .rect(-half * 2, 0, half * 2, e.c)
-    .tint(dragon.teal, 0.8 * fade, dragon.light, 0.4)
+    .tint(dragon.teal, fade, dragon.light, 1)
     .args(0, half, 0);
-  const head = Math.min(1, t / 0.4);
-  for (let i = 0; i <= 16; i++) {
-    const d = e.c * head * (i / 16);
-    const px = e.x + e.a * d;
-    const pz = e.z + e.b * d;
-    fx.ribbons.point(
-      px,
-      fx.ground.heightAt(px, pz) + 0.3,
-      pz,
-      half * 0.4 * fade,
-      dragon.scale,
-      (i / 16) * fade,
-    );
+  const run = 1 - (1 - Math.min(1, t / 0.3)) ** 2;
+  const front = e.c * run;
+  const tail = Math.max(0, front - 3.5);
+  for (const [width, colour, add] of [
+    [0.5, dragon.teal, 1],
+    [0.16, dragon.scale, 0.6],
+  ] as const) {
+    for (let i = 0; i <= 14; i++) {
+      const k = i / 14;
+      const d = tail + (front - tail) * k;
+      const weave = Math.sin(d * 1.8 - t * 18 + e.seed) * half * 0.7;
+      const px = e.x + e.a * d - e.b * weave;
+      const pz = e.z + e.b * d + e.a * weave;
+      fx.ribbons.point(
+        px,
+        fx.ground.heightAt(px, pz) + 0.45 + 0.25 * Math.sin(d * 1.3 + e.seed),
+        pz,
+        width * Math.sin(k * Math.PI * 0.5 + 0.15) * fade,
+        colour,
+        k * fade,
+      );
+    }
+    fx.ribbons.flush(Ribbon.glow, add);
   }
-  fx.ribbons.flush(Ribbon.streak, 0.3);
+  const hx = e.x + e.a * front;
+  const hz = e.z + e.b * front;
+  const hy = fx.ground.heightAt(hx, hz) + 0.5;
+  fx.sprites.draw(halo, hx, hy, hz, 0.7 * fade, fade);
+  // The serpent reaches the lane's end: a star flash there.
+  if (t > 0.3 && t < 0.55) {
+    const k = (t - 0.3) / 0.25;
+    fx.sprites.draw(starburst, hx, hy, hz, 0.9 * (1 - k * 0.4), 1 - k, 0, 0, 0, e.seed, k);
+  }
 }
 
-/** A meteor's last instant: its trail from the sky retracts as the crater flashes. */
+/** A meteor slams down from the sky onto its disc: the streak collapses into the ground as it flashes. */
 function drawMeteor(fx: Fx, e: Echo, t: number): void {
-  const fall = Math.min(1, t / 0.18);
-  const rise = 5.5 * (1 - fall * 0.85);
-  const lean = rise * 0.6;
-  const tail = Math.min(1, t / 0.35);
-  fx.ribbons.point(
-    e.x - Math.sin(fx.viewYaw) * lean,
-    e.y + rise,
-    e.z - Math.cos(fx.viewYaw) * lean,
-    0.06,
-    dragon.indigo,
-    0,
-  );
-  fx.ribbons.point(e.x, e.y + 0.3, e.z, e.a * 0.35 * (1 - tail), dragon.scale, 1 - tail);
-  fx.ribbons.flush(Ribbon.streak, 0.35);
-  if (t < 0.25) {
-    const s = e.a * 0.4 * (1 - t / 0.25);
+  const [tx, rise, tz] = skyTop(fx, e.x, e.z, 10);
+  const drop = 1 - (1 - Math.min(1, t / 0.22)) ** 2;
+  if (drop < 1) {
+    const top = drop;
+    for (const [width, colour] of [
+      [Math.min(1.1, e.a * 0.6), dragon.teal],
+      [Math.min(0.35, e.a * 0.2), dragon.light],
+    ] as const) {
+      fx.ribbons.point(
+        tx + (e.x - tx) * top,
+        rise + (e.y - rise) * top,
+        tz + (e.z - tz) * top,
+        width * 0.3,
+        colour,
+        0.2,
+      );
+      fx.ribbons.point(e.x, e.y + 0.2, e.z, width * (1 - drop * 0.6), colour, 1 - drop * 0.5);
+      fx.ribbons.flush(Ribbon.glow, 1);
+    }
+  }
+  if (t < 0.22) {
+    const s = e.a * 0.45 * (1 - t / 0.22);
     fx.volumes.orbs.add(
-      place(e.x, e.y + s, e.z, 0, s, s, s),
-      dragon.scale,
+      place(e.x, e.y + s * 0.6, e.z, 0, s, s, s),
+      dragon.teal,
       1,
       dragon.indigo,
       0,
       e.seed,
     );
   }
+  if (t < 0.35) {
+    const k = t / 0.35;
+    fx.sprites.draw(
+      starburst,
+      e.x,
+      e.y + 0.5,
+      e.z,
+      Math.min(1.8, e.a * 0.95) * (1 - k * 0.3),
+      1 - k * k,
+      0,
+      0,
+      0,
+      e.seed,
+      k,
+    );
+  }
+  fx.decals
+    .put(Decal.ring, e.x, e.z, e.a)
+    .tint(dragon.light, (1 - t) * 0.9, dragon.indigo, 0.8)
+    .args(Math.min(1, t * 1.6), 0.28, 0.25);
   drawDragonBurst(fx, e, t);
 }
 
 function crater(fx: Fx, x: number, z: number, r: number, life: number): void {
-  fx.decals.stamp(Decal.scorch, x, z, r * 0.85, life, dragon.deep, 1.4, dragon.scale, 0, 0, 0);
+  fx.decals.stamp(Decal.scorch, x, z, r * 0.9, life, dragon.deep, 1.6, dragon.teal, 0, 0, 0);
   fx.decals.stamp(Decal.cracks, x, z, r, life * 0.8, dragon.scale, 1, dragon.deep, 0);
 }
 
 export function dracoMeteor(fx: Fx, e: UltPulseEvent): void {
   if (e.look === "roots") {
     // A lane fully blocked by cover arrives with length 0: nothing to draw.
-    if (e.length > 0)
-      fx.echoes.add(drawDragonLane, 0.4, e.x, e.radius, e.z, e.dirX, e.dirZ, e.length);
+    if (e.length <= 0) return;
+    fx.echoes.add(drawDragonLane, 0.55, e.x, e.radius, e.z, e.dirX, e.dirZ, e.length);
+    const tx = e.x + e.dirX * e.length;
+    const tz = e.z + e.dirZ * e.length;
+    spray(fx, scale, tx, fx.ground.heightAt(tx, tz) + 0.4, tz, 6, 3, 2.5, 0.1);
     return;
   }
+  const big = e.look !== "meteor";
   const h = fx.ground.heightAt(e.x, e.z);
-  fx.echoes.add(drawMeteor, e.look === "meteor" ? 0.45 : 0.6, e.x, h, e.z, e.radius);
-  crater(fx, e.x, e.z, e.radius, e.look === "meteor" ? 2 : 2.6);
-  spray(fx, scale, e.x, h + 0.25, e.z, 10, e.radius * 2, 2, 0.1);
-  spray(fx, rubble, e.x, h + 0.2, e.z, 6, e.radius * 1.2, 0.6, 0.3);
+  fx.echoes.add(drawMeteor, big ? 0.7 : 0.55, e.x, h, e.z, e.radius);
+  crater(fx, e.x, e.z, e.radius, big ? 2.6 : 2);
+  spray(fx, scale, e.x, h + 0.25, e.z, big ? 18 : 12, e.radius * 2.2, 2.5, 0.11);
+  spray(fx, mote, e.x, h + 0.2, e.z, big ? 22 : 14, e.radius * 1.2, 8, 0.12);
+  spray(fx, rubble, e.x, h + 0.2, e.z, big ? 10 : 6, e.radius * 1.2, 0.6, 0.3);
 }

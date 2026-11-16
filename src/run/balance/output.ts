@@ -17,6 +17,7 @@ import {
   SPIN,
   SPRINKLER,
   STRIKE,
+  TEMPEST,
   VORTEX,
   WAVE,
 } from "../sim/content/params/archetypes";
@@ -35,6 +36,8 @@ import { novaArea } from "../sim/archetypes/nova";
 import { spinArea } from "../sim/archetypes/spin";
 
 import { strikeArea } from "../sim/archetypes/strike";
+
+import { tempestStreams } from "../sim/archetypes/tempest";
 
 import { vortexArea } from "../sim/archetypes/vortex";
 
@@ -586,6 +589,34 @@ const volleyModels: Record<Archetype, (cast: Cast) => Volley[]> = {
         ticks: 1,
         scale: f.flowerDmg,
         crowd: disc(f.flower * scale),
+        onBoss: 0,
+        bossTicks: 0,
+        knock: burstArea.knock,
+      },
+    ];
+  },
+  tempest({ p, target, rE, scale, disc }) {
+    const f = TEMPEST;
+    const streams = tempestStreams(p.count);
+    const life = f.delay + f.life * p.dur;
+    const ticks = areaTicks(life, f.delay, f.tick);
+    return [
+      // Each stream holds a lane at its own enemy; on a lone guardian they all converge.
+      {
+        copies: streams,
+        ticks,
+        scale: f.streamDmg,
+        crowd: (d) => Math.max(1, d * f.reach * (p.area + 2 * rE)),
+        onBoss: 1,
+        bossTicks: ticks * stick(p.area / 2, life, target),
+        knock: f.knock,
+      },
+      // Each stream bursts where it ends, past a guardian it was aimed at.
+      {
+        copies: streams,
+        ticks: 1,
+        scale: f.burstDmg,
+        crowd: disc(f.burst * scale),
         onBoss: 0,
         bossTicks: 0,
         knock: burstArea.knock,

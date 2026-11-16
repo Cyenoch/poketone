@@ -29,7 +29,7 @@ import { heightAt } from "../sim/terrain";
 import { TICK, type World } from "../sim/state/world";
 import type { Obstacle, Player, PlayerId } from "../sim/state/entities";
 import type { FormId } from "../sim/content/lines/index";
-import type { RunEvent } from "../sim/state/events";
+import type { RunEvent, UltLook } from "../sim/state/events";
 import { windAt } from "../sim/wind";
 import { releaseUploads } from "../../rendering/releaseUploads";
 import type { PlayerModels, RunAssets } from "./assets";
@@ -91,10 +91,19 @@ const TRAUMA = {
   bigKill: 0.5,
   guardianDash: 0.35,
   evolve: 0.35,
-  ultHeavy: 0.3,
+  ultCast: 0.45,
 } as const;
-/** Ultimate beats heavy enough to knock the camera (the rest stay readable without shake). */
-const HEAVY_ULT = new Set(["ring", "blast", "wave", "bolt"]);
+/**
+ * Ultimate beats that knock the camera, by look (the rest stay readable without shake). Meteors land
+ * up to every 0.13 s, so theirs stays below what the decay clears between them.
+ */
+const ULT_KNOCK: Partial<Record<UltLook, number>> = {
+  ring: 0.3,
+  blast: 0.3,
+  wave: 0.3,
+  bolt: 0.3,
+  meteor: 0.12,
+};
 /** A guardian dash that ends this close to the player lands as a camera knock. */
 const DASH_FELT_WITHIN = 8;
 /** Phones and tablets: fewer plants. */
@@ -809,8 +818,8 @@ export function* createRunView(
         const mine = "player" in event && event.player === local;
         if (event.t === "player-hit" && mine) shake.add(TRAUMA.playerHit);
         if (event.t === "evolve" && mine) shake.add(TRAUMA.evolve);
-        if (event.t === "ult-pulse" && mine && HEAVY_ULT.has(event.look))
-          shake.add(TRAUMA.ultHeavy);
+        if (event.t === "ult" && mine) shake.add(TRAUMA.ultCast);
+        if (event.t === "ult-pulse" && mine) shake.add(ULT_KNOCK[event.look] ?? 0);
         // combat flags the guardian's death as elite too.
         if (event.t === "death" && event.elite) shake.add(TRAUMA.bigKill);
       }

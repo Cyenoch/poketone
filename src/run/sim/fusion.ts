@@ -1,7 +1,7 @@
 // Signature fusions (openspec/specs/combat-builds/spec.md 融合; reference `fusions.json` fu-1 / fu-4 / fu-7 / fu-25 and
 // `fusion-scaling.json`). Bill's machine fuses the line's two max-level signature moves once per run into
 // one fusion move that keeps both moves' upgrades. Each fusion casts as its own archetype
-// (sim/archetypes/bloom, firestorm, sprinkler, rod).
+// (sim/archetypes/bloom, firestorm, sprinkler, rod, tempest).
 
 import { signatureFusions } from "./content/fusions";
 import type { MoveId } from "./content/moves";

@@ -312,11 +312,12 @@ export function createVolumes(uniforms: FxUniforms, ground: TerrainUniforms): Vo
       16,
       DoubleSide,
     ),
+    // Four co-op players can each hold a capped 苍龙风暴 (12 streams) while other beams still draw.
     beams: new Volume(
       new CylinderGeometry(1, 1, 1, 18, 40, true).rotateX(Math.PI / 2).translate(0, 0, 0.5),
       BEAM,
       uniforms,
-      24,
+      64,
       FrontSide,
     ),
     whirls: new Volume(

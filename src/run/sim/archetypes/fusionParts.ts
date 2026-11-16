@@ -1,4 +1,4 @@
-// Parts the signature fusions (bloom, firestorm, sprinkler, rod) play out: shares of the cast's hit,
+// Parts the signature fusions (bloom, firestorm, sprinkler, rod, tempest) play out: shares of the cast's hit,
 // ground discs, lanes and the closing burst. Sizes are the reference's at our scale (docs/BALANCE.md
 // 招式大小); damage is a share of the cast's hit (openspec/specs/combat-builds/spec.md 融合).
 

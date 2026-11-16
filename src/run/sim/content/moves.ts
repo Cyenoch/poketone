@@ -24,6 +24,7 @@ export type Archetype =
   | "firestorm"
   | "sprinkler"
   | "rod"
+  | "tempest"
   | "combo";
 export type UpgradeStat =
   | "dmg"
@@ -908,12 +909,12 @@ const movesTable = {
     id: "dragon-tempest",
     name: "苍龙风暴",
     type: "dragon",
-    archetype: "bloom",
+    archetype: "tempest",
     category: "special",
     dmg: 18,
-    cd: 4,
-    count: 0,
-    area: 0.9,
+    cd: 5,
+    count: 2,
+    area: 0.7,
     speed: 0,
     dur: 1,
     pierce: 99,

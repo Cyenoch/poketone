@@ -5,8 +5,9 @@ import test from "node:test";
 import { updateAreas, updateMoves, updateProjectiles } from "../src/run/sim/attacks.ts";
 import { acquire, chestOf, nearest } from "../src/run/sim/archetypes/kit.ts";
 import { moves } from "../src/run/sim/content/moves.ts";
-import { COMBO } from "../src/run/sim/content/params/archetypes.ts";
+import { COMBO, TEMPEST } from "../src/run/sim/content/params/archetypes.ts";
 import { combo } from "../src/run/sim/archetypes/combo.ts";
+import { tempest } from "../src/run/sim/archetypes/tempest.ts";
 import { moveParams } from "../src/run/sim/attacks.ts";
 import { playerStats } from "../src/run/sim/stats.ts";
 import { spawnEnemy } from "../src/run/sim/director.ts";
@@ -293,6 +294,48 @@ test("a melee combo waits, follows position without turning, and finishes with a
   assert.equal(back.hp, back.maxHp, "turning never redirects the committed chain behind");
   assert.equal(touchingBack.hp, touchingBack.maxHp, "even a touching enemy behind stays outside");
   assert.equal(above.hp, above.maxHp, "out-of-reach targets stay untouched");
+});
+
+test("each count on Dragon Tempest adds a stream: apart at separate enemies, converging on a lone one", () => {
+  const streamsOf = (world, extra) => {
+    const player = world.players[0];
+    const state = newMoveState("dragon-tempest");
+    state.mods.count = extra;
+    const ctx = { world, grid: new EnemyGrid() };
+    const def = moves["dragon-tempest"];
+    assert.equal(tempest.cast(ctx, player, def, moveParams(state, playerStats(player))), true);
+    return world.areas.filter((a) => a.kind === "tempest");
+  };
+  for (const extra of [0, 1, 3]) {
+    const world = arena();
+    for (let i = 0; i < 12; i++)
+      dummy(world, 5 * Math.cos((i * Math.PI) / 6), 5 * Math.sin((i * Math.PI) / 6));
+    const streams = streamsOf(world, extra);
+    assert.equal(streams.length, moves["dragon-tempest"].count + extra, `count +${extra}`);
+    for (const [i, a] of streams.entries())
+      for (const b of streams.slice(i + 1)) {
+        const angle = Math.acos(Math.min(1, a.dirX * b.dirX + a.dirZ * b.dirZ));
+        assert.ok(angle >= TEMPEST.spread - 1e-9, "streams stay visibly apart");
+      }
+  }
+  const world = arena();
+  const lone = dummy(world, 5, 0);
+  for (const a of streamsOf(world, 3)) {
+    const dx = lone.x - a.x;
+    const dz = lone.z - a.z;
+    assert.ok(dx * a.dirX + dz * a.dirZ > 0, "ahead of its rim point");
+    assert.ok(Math.abs(dx * a.dirZ - dz * a.dirX) < 1e-9, "through the lone target");
+  }
+  // An enemy inside the storm's rim is still struck, not left behind every stream's start.
+  const close = arena();
+  const hugging = dummy(close, 0.55, 0);
+  streamsOf(close, 3);
+  const ctx = { world: close, grid: new EnemyGrid() };
+  for (let t = 0; t < 2; t += 1 / 30) {
+    ctx.grid.rebuild(close.enemies);
+    updateAreas(ctx, 1 / 30);
+  }
+  assert.ok(hugging.hp < hugging.maxHp, "a hugging enemy takes the streams");
 });
 
 test("a ready move with nothing in range waits ready, and casts when a target arrives", () => {

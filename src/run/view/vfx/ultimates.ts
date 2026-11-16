@@ -2,17 +2,22 @@
 // radius / lane is the hitbox, so the primary shape is drawn exactly there; flourishes stay inside it
 // and short. Evolution is a light column: a tall, thin, brief beat that never covers the crowd.
 
-import { starters, type StarterId } from "../../sim/content/lines/index";
+import type { Stage } from "../../sim/content/lines/index";
 import { CHEST } from "../../sim/content/params/combat";
+import type { PlayerId } from "../../sim/state/entities";
 import type { UltPulseEvent } from "../../sim/state/events";
-import type { UltimateId } from "../../sim/content/ultimates";
+import { ultimates, type UltimateId } from "../../sim/content/ultimates";
+import { timeline } from "../../sim/ultimates/index";
 import { Decal } from "./decals";
+import { dracoCast } from "./dragon";
 import { lineUltColour, lineUltPulse } from "./lines";
-import { flicker, rand, skyTop, spray, type Echo, type Fx } from "./fx";
+import { flicker, perFrame, rand, skyTop, spray, type Echo, type Fx } from "./fx";
 import type { Rgb } from "./gl";
-import { electric, fire, gold, grass, powder, water, white } from "./palette";
+import { groundArc } from "./line-shapes";
+import { electric, fire, gold, grass, ink, powder, water, white } from "./palette";
 import { Ribbon } from "./ribbons";
-import { Shape, sprite } from "./sprites";
+import { Shape, sprite, type SpriteSpec } from "./sprites";
+import { place } from "./volumes";
 
 const COLUMN_HEIGHT = 6.5;
 
@@ -41,6 +46,17 @@ const flame = sprite({
   to: fire.soot,
   accent: fire.yellow,
   add: 0.3,
+});
+const rimFlame = sprite({
+  shape: Shape.flame,
+  life: 0.45,
+  grow: 0.4,
+  from: fire.yellow,
+  to: fire.red,
+  accent: fire.core,
+  add: 0.4,
+  gravity: -3,
+  drag: 2,
 });
 const leaf = sprite({
   shape: Shape.leaf,
@@ -163,14 +179,136 @@ function drawColumn(fx: Fx, echo: Echo, t: number): void {
   fx.ribbons.flush(Ribbon.glow, 1);
 }
 
-/** Cast beat: a bright ring at the body in the ultimate's colour. */
-export function ultCast(fx: Fx, line: StarterId, x: number, z: number): void {
-  // Blast Burn's simultaneous near-body pulse supplies its cast beat without hiding the caster.
-  if (starters[line].ultimate === "blast-burn") return;
-  const [colour, core] = ultColour[starters[line].ultimate];
-  const y = fx.ground.heightAt(x, z) + CHEST;
-  fx.sprites.emit(flash, x, y, z, 0, 0, 0, 0.55);
-  fx.decals.stamp(Decal.ring, x, z, 1.4, 0.35, colour, 1, core, 0.8, 0.3, 0.1);
+/** Ultimates in table order: an echo carries its ultimate as this index. */
+const ULTIMATES = Object.keys(ultimates) as UltimateId[];
+/** Rising motes in each ultimate's own two colours. */
+const castMote = Object.fromEntries(
+  ULTIMATES.map((id) => {
+    const [colour, core] = ultColour[id];
+    const spec = sprite({
+      shape: Shape.spark,
+      life: 0.7,
+      grow: 0.3,
+      from: core,
+      to: colour,
+      accent: white,
+      add: 1,
+      drag: 1.6,
+      stretch: 0.05,
+    });
+    return [id, spec];
+  }),
+) as Record<UltimateId, SpriteSpec>;
+/** A line's own flourish on top of the shared cast beat (where its signature starts at the caster). */
+const castFlourish: Partial<Record<UltimateId, (fx: Fx, x: number, h: number, z: number) => void>> =
+  { "draco-meteor": dracoCast };
+
+const CAST_COLUMN = 9;
+/** Ground darkened around the caster while an ultimate plays, so its colours carry over the field. */
+const DIM_RADIUS = 9;
+const DIM_ALPHA = 0.7;
+
+/**
+ * Cast beat: a column of the ultimate's light through the caster, a burst on the ground and motes
+ * spiralling up. Vertical and brief, so it never reads as a hitbox; the pulses that follow are.
+ */
+export function ultCast(fx: Fx, ultimate: UltimateId, x: number, z: number): void {
+  const [colour, core] = ultColour[ultimate];
+  const h = fx.ground.heightAt(x, z);
+  fx.echoes.add(drawCastColumn, 0.6, x, h, z, ULTIMATES.indexOf(ultimate));
+  fx.sprites.emit(flash, x, h + CHEST, z, 0, 0, 0, 1.1);
+  fx.decals.stamp(Decal.glow, x, z, 2.6, 0.55, colour, 1, core, 1);
+  fx.decals.stamp(Decal.ring, x, z, 2.4, 0.4, core, 1, colour, 0.8, 0.22, 0.15);
+  const mote = castMote[ultimate];
+  for (let i = 0; i < 28; i++) {
+    const a = (i / 28) * Math.PI * 2;
+    const d = rand(0.3, 1.1);
+    fx.sprites.emit(
+      mote,
+      x + Math.cos(a) * d,
+      h + rand(0.1, 0.8),
+      z + Math.sin(a) * d,
+      Math.cos(a) * 1.5 - Math.sin(a) * 2,
+      rand(5, 10),
+      Math.sin(a) * 1.5 + Math.cos(a) * 2,
+      rand(0.12, 0.22),
+    );
+  }
+  castFlourish[ultimate]?.(fx, x, h, z);
+}
+
+function drawCastColumn(fx: Fx, echo: Echo, t: number): void {
+  const [colour, core] = ultColour[ULTIMATES[echo.a]!];
+  // Snaps open in the first 12 %, then narrows away instead of fading flat.
+  const open = 1 - (1 - Math.min(1, t / 0.12)) ** 3;
+  const width = 1.5 * open * (1 - t) ** 0.7;
+  for (const [w, c, a] of [
+    [width, colour, 0.85],
+    [width * 0.35, core, 1],
+  ] as const) {
+    for (let i = 0; i <= 8; i++) {
+      const k = i / 8;
+      fx.ribbons.point(
+        echo.x,
+        echo.y + k * CAST_COLUMN * open,
+        echo.z,
+        w * (1 - 0.55 * k),
+        c,
+        a * (1 - k * 0.8),
+      );
+    }
+    fx.ribbons.flush(Ribbon.glow, 1);
+  }
+}
+
+/** The view's record of a cast in progress: it follows its caster until the timeline has played. */
+export interface CastAura {
+  player: PlayerId;
+  ultimate: UltimateId;
+  age: number;
+  life: number;
+}
+
+/** How long a cast plays: its last pulse, with a short tail (instant casts still get a beat). */
+export function castAura(player: PlayerId, ultimate: UltimateId, stage: Stage): CastAura {
+  const pulses = timeline(ultimate, stage);
+  const last = pulses[pulses.length - 1]?.at ?? 0;
+  return { player, ultimate, age: 0, life: Math.max(0.9, last + 0.45) };
+}
+
+/**
+ * While an ultimate plays: the ground around the local caster dims, a sigil turns under them and motes of
+ * its colour keep rising, so the whole cast reads as one event from the first frame to the last.
+ */
+export function drawCastAura(fx: Fx, aura: CastAura, x: number, z: number, mine: boolean): void {
+  const [colour, core] = ultColour[aura.ultimate];
+  const k = Math.min(1, aura.age / 0.1, (aura.life - aura.age) / 0.35);
+  if (k <= 0) return;
+  // Only the local caster's field dims: a partner's ultimate must not darken this player's view.
+  if (mine) fx.decals.put(Decal.glow, x, z, DIM_RADIUS).tint(ink, DIM_ALPHA * k, ink, 0);
+  fx.decals.put(Decal.glow, x, z, 1.9).tint(colour, 0.7 * k, core, 1);
+  const spin = fx.time * 2.2;
+  for (let i = 0; i < 3; i++) {
+    const from = spin + (i * Math.PI * 2) / 3;
+    groundArc(fx, x, z, 1.5, from, 1.5, 0.06, 0.16, colour, k);
+    groundArc(fx, x, z, 1.05, -from * 1.4, 1.2, 0.06, 0.1, core, k);
+  }
+  const h = fx.ground.heightAt(x, z);
+  const mote = castMote[aura.ultimate];
+  for (let i = perFrame(fx, 36 * k); i > 0; i--) {
+    const a = Math.random() * Math.PI * 2;
+    const d = rand(0.5, 1.5);
+    fx.sprites.emit(
+      mote,
+      x + Math.cos(a) * d,
+      h + 0.1,
+      z + Math.sin(a) * d,
+      0,
+      rand(3, 6),
+      0,
+      rand(0.08, 0.15),
+    );
+  }
 }
 
 export function ultPulse(fx: Fx, e: UltPulseEvent, ultimate?: UltimateId): void {
@@ -178,11 +316,15 @@ export function ultPulse(fx: Fx, e: UltPulseEvent, ultimate?: UltimateId): void 
   const { x, z, radius: r } = e;
   const h = fx.ground.heightAt(x, z);
   switch (e.look) {
-    case "roots":
-      fx.echoes.add(drawRootLane, 0.45, x, r, z, e.dirX, e.dirZ, e.length);
-      fx.echoes.add(drawRoot, 0.4, x, h, z, e.dirX, e.dirZ, e.length);
-      along(e, (px, pz) => spray(fx, leaf, px, h + 0.3, pz, 2, 2, 3, 0.18));
+    case "roots": {
+      fx.echoes.add(drawRootLane, 0.6, x, r, z, e.dirX, e.dirZ, e.length);
+      fx.echoes.add(drawRoot, 0.6, x, h, z, e.dirX, e.dirZ, e.length);
+      along(e, (px, pz) => spray(fx, leaf, px, h + 0.3, pz, 3, 2.5, 4, 0.2));
+      const tx = x + e.dirX * e.length;
+      const tz = z + e.dirZ * e.length;
+      spray(fx, leaf, tx, fx.ground.heightAt(tx, tz) + 0.5, tz, 8, 3.5, 5, 0.22);
       return;
+    }
     case "sun":
       fx.decals.stamp(Decal.glow, x, z, r, 0.9, grass.gold, 0.9, grass.sun, 1);
       for (let i = 0; i < 16; i++)
@@ -207,9 +349,22 @@ export function ultPulse(fx: Fx, e: UltPulseEvent, ultimate?: UltimateId): void 
       return;
     case "pillar":
       fx.echoes.add(drawFireRelease, 0.28, x, h, z, r, 1);
+      fx.echoes.add(drawFirePillar, 0.55, x, h, z, r);
       return;
     case "ring":
-      fx.echoes.add(drawFireRelease, 0.28, x, h, z, r, 0.8);
+      fx.echoes.add(drawFireRelease, 0.42, x, h, z, r, 0.9);
+      rim(x, z, r * 0.92, Math.round(r * 5), (px, pz) =>
+        fx.sprites.emit(
+          rimFlame,
+          px,
+          fx.ground.heightAt(px, pz) + 0.15,
+          pz,
+          0,
+          rand(1, 2.5),
+          0,
+          rand(0.28, 0.4),
+        ),
+      );
       return;
     case "embers":
       fx.echoes.add(drawEmberPatch, 0.28, x, h, z, r);
@@ -223,11 +378,25 @@ export function ultPulse(fx: Fx, e: UltPulseEvent, ultimate?: UltimateId): void 
       fx.decals.stamp(Decal.scorch, x, z, r * 0.8, 0.7, fire.soot, 0.45, fire.orange, 0);
       return;
     case "blast":
-      fx.echoes.add(drawFireRelease, 0.3, x, h, z, r, 1);
+      fx.echoes.add(drawFireRelease, 0.45, x, h, z, r, 1);
+      fx.echoes.add(drawFirePillar, 0.6, x, h, z, 1.6);
+      rim(x, z, r * 0.92, Math.round(r * 5), (px, pz) =>
+        fx.sprites.emit(
+          rimFlame,
+          px,
+          fx.ground.heightAt(px, pz) + 0.15,
+          pz,
+          0,
+          rand(1.5, 3),
+          0,
+          rand(0.32, 0.46),
+        ),
+      );
       fx.decals.stamp(Decal.scorch, x, z, r * 0.85, 1, fire.soot, 0.45, fire.orange, 0);
       return;
     case "whirl":
       fx.decals.stamp(Decal.whirl, x, z, r, 0.3, water.mid, 0.75, water.foam, 0.3);
+      fx.echoes.add(drawWaterWall, 0.3, x, h, z, r);
       rim(x, z, r * 0.8, 6, (px, pz, a) =>
         fx.sprites.emit(drop, px, h + 0.4, pz, -Math.sin(a) * 5, 1.5, Math.cos(a) * 5, 0.16),
       );
@@ -272,16 +441,18 @@ export function ultPulse(fx: Fx, e: UltPulseEvent, ultimate?: UltimateId): void 
       fx.echoes.add(drawCannon, 0.16, x, r, z, e.dirX, e.dirZ, e.length);
       return;
     case "storm":
-      fx.echoes.add(drawSkyBolt, 0.18, x, h, z, 0.07);
+      fx.echoes.add(drawSkyBolt, 0.2, x, h, z, 0.11);
+      fx.decals.stamp(Decal.glow, x, z, r * 1.1, 0.2, electric.yellow, 0.9, white, 1);
       fx.decals.stamp(Decal.ring, x, z, r, 0.22, electric.yellow, 0.8, white, 0.4, 0.05, 1);
       spray(fx, spark, x, h + 0.3, z, 6, 4, 3, 0.18);
       return;
     case "bolt":
-      fx.echoes.add(drawSkyBolt, 0.3, x, h, z, 0.16);
-      fx.sprites.emit(flash, x, h + 0.5, z, 0, 0, 0, r * 0.45);
+      fx.echoes.add(drawSkyBolt, 0.34, x, h, z, 0.26);
+      fx.sprites.emit(flash, x, h + 0.5, z, 0, 0, 0, r * 0.6);
+      fx.decals.stamp(Decal.glow, x, z, r * 1.1, 0.35, electric.yellow, 1, white, 1);
       fx.decals.stamp(Decal.ring, x, z, r, 0.24, electric.yellow, 0.9, white, 0.4, 0.05, 1);
       fx.decals.stamp(Decal.cracks, x, z, r * 0.8, 1.2, electric.gold, 0.6, white, 0.5);
-      spray(fx, spark, x, h + 0.4, z, 14, 7, 5, 0.22);
+      spray(fx, spark, x, h + 0.4, z, 22, 8, 6, 0.24);
       return;
     case "zigzag":
       fx.echoes.add(drawHop, 0.28, x, h, z, e.dirX, e.dirZ, e.length);
@@ -353,25 +524,63 @@ function rim(
   }
 }
 
-/** Roots erupt across the instant-hit lane, then sink. a, b: heading; c: length. */
+/** Roots erupt across the instant-hit lane, then sink: a dark vine and a light one twist round it. */
 function drawRoot(fx: Fx, echo: Echo, t: number): void {
   const reach = echo.c;
+  const rise = 1 - (1 - Math.min(1, t / 0.15)) ** 2;
   const sink = t < 0.6 ? 0 : (t - 0.6) / 0.4;
-  for (let i = 0; i <= 10; i++) {
-    const s = (reach * i) / 10;
-    const px = echo.x + echo.a * s;
-    const pz = echo.z + echo.b * s;
-    const arch = Math.sin((i / 10) * Math.PI * 3 + echo.seed) * 0.12 + 0.25;
-    fx.ribbons.point(
-      px,
-      fx.ground.heightAt(px, pz) + arch * (1 - sink),
-      pz,
-      0.16 * (1 - 0.5 * (i / 10)),
-      grass.deep,
-      1 - sink,
-    );
+  const up = rise * (1 - sink);
+  for (const [phase, width, colour] of [
+    [0, 0.26, grass.deep],
+    [Math.PI, 0.15, grass.leaf],
+  ] as const) {
+    for (let i = 0; i <= 14; i++) {
+      const k = i / 14;
+      const s = reach * k;
+      const twist = Math.sin(k * Math.PI * 4 + echo.seed + phase) * 0.22;
+      const px = echo.x + echo.a * s - echo.b * twist;
+      const pz = echo.z + echo.b * s + echo.a * twist;
+      const arch = Math.sin(k * Math.PI * 3 + echo.seed) * 0.18 + 0.45;
+      fx.ribbons.point(
+        px,
+        fx.ground.heightAt(px, pz) + arch * up,
+        pz,
+        width * (1 - 0.5 * k),
+        colour,
+        1 - sink,
+      );
+    }
+    fx.ribbons.flush(Ribbon.vine, 0);
   }
-  fx.ribbons.flush(Ribbon.vine, 0);
+}
+
+/** Blast Burn's eruption at the caster: a fire funnel bursting up out of the pillar disc; a: radius. */
+function drawFirePillar(fx: Fx, echo: Echo, t: number): void {
+  const grow = 1 - (1 - Math.min(1, t / 0.2)) ** 3;
+  const fade = t < 0.5 ? 1 : 1 - (t - 0.5) / 0.5;
+  const r = echo.a * (0.6 + 0.4 * grow);
+  fx.volumes.funnels.add(
+    place(echo.x, echo.y, echo.z, echo.seed, r, 3.4 * grow * (1 - 0.3 * t), r),
+    fire.yellow,
+    fade,
+    fire.orange,
+    0,
+    echo.seed,
+  );
+}
+
+/** Hydro Cannon's pull: a water wall turning on the disc's edge for one beat; a: radius. */
+function drawWaterWall(fx: Fx, echo: Echo, t: number): void {
+  const fade = Math.min(1, t / 0.2) * (1 - t);
+  fx.volumes.whirls.add(
+    // The whirl volume conforms to the terrain itself: y is a lift, not a height.
+    place(echo.x, 0.05, echo.z, echo.seed, echo.a, 1.1, echo.a),
+    water.foam,
+    fade,
+    water.mid,
+    0,
+    echo.seed,
+  );
 }
 
 /** Instant disc hit: its full edge is visible at impact; low fire tongues tear outward inside it. */
@@ -487,6 +696,23 @@ function drawHop(fx: Fx, echo: Echo, t: number): void {
 /** One cannon beam; y: half-width, a, b: heading, c: length. Each tick's beam is drawn briefly. */
 function drawCannon(fx: Fx, echo: Echo, t: number): void {
   strip(fx, echo, water.deep, water.foam, 0.8 * (1 - t) ** 2, 1);
+  const w = echo.y * 0.7 * (1 - t * 0.5);
+  fx.volumes.beams.add(
+    place(
+      echo.x,
+      fx.ground.heightAt(echo.x, echo.z) + 0.6,
+      echo.z,
+      Math.atan2(echo.a, echo.b),
+      w,
+      w,
+      echo.c,
+    ),
+    water.light,
+    1 - t,
+    water.deep,
+    2,
+    echo.seed,
+  );
   // Eight short jets share the existing sprite batch and replace each tick's lingering drops.
   const step = echo.c / 8;
   for (let i = 0; i < 8; i++) {

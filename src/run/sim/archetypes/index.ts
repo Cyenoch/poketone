@@ -22,6 +22,7 @@ import { smite, smiteArea } from "./smite";
 import { spin, spinArea } from "./spin";
 import { sprinkler, sprinklerArea } from "./sprinkler";
 import { strike, strikeArea } from "./strike";
+import { tempest, tempestArea } from "./tempest";
 import { vortex, vortexArea } from "./vortex";
 import { wave } from "./wave";
 import { combo, comboArea } from "./combo";
@@ -47,6 +48,7 @@ export const archetypes: Record<Archetype, ArchetypeDef> = {
   firestorm,
   sprinkler,
   rod,
+  tempest,
   combo,
 };
 
@@ -63,6 +65,7 @@ export const areaRules = {
   firestorm: firestormArea,
   sprinkler: sprinklerArea,
   rod: rodArea,
+  tempest: tempestArea,
   combo: comboArea,
 } as const satisfies Record<string, AreaRule>;
 
