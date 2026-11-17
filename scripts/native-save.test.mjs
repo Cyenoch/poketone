@@ -16,6 +16,43 @@ import { nativeSavePath, readSave, writeSave, writeTextFile } from "../src/platf
 import { decodeSave, encodeSave, SAVE_FORMAT } from "../src/run/save.ts";
 import { validPick } from "../src/lobbyPick.ts";
 
+// Synthetic data encoded by the released 0910cc31 encoder, not a player's private export.
+const releasedText = readFileSync(
+  new URL("./fixtures/save-v3-progress-v4.txt", import.meta.url),
+  "utf8",
+);
+
+test("native finds the published v3 path, preserves it on migration failure, then atomically upgrades in place", () => {
+  const directory = mkdtempSync(join(tmpdir(), "poketone-save-migrate-"));
+  const path = join(directory, "save.v3.txt");
+  try {
+    writeFileSync(path, releasedText);
+    assert.equal(nativeSavePath(directory), path);
+    mkdirSync(`${path}.tmp`);
+    assert.throws(() => nativeAppStorage(path));
+    assert.equal(readFileSync(path, "utf8"), releasedText);
+    rmSync(`${path}.tmp`, { recursive: true });
+    const expected = decodeSave(releasedText);
+    assert.equal(readFileSync(path, "utf8"), releasedText, "decode alone never commits an import");
+    const storage = nativeAppStorage(nativeSavePath(directory));
+    assert.deepEqual(storage.load().progress, {
+      status: "ready",
+      progress: expected.progress,
+      needsSave: false,
+    });
+    assert.deepEqual(storage.load().settings, expected.settings);
+    const committed = readFileSync(path, "utf8");
+    assert.ok(atob(committed).startsWith(`${SAVE_FORMAT}.`));
+    assert.deepEqual(decodeSave(committed), expected);
+    assert.equal(nativeSavePath(directory), path, "a later launch uses the same location");
+    assert.deepEqual(readSave(path), expected);
+    assert.equal(readFileSync(path, "utf8"), committed);
+    assert.equal(existsSync(`${path}.tmp`), false);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test("native whole-save import commits progress and settings together and keeps disk/memory on write failure", () => {
   const directory = mkdtempSync(join(tmpdir(), "poketone-save-import-"));
   const path = join(directory, "save.txt");
@@ -52,7 +89,7 @@ test("native startup rejects legacy and unsupported saves without replacing thei
     save.progress.stardust = 567;
     const old = btoa(atob(encodeSave(save)).replace(/^[^.]+/, "2"));
     writeTextFile(oldPath, old);
-    const path = join(directory, `save.v${SAVE_FORMAT}.txt`);
+    const path = join(directory, "save.v3.txt");
     assert.throws(() => nativeSavePath(directory), /旧存档路径不受支持/);
     assert.equal(existsSync(path), false, "startup must not create a replacement save");
     assert.equal(readFileSync(oldPath, "utf8"), old);
@@ -92,7 +129,11 @@ test("unreadable native pick falls back with a diagnostic while the progress fil
 
     mkdirSync(pickPath);
     const loaded = storage.load();
-    assert.deepEqual(loaded.progress, { status: "ready", progress: save.progress });
+    assert.deepEqual(loaded.progress, {
+      status: "ready",
+      progress: save.progress,
+      needsSave: false,
+    });
     assert.deepEqual(loaded.settings, save.settings);
     assert.deepEqual(validPick(save.progress, loaded.pick), {
       starter: "charmander",
@@ -139,7 +180,11 @@ test(
       writeFileSync(pickPath, pick, { mode: 0o600 });
       chmodSync(pickPath, 0);
       const loaded = nativeAppStorage(path).load();
-      assert.deepEqual(loaded.progress, { status: "ready", progress: save.progress });
+      assert.deepEqual(loaded.progress, {
+        status: "ready",
+        progress: save.progress,
+        needsSave: false,
+      });
       assert.deepEqual(loaded.pick, {});
       assert.equal(warnings.length, 1);
       assert.ok(warnings[0][0].includes(pickPath));

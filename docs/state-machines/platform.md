@@ -108,7 +108,7 @@
 
 - **所有者/编码**：[ProgressLoad](../../src/run/progress.ts#L65) 的 ready/locked；[webAppStorage.save](../../src/platform/web/app-storage.ts#L8) 的 previous/written；[nativeAppStorage](../../src/platform/native/app-storage.ts#L7) 的缓存save；[writeTextFile](../../src/platform/native/save.ts#L44) 的临时文件/rename。
 - **状态/转换**：Web读到可解释进度→ready，无法解释则保留原数据并locked；完整导入先校验，再写progress/settings，部分失败按written逆序恢复，恢复也失败则AggregateError。native缺文件产生初始数据，损坏/其他读取错误向外抛；完整文件flush后rename成功才更新内存缓存。
-- **守卫/终态**：上层 change 先保存再更新应用 progress。progress 仍为 v4、导入导出外壳仍为 v3；旧外壳和未知字段拒绝，时间须有限非负、计数须非负安全整数，写入/导出前也验证。native 默认路径优先 `save.v3.txt`；缺少当前文件但存在旧 `save.txt` 时报错保留原文件，不迁移。
+- **守卫/终态**：上层 change 先保存再更新应用 progress。当前 progress v5、导出外层 v4；已发布 v4 / 外层 v3 按冻结规则完整校验后升级，未知字段拒绝，时间须有限非负、计数须非负安全整数。Web 读取返回 `needsSave`，GPU host 就绪后保存，失败保留原记录、升级后的会话数据和待保存标记；后续成功写入才清标记。native 在读取旧外层后原子升级，失败终止启动且保留原文件。默认路径保持 `save.v3.txt`；缺少当前文件但存在旧 `save.txt` 时报错保留原文件，不迁移旧路径。
 - **不变量**：**#20/#21** 已将未保存 result 留在 run session，save-error 只允许重试，成功后才结算/导航；背包消费失败不注册世界 advance。原子文件替换不等于整个业务天然有事务性，最终保存接线审阅仍由主线程完成，见 [UI-APP-PROGRESS](application-ui.md#ui-app-progress)。
 - **证据**：[native-save.test](../../scripts/native-save.test.mjs)、[ui-save-import.test](../../scripts/ui-save-import.test.mjs)、[ui-run-session.test](../../scripts/ui-run-session.test.mjs) 为当前测试定位。
 

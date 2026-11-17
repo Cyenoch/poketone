@@ -15,7 +15,7 @@ context: |
   最小完整实现，复用现有设施；不新增兼容 shim、旧接口转发或双实现。
   UI 保真迁移；不新增正常可见 DOM UI；不支持 reduced-motion。
   纯模拟固定步长、种子随机；画面只读。行为不变时 golden 不得重录。
-  正式设置只含声音、开发者模式与 UI 缩放；无震动或 reduced-motion 兼容字段。仅接受当前存档格式，不迁移旧导出或 native 旧路径；拒绝时保留原数据。
+  正式设置包含声音、开发者模式、UI 缩放、失焦暂停和自动打开升级卡；无震动或 reduced-motion。玩家进度从已发布 v4、导出外层从已发布 v3 逐版校验升级，历史设置在版本化边界校验，保存成功前保留原数据；世界快照不兼容旧版，native 旧 save.txt 路径仍拒绝且保留原文件。
 rules:
   proposal:
     - 说明用户需求、范围和非目标；New Capabilities 与 Modified Capabilities 使用已有能力边界。

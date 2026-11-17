@@ -4,9 +4,9 @@ import { decodeSave, encodeSave, SAVE_FORMAT, type SaveData } from "../../run/sa
 import { emptyProgress } from "../../run/progress";
 import { defaultSettings } from "../../settings";
 
-/** Schema versions are independent of app releases; legacy files stay untouched. */
+/** Keep the published filename stable; the envelope inside upgrades independently. */
 export function nativeSavePath(directory: string): string {
-  const path = join(directory, `save.v${SAVE_FORMAT}.txt`);
+  const path = join(directory, "save.v3.txt");
   try {
     statSync(path);
     return path;
@@ -35,7 +35,10 @@ export function readSave(path: string): SaveData {
       settings: { ...defaultSettings },
     };
   }
-  return decodeSave(text);
+  const save = decodeSave(text);
+  // decodeSave has already validated both versions and the full payload. Commit only atomically.
+  if (!atob(text.replace(/\s+/g, "")).startsWith(`${SAVE_FORMAT}.`)) writeSave(path, save);
+  return save;
 }
 
 /** A complete, flushed file replaces the old one atomically on the same filesystem. */

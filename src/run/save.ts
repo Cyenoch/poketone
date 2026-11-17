@@ -2,7 +2,7 @@ import { parseSettings, type Settings } from "../settings";
 import { parseProgress, type Progress } from "./progress";
 
 /** Export text: base64 of `<format>.<json>.<checksum>` (UTF-8). A checksum, not anti-tamper. */
-export const SAVE_FORMAT = 3;
+export const SAVE_FORMAT = 4;
 /** The reason shown when an intact (checksummed) save's content is not valid JSON. */
 export const SAVE_UNREADABLE = "存档已损坏（内容无法读取）。";
 
@@ -32,8 +32,7 @@ function fromBase64(text: string): string {
 }
 
 export function encodeSave(save: SaveData): string {
-  parseSave(save);
-  const json = JSON.stringify(save);
+  const json = JSON.stringify(parseSave(save, SAVE_FORMAT));
   return toBase64(`${SAVE_FORMAT}.${json}.${checksum(json)}`);
 }
 
@@ -49,7 +48,7 @@ export function decodeSave(text: string): SaveData {
   const last = raw.lastIndexOf(".");
   if (first < 0 || last <= first) throw new Error("不是存档文本。");
   const version = raw.slice(0, first);
-  if (version !== String(SAVE_FORMAT)) throw new Error("存档版本不受支持。");
+  if (version !== "3" && version !== String(SAVE_FORMAT)) throw new Error("存档版本不受支持。");
   const json = raw.slice(first + 1, last);
   if (checksum(json) !== raw.slice(last + 1)) throw new Error("存档已损坏（校验和不符）。");
   let value: unknown;
@@ -61,14 +60,47 @@ export function decodeSave(text: string): SaveData {
     console.error("存档内容无法解析", cause);
     throw new Error(SAVE_UNREADABLE);
   }
-  return parseSave(value);
+  return parseSave(value, Number(version));
 }
 
-function parseSave(value: unknown): SaveData {
+function parseSave(value: unknown, format: number): SaveData {
   if (typeof value !== "object" || value === null || Array.isArray(value))
     throw new Error("存档内容无效。");
   if (Object.keys(value).some((key) => key !== "progress" && key !== "settings"))
     throw new Error("存档字段不受支持。");
   const { progress, settings } = value as Partial<SaveData>;
-  return { progress: parseProgress(progress), settings: parseSettings(settings) };
+  const expectedProgress = format === 3 ? 4 : 5;
+  if (typeof progress !== "object" || progress === null || progress.version !== expectedProgress)
+    throw new Error(`存档进度版本不受支持（外层 v${format} 需要进度 v${expectedProgress}）。`);
+  return {
+    progress: parseProgress(progress),
+    settings: format === 3 ? parseSettingsV3(settings) : parseSettings(settings),
+  };
+}
+
+/** v3 shipped with three settings, then added two preferences without changing the envelope. */
+function parseSettingsV3(value: unknown): Settings {
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    throw new Error("设置无效。");
+  const keys = ["sound", "devMode", "uiScale", "pauseOnBlur", "autoOpenCards"];
+  if (Object.keys(value).some((key) => !keys.includes(key))) throw new Error("设置不受支持。");
+  const {
+    sound,
+    devMode,
+    uiScale,
+    pauseOnBlur = true,
+    autoOpenCards = true,
+  } = value as Partial<Settings>;
+  if (
+    typeof sound !== "boolean" ||
+    typeof devMode !== "boolean" ||
+    typeof pauseOnBlur !== "boolean" ||
+    typeof autoOpenCards !== "boolean" ||
+    typeof uiScale !== "number" ||
+    !Number.isFinite(uiScale) ||
+    uiScale < 0.8 ||
+    uiScale > 1.5
+  )
+    throw new Error("旧存档设置无效。");
+  return { sound, devMode, uiScale, pauseOnBlur, autoOpenCards };
 }

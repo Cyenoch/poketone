@@ -19,7 +19,7 @@ import { validPick } from "../src/lobbyPick.ts";
 import { starterOrder } from "../src/run/sim/content/lines/index.ts";
 import { encodeSave, decodeSave } from "../src/run/save.ts";
 import { webAppStorage } from "../src/platform/web/app-storage.ts";
-import { loadSettings, saveSettings } from "../src/settings.ts";
+import { defaultSettings, loadSettings, saveSettings } from "../src/settings.ts";
 import { moveParams } from "../src/run/sim/attacks.ts";
 import { SIGNATURE_GATES } from "../src/run/sim/content/params/cards.ts";
 import { killEnemy } from "../src/run/sim/combat.ts";
@@ -528,7 +528,7 @@ test("recordRun banks a run's stardust, win or lose, with lifetime kills; crossi
   assert.equal(progress.stardust, 360);
   assert.equal(progress.kills, 2500);
   assert.equal(starterUnlocked(progress, "pikachu"), true);
-  assert.deepEqual(loadProgress(), { status: "ready", progress });
+  assert.deepEqual(loadProgress(), { status: "ready", progress, needsSave: false });
 });
 
 test("buying a lab level deducts its cost and persists; unaffordable or maxed throws", () => {
@@ -558,7 +558,7 @@ test("export → wipe → import restores the save exactly", () => {
   };
   progress.best.squirtle = { difficulty: 1, victory: true, time: 540.5, kills: 1400 };
   store.set(PROGRESS_STORAGE_KEY, JSON.stringify(progress));
-  saveSettings({ sound: false, devMode: true, uiScale: 1.2 });
+  saveSettings({ ...defaultSettings, sound: false, devMode: true, uiScale: 1.2 });
   const before = new Map(store);
   const current = webAppStorage.load();
   const text = encodeSave({ progress: current.progress.progress, settings: current.settings });

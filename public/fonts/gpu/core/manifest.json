@@ -8,51 +8,51 @@
     "libwebp": "1.6.0"
   },
   "ui-500": {
-    "json": "ui-500.a829f4c4b16a3944.json",
-    "sha256": "a829f4c4b16a3944c809cea287bfda17a3a21fce650a24cb5a15ec08b38d4d83",
+    "json": "ui-500.e4b11588e66ff895.json",
+    "sha256": "e4b11588e66ff89509d3585c76fa9bb5bad5ee8cce2ee344eb7a507735fafad4",
     "weight": 500,
-    "glyphs": 1225,
+    "glyphs": 1227,
     "pages": 2,
     "unavailable": "−",
     "chromePages": 1,
     "source": "public/fonts/noto-sans-sc-game.woff2",
     "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
-    "jsonBytes": 50274,
+    "jsonBytes": 50345,
     "pageBytes": [
-      1559844,
-      1121336
+      1550084,
+      1139754
     ]
   },
   "ui-700": {
-    "json": "ui-700.06a56a96690efb0e.json",
-    "sha256": "06a56a96690efb0e9a131c637b8557c885a10484e7498c766caa995c8bbd4f98",
+    "json": "ui-700.34b2bd397199db9c.json",
+    "sha256": "34b2bd397199db9c8de29f82848c044038fb9a771b2dd9aa29c896f2a1803d40",
     "weight": 700,
-    "glyphs": 1225,
+    "glyphs": 1227,
     "pages": 2,
     "unavailable": "−",
     "chromePages": 1,
     "source": "public/fonts/noto-sans-sc-game.woff2",
     "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
-    "jsonBytes": 50327,
+    "jsonBytes": 50401,
     "pageBytes": [
-      1569520,
-      1128708
+      1556952,
+      1146758
     ]
   },
   "ui-800": {
-    "json": "ui-800.8a7544bfba83b3cd.json",
-    "sha256": "8a7544bfba83b3cd8e2f4d28f3e3edc94a07bef11e4edbaf0ecf3f756207419d",
+    "json": "ui-800.9f141c99ff2293d8.json",
+    "sha256": "9f141c99ff2293d8c9138c1d7e53383d271c8392a37d0ce475d3e4a0c360dfcc",
     "weight": 800,
-    "glyphs": 1225,
+    "glyphs": 1227,
     "pages": 2,
     "unavailable": "−",
     "chromePages": 1,
     "source": "public/fonts/noto-sans-sc-game.woff2",
     "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
-    "jsonBytes": 50373,
+    "jsonBytes": 50443,
     "pageBytes": [
-      1568348,
-      1125300
+      1556796,
+      1143700
     ]
   },
   "display": {

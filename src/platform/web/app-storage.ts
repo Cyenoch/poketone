@@ -1,5 +1,10 @@
-import { loadProgress, saveProgress, PROGRESS_STORAGE_KEY } from "../../run/progress";
-import { loadSettings, saveSettings, SETTINGS_STORAGE_KEY } from "../../settings";
+import {
+  loadProgress,
+  parseProgress,
+  saveProgress,
+  PROGRESS_STORAGE_KEY,
+} from "../../run/progress";
+import { loadSettings, parseSettings, saveSettings, SETTINGS_STORAGE_KEY } from "../../settings";
 import { loadPick, savePick } from "../../lobbyPick";
 import type { AppStorage } from "../app-storage";
 
@@ -7,8 +12,8 @@ export const webAppStorage: AppStorage = {
   load: () => ({ progress: loadProgress(), settings: loadSettings(), pick: loadPick() }),
   save(save) {
     const entries = [
-      [PROGRESS_STORAGE_KEY, JSON.stringify(save.progress)],
-      [SETTINGS_STORAGE_KEY, JSON.stringify(save.settings)],
+      [PROGRESS_STORAGE_KEY, JSON.stringify(parseProgress(save.progress))],
+      [SETTINGS_STORAGE_KEY, JSON.stringify(parseSettings(save.settings))],
     ] as const;
     const previous = entries.map(([key]) => localStorage.getItem(key));
     let written = 0;

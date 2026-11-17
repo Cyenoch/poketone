@@ -161,7 +161,11 @@ test("invalid and unsupported imports never commit; valid boundary values export
       const decoded = decodeSave(encodeSave(next));
       webAppStorage.save(decoded);
       const loaded = webAppStorage.load();
-      assert.deepEqual(loaded.progress, { status: "ready", progress: next.progress });
+      assert.deepEqual(loaded.progress, {
+        status: "ready",
+        progress: next.progress,
+        needsSave: false,
+      });
       assert.deepEqual(loaded.settings, next.settings);
       assert.deepEqual(decodeSave(encodeSave(decoded)), next);
     }

@@ -9,6 +9,9 @@ import {
 } from "./sim/content/params/progression";
 import type { RunResult } from "./createRun";
 import { labItem, metaBonuses, nextCost } from "./lab";
+import { enemies, type EnemyId } from "./sim/content/enemies";
+import { isTrainerId, type TrainerId } from "../trainers";
+import { parseProgressV4, type ProgressV4 } from "./progress-v4";
 
 export const PROGRESS_STORAGE_KEY = "poketone.progress.v4";
 
@@ -20,7 +23,7 @@ export interface BestRecord {
 }
 
 export interface Progress {
-  version: 4;
+  version: 5;
   runs: number;
   /** Clears per difficulty tier; clearing a tier unlocks the next. */
   clears: [number, number, number];
@@ -36,6 +39,24 @@ export interface Progress {
   archive: ItemId[];
   /** 背包: items the next run starts with at level 1 (at most `backpackSlots`); emptied when it starts. */
   backpack: ItemId[];
+  dex: Partial<Record<EnemyId, { seen: number; defeated: number; shiny: number }>>;
+  looks: { owned: StarterId[]; worn: StarterId[] };
+  badges: string[];
+  rules: string[];
+  unlocks: string[];
+  bonds: Partial<Record<StarterId, number>>;
+  tower: Partial<Record<StarterId, { floor: number; difficulty: Difficulty }>>;
+  seeds: SeedRecord[];
+}
+
+export interface SeedRecord {
+  code: string;
+  starter: StarterId;
+  trainer: TrainerId;
+  result: "victory" | "defeat";
+  time: number;
+  kills: number;
+  floor?: number;
 }
 
 /** Partners cleared with at `difficulty` or above (`best` keeps a partner's hardest victory). */
@@ -74,13 +95,13 @@ export function backpackSlots(progress: Progress): number {
 }
 
 export type ProgressLoad =
-  | { status: "ready"; progress: Progress }
+  | { status: "ready"; progress: Progress; needsSave: boolean }
   /** Unreadable or future-version data is kept untouched; this session plays without saving. */
   | { status: "locked"; progress: Progress; message: string };
 
 export function emptyProgress(): Progress {
   return {
-    version: 4,
+    version: 5,
     runs: 0,
     clears: [0, 0, 0],
     best: {},
@@ -90,6 +111,14 @@ export function emptyProgress(): Progress {
     lab: {},
     archive: [],
     backpack: [],
+    dex: {},
+    looks: { owned: [], worn: [] },
+    badges: [],
+    rules: [],
+    unlocks: [],
+    bonds: {},
+    tower: {},
+    seeds: [],
   };
 }
 
@@ -97,12 +126,18 @@ function isCount(value: unknown): value is number {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
 }
 
+/** Pure upgrade of an already validated released record. */
+export function upgradeProgressV4(progress: ProgressV4): Progress {
+  return { ...emptyProgress(), ...structuredClone(progress), version: 5 };
+}
+
 /** Validates stored or imported progress (a trust boundary). */
 export function parseProgress(value: unknown): Progress {
   if (typeof value !== "object" || value === null || Array.isArray(value))
     throw new Error("记录不是对象。");
   const record = value as Partial<Omit<Progress, "version">> & { version?: unknown };
-  if (record.version !== 4) throw new Error("记录版本不受支持。");
+  if (record.version === 4) return upgradeProgressV4(parseProgressV4(value));
+  if (record.version !== 5) throw new Error("记录版本不受支持。");
   const fields = emptyProgress();
   if (Object.keys(record).some((key) => !Object.hasOwn(fields, key)))
     throw new Error("记录字段不受支持。");
@@ -110,7 +145,7 @@ export function parseProgress(value: unknown): Progress {
     !isCount(record.runs) ||
     !Array.isArray(record.clears) ||
     record.clears.length !== 3 ||
-    !record.clears.every(isCount)
+    !Array.from(record.clears).every(isCount)
   ) {
     throw new Error("记录内容不完整。");
   }
@@ -124,7 +159,7 @@ export function parseProgress(value: unknown): Progress {
   const best: Progress["best"] = {};
   for (const id of starterOrder) {
     const entry = record.best[id];
-    if (entry === undefined) continue;
+    if (!Object.hasOwn(record.best, id)) continue;
     if (
       typeof entry !== "object" ||
       entry === null ||
@@ -156,12 +191,82 @@ export function parseProgress(value: unknown): Progress {
       console.error("研究所等级无效", id, level);
       throw new Error("研究所等级无效。");
     }
-    if (level > 0) lab[item.id] = level;
+    lab[item.id] = level;
   }
+  const dex: Progress["dex"] = {};
+  for (const [id, value] of Object.entries(objectRecord(record.dex, "图鉴"))) {
+    if (!Object.hasOwn(enemies, id)) throw new Error(`图鉴物种无效（${id}）。`);
+    const entry = objectRecord(value, `图鉴 ${id}`, ["seen", "defeated", "shiny"]);
+    if (!isCount(entry.seen) || !isCount(entry.defeated) || !isCount(entry.shiny))
+      throw new Error(`图鉴计数无效（${id}）。`);
+    dex[id as EnemyId] = { seen: entry.seen, defeated: entry.defeated, shiny: entry.shiny };
+  }
+  const looks = objectRecord(record.looks, "异色外观", ["owned", "worn"]);
+  const owned = starterList(looks.owned, "拥有的异色外观");
+  const worn = starterList(looks.worn, "穿戴的异色外观");
+  if (worn.some((id) => !owned.includes(id))) throw new Error("未拥有的异色外观不能穿戴。");
+  // shortcut: these content tables land in their feature changes; until then only empty sets exist.
+  for (const field of ["badges", "rules", "unlocks"] as const) {
+    if (!Array.isArray(record[field]) || record[field].length !== 0)
+      throw new Error(`${field} 记录含未知 ID 或格式无效。`);
+  }
+  const bonds: Progress["bonds"] = {};
+  for (const [id, points] of Object.entries(objectRecord(record.bonds, "伙伴羁绊"))) {
+    if (!starterOrder.includes(id as StarterId) || !isCount(points))
+      throw new Error(`伙伴羁绊无效（${id}）。`);
+    bonds[id as StarterId] = points;
+  }
+  const tower: Progress["tower"] = {};
+  for (const [id, value] of Object.entries(objectRecord(record.tower, "对战塔"))) {
+    const entry = objectRecord(value, `对战塔 ${id}`, ["floor", "difficulty"]);
+    if (
+      !starterOrder.includes(id as StarterId) ||
+      !isCount(entry.floor) ||
+      (entry.difficulty !== 0 && entry.difficulty !== 1 && entry.difficulty !== 2)
+    )
+      throw new Error(`对战塔记录无效（${id}）。`);
+    tower[id as StarterId] = { floor: entry.floor, difficulty: entry.difficulty };
+  }
+  if (!Array.isArray(record.seeds) || record.seeds.length > 20)
+    throw new Error("种子码成绩记录无效。");
+  const seeds = Array.from(record.seeds, (value): SeedRecord => {
+    const entry = objectRecord(value, "种子码成绩", [
+      "code",
+      "starter",
+      "trainer",
+      "result",
+      "time",
+      "kills",
+      "floor",
+    ]);
+    if (
+      typeof entry.code !== "string" ||
+      entry.code.trim().length === 0 ||
+      typeof entry.starter !== "string" ||
+      !starterOrder.includes(entry.starter as StarterId) ||
+      !isTrainerId(entry.trainer) ||
+      (entry.result !== "victory" && entry.result !== "defeat") ||
+      typeof entry.time !== "number" ||
+      !Number.isFinite(entry.time) ||
+      entry.time < 0 ||
+      !isCount(entry.kills) ||
+      (Object.hasOwn(entry, "floor") && !isCount(entry.floor))
+    )
+      throw new Error("种子码成绩记录无效。");
+    return {
+      code: entry.code,
+      starter: entry.starter as StarterId,
+      trainer: entry.trainer,
+      result: entry.result,
+      time: entry.time,
+      kills: entry.kills,
+      ...(isCount(entry.floor) ? { floor: entry.floor } : {}),
+    };
+  });
   const progress: Progress = {
-    version: 4,
+    version: 5,
     runs: record.runs,
-    clears: record.clears as Progress["clears"],
+    clears: [...record.clears] as Progress["clears"],
     best,
     kills: record.kills,
     research: record.research,
@@ -169,6 +274,14 @@ export function parseProgress(value: unknown): Progress {
     lab,
     archive: itemList(record.archive, "档案库"),
     backpack: itemList(record.backpack, "背包"),
+    dex,
+    looks: { owned, worn },
+    badges: [],
+    rules: [],
+    unlocks: [],
+    bonds,
+    tower,
+    seeds,
   };
   if (progress.archive.length > archiveSlots(progress)) throw new Error("档案库超出栏位。");
   if (progress.backpack.length > backpackSlots(progress)) throw new Error("背包超出栏位。");
@@ -178,11 +291,35 @@ export function parseProgress(value: unknown): Progress {
 function itemList(value: unknown, name: string): ItemId[] {
   if (
     !Array.isArray(value) ||
-    !value.every((id) => typeof id === "string" && Object.hasOwn(items, id)) ||
+    !Array.from(value).every((id) => typeof id === "string" && Object.hasOwn(items, id)) ||
     new Set(value).size !== value.length
   )
     throw new Error(`${name}记录无效。`);
-  return value as ItemId[];
+  return [...value] as ItemId[];
+}
+
+function objectRecord(
+  value: unknown,
+  name: string,
+  fields?: readonly string[],
+): Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    throw new Error(`${name}记录无效。`);
+  if (fields && Object.keys(value).some((key) => !fields.includes(key)))
+    throw new Error(`${name}字段不受支持。`);
+  return value as Record<string, unknown>;
+}
+
+function starterList(value: unknown, name: string): StarterId[] {
+  if (
+    !Array.isArray(value) ||
+    !Array.from(value).every(
+      (id) => typeof id === "string" && starterOrder.includes(id as StarterId),
+    ) ||
+    new Set(value).size !== value.length
+  )
+    throw new Error(`${name}记录无效。`);
+  return [...value] as StarterId[];
 }
 
 export function loadProgress(): ProgressLoad {
@@ -196,9 +333,11 @@ export function loadProgress(): ProgressLoad {
       message: "浏览器禁止本地存储，本次记录不会保存。",
     };
   }
-  if (raw === null) return { status: "ready", progress: emptyProgress() };
+  if (raw === null) return { status: "ready", progress: emptyProgress(), needsSave: false };
   try {
-    return { status: "ready", progress: parseProgress(JSON.parse(raw)) };
+    const stored: unknown = JSON.parse(raw);
+    const progress = parseProgress(stored);
+    return { status: "ready", progress, needsSave: (stored as { version: number }).version === 4 };
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     return {
@@ -211,8 +350,7 @@ export function loadProgress(): ProgressLoad {
 
 /** Throws when the browser refuses the write, so the UI never claims it saved. */
 export function saveProgress(progress: Progress): void {
-  parseProgress(progress);
-  localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(progress));
+  localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(parseProgress(progress)));
 }
 
 export function unlockedDifficulty(progress: Progress): Difficulty {

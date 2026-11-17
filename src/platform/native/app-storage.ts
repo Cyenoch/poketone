@@ -23,7 +23,7 @@ export function nativeAppStorage(path: string): AppStorage {
         }
       }
       return {
-        progress: { status: "ready", progress: save.progress },
+        progress: { status: "ready", progress: save.progress, needsSave: false },
         settings: save.settings,
         pick,
       };

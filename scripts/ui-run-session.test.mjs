@@ -10,6 +10,10 @@ if (!process.argv.includes("--run-session-fixture")) {
       "failed run records survive retry, return and natural results without double credit",
     ],
     ["backpack", "a refused backpack write blocks activation and retry consumes it once"],
+    [
+      "migration",
+      "startup upgrades save once and a refused upgrade preserves the old record for retry",
+    ],
     ["fatal", "GPU host failure terminates preparing and active sessions"],
     ["notices", "run notices prioritize danger without duplicates, stale timers or queued replay"],
     [
@@ -195,11 +199,11 @@ if (!process.argv.includes("--run-session-fixture")) {
           }
         },
         setPaused: noop,
+        setPauseOnBlur: noop,
+        setAutoOpenCards: noop,
         stats: () => ({}),
         setSound: noop,
         setDevMode: noop,
-        setPauseOnBlur: noop,
-        setAutoOpenCards: noop,
         dispose() {
           disposed = true;
           active = false;
@@ -212,16 +216,16 @@ if (!process.argv.includes("--run-session-fixture")) {
   installRuntime({ nextFrame: () => Promise.resolve() });
   const { createAppSession } = await import(at("src/app/session.ts"));
   const { createWorld, stepWorld } = await import(at("src/run/sim/world.ts"));
-  const { emptyProgress } = await import(at("src/run/progress.ts"));
+  const { emptyProgress, parseProgress } = await import(at("src/run/progress.ts"));
   const settings = { sound: false, devMode: false, uiScale: 1 };
-  async function setup(initial) {
+  async function setup(initial, { needsSave = false, failWrite = false } = {}) {
     let disk = structuredClone(initial),
-      failNext = false;
+      failNext = failWrite;
     const writes = [];
     const errors = [];
     const storage = {
       load: () => ({
-        progress: { status: "ready", progress: structuredClone(disk) },
+        progress: { status: "ready", progress: parseProgress(structuredClone(disk)), needsSave },
         settings,
         pick: {},
       }),
@@ -280,7 +284,30 @@ if (!process.argv.includes("--run-session-fixture")) {
     };
   }
   const which = process.argv.at(-1);
-  if (which === "result") {
+  if (which === "migration") {
+    const { readFileSync } = await import("node:fs");
+    const raw = atob(readFileSync(at("scripts/fixtures/save-v3-progress-v4.txt"), "utf8").trim());
+    const legacy = JSON.parse(raw.slice(raw.indexOf(".") + 1, raw.lastIndexOf("."))).progress;
+    for (const failWrite of [false, true]) {
+      const t = await setup(legacy, { needsSave: true, failWrite });
+      try {
+        assert.equal(t.writes.length, 1);
+        assert.equal(lobby.state.progress.version, 5);
+        if (failWrite) {
+          assert.deepEqual(t.disk(), legacy);
+          assert.match(hostState.notification.message, /存档升级保存失败/);
+          assert.equal(
+            t.session.change("重试存档升级", (progress) => progress),
+            true,
+          );
+        }
+        assert.deepEqual(t.disk(), parseProgress(legacy));
+        assert.equal(t.errors.length, 0);
+      } finally {
+        t.session.dispose();
+      }
+    }
+  } else if (which === "result") {
     for (const intent of ["retry", "lobby", "natural"]) {
       const t = await setup(emptyProgress());
       try {

@@ -218,7 +218,7 @@ export async function createAppSession(
     try {
       const progress = apply(progressLoad.progress);
       storage.saveProgress(progress);
-      progressLoad = { status: "ready", progress };
+      progressLoad = { status: "ready", progress, needsSave: false };
       refreshScreen();
       sync();
       return true;
@@ -242,7 +242,7 @@ export async function createAppSession(
         load(text) {
           const save = decodeSave(text);
           storage.save(save);
-          progressLoad = { status: "ready", progress: save.progress };
+          progressLoad = { status: "ready", progress: save.progress, needsSave: false };
           settings = save.settings;
           audio.setEnabled(settings.sound);
           refreshScreen();
@@ -527,6 +527,15 @@ export async function createAppSession(
     }
     releaseInput = app.setInput(() => host?.sampleInput());
     audio.setEnabled(settings.sound);
+    if (progressLoad.status === "ready" && progressLoad.needsSave) {
+      try {
+        storage.saveProgress(progressLoad.progress);
+        progressLoad = { ...progressLoad, needsSave: false };
+      } catch (error) {
+        console.error("存档升级保存失败", error);
+        notify(`存档升级保存失败：${(error as Error).message}`);
+      }
+    }
     sync();
     show("lobby");
     // The launcher waits for the opening pick's run too; the lobby's holds take it over before it goes.
