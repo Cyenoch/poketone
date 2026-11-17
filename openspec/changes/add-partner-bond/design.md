@@ -35,7 +35,6 @@
 
 - 开局配置 `RunConfig.players[].bond: number`（等级），`createWorld` 写入 `Player.bond` 和本局剩余次数，世界快照版本加一。
 - 现有 golden 配置不带羁绊（等级 0），结果不变。
-- 种子码挑战中羁绊等级按 0 开局（`add-seed-challenges` 的公平开局），羁绊点照常结算。
 
 ## 训练师对白
 
