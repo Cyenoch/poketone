@@ -11,6 +11,10 @@ if (!process.argv.includes("--run-session-fixture")) {
     ],
     ["backpack", "a refused backpack write blocks activation and retry consumes it once"],
     [
+      "shiny-import",
+      "importing a worn look cancels the pending switch without a second save or success cue",
+    ],
+    [
       "migration",
       "startup upgrades save once and a refused upgrade preserves the old record for retry",
     ],
@@ -47,6 +51,18 @@ if (!process.argv.includes("--run-session-fixture")) {
     failRunOnCreate = false;
   const hostStates = [];
   const audio = { music: { play: noop }, sfx: noop, setEnabled: noop, onError: () => noop };
+  let importSave, pendingMap;
+  const shinyReceipts = [];
+  const sounds = [];
+  if (process.argv.at(-1) === "shiny-import") {
+    audio.sfx = (name) => sounds.push(name);
+    const { Shared } = await import(at("src/prepare/handle.ts"));
+    pendingMap = new Shared("shiny-import", { empty: noop });
+    await mock.module(at("src/run/view/assets.ts"), () => ({ shinyMapNeed: () => pendingMap }));
+    await mock.module(at("src/prepare/images.ts"), () => ({
+      images: () => ({ acquire: () => ({ result: Promise.resolve(), release: noop }) }),
+    }));
+  }
   await mock.module(at("src/audio/engine.ts"), () => ({ getAudio: () => audio }));
   await mock.module(at("src/run/prefetch.ts"), () => ({
     depart: noop,
@@ -64,6 +80,9 @@ if (!process.argv.includes("--run-session-fixture")) {
       this.state = state;
     }
     attachScene() {}
+    lookSaved(line, worn) {
+      shinyReceipts.push([line, worn]);
+    }
     focusStart() {
       this.focused = "start";
     }
@@ -120,7 +139,14 @@ if (!process.argv.includes("--run-session-fixture")) {
     },
   }));
   await mock.module(at("src/ui/gpu/run-dev-readout.ts"), () => ({ GpuDevReadout: class {} }));
-  await mock.module(at("src/ui/gpu/save-dialog.ts"), () => ({ GpuSaveDialog: class {} }));
+  await mock.module(at("src/ui/gpu/save-dialog.ts"), () => ({
+    GpuSaveDialog: class {
+      constructor(_fonts, _initial, callbacks) {
+        importSave = callbacks.load;
+      }
+      dispose() {}
+    },
+  }));
   await mock.module(at("src/ui/gpu/multiplayer-session.ts"), () => ({
     mountMultiplayer: (...args) => {
       room = args[4];
@@ -242,6 +268,9 @@ if (!process.argv.includes("--run-session-fixture")) {
         disk = structuredClone(progress);
       },
       savePick: noop,
+      save: (save) => {
+        disk = structuredClone(save.progress);
+      },
       saveSettings: noop,
     };
     const app = { setInput: () => noop };
@@ -288,7 +317,31 @@ if (!process.argv.includes("--run-session-fixture")) {
     };
   }
   const which = process.argv.at(-1);
-  if (which === "migration") {
+  if (which === "shiny-import") {
+    const { encodeSave } = await import(at("src/run/save.ts"));
+    const progress = { ...emptyProgress(), looks: { owned: ["charmander"], worn: [] } };
+    const fixture = await setup(progress);
+    try {
+      lobby.callbacks.shiny("charmander", false);
+      assert.deepEqual(sounds, []);
+      lobby.callbacks.shiny("charmander", true);
+      lobby.callbacks.shiny("charmander", true);
+      assert.deepEqual(sounds, ["ui-move"]);
+      assert.equal(pendingMap.holders, 1);
+      hostCallbacks.openSave();
+      const imported = { ...progress, looks: { owned: ["charmander"], worn: ["charmander"] } };
+      importSave(encodeSave({ progress: imported, settings }));
+      assert.equal(pendingMap.holders, 0);
+      pendingMap.resolve();
+      await new Promise((resolve) => setImmediate(resolve));
+      assert.deepEqual(fixture.disk().looks, imported.looks);
+      assert.deepEqual(lobby.state.progress.looks, imported.looks);
+      assert.deepEqual(fixture.writes, []);
+      assert.deepEqual(shinyReceipts, []);
+    } finally {
+      fixture.session.dispose();
+    }
+  } else if (which === "migration") {
     const { readFileSync } = await import("node:fs");
     const raw = atob(readFileSync(at("scripts/fixtures/save-v3-progress-v4.txt"), "utf8").trim());
     const legacy = JSON.parse(raw.slice(raw.indexOf(".") + 1, raw.lastIndexOf("."))).progress;

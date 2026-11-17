@@ -101,6 +101,7 @@ export interface PlayerSheet {
 export interface TeamMate {
   slot: PlayerId;
   form: FormId;
+  shiny: boolean;
   level: number;
   hp: number;
   maxHp: number;
@@ -152,6 +153,7 @@ export interface RunSnapshot {
   ultWindup: number;
   ultProtection: number;
   form: FormId;
+  shiny: boolean;
   rampage: boolean;
   /** The zone (0-based of `count`), its seconds so far and the second its final swarm starts. */
   zone: {
@@ -347,6 +349,7 @@ function moveReadiness(move: MoveState, cd: number): { ready: number; cd: number
 function snapshot(
   world: World,
   playerId: PlayerId,
+  seatLooks: readonly boolean[],
   isSeatPresent?: (id: number) => boolean,
 ): RunSnapshot {
   const player = world.players[playerId]!;
@@ -412,6 +415,7 @@ function snapshot(
     ultWindup: player.ult.elapsed < 0 ? 0 : Math.max(0, ULT_WINDUP - player.ult.elapsed),
     ultProtection: player.ult.protection,
     form: formOf(player).id,
+    shiny: seatLooks[playerId]!,
     rampage: world.rampage,
     zone: {
       index: world.zone.index,
@@ -432,6 +436,7 @@ function snapshot(
       .map((mate) => ({
         slot: mate.id,
         form: formOf(mate).id,
+        shiny: seatLooks[mate.id]!,
         level: mate.level,
         hp: Math.max(0, mate.hp),
         maxHp: playerStats(mate).maxHp,
@@ -452,6 +457,7 @@ export function createRun(
     stage: StageId;
     route?: readonly StageId[];
     starter: StarterId;
+    shiny: boolean;
     trainer: TrainerId;
     difficulty: Difficulty;
     lab: LabBonuses;
@@ -469,6 +475,7 @@ export function createRun(
 ): RunHandle {
   const network = config.multiplayer;
   const PLAYER: PlayerId = network?.player ?? 0;
+  const seatLooks = network?.config.players.map((seat) => seat.shiny) ?? [config.shiny];
   if (network) network.onError = fail;
   let renderer = app.renderer;
   const grade = createGrade();
@@ -1197,7 +1204,7 @@ export function createRun(
       snapshotTimer = 0.1;
       lastPending = pending;
       lastDialog = self.dialog;
-      const snap = snapshot(world, PLAYER, network?.isSeatPresent);
+      const snap = snapshot(world, PLAYER, seatLooks, network?.isSeatPresent);
       // A paused world (open window) yields the same snapshot every 0.1 s; republishing it would
       // re-run the HUD and keep the UI canvas redrawing for nothing.
       const key = JSON.stringify(snap);
@@ -1310,7 +1317,12 @@ export function createRun(
                 route: network?.config.route ?? config.route,
                 difficulty: config.difficulty,
                 players: network?.config.players ?? [
-                  { starter: config.starter, lab: config.lab, ...config.loadout },
+                  {
+                    starter: config.starter,
+                    shiny: config.shiny,
+                    lab: config.lab,
+                    ...config.loadout,
+                  },
                 ],
               },
               () => crypto.getRandomValues(new Uint32Array(1))[0]!,
@@ -1324,7 +1336,7 @@ export function createRun(
       // The run log stays on the window after the run, for an export from the result screen.
       if (import.meta.env.DEV)
         Object.assign(window, { __poketoneWorld: world, __poketoneRunLog: runLog });
-      const loaded = await loadRunAssets(world, abort.signal, assetProgress);
+      const loaded = await loadRunAssets(world, abort.signal, assetProgress, seatLooks);
       if (disposed) return loaded.dispose();
       assets = loaded;
       healthBars = createHealthBars();
@@ -1419,7 +1431,7 @@ export function createRun(
       }
       if (world.stage !== previousStage) {
         assets?.dispose();
-        assets = await loadRunAssets(world, abort.signal, assetProgress);
+        assets = await loadRunAssets(world, abort.signal, assetProgress, seatLooks);
         if (disposed) return assets.dispose();
       }
       if (!(await buildScene(assets!))) return;
@@ -1468,7 +1480,7 @@ export function createRun(
         callbacks.onReady();
         committed = true;
         if (disposed || failed) return;
-        callbacks.onSnapshot(snapshot(world, PLAYER, network?.isSeatPresent));
+        callbacks.onSnapshot(snapshot(world, PLAYER, seatLooks, network?.isSeatPresent));
         releaseWorld = app.setWorld({ advance, draw });
       }
       // Teammates are waited for before the deployment, so the cover lifts once, onto it.

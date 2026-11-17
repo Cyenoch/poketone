@@ -74,7 +74,7 @@ try {
       nativeSession = new MultiplayerSession(
         url,
         code,
-        { starter: nativeHost ? "charmander" : "squirtle" },
+        { starter: nativeHost ? "charmander" : "squirtle", trainer: "chengxi", shiny: false },
         { directPeer: nativeDirectPeer, signal: lifetime.signal },
       );
       nativeSession.onFailure = (error) => failures.push(error.message);
@@ -106,7 +106,7 @@ try {
           const session = new MultiplayerSession(
             url,
             code,
-            { starter: host ? "charmander" : "squirtle" },
+            { starter: host ? "charmander" : "squirtle", trainer: "yewei", shiny: false },
             { directPeer: webDirectPeer, signal: lifetime.signal },
           );
           const test = (globalThis.networkTest = {

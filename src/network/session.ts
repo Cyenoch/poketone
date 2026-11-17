@@ -71,9 +71,13 @@ interface Link {
   reachable: boolean;
 }
 
-/** Every seat's partner and trainer are ones this build knows. */
 function knownPlayers(players: readonly PlayerSetup[]) {
-  return players.every((player) => knownStarter(player.starter) && isTrainerId(player.trainer));
+  return players.every(
+    (player) =>
+      knownStarter(player.starter) &&
+      isTrainerId(player.trainer) &&
+      typeof player.shiny === "boolean",
+  );
 }
 
 /** Sent over Harbor before the first direct packet, so direct data never overtakes relayed data. */
@@ -564,8 +568,8 @@ export class MultiplayerSession {
     this.changed();
   }
   /** Before the start only; Harbor's next room carries the change to every seat. */
-  setup(starter: PlayerSetup["starter"], trainer: PlayerSetup["trainer"]) {
-    if (this.inLobby()) this.signal({ t: "setup", starter, trainer });
+  setup(starter: PlayerSetup["starter"], trainer: PlayerSetup["trainer"], shiny: boolean) {
+    if (this.inLobby()) this.signal({ t: "setup", starter, trainer, shiny });
   }
   /** Host only, before the start. */
   mission(mission: Mission) {

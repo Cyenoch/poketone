@@ -1,5 +1,8 @@
 import { Vector4, type Material } from "three";
 import type { EnemyId } from "../sim/content/enemies";
+import type { FormId } from "../sim/content/lines/index";
+import formPalettes from "../../../assets/shiny-forms/palettes.json";
+import recipes from "../../../assets/shiny-forms/texture-recipes.json";
 import { inject, patchShader } from "./patchShader";
 
 /**
@@ -28,7 +31,7 @@ const g = (hue: number, amount: number, value = 1, ...swaps: Swap[]): ShinyPalet
  * Each species' shiny colouring after the main series (gold Magikarp, red Gyarados, blue Voltorb…),
  * as hue swaps on its own model texture: no new models (design §4).
  */
-export const shinyPalettes: Record<EnemyId, ShinyPalette> = {
+const enemyPalettes: Record<EnemyId, ShinyPalette> = {
   caterpie: p([110, 55]),
   weedle: p([35, 75]),
   rattata: p([275, 60]),
@@ -39,7 +42,7 @@ export const shinyPalettes: Record<EnemyId, ShinyPalette> = {
   zubat: p([215, 110], [280, 330]),
   ekans: p([275, 90]),
   paras: p([30, 5, 40, 1.2]),
-  geodude: g(42, 0.42),
+  geodude: g(44, 0.68, 1.65),
   venonat: p([280, 215]),
   metapod: p([120, 35]),
   kakuna: p([55, 110]),
@@ -58,9 +61,9 @@ export const shinyPalettes: Record<EnemyId, ShinyPalette> = {
   venomoth: p([275, 215]),
   fearow: p([30, 70]),
   vileplume: p([0, 40], [220, 290]),
-  graveler: g(42, 0.42),
+  graveler: g(40, 0.75, 1.5),
   electrode: p([0, 225]),
-  golem: g(30, 0.3, 1, [110, 25]),
+  golem: g(39, 0.47, 1.7, [110, 39]),
   nidorina: p([210, 320]),
   poliwag: p([225, 195, 40, 0.9]),
   diglett: p([25, 215]),
@@ -73,11 +76,11 @@ export const shinyPalettes: Record<EnemyId, ShinyPalette> = {
   exeggcute: p([340, 55]),
   primeape: p([35, 85]),
   pinsir: p([30, 255]),
-  gastly: p([280, 330]),
+  gastly: p([293, 226, 35, 2]),
   koffing: p([285, 195]),
   clefairy: p([340, 355, 40, 1.25]),
   tangela: p([220, 130]),
-  haunter: p([275, 320]),
+  haunter: p([270, 250, 37, 0.82], [356, 227, 28, 0.74]),
   weezing: p([285, 180]),
   exeggutor: p([115, 45]),
   nidoking: p([285, 225]),
@@ -114,11 +117,11 @@ export const shinyPalettes: Record<EnemyId, ShinyPalette> = {
   staryu: p([35, 215]),
   jolteon: p([55, 85]),
   electabuzz: p([55, 35, 40, 1.2]),
-  dragonair: p([210, 320]),
+  dragonair: p([208, 320, 19, 0.92], [229, 34, 14, 0.76]),
   starmie: p([275, 220]),
   grimer: p([285, 115]),
   jigglypuff: p([340, 325, 40, 1.15]),
-  kadabra: p([50, 15]),
+  kadabra: p([46, 56, 18, 0.52], [25, 12, 15, 1.15]),
   wigglytuff: p([340, 320]),
   jynx: p([0, 300]),
   seel: g(40, 0.25),
@@ -135,23 +138,44 @@ export const shinyPalettes: Record<EnemyId, ShinyPalette> = {
   muk: p([285, 115]),
   "mr-mime": p([220, 140]),
   golbat: p([215, 110], [280, 330]),
-  alakazam: p([50, 15]),
+  alakazam: p([24, 330, 16, 1.85]),
   "marowak-ghost": p([35, 100]),
-  gengar: p([280, 240, 40, 0.6]),
+  gengar: p([265, 247, 40, 0.5]),
   dewgong: g(40, 0.2),
   cloyster: p([280, 220]),
   lapras: p([210, 275]),
   magmar: p([15, 335]),
   arcanine: p([25, 48]),
-  dragonite: p([30, 100]),
+  dragonite: p([31, 110, 17, 0.34], [171, 316, 43, 1.05], [42, 42, 8]),
   heracross: p([215, 320]),
   munchlax: p([195, 230]),
   magikarp: p([10, 48, 45, 1.15]),
 };
 
+export function shinyTextureUrl(form: FormId): string | null {
+  return Object.hasOwn(recipes.forms, form) ? `/textures/shiny/${form}.png` : null;
+}
+
+const registeredForms = Object.fromEntries<ShinyPalette>(
+  Object.entries(formPalettes).map(([form, palette]) => [
+    form,
+    {
+      ...palette,
+      swaps: palette.swaps.map(([from, to, width, sat]) => [from!, to!, width, sat] as Swap),
+    },
+  ]),
+) as Record<keyof typeof formPalettes, ShinyPalette>;
+
+export const shinyPalettes: Record<EnemyId | FormId, ShinyPalette> = {
+  ...registeredForms,
+  ...enemyPalettes,
+};
+
 /** Packs a palette into the shader's three swaps and grey tint (hues 0–1). */
-export function shinyUniforms(id: EnemyId): { swaps: Vector4[]; grey: Vector4 } {
-  const palette = shinyPalettes[id];
+export function shinyUniforms(
+  id: EnemyId | FormId,
+  palette = shinyPalettes[id],
+): { swaps: Vector4[]; grey: Vector4 } {
   if (!palette) throw new Error(`${id} 没有异色配色。`);
   const swaps = [0, 1, 2].map((i) => {
     const swap = palette.swaps[i];
@@ -173,9 +197,9 @@ export function shinyUniforms(id: EnemyId): { swaps: Vector4[]; grey: Vector4 } 
  * Recolours the texture before instance tints (hit flash, statuses) multiply it. One program for
  * every species: the palette is per-material uniforms.
  */
-export function shinyLook(material: Material, id: EnemyId): void {
+export function shinyLook(material: Material, id: EnemyId | FormId, key = "shiny-palette"): void {
   const { swaps, grey } = shinyUniforms(id);
-  patchShader(material, "shiny-palette", (shader) => {
+  patchShader(material, key, (shader) => {
     shader.uniforms.shinySwaps = { value: swaps };
     shader.uniforms.shinyGrey = { value: grey };
     shader.fragmentShader = inject(
@@ -194,8 +218,9 @@ export function shinyLook(material: Material, id: EnemyId): void {
           vec3 shifted = hsv;
           for (int i = 0; i < 3; i++) {
             vec4 swap = shinySwaps[i];
+            if (swap.z <= 0.) continue;
             float off = abs(fract(hsv.x - swap.x + .5) - .5);
-            float w = chroma * (1. - smoothstep(swap.z * .6, swap.z, off)) * step(.0001, swap.z);
+            float w = chroma * (1. - smoothstep(swap.z * .6, swap.z, off));
             float target = fract(swap.y + (hsv.x - swap.x));
             shifted.x = mix(shifted.x, target, w);
             shifted.y = mix(shifted.y, clamp(hsv.y * swap.w, 0., 1.), w);

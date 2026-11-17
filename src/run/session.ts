@@ -33,6 +33,7 @@ export interface RunSessionOptions {
   multiplayer?: MultiplayerRun;
   stage: StageId;
   starter: StarterId;
+  shiny: boolean;
   trainer: TrainerId;
   difficulty: Difficulty;
   lab: LabBonuses;
@@ -140,6 +141,7 @@ export function createRunSession(options: RunSessionOptions) {
         kind: "stats",
         starter,
         form: snap.form,
+        shiny: snap.shiny,
         level: snap.level,
         build: stats,
         theme,
@@ -275,6 +277,7 @@ export function createRunSession(options: RunSessionOptions) {
     {
       stage,
       starter,
+      shiny: options.shiny,
       trainer: options.trainer,
       difficulty,
       lab,

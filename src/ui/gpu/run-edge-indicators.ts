@@ -5,6 +5,7 @@ import type { PlayerId } from "../../run/sim/state/entities";
 import { formOf } from "../../run/sim/evolution";
 import { heightAt } from "../../run/sim/terrain";
 import { playerColors } from "../player-colors";
+import { portraitSrc } from "./ball";
 import { createMenuIcon } from "./icons";
 import { fade, stack } from "./layer";
 import { gameTag } from "./tag";
@@ -29,6 +30,8 @@ interface Marker {
   x: number;
   y: number;
   form: string;
+  /** The portrait's look: its player's shiny choice. */
+  shiny: boolean;
 }
 const INK = ui.ink;
 /** hp-low red (DESIGN.md): a downed teammate keeps the seat colour and adds this alarm. */
@@ -152,6 +155,7 @@ export class GpuEdgeIndicators {
       x: NaN,
       y: NaN,
       form: "",
+      shiny: false,
     };
   }
   update(
@@ -161,6 +165,8 @@ export class GpuEdgeIndicators {
     alpha: number,
     delta: number,
     visible: boolean,
+    /** A teammate's look, as they chose it. */
+    shiny: (slot: PlayerId) => boolean = () => false,
   ) {
     this.clock += delta;
     this.root.setProperties({ display: visible ? "flex" : "none" });
@@ -203,9 +209,11 @@ export class GpuEdgeIndicators {
           positionTop: ((1 - head.y) * v.height) / 2 - 16,
         });
       }
-      if (marker.form !== form.id) {
+      const look = shiny(player.id);
+      if (marker.form !== form.id || marker.shiny !== look) {
         marker.form = form.id;
-        marker.portrait!.setProperties({ src: `/art/portraits/${form.id}.webp` });
+        marker.shiny = look;
+        marker.portrait!.setProperties({ src: portraitSrc(form.id, look) });
       }
       this.place(
         marker,

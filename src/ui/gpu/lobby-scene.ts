@@ -28,8 +28,8 @@ import {
   formModels,
   instantiate,
   models,
+  shinyMapNeed,
   yawFor,
-  type CanonicalModel,
   type ModelInstance,
 } from "../../run/view/assets";
 import type { Handle } from "../../prepare/handle";
@@ -250,6 +250,7 @@ export class LobbyScene {
   private readonly fits = new WeakMap<Staged, Fit>();
   private layout: LobbySceneLayout | null = null;
   private form: FormId | null = null;
+  private shiny = false;
   private type: ElementType | null = null;
   private trainerId: TrainerId | null = null;
   private trainerLocked = false;
@@ -259,10 +260,11 @@ export class LobbyScene {
   private readonly views = new Set<Texture>();
   private current: Staged | null = null;
   private leaving: { prepared: Staged; age: number } | null = null;
-  /** Models held from the store: the current pick on the interactive lane, earlier ones on keep. */
+  /** Models held from the store (with a shiny copy's map): the current pick on the interactive
+   *  lane, earlier ones on keep. Keyed by the model and its look. */
   private readonly held = new Map<
     string,
-    { handle: Handle<CanonicalModel>; staged: Promise<Staged> }
+    { handles: Handle<unknown>[]; staged: Promise<Staged> }
   >();
   private compiled = new WeakSet<Staged>();
   private request = 0;
@@ -352,12 +354,39 @@ export class LobbyScene {
   }
 
   /**
-   * Shows `form` (its type on the slab and stage, its live model); the previous model sinks out.
+   * Shows `form` (its type on the slab and stage, its live model) in its normal or shiny colours;
+   * the previous model sinks out. The same partner in its other colours swaps in place once the
+   * new copy is ready: same pose, no sink, and the stage's ripple marks the change.
    */
-  show(form: FormId, type: ElementType): void {
-    if (form === this.form) return;
+  show(form: FormId, type: ElementType, shiny = false): void {
+    if (form === this.form && shiny === this.shiny) return;
+    const recolour = form === this.form && this.current?.holder.parent === this.turntable;
     const first = this.form === null;
     this.form = form;
+    this.shiny = shiny;
+    const request = ++this.request;
+    const failed = (error: unknown) => {
+      // Released before it arrived (the lobby unmounted or moved on): not a failure.
+      if (request !== this.request || this.disposed) return;
+      console.error("大厅模型载入失败", form, shiny, error);
+      this.notify("模型载入失败，请检查网络后再试。");
+    };
+    if (recolour) {
+      const was = this.current!;
+      void this.model(form, shiny).then((prepared) => {
+        if (request !== this.request || this.disposed) return;
+        this.compile(prepared).then(() => {
+          if (request !== this.request || this.disposed) return;
+          if (was.mixer && prepared.mixer) prepared.mixer.setTime(was.mixer.time);
+          was.holder.removeFromParent();
+          this.turntable.add(prepared.holder);
+          this.current = prepared;
+          this.burstAge = 0;
+          this.dirty = true;
+        }, failed);
+      }, failed);
+      return;
+    }
     this.setType(type, first);
     this.burstAge = first ? BURST_MS : 0;
     // Only a partner that has stood on the stage sinks; one still waiting for the last sink is
@@ -367,14 +396,7 @@ export class LobbyScene {
     this.current = null;
     this.turntable.clear();
     if (this.leaving) this.turntable.add(this.leaving.prepared.holder);
-    const request = ++this.request;
-    const failed = (error: unknown) => {
-      // Released before it arrived (the lobby unmounted or moved on): not a failure.
-      if (request !== this.request || this.disposed) return;
-      console.error("大厅模型载入失败", form, error);
-      this.notify("模型载入失败，请检查网络后再试。");
-    };
-    void this.model(form).then((prepared) => {
+    void this.model(form, shiny).then((prepared) => {
       if (request !== this.request || this.disposed) return;
       this.compile(prepared).then(() => {
         if (request !== this.request || this.disposed) return;
@@ -470,27 +492,34 @@ export class LobbyScene {
     if (!covered) this.dirty = true;
   }
 
-  private model(form: FormId): Promise<Staged> {
+  /** The store's model in its own copy; a shiny copy has its own recoloured materials (and the
+   *  form's shiny map where it has one), so the store's shared materials are never patched. */
+  private model(form: FormId, shiny: boolean): Promise<Staged> {
     const url = formModels[form].url;
+    const key = shiny ? `${url}#shiny` : url;
     // The previous pick stays warm on the keep lane; the new one loads as interactive.
-    for (const [key, entry] of this.held)
-      entry.handle.setLane(key === url ? "interactive" : "keep");
-    let entry = this.held.get(url);
+    for (const [held, entry] of this.held)
+      for (const handle of entry.handles) handle.setLane(held === key ? "interactive" : "keep");
+    let entry = this.held.get(key);
     if (!entry) {
-      const handle = models.acquire(url, "interactive");
+      const model = models.acquire(url, "interactive");
+      const map = shiny ? shinyMapNeed(form)?.acquire("interactive") : undefined;
+      const handles: Handle<unknown>[] = map ? [model, map] : [model];
       entry = {
-        handle,
-        staged: handle.result
-          .then((canonical) => stage(url, instantiate(canonical)))
+        handles,
+        staged: Promise.all([model.result, map?.result])
+          .then(([canonical, texture]) =>
+            stage(url, instantiate(canonical, shiny ? { form, map: texture } : undefined)),
+          )
           .catch((error: unknown) => {
-            if (this.held.get(url) === entry) {
-              this.held.delete(url);
-              handle.release();
+            if (this.held.get(key) === entry) {
+              this.held.delete(key);
+              for (const handle of handles) handle.release();
             }
             throw error;
           }),
       };
-      this.held.set(url, entry);
+      this.held.set(key, entry);
     }
     return entry.staged;
   }
@@ -710,7 +739,8 @@ export class LobbyScene {
     this.geometry.dispose();
     // Our views' GPU copies; the views stay bound and upload again when next drawn.
     for (const view of this.views) view.dispose();
-    // Our copies' bone textures (the shared model is the store's own loss resident).
+    // Our copies' bone textures and shiny materials (the shared model and map are the store's own
+    // loss residents); the next draw compiles them again.
     for (const { staged } of this.held.values())
       void staged.then(
         (entry) => entry.copy.releaseUploads(),
@@ -731,13 +761,14 @@ export class LobbyScene {
     for (const view of this.views) view.dispose();
     this.views.clear();
     this.trainerArt.clear();
-    // Our copies' skeletons only; the shared geometry, materials and textures stay with the store.
-    for (const { handle, staged } of this.held.values()) {
+    // Our copies' skeletons (and a shiny copy's materials); the shared geometry, materials and
+    // textures stay with the store.
+    for (const { handles, staged } of this.held.values()) {
       void staged.then(
         (entry) => entry.copy.dispose(),
         () => {},
       );
-      handle.release();
+      for (const handle of handles) handle.release();
     }
     this.held.clear();
   }

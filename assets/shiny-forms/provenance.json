@@ -1,0 +1,264 @@
+{
+  "rights": "Pokémon designs and Pokémon HOME imagery belong to their respective rights holders. References are used for colour comparison in this noncommercial fan project. Source imagery is not shipped.",
+  "generationCredits": 0,
+  "references": {
+    "collection": "Pokémon HOME normal and shiny renders preserved by PokéAPI/sprites",
+    "revision": "c0542f7c51215d9672439012838c99f520596cbd",
+    "normal": "https://raw.githubusercontent.com/PokeAPI/sprites/c0542f7c51215d9672439012838c99f520596cbd/sprites/pokemon/other/home/{dex}.png",
+    "shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/c0542f7c51215d9672439012838c99f520596cbd/sprites/pokemon/other/home/shiny/{dex}.png",
+    "sourceNotes": "Existing multiview and portrait provenance uses the PokéAPI mirror. HOME supplies paired game renders for colour. The mirror documents that its official-artwork/shiny directory contains custom recolours."
+  },
+  "inputs": {
+    "model": "public/models/{form}.glb",
+    "modelBuild": "assets/game-models.build.json (match output path, including player-prefixed build keys)",
+    "portrait": "public/art/portraits/{form}.webp",
+    "modelProvenance": {
+      "original": "public/models/game-models.provenance.json",
+      "newLines": "public/models/new-lines.provenance.json",
+      "psychicRock": "public/models/psychic-rock.provenance.json"
+    },
+    "portraitProvenance": "public/art/portraits/{portraitGroup}.provenance.json"
+  },
+  "methods": {
+    "shared": "Use the species entry in src/run/view/shiny.ts#shinyPalettes for both outputs.",
+    "palette": "Use palettes.json under the form ID. Swaps are [from°, to°, width°, saturationScale], at most three. Grey is {hue,amount,value?}. Evaluate the current shinyLook transfer in sRGB on unpremultiplied RGB. Preserve alpha.",
+    "texture": "Bake the partner GLB on its original UVs using texture-recipes.json and the ordinary illustrated portrait in its own coordinates. The bakedPortrait flag selects spatial_bake.py for both images. Shared hue swaps are exported from src/run/view/shiny.ts#shinyPalettes.",
+    "portraitKeep": "Apply the shared model parameters followed by the form's portraitOnly mask in texture-recipes.json."
+  },
+  "textureBakeCommand": "python3 assets/shiny-forms/bake-base-color.py \"${TMPDIR%/}/opencode/shiny-bake-repro\"",
+  "colourCorrections": {
+    "ivysaur": "花苞在原头像中偏洋红，模型中偏红。分别匹配两段源色相，花苞转桃橙，头像虹膜转琥珀。叶片沿用源图绿色。",
+    "venusaur": "分别匹配原头像的洋红花瓣与模型的红色花瓣，调成高饱和明黄。叶片沿用源图绿色。",
+    "wartortle": "身体调成低饱和淡紫，腹甲偏暖橙。模型背甲与耳尾沿用原分区配色。",
+    "charmeleon": "适度提高金色皮肤的饱和度，沿用同 UV 与头像遮罩保护尾焰。"
+  },
+  "formColumns": [
+    "dex",
+    "name",
+    "modelProvenance",
+    "portraitGroup",
+    "modelMethod",
+    "portraitMethod",
+    "HOME colour landmarks"
+  ],
+  "forms": {
+    "charmander": [
+      4,
+      "小火龙",
+      "original",
+      "starters",
+      "texture",
+      "texture",
+      "金黄身体，浅黄腹部，尾焰保留红黄"
+    ],
+    "charmeleon": [
+      5,
+      "火恐龙",
+      "original",
+      "forms",
+      "texture",
+      "texture",
+      "暖金色身体，浅腹，尾焰保留红黄"
+    ],
+    "charizard": [
+      6,
+      "喷火龙",
+      "original",
+      "forms",
+      "texture",
+      "texture",
+      "炭灰色身体，暗红翼膜，奶油色腹部，橙黄尾焰"
+    ],
+    "bulbasaur": [
+      1,
+      "妙蛙种子",
+      "original",
+      "starters",
+      "palette",
+      "palette",
+      "黄绿色皮肤与深色斑块，青绿色鳞茎，红眼"
+    ],
+    "ivysaur": [
+      2,
+      "妙蛙草",
+      "original",
+      "forms",
+      "palette",
+      "palette",
+      "浅黄绿身体，金黄花苞，绿叶，金色虹膜"
+    ],
+    "venusaur": [
+      3,
+      "妙蛙花",
+      "original",
+      "forms",
+      "palette",
+      "palette",
+      "黄绿身体，黄色花瓣与浅色斑点，绿叶"
+    ],
+    "squirtle": [
+      7,
+      "杰尼龟",
+      "original",
+      "starters",
+      "palette",
+      "portraitKeep",
+      "淡青身体，绿色背甲，浅黄腹甲，深红眼"
+    ],
+    "wartortle": [
+      8,
+      "卡咪龟",
+      "original",
+      "forms",
+      "texture",
+      "texture",
+      "淡紫身体，薄荷色耳尾，绿色背甲，橙褐腹甲"
+    ],
+    "blastoise": [
+      9,
+      "水箭龟",
+      "original",
+      "forms",
+      "texture",
+      "texture",
+      "灰紫身体与绿色背甲，浅暖色下颌及腹部，金属炮管"
+    ],
+    "pikachu": [
+      25,
+      "皮卡丘",
+      "original",
+      "starters",
+      "palette",
+      "palette",
+      "橙黄色身体，浅珊瑚色脸颊，深耳尖"
+    ],
+    "raichu": [
+      26,
+      "雷丘",
+      "original",
+      "forms",
+      "palette",
+      "palette",
+      "橙红身体，耳内、尾尖及脸颊转浅褐色，白腹"
+    ],
+    "gastly": [
+      92,
+      "鬼斯",
+      "newLines",
+      "new-lines",
+      "texture",
+      "texture",
+      "蓝紫雾气包围紫红色球体，白眼"
+    ],
+    "haunter": [
+      93,
+      "鬼斯通",
+      "newLines",
+      "new-lines",
+      "texture",
+      "texture",
+      "偏冷紫色身体，蓝色口腔"
+    ],
+    "gengar": [
+      94,
+      "耿鬼",
+      "newLines",
+      "new-lines",
+      "shared",
+      "shared",
+      "低饱和灰紫身体，红眼与白牙"
+    ],
+    "dratini": [
+      147,
+      "迷你龙",
+      "newLines",
+      "new-lines",
+      "shared",
+      "shared",
+      "淡粉紫身体，白色腹面和耳鳍"
+    ],
+    "dragonair": [
+      148,
+      "哈克龙",
+      "newLines",
+      "new-lines",
+      "texture",
+      "texture",
+      "粉色身体，颈珠和尾珠转金橙，白腹与耳翼"
+    ],
+    "dragonite": [
+      149,
+      "快龙",
+      "newLines",
+      "new-lines",
+      "texture",
+      "texture",
+      "灰绿身体，紫红翼膜，奶油色腹部"
+    ],
+    "machop": [
+      66,
+      "腕力",
+      "newLines",
+      "new-lines",
+      "shared",
+      "shared",
+      "淡橄榄色身体，红眼与浅褐头脊"
+    ],
+    "machoke": [
+      67,
+      "豪力",
+      "newLines",
+      "new-lines",
+      "palette",
+      "palette",
+      "绿色身体，蓝色手臂纹，深色短裤与金色腰带"
+    ],
+    "machamp": [
+      68,
+      "怪力",
+      "newLines",
+      "new-lines",
+      "palette",
+      "palette",
+      "黄绿身体，浅色口唇，深色短裤与金色腰带"
+    ],
+    "abra": [
+      63,
+      "凯西",
+      "psychicRock",
+      "psychic-rock",
+      "palette",
+      "palette",
+      "浅黄色身体，红褐色护肩"
+    ],
+    "kadabra": [
+      64,
+      "勇基拉",
+      "psychicRock",
+      "psychic-rock",
+      "shared",
+      "shared",
+      "浅黄身体，褐红护肩与尾条纹，浅色汤匙"
+    ],
+    "alakazam": [
+      65,
+      "胡地",
+      "psychicRock",
+      "psychic-rock",
+      "texture",
+      "texture",
+      "金黄身体，玫红色甲片，浅色汤匙"
+    ],
+    "geodude": [74, "小拳石", "psychicRock", "psychic-rock", "texture", "texture", "金黄色岩体"],
+    "graveler": [75, "隆隆石", "psychicRock", "psychic-rock", "texture", "texture", "赭金色岩体"],
+    "golem": [
+      76,
+      "隆隆岩",
+      "psychicRock",
+      "psychic-rock",
+      "texture",
+      "texture",
+      "沙金色岩壳，浅暖黄头部与四肢"
+    ]
+  }
+}

@@ -985,6 +985,7 @@ export async function createGpuAppHost(
         {
           start() {},
           pick() {},
+          shiny() {},
           lab() {},
           codex() {},
           settings() {},

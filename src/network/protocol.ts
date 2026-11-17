@@ -6,7 +6,7 @@ import type { StageId } from "../run/sim/content/stages/index";
 import { playableStages } from "../lobbyPick";
 import type { TrainerId } from "../trainers";
 
-export const PROTOCOL_VERSION = 12;
+export const PROTOCOL_VERSION = 13;
 export type RoomErrorCode = "no-room" | "full" | "started" | "version";
 export type PlayerSetup = RunConfig["players"][number] & { trainer: TrainerId };
 /** The host's choice of route and difficulty; changed only before the room starts. */
@@ -42,8 +42,8 @@ export type ClientMessage =
   | { t: "terminal-ack" }
   | { t: "ping" }
   | { t: "start" }
-  /** Before the start: the sender's own partner and trainer. */
-  | { t: "setup"; starter: PlayerSetup["starter"]; trainer: TrainerId }
+  /** Before the start: the sender's own partner, trainer and look. */
+  | ({ t: "setup" } & Pick<PlayerSetup, "starter" | "trainer" | "shiny">)
   /** Before the start, host only. */
   | ({ t: "mission" } & Mission)
   | { t: "transport-ready"; peer: number }

@@ -4,7 +4,7 @@ import type { ElementType } from "../../run/sim/content/elements";
 import { starters } from "../../run/sim/content/lines";
 import { trainerArt, trainers } from "../../trainers";
 import { playerColors } from "../player-colors";
-import { BallBadge } from "./ball";
+import { BallBadge, portraitSrc } from "./ball";
 import { createMenuIcon } from "./icons";
 import { fade, stack } from "./layer";
 import { EASE } from "./motion";
@@ -41,6 +41,7 @@ export class MultiplayerSeat {
   private readonly empty: SlantPlate;
   private filled: SlantPlate | null = null;
   private type: ElementType | null = null;
+  private shiny = false;
   private readonly color: string;
   private readonly art = new Container({
     positionType: "absolute",
@@ -220,9 +221,12 @@ export class MultiplayerSeat {
     this.waitingText.setProperties({ fontSize: compact ? 13 : 15 });
   }
 
-  update(view: SeatView) {
+  /** `shiny`: the seat's own look, as its player chose it (only they can change it). */
+  update(view: SeatView, shiny = false) {
     const previous = this.view;
+    const wasShiny = this.shiny;
     this.view = view;
+    this.shiny = shiny;
     const taken = !!view.starter;
     this.me.tag.setProperties({ display: view.self ? "flex" : "none" });
     this.empty.content.setProperties({ display: taken ? "none" : "flex" });
@@ -238,9 +242,13 @@ export class MultiplayerSeat {
         this.trainerName.setProperties({ text: trainers[view.trainer].name });
       }
     }
+    if (view.starter && previous?.starter === view.starter && wasShiny !== shiny) {
+      const form = starters[view.starter].stages[0].form;
+      this.portrait.setProperties({ src: portraitSrc(form.id, shiny) });
+    }
     if (view.starter && previous?.starter !== view.starter) {
       const form = starters[view.starter].stages[0].form;
-      this.portrait.setProperties({ src: `/art/portraits/${form.id}.webp` });
+      this.portrait.setProperties({ src: portraitSrc(form.id, shiny) });
       this.name.setProperties({ text: form.name });
       this.setType(form.types[0]!);
       this.arrival.opacity = 0;

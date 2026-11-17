@@ -1,5 +1,5 @@
 import { items, type ItemId } from "./sim/content/items";
-import { starterOrder, type StarterId } from "./sim/content/lines/index";
+import { lineForms, starterOrder, type StarterId } from "./sim/content/lines/index";
 import type { Difficulty } from "./sim/content/difficulties";
 import { labDefinitions, type LabId, type LabLevels } from "./sim/content/lab";
 import {
@@ -371,6 +371,16 @@ export function researchedKills(progress: Progress, kills: number): number {
 
 /** Records the run and banks its 星星沙子; the host commits the returned progress. */
 export function recordRun(progress: Progress, result: RunResult): Progress {
+  const shinySpecies = new Set(
+    Object.entries(result.dex)
+      .filter(([, entry]) => entry.shiny > 0)
+      .map(([id]) => id),
+  );
+  const gained = starterOrder.filter(
+    (line) =>
+      !progress.looks.owned.includes(line) &&
+      lineForms(line).some((form) => shinySpecies.has(form.id)),
+  );
   const next: Progress = {
     ...progress,
     runs: progress.runs + 1,
@@ -380,6 +390,9 @@ export function recordRun(progress: Progress, result: RunResult): Progress {
     research: progress.research + Math.floor(researchedKills(progress, result.kills)),
     stardust: progress.stardust + result.stardust,
     dex: { ...progress.dex },
+    looks: gained.length
+      ? { ...progress.looks, owned: [...progress.looks.owned, ...gained] }
+      : progress.looks,
   };
   for (const [id, earned] of Object.entries(result.dex)) {
     const species = id as EnemyId;
@@ -399,6 +412,18 @@ export function recordRun(progress: Progress, result: RunResult): Progress {
   };
   if (better(record, progress.best[result.starter])) next.best[result.starter] = record;
   return next;
+}
+
+export function setShinyLook(progress: Progress, line: StarterId, worn: boolean): Progress {
+  if (worn && !progress.looks.owned.includes(line)) throw new Error("未拥有的异色外观不能穿戴。");
+  if (progress.looks.worn.includes(line) === worn) return progress;
+  return {
+    ...progress,
+    looks: {
+      ...progress.looks,
+      worn: worn ? [...progress.looks.worn, line] : progress.looks.worn.filter((id) => id !== line),
+    },
+  };
 }
 
 /** Buys the next level of a lab item; throws when maxed or unaffordable. */

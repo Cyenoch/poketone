@@ -180,6 +180,7 @@ export function startHarbor(
             if (!record(msg.player) || !knownStarter(msg.player.starter))
               throw new Error("伙伴选择无效。");
             if (!isTrainerId(msg.player.trainer)) throw new Error("训练师选择无效。");
+            if (typeof msg.player.shiny !== "boolean") throw new Error("异色外观选择无效。");
             if (typeof msg.code !== "string") throw new Error("房间码无效。");
             if (msg.code) {
               room = rooms.get(msg.code);
@@ -295,12 +296,14 @@ export function startHarbor(
           } else if (msg.t === "setup") {
             if (!knownStarter(msg.starter)) throw new Error("伙伴选择无效。");
             if (!isTrainerId(msg.trainer)) throw new Error("训练师选择无效。");
+            if (typeof msg.shiny !== "boolean") throw new Error("异色外观选择无效。");
             // A change that loses the race to the start is dropped: the run keeps the start's pick.
             if (room.state.started) return;
             room.state.players[from] = {
               ...room.state.players[from]!,
               starter: msg.starter,
               trainer: msg.trainer,
+              shiny: msg.shiny,
             };
             publish(room);
           } else if (msg.t === "mission") {

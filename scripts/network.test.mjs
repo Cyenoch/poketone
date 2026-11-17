@@ -11,7 +11,7 @@ import { enterZone, prepareZone } from "../src/run/sim/zones.ts";
 import { applyEntityDelta, entityDelta, entityState } from "../src/network/delta.ts";
 
 globalThis.__GAME_BUILD__ = "network-test";
-const player = { starter: "charmander", trainer: "chengxi" };
+const player = { starter: "charmander", trainer: "chengxi", shiny: false };
 const connection = (rejoin) => ({
   directPeer() {
     throw new Error("Direct transport disabled for Harbor relay tests.");
@@ -23,7 +23,7 @@ const config = {
   stage: "forest",
   seed: 7,
   difficulty: 0,
-  players: [player, { starter: "squirtle", trainer: "yewei" }],
+  players: [player, { starter: "squirtle", trainer: "yewei", shiny: false }],
 };
 const until = async (condition) => {
   const end = Date.now() + 8000;
@@ -2436,7 +2436,7 @@ test("Harbor 拒绝非法训练师身份，房间不产生该席位", async (t) 
     const session = new MultiplayerSession(
       url,
       host.state.room.code,
-      { starter: "squirtle", trainer },
+      { starter: "squirtle", trainer, shiny: false },
       connection(),
     );
     forged.push(session);
@@ -2463,7 +2463,7 @@ test("四人选同一训练师时按原席位区分，开局配置保留各自�
 
 test("Harbor 接受夏晴身份并将其传入双方开局配置", async (t) => {
   const { host, guest } = await pair(t);
-  guest.setup("squirtle", "xiaqing");
+  guest.setup("squirtle", "xiaqing", false);
   await until(() => host.state.room.players[1].trainer === "xiaqing");
   const { runs } = await startParty([host, guest]);
   for (const run of runs) assert.equal(run.config.players[1].trainer, "xiaqing");
@@ -2498,7 +2498,7 @@ test("房主仍在开局演出时，已载入的客机不会开跑", async (t) =
 test("房间内修改伙伴、训练师与任务广播给全员，开局与重返都用最后的选择", async (t) => {
   const { host, guest, url } = await pair(t);
   assert.deepEqual(host.state.room.mission, { stage: "forest", difficulty: 0 });
-  guest.setup("pikachu", "shuoye");
+  guest.setup("pikachu", "shuoye", false);
   host.mission({ stage: "forest", difficulty: 1 });
   for (const session of [host, guest])
     await until(
@@ -2544,9 +2544,9 @@ test("房间内修改伙伴、训练师与任务广播给全员，开局与重�
 
 test("Harbor 拒绝未知伙伴/训练师与客机改任务，房间不变", async (t) => {
   for (const forged of [
-    { t: "setup", starter: "mewtwo", trainer: "chengxi", error: /伙伴选择无效/ },
-    { t: "setup", starter: "__proto__", trainer: "chengxi", error: /伙伴选择无效/ },
-    { t: "setup", starter: "squirtle", trainer: "nobody", error: /训练师选择无效/ },
+    { t: "setup", starter: "mewtwo", trainer: "chengxi", shiny: false, error: /伙伴选择无效/ },
+    { t: "setup", starter: "__proto__", trainer: "chengxi", shiny: false, error: /伙伴选择无效/ },
+    { t: "setup", starter: "squirtle", trainer: "nobody", shiny: false, error: /训练师选择无效/ },
     { t: "mission", stage: "forest", difficulty: 2, error: /只有房主/ },
   ]) {
     const { host, guest } = await pair(t);
@@ -2588,7 +2588,7 @@ test("出发后才到达的修改不改变开局配置，也不使发送者失�
   host.start();
   await until(() => configs.length === 2);
   // The client no longer sends once playing; a change already in flight reaches Harbor like this.
-  guest.signal({ t: "setup", starter: "pikachu", trainer: "shuoye" });
+  guest.signal({ t: "setup", starter: "pikachu", trainer: "shuoye", shiny: false });
   host.signal({ t: "mission", stage: "forest", difficulty: 2 });
   host.signal({ t: "ping" });
   guest.signal({ t: "ping" });

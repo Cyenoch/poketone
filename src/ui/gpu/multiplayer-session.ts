@@ -61,6 +61,7 @@ export function mountMultiplayer(
         {
           starter: pick.starter,
           trainer: pick.trainer,
+          shiny: progress.looks.worn.includes(pick.starter),
           lab: labBonuses(progress.lab),
           archive: progress.archive,
           backpack: progress.backpack,
@@ -107,7 +108,7 @@ export function mountMultiplayer(
         pick = next;
         page.pick(next);
         if (next.starter !== previous.starter || next.trainer !== previous.trainer)
-          session?.setup(next.starter, next.trainer);
+          session?.setup(next.starter, next.trainer, progress.looks.worn.includes(next.starter));
         if (next.difficulty !== previous.difficulty)
           session?.mission({ stage: next.stage, difficulty: next.difficulty });
       },

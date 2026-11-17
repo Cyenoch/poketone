@@ -43,10 +43,12 @@ const loadingArt = (stage: StageId): Need => {
 };
 
 let report: ((message: string) => void) | null = null;
-let wanted: { starter: StarterId; stage: StageId } | null = null;
+type AppearancePick = { starter: StarterId; stage: StageId; shiny: boolean };
+let wanted: AppearancePick | null = null;
 
 interface LineHold {
   readonly starter: StarterId;
+  readonly shiny: boolean;
   readonly preparation: Preparation<StarterId>;
 }
 
@@ -64,10 +66,11 @@ export interface Departure {
 let departures = 0;
 let departed: Preparation<Departure> | null = null;
 
-const holdLine = (starter: StarterId): LineHold => ({
+const holdLine = (starter: StarterId, shiny: boolean): LineHold => ({
   starter,
+  shiny,
   preparation: watch(
-    createPreparation({ revision: starter, lane: "background", needs: lineNeeds(starter) }),
+    createPreparation({ revision: starter, lane: "background", needs: lineNeeds(starter, shiny) }),
   ),
 });
 
@@ -80,7 +83,7 @@ export function open(onError: (message: string) => void): void {
 }
 
 /** The lobby's pick (the one it opens on included). */
-export function select(pick: { starter: StarterId; stage: StageId }): void {
+export function select(pick: AppearancePick): void {
   // Back in the lobby: the last run's own hold is over (the lobby's holds keep what it needs).
   departed?.cancel();
   departed = null;
@@ -98,7 +101,7 @@ const watch = <R>(preparation: Preparation<R>) => {
   return preparation;
 };
 
-function hold({ starter, stage }: { starter: StarterId; stage: StageId }): void {
+function hold({ starter, stage, shiny }: AppearancePick): void {
   if (!shared.has(stage)) {
     shared.set(
       stage,
@@ -111,13 +114,13 @@ function hold({ starter, stage }: { starter: StarterId; stage: StageId }): void 
       ),
     );
   }
-  if (current?.starter !== starter) {
-    if (recent?.starter === starter) {
+  if (current?.starter !== starter || current.shiny !== shiny) {
+    if (recent?.starter === starter && recent.shiny === shiny) {
       [current, recent] = [recent, current];
     } else {
       recent?.preparation.cancel();
       recent = current;
-      current = holdLine(starter);
+      current = holdLine(starter, shiny);
     }
     current!.preparation.setLane("background");
     recent?.preparation.setLane("keep");
@@ -148,17 +151,11 @@ export function state(starter: StarterId): {
  * stage's shared set, the line, the run's sounds), at the background lane until the first screen
  * is in. The lobby's holds take the same keys over once it opens, before this is cancelled.
  */
-export function launch({
-  starter,
-  stage,
-}: {
-  starter: StarterId;
-  stage: StageId;
-}): Preparation<StarterId> {
+export function launch({ starter, stage, shiny }: AppearancePick): Preparation<StarterId> {
   return createPreparation({
     revision: starter,
     lane: "background",
-    needs: [...runSharedNeeds(stage), ...lineNeeds(starter), runAudio()[0]!],
+    needs: [...runSharedNeeds(stage), ...lineNeeds(starter, shiny), runAudio()[0]!],
   });
 }
 
@@ -171,16 +168,13 @@ export function depart({
   starter,
   difficulty,
   stage,
-}: {
-  starter: StarterId;
-  difficulty: Difficulty;
-  stage: StageId;
-}): Preparation<Departure> {
+  shiny,
+}: AppearancePick & { difficulty: Difficulty }): Preparation<Departure> {
   departed?.cancel();
   departed = createPreparation({
     revision: { starter, difficulty, stage, n: ++departures },
     lane: "critical",
-    needs: [...runSharedNeeds(stage), ...lineNeeds(starter), ...runAudio()],
+    needs: [...runSharedNeeds(stage), ...lineNeeds(starter, shiny), ...runAudio()],
   });
   return departed;
 }

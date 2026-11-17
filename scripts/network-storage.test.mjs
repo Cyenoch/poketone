@@ -48,7 +48,7 @@ test("凭据读取、开局写入和关闭删除的真实 I/O 失败会通知，
   const host = new MultiplayerSession(
     url,
     "",
-    { starter: "charmander", trainer: "chengxi" },
+    { starter: "charmander", trainer: "chengxi", shiny: false },
     connection,
   );
   let screen, guest, hostRun, unmount;

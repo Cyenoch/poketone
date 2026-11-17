@@ -43,6 +43,7 @@ const cssEase = (t: number) => cubicBezier(t, 0.25, 0.1, 0.25, 1);
 import { fade, stack } from "./layer";
 import { CURRENCY_ICON } from "./currency";
 import { createMenuIcon } from "./icons";
+import { portraitSrc } from "./ball";
 import { createRunCommandIcon } from "./run-overlays-icons";
 import { playerColors } from "../player-colors";
 import { slantTag } from "./tag";
@@ -93,6 +94,7 @@ interface Mate {
   tag: Text;
   level: Text;
   bar: RunHudSurface;
+  /** The portrait shown: the form and the player's look. */
   form: string | null;
 }
 
@@ -211,6 +213,9 @@ export class GpuRunHud {
     height: "84%",
   });
   private portraitForm: string | null = null;
+  private portraitShown: string | null = null;
+  /** Each teammate's look by seat, for the off-screen markers. */
+  private readonly mateShiny: boolean[] = [];
   /** The level on an ink badge over the medal's lower-left rim. */
   private readonly level = new Text({ text: "1", fontSize: 15, fontWeight: 800, color: ui.white });
   private readonly levelTag = new Container({
@@ -777,9 +782,10 @@ export class GpuRunHud {
       const data = team[i];
       mate.row.setProperties({ display: data ? "flex" : "none" });
       if (!data) return;
-      if (mate.form !== data.form) {
-        mate.form = data.form;
-        mate.face.setProperties({ src: `/art/portraits/${data.form}.webp` });
+      const portrait = portraitSrc(data.form, data.shiny);
+      if (mate.form !== portrait) {
+        mate.form = portrait;
+        mate.face.setProperties({ src: portrait });
       }
       const color = playerColors[data.slot] ?? ui.white;
       const share = data.alive ? Math.max(0, Math.min(1, data.hp / data.maxHp)) : 0;
@@ -1204,10 +1210,14 @@ export class GpuRunHud {
     this.ultimate.uniforms.hudKind.value = grain.kind;
     this.halo.uniforms.hudColor.value.set(palette[2]);
     this.crest.setProperties({ src: `/art/icons/crests/${state.theme}.webp` });
+    const portrait = portraitSrc(snap.form, snap.shiny);
+    if (portrait !== this.portraitShown) {
+      this.portraitShown = portrait;
+      this.portrait.setProperties({ src: portrait });
+    }
     if (snap.form !== this.portraitForm) {
       this.portraitForm = snap.form;
       const def = formDefs[snap.form];
-      this.portrait.setProperties({ src: `/art/portraits/${snap.form}.webp` });
       this.formName.set({ text: def.name });
       for (const tag of this.typeTags) {
         tag.tag.removeFromParent();
@@ -1218,6 +1228,8 @@ export class GpuRunHud {
       this.formTypes.add(...this.typeTags.map((tag) => tag.tag));
     }
     this.updateTeam(snap.team);
+    this.mateShiny.length = 0;
+    for (const mate of snap.team) this.mateShiny[mate.slot] = mate.shiny;
     const goal = snap.level + Math.max(0, Math.min(1, snap.xp / snap.xpNext));
     const xp = this.xpShown;
     if (xp.progress < 0 || goal < xp.progress) {
@@ -1584,7 +1596,15 @@ export class GpuRunHud {
   ) {
     const visible = !!this.state?.visible && !this.state.blocked;
     this.exitLabels.update(world, local, camera, delta, visible && !this.choiceOpen);
-    this.indicators.update(world, local, camera, alpha, delta, visible);
+    this.indicators.update(
+      world,
+      local,
+      camera,
+      alpha,
+      delta,
+      visible,
+      (slot) => this.mateShiny[slot] ?? false,
+    );
   }
   afterLayout(deltaMs: number): void {
     // Under the left column (vitals, teammates, the notice): its foot from the stage top.

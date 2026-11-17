@@ -71,6 +71,7 @@ export function runWindowSamples(starter: StarterId): NonNullable<RunOverlayStat
       theme,
       starter,
       form: form.id,
+      shiny: false,
       level: 1,
       build: {
         sheet: statBreakdown(player),

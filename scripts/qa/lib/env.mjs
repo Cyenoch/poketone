@@ -57,6 +57,10 @@ export function snapshot(root, dir) {
       /^tsconfig.*\.json$/.test(name);
     if (keep) cpSync(join(root, name), join(dir, name), { recursive: true });
   }
+  for (const file of ["palettes.json", "texture-recipes.json"]) {
+    const recipe = join("assets", "shiny-forms", file);
+    cpSync(join(root, recipe), join(dir, recipe));
+  }
   symlinkSync(join(root, "node_modules"), join(dir, "node_modules"), "dir");
   mkdirSync(join(dir, "scripts"), { recursive: true });
   for (const file of ["game-build.ts", "web-build.mjs", "web.mjs"])

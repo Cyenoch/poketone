@@ -27,6 +27,7 @@ import {
   formModels,
   instantiate,
   models,
+  shinyMapNeed,
   stationFiles,
   yawFor,
 } from "../../run/view/assets";
@@ -45,6 +46,9 @@ const START_YAW = -0.5;
 /** Thumbnail side in pixels: a 36px row icon at 150% on a 3× screen. */
 const THUMB = 160;
 
+/** An entry's model, an enemy or a partner's form possibly in its shiny colours. */
+export type CodexPicture = CodexModel & { shiny?: boolean };
+
 function modelUrl(model: CodexModel): string {
   return model.kind === "form"
     ? formModels[model.id].url
@@ -54,14 +58,14 @@ function modelUrl(model: CodexModel): string {
 }
 
 /** The species whose shiny palette the picture wears, if any. */
-const shinyOf = (model: CodexModel): EnemyId | undefined =>
+const shinyOf = (model: CodexPicture): EnemyId | undefined =>
   model.kind === "enemy" && model.shiny ? model.id : undefined;
 
-/** Species can share a GLB, palettes are per species: a shiny picture is keyed by both. */
-const pictureKey = (model: CodexModel): string => {
-  const shiny = shinyOf(model);
-  return shiny ? `${modelUrl(model)}#shiny:${shiny}` : modelUrl(model);
-};
+/** Species can share a GLB, palettes are per species and form: a shiny picture is keyed by both. */
+const pictureKey = (model: CodexPicture): string =>
+  model.kind !== "station" && model.shiny
+    ? `${modelUrl(model)}#shiny:${model.id}`
+    : modelUrl(model);
 
 /**
  * Own copies of the shared model's materials in `id`'s shiny palette: the store's materials are the
@@ -103,17 +107,29 @@ interface Prepared {
  * memory is neither refetched nor re-parsed), copied for the 图鉴 and centred at unit height, facing
  * +Z like the run view.
  */
-async function loadPrepared(model: CodexModel, signal: AbortSignal): Promise<Prepared> {
+async function loadPrepared(model: CodexPicture, signal: AbortSignal): Promise<Prepared> {
   const url = modelUrl(model);
   const handle = models.acquire(url, "interactive");
-  const abort = () => handle.release();
-  signal.addEventListener("abort", abort, { once: true });
-  const canonical = await handle.result.finally(() => signal.removeEventListener("abort", abort));
-  if (signal.aborted) {
+  // A partner's shiny form: its own recoloured copy, with the form's shiny map where it has one.
+  const look = model.kind === "form" && model.shiny ? model.id : undefined;
+  const map = look ? shinyMapNeed(look)?.acquire("interactive") : undefined;
+  const release = () => {
     handle.release();
+    map?.release();
+  };
+  signal.addEventListener("abort", release, { once: true });
+  const [canonical, texture] = await Promise.all([handle.result, map?.result])
+    .catch((error: unknown) => {
+      // One of the two failed: neither is held for a picture that will not show.
+      if (!signal.aborted) release();
+      throw error;
+    })
+    .finally(() => signal.removeEventListener("abort", release));
+  if (signal.aborted) {
+    release();
     throw signal.reason;
   }
-  const copy = instantiate(canonical);
+  const copy = instantiate(canonical, look ? { form: look, map: texture } : undefined);
   const shiny = shinyOf(model);
   const recoloured = shiny ? wearShiny(copy.root, shiny) : [];
   const loaded = {
@@ -126,7 +142,7 @@ async function loadPrepared(model: CodexModel, signal: AbortSignal): Promise<Pre
     dispose() {
       copy.dispose();
       for (const material of recoloured) material.dispose();
-      handle.release();
+      release();
     },
   };
   const root = copy.root;
@@ -261,7 +277,7 @@ export class CodexModelStage {
   /** The mounted picture; hidden until the wanted model has drawn, so the last one never shows. */
   private mesh: Mesh | undefined;
   private wanted: string | undefined;
-  private showing: CodexModel | undefined;
+  private showing: CodexPicture | undefined;
   /** On a recolour, the picture being replaced: the new one starts from its idle pose. */
   private posedAfter: Prepared | undefined;
   private request: AbortController | undefined;
@@ -290,16 +306,20 @@ export class CodexModelStage {
     return content;
   }
 
-  show(model: CodexModel | undefined): void {
+  /** Shows `model`; the picture that failed to load is requested again when asked for again. */
+  show(model: CodexPicture | undefined): void {
     const key = model && pictureKey(model);
-    if (key === this.wanted) {
+    if (key === this.wanted && this.state !== "error") {
       this.showing = model;
       return;
     }
     // The same species in its other palette keeps its turn, its idle pose and the last picture
     // until the new one draws: only the colours change.
     const recolour =
-      model?.kind === "enemy" && this.showing?.kind === "enemy" && this.showing.id === model.id;
+      !!model &&
+      model.kind !== "station" &&
+      this.showing?.kind === model.kind &&
+      this.showing.id === model.id;
     const previous = this.current;
     this.wanted = key;
     this.showing = model;

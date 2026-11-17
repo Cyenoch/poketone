@@ -20,11 +20,10 @@ import { Component, Container, Text, type Content, type FontFamilies } from "@pm
 import { Matrix4, Vector3, Mesh, MeshBasicMaterial, PlaneGeometry } from "three";
 import type { RunResult, StationView } from "../../run/createRun";
 import type { LocalCommand } from "../../run/createRun";
-import type { FormId, StarterId } from "../../run/sim/content/lines/index";
+import type { StarterId } from "../../run/sim/content/lines/index";
 import type { ItemId } from "../../run/sim/content/items";
 import type { ElementType } from "../../run/sim/content/elements";
 import { stationNames } from "../../run/sim/content/stations";
-import type { PlayerSheet } from "../../run/createRun";
 import { UiStage } from "./stage";
 import { fade, stack } from "./layer";
 import { OutlineRing } from "./box-shadow";
@@ -46,7 +45,7 @@ import { themeColors } from "./run-theme";
 import { createRunCommandIcon } from "./run-overlays-icons";
 import { createStationArt } from "./station-art";
 import type { UiInsets } from "./viewport";
-import { GpuStatsContent } from "./run-overlays-stats-panel";
+import { GpuStatsContent, type StatsPanelState } from "./run-overlays-stats-panel";
 import { gridStep } from "./grid-nav";
 import { runWindowSamples } from "./run-overlays-samples";
 import { images } from "../../prepare/images";
@@ -59,7 +58,7 @@ export type RunOverlayState =
       | { kind: "save-error"; message: string }
       | { kind: "reconnecting" }
       | { kind: "pause"; form: string; meta: string[]; quitting: boolean; shared: boolean }
-      | { kind: "stats"; starter: StarterId; form: FormId; level: number; build: PlayerSheet }
+      | ({ kind: "stats" } & StatsPanelState)
       | { kind: "station"; view: StationView }
       | Omit<ChoiceState, "theme">
       | { kind: "result"; result: RunResult; note: string | null; backpackSize: number | null }

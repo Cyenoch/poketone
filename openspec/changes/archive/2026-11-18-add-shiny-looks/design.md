@@ -2,7 +2,7 @@
 
 ## 所属版本
 
-大版本「野外与路线」。共用约定见 [野外与路线规划](../archive/2026-11-18-add-field-events/design.md#共用约定)。依赖 `extend-progress-v5`、`add-field-events`。羁绊 Lv5 授予由 `add-partner-bond`（在本 change 之后）写入同一个 `looks.owned`，本 change 不依赖它。
+大版本「野外与路线」。共用约定见 [野外与路线规划](../2026-11-18-add-field-events/design.md#共用约定)。依赖 `extend-progress-v5`、`add-field-events`。羁绊 Lv5 授予由 `add-partner-bond`（在本 change 之后）写入同一个 `looks.owned`，本 change 不依赖它。
 
 ## 技术方案：着色器调色板替换
 
@@ -11,15 +11,15 @@
 - 每个形态的 GLB 只有一张 `baseColorTexture`。局内 `lambertCopy` 复制 `map`，敌人逐物种用 `patchShader` / `inject` 改着色器（`view/enemyLook.ts`）。
 - 大厅转台用 `instantiate(canonical)`，材质、几何和贴图与模型仓库共享。
 
-因此不做第二套贴图，用片元着色器做调色板替换：
+多数形态使用片元着色器替换配色。需要按身体部位区分相近色相的形态使用同 UV 底图。
 
-- `view/assets.ts` 为每个形态登记异色调色参数：若干条 `{ hue: [from, to], toHue, satScale, valScale }`，在 `#include <map_fragment>` 之后把采样色转到 HSV，命中色相区间的像素平滑地映射到目标色相，再乘饱和度和明度系数。区间边缘用 smoothstep 过渡，避免硬边。
-- `add-field-events` 的异色敌人和本 change 共用同一张参数表，以及同一个 `shinyLook(material, params)`（`view/materials.ts`）。
+- `view/shiny.ts` 汇合 `add-field-events` 已登记的敌人配色和 `assets/shiny-forms/palettes.json` 的伙伴补充配色。着色器将所选色相平滑映射到目标色相，对低饱和区域可单独着色。
+- `view/materials.ts` 为玩家实例应用该调色或使用已加载的同 UV 贴图。离线头像生成器读取相同的形态表。
 - 局内：玩家网格在 `lambertCopy` 之后按需套用 `shinyLook`，材质本来就是每实例一份，不影响他人。
 - 大厅：异色时为转台副本克隆材质再套用，不改动仓库的共享材质；释放时只释放克隆的材质。上下文丢失和恢复沿用转台现有的释放与重新编译路径。
 - 进化时换模型，新形态按同一外观重新套用。
-- 着色器 key 按形态和异色区分，同一形态的普通和异色版本可以同时存在（合作中两名玩家选同一伙伴，一人异色）。
-- **兜底**：个别形态的贴图里需要换色和不能换色的区域色相相同（例如喷火龙橙色身体要变黑，尾巴火焰也是橙色但不能变），调色参数分不开。这类形态由 `assets:game` 的 Blender 管线额外输出一张同 UV 的异色贴图，参数表里标为 `{ texture }`，走 `fetchAsset`。只有确实分不开的形态才用这条路径，并在 provenance 记录。
+- 着色器按调色功能缓存程序，配色参数属于材质实例。合作中同形态的普通玩家和异色玩家可以同时显示。
+- 小火龙、火恐龙、喷火龙需要保留尾焰，卡咪龟和水箭龟需要区分背甲与腹甲。胡地、快龙、鬼斯、鬼斯通、哈克龙和小拳石系列的三个形态也使用局部遮罩，分别处理护甲、翼膜、雾气、口腔、宝珠或岩体。烘焙工具从正式 GLB 提取静止网格、原 UV 和内嵌底图。各形态的配方和来源在 `assets/shiny-forms/` 登记，游戏通过资源清单加载十三张异色底图。
 
 ## 配色依据
 

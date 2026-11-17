@@ -1,0 +1,329 @@
+{
+  "coordinates": "Pixel centres from upper left. Model masks project the final Blender rest mesh onto X/right and Z/up, ignoring depth, into a 448px square orthographic side. Centre on mesh bounds, orthographic width 1.12 × max(X span, Z span). Portrait masks use the existing 320px WebP.",
+  "processing": "Use sRGB. Fire forms apply the palette, then multiply HSV value by skinValue with weight smoothstep(0.30,0.60,S) × (1-smoothstep(30,43,H)) for H in [0,43]. Restore original texels in the keep polygon. Water forms use the last (brown-to-green) swap only inside shell polygons. Outside, use the listed belly swap if present. For Wartortle use its first blue swap on skin, use the second instead on the side-view tail and ears. Its portrait has white ears and no visible blue tail. Pad UV masks 3 texels into empty islands. Preserve portrait alpha.",
+  "forms": {
+    "charmander": {
+      "skinValue": 1.04,
+      "keepSide": [
+        [0, 0],
+        [141, 0],
+        [141, 275],
+        [87, 277],
+        [71, 280],
+        [0, 280]
+      ],
+      "keepPortrait": [
+        [39, 45],
+        [95, 45],
+        [99, 128],
+        [82, 144],
+        [70, 147],
+        [41, 146]
+      ]
+    },
+    "charmeleon": {
+      "skinValue": 1.2,
+      "keepSide": [
+        [0, 0],
+        [150, 0],
+        [150, 285],
+        [104, 280],
+        [96, 269],
+        [90, 277],
+        [89, 284],
+        [0, 284]
+      ],
+      "keepPortrait": [
+        [216, 31],
+        [273, 31],
+        [275, 100],
+        [250, 102],
+        [246, 94],
+        [242, 102],
+        [215, 105]
+      ]
+    },
+    "charizard": {
+      "skinValue": 0.43,
+      "keepSide": [
+        [0, 0],
+        [96, 0],
+        [96, 299],
+        [60, 299],
+        [53, 302],
+        [49, 300],
+        [47, 310],
+        [46, 317],
+        [0, 317]
+      ],
+      "keepPortrait": [
+        [239, 158],
+        [247, 148],
+        [249, 136],
+        [253, 148],
+        [253, 160],
+        [247, 156]
+      ]
+    },
+    "wartortle": {
+      "shellSide": [
+        [163, 361],
+        [157, 316],
+        [157, 205],
+        [210, 159],
+        [246, 149],
+        [254, 165],
+        [249, 229],
+        [250, 289],
+        [220, 329],
+        [210, 378]
+      ],
+      "shellPortrait": [],
+      "bellySwap": [43, 28, 24, 1.3],
+      "tailEarSide": [
+        [
+          [0, 132],
+          [164, 132],
+          [177, 250],
+          [164, 309],
+          [200, 351],
+          [210, 375],
+          [198, 402],
+          [0, 402]
+        ],
+        [
+          [201, 0],
+          [321, 0],
+          [329, 105],
+          [311, 139],
+          [265, 144],
+          [219, 96]
+        ]
+      ]
+    },
+    "blastoise": {
+      "shellSide": [
+        [46, 331],
+        [40, 164],
+        [112, 62],
+        [221, 43],
+        [226, 126],
+        [209, 172],
+        [243, 205],
+        [229, 254],
+        [194, 285],
+        [152, 359],
+        [84, 360]
+      ],
+      "shellPortrait": [
+        [66, 94],
+        [250, 94],
+        [300, 133],
+        [271, 173],
+        [245, 151],
+        [221, 135],
+        [104, 135],
+        [82, 151],
+        [58, 186],
+        [49, 138]
+      ]
+    },
+    "alakazam": {
+      "bakedPortrait": true,
+      "tones": {
+        "armor": {
+          "targetHSV": [328.95, 0.556, 0.804],
+          "modelValue": 0.439,
+          "portraitValue": 0.478,
+          "modelTexel": [810, 996],
+          "portraitPixel300": [89, 100],
+          "homePixel300": [152, 151]
+        }
+      }
+    },
+    "dragonite": {
+      "bakedPortrait": true,
+      "tones": {
+        "skin": {
+          "targetHSV": [120.0, 0.202, 0.698],
+          "modelValue": 0.922,
+          "portraitValue": 0.922,
+          "modelTexel": [468, 256],
+          "portraitPixel300": [151, 149],
+          "homePixel300": [111, 53]
+        }
+      }
+    },
+    "gastly": {
+      "bakedPortrait": true,
+      "tones": {
+        "core": {
+          "targetHSV": [296.96, 0.648, 0.478],
+          "modelValue": 0.267,
+          "portraitValue": 0.192,
+          "modelTexel": [268, 158],
+          "portraitPixel300": [120, 141],
+          "homePixel300": [108, 129]
+        },
+        "fog": {
+          "targetHSV": [224.48, 0.408, 0.557],
+          "modelValue": 0.62,
+          "portraitValue": 0.612,
+          "modelTexel": [541, 859],
+          "portraitPixel300": [186, 71],
+          "homePixel300": [206, 87]
+        }
+      }
+    },
+    "haunter": {
+      "bakedPortrait": true,
+      "tones": {
+        "mouth": {
+          "targetHSV": [226.83, 0.337, 0.953],
+          "modelValue": 0.804,
+          "portraitValue": 0.843,
+          "modelTexel": [355, 54],
+          "portraitPixel300": [144, 158],
+          "homePixel300": [153, 172]
+        }
+      }
+    },
+    "dragonair": {
+      "bakedPortrait": true,
+      "tones": {
+        "beads": {
+          "targetHSV": [30, 0.5, 0.976],
+          "modelValue": 0.584,
+          "portraitValue": 0.384,
+          "modelTexel": [719, 68],
+          "portraitPixel300": [142, 123],
+          "homePixel300": [148, 141.33]
+        }
+      },
+      "beads": {
+        "model": [
+          [388, 196, 11, 10],
+          [46, 332, 24, 12]
+        ],
+        "portrait": [
+          [152, 131, 13, 13],
+          [51, 180, 25, 27]
+        ]
+      }
+    },
+    "geodude": {
+      "bakedPortrait": true,
+      "tones": {
+        "rock": {
+          "targetHSV": [43.17, 0.683, 0.941],
+          "modelValue": 0.541,
+          "portraitValue": 0.478,
+          "modelTexel": [568, 201],
+          "portraitPixel300": [148.0, 113.33333333333333],
+          "homePixel300": [150.66666666666666, 176.0]
+        }
+      },
+      "eyes": {
+        "model": [
+          [
+            [332, 194],
+            [348, 200],
+            [375, 218],
+            [386, 230],
+            [383, 253],
+            [337, 254],
+            [328, 218]
+          ]
+        ],
+        "portrait": [
+          [
+            [104, 154],
+            [142, 170],
+            [140, 184],
+            [110, 186],
+            [105, 178]
+          ],
+          [
+            [176, 169],
+            [211, 152],
+            [214, 162],
+            [212, 184],
+            [181, 184]
+          ]
+        ]
+      }
+    },
+    "graveler": {
+      "bakedPortrait": true,
+      "tones": {
+        "rock": {
+          "targetHSV": [40.12, 0.758, 0.843],
+          "modelValue": 0.561,
+          "portraitValue": 0.663,
+          "modelTexel": [153, 127],
+          "portraitPixel300": [148.0, 114.66666666666667],
+          "homePixel300": [105.33333333333333, 212.0]
+        }
+      },
+      "eyes": {
+        "model": [
+          [
+            [339, 211],
+            [350, 216],
+            [365, 230],
+            [362, 245],
+            [344, 246],
+            [332, 237]
+          ]
+        ],
+        "portrait": [
+          [
+            [126, 159],
+            [148, 171],
+            [148, 175],
+            [128, 175]
+          ],
+          [
+            [170, 170],
+            [192, 158],
+            [191, 174],
+            [172, 174]
+          ]
+        ]
+      }
+    },
+    "golem": {
+      "bakedPortrait": true,
+      "tones": {
+        "rock": {
+          "targetHSV": [39.8, 0.467, 0.824],
+          "modelValue": 0.431,
+          "portraitValue": 0.451,
+          "modelTexel": [330, 708],
+          "portraitPixel300": [152.0, 86.66666666666667],
+          "homePixel300": [170.66666666666666, 106.66666666666667]
+        },
+        "limbs": {
+          "targetHSV": [38.18, 0.262, 0.988],
+          "modelValue": 0.565,
+          "portraitValue": 0.612,
+          "modelTexel": [141, 513],
+          "portraitPixel300": [213.33333333333334, 236.0],
+          "homePixel300": [226.66666666666666, 226.66666666666666]
+        }
+      }
+    }
+  },
+  "portraitOnly": {
+    "squirtle": {
+      "keepPortrait": [
+        [139, 48],
+        [247, 47],
+        [249, 94],
+        [141, 102]
+      ],
+      "hueSelection": "Original H < 55° or H > 325° inside the polygon",
+      "reason": "Brown irises in the existing illustrated portrait overlap shell hues. Restore them after applying the same model palette."
+    }
+  }
+}

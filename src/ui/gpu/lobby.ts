@@ -2,6 +2,7 @@ import { FullscreenIcon } from "./fullscreen-icon";
 import type { UiKey } from "../../platform/ui-surface";
 import {
   isNavigationDirection,
+  navigationAction,
   type NavigationAction,
   type NavigationDirection,
 } from "../../platform/input";
@@ -28,7 +29,7 @@ import { difficulties, type Difficulty } from "../../run/sim/content/difficultie
 import { items, type ItemId } from "../../run/sim/content/items";
 import { starterOrder, starters, type StarterId } from "../../run/sim/content/lines/index";
 import { type StageId } from "../../run/sim/content/stages/index";
-import { BallBadge } from "./ball";
+import { BallBadge, portraitSrc } from "./ball";
 import { CURRENCY_ICON, CURRENCY_NAME } from "./currency";
 import { GameButton } from "./game-button";
 import { createMenuIcon } from "./icons";
@@ -60,6 +61,14 @@ export interface LobbyCallbacks {
   start(pick: LobbyPick): void;
   /** The pick changed (kept by the app for the next visit and the next session). */
   pick(pick: LobbyPick): void;
+  /**
+   * The player asks for `line`'s shiny look: `worn` from a direction (← off, → on), sent even when
+   * it matches the saved look (it may cancel a look still loading); a press or click leaves it out
+   * to toggle, against a look still loading if there is one, else against the saved look. The app
+   * saves the result and updates the lobby's progress; the key only ever shows the saved look, and
+   * pops only when the app reports a saved request (`lookSaved`).
+   */
+  shiny(line: StarterId, worn?: boolean): void;
   lab(): void;
   codex(): void;
   settings(): void;
@@ -124,6 +133,7 @@ type ControlKind =
   | "prev"
   | "next"
   | "tile"
+  | "shiny"
   | "trainer"
   | "difficulty"
   | "start"
@@ -236,6 +246,133 @@ class NamePlate {
 
   dispose(): void {
     this.stage.motion.cancel(this.pose);
+    this.plate.dispose();
+  }
+}
+
+/**
+ * The partner's shiny look, before its name plate: a slanted key of the ‹ › family (white face,
+ * ink frame, hard shadow) with an ink spark. Worn, it reads as a checked segment does: the face
+ * turns ink, the spark white, and a second small twinkle joins it, so the state shows by fill and
+ * mark; putting it on pops the spark as a picked ball mark pops (1.35 → 1, 220ms). Hover lifts
+ * it, a press sinks it, keyboard focus rings it.
+ */
+class ShinyKey implements Keyed {
+  readonly panel = new Container({
+    flexShrink: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 40 + slantOf(44),
+    minHeight: 44,
+  });
+  private readonly plate = new SlantPlate(this.panel, {
+    fill: ui.white,
+    border: { color: ui.ink, width: 2 },
+  });
+  private readonly spark = createMenuIcon("spark");
+  private readonly twinkle = createMenuIcon("spark");
+  private readonly pose = { y: 0, depth: HARD_SHADOW.offset - 1 };
+  private readonly pop = { scale: 1 };
+  private readonly stage: UiStage;
+  private hovered = false;
+  private focused = false;
+  private focusVisible = false;
+  private pressed = false;
+  private on = false;
+
+  constructor(stage: UiStage) {
+    this.stage = stage;
+    this.plate.set({ depth: this.pose.depth });
+    this.spark.setProperties({ width: 24, height: 24 });
+    this.twinkle.setProperties({
+      positionType: "absolute",
+      width: 11,
+      height: 11,
+      positionTop: 6,
+      positionRight: 12,
+    });
+    this.panel.add(this.plate.content, stack(this.spark, 1), stack(this.twinkle, 1));
+    this.paintLook();
+  }
+
+  /** Worn or not, as saved. */
+  setOn(on: boolean): void {
+    this.on = on;
+    this.paintLook();
+  }
+
+  /** The spark pops as a picked ball mark pops: the player's own request has been saved. */
+  popSpark(): void {
+    this.stage.motion.enter(
+      this.pop,
+      { scale: 1.35 },
+      { scale: 1 },
+      220,
+      () => {
+        this.spark.setProperties({
+          transformScaleX: this.pop.scale,
+          transformScaleY: this.pop.scale,
+        });
+        this.stage.invalidate();
+      },
+      EASE,
+    );
+  }
+
+  private paintLook(): void {
+    this.plate.set({ fill: this.on ? ui.ink : ui.white });
+    this.spark.setProperties({ color: this.on ? ui.white : ui.ink });
+    this.twinkle.setProperties({ color: ui.white, display: this.on ? "flex" : "none" });
+    this.stage.invalidate();
+  }
+
+  setHovered(hovered: boolean): void {
+    if (hovered === this.hovered) return;
+    this.hovered = hovered;
+    this.paint();
+  }
+  setFocused(focused: boolean): void {
+    if (focused === this.focused) return;
+    this.focused = focused;
+    this.paint();
+  }
+  setFocusVisible(visible: boolean): void {
+    if (visible === this.focusVisible) return;
+    this.focusVisible = visible;
+    this.paint();
+  }
+  setPressed(pressed: boolean): void {
+    if (pressed === this.pressed) return;
+    this.pressed = pressed;
+    this.paint();
+  }
+  fitTouch(): void {
+    const min = this.stage.viewport.minTarget;
+    this.panel.setProperties({
+      minHeight: Math.max(44, min),
+      minWidth: Math.max(40 + slantOf(44), min),
+    });
+  }
+
+  private paint(): void {
+    const lift = this.pressed ? -LIFT.press : this.hovered ? LIFT.hover : 0;
+    this.plate.set({ focus: this.focused && this.focusVisible ? 1 : 0 });
+    this.stage.motion.animate(
+      this.pose,
+      { y: -lift, depth: HARD_SHADOW.offset - 1 + lift },
+      LIFT.ms,
+      () => {
+        this.plate.set({ depth: this.pose.depth });
+        this.panel.setProperties({ transformTranslateY: this.pose.y });
+        this.stage.invalidate();
+      },
+      SNAP,
+    );
+  }
+
+  dispose(): void {
+    this.stage.motion.cancel(this.pose);
+    this.stage.motion.cancel(this.pop);
     this.plate.dispose();
   }
 }
@@ -383,6 +520,8 @@ export class GpuLobby {
   /** The selected partner's parts (rebuilt on a switch). */
   private readonly partnerParts: { dispose(): void }[] = [];
   private ribbonPlate: NamePlate | null = null;
+  /** Before the name plate while the picked partner's shiny look is owned. */
+  private readonly shinyKey: ShinyKey;
   private readonly carryTips: { panel: Container; item: ItemId }[] = [];
   private readonly inverse = new Matrix4();
   private readonly point = new Vector3();
@@ -520,7 +659,12 @@ export class GpuLobby {
     this.prev = this.switchButton(-1);
     this.next = this.switchButton(1);
 
-    // The decision column: name plate, tag and record, chain, roster, backpack.
+    // The decision column: shiny key and name plate, tag and record, chain, roster, backpack.
+    this.shinyKey = new ShinyKey(this.stage);
+    this.controls.push({
+      ...this.keyControl("shiny", this.shinyKey, () => this.requestShiny()),
+      tip: () => "异色",
+    });
     for (const [index, id] of starterOrder.entries()) this.tile(id, index);
     this.columnContent.add(
       stack(this.ribbon, 2),
@@ -561,7 +705,7 @@ export class GpuLobby {
     this.scene = scene;
     this.placed = "";
     const form = starters[this.selected].stages[0].form;
-    scene.show(form.id, form.types[0]!);
+    scene.show(form.id, form.types[0]!, this.wears(this.selected));
     scene.showTrainer(this.trainer);
     scene.setCovered(this.covered || !this.revealed);
   }
@@ -690,7 +834,7 @@ export class GpuLobby {
     const form = starters[id].stages[0].form;
     const type = themeColors(form.types[0]!).theme;
     const badge = new BallBadge(this.stage.motion, () => this.stage.invalidate(), 56);
-    badge.portrait(`/art/portraits/${form.id}.webp`);
+    badge.portrait(portraitSrc(form.id, this.wears(id)));
     const entry = { x: 0, o: 1 };
     this.badges.push({ badge, entry });
     this.roster.add(badge.panel);
@@ -705,6 +849,7 @@ export class GpuLobby {
       paint: ({ hovered, focused, focusVisible, pressed }) => {
         const locked = control.locked();
         const cleared = !locked && !!this.progress.best[id]?.victory;
+        badge.setPortrait(portraitSrc(form.id, this.wears(id)));
         badge.set({
           selected: id === this.selected,
           silhouette: locked,
@@ -788,11 +933,35 @@ export class GpuLobby {
     return this.trainerPreview !== null;
   }
 
-  /** The selected partner's plate, column and model. */
+  /** The selected partner's plate, column and model (in the look it wears). */
   private showPartner(): void {
     const form = starters[this.selected].stages[0].form;
     this.buildPartner();
-    this.scene?.show(form.id, form.types[0]!);
+    this.scene?.show(form.id, form.types[0]!, this.wears(this.selected));
+  }
+
+  private owns(id: StarterId): boolean {
+    return this.progress.looks.owned.includes(id);
+  }
+
+  private wears(id: StarterId): boolean {
+    return this.progress.looks.worn.includes(id);
+  }
+
+  /** Asks for the picked partner's shiny look (`worn` from a direction, none to toggle); the app
+   *  saves it once its pictures are in and the new progress repaints the stage, medal and chain. */
+  private requestShiny(worn?: boolean): void {
+    const line = this.selected;
+    if (!this.owns(line)) return;
+    this.callbacks.shiny(line, worn);
+  }
+
+  /**
+   * The app saved a look this lobby asked for (after its pictures loaded): the key pops once it
+   * shows that look. Imports, failures and cancels never call it, so they change without a pop.
+   */
+  lookSaved(line: StarterId, worn: boolean): void {
+    if (worn && line === this.selected && this.wears(line)) this.shinyKey.popSpark();
   }
 
   /** The next (previous) partner that has joined, wrapping. */
@@ -832,6 +1001,8 @@ export class GpuLobby {
     for (let i = this.controls.length - 1; i >= 0; i--)
       if (this.controls[i]!.kind === "info") this.controls.splice(i, 1);
     for (const part of this.partnerParts.splice(0)) part.dispose();
+    // The shiny key outlives the partner's parts.
+    this.shinyKey.panel.removeFromParent();
     for (const node of [this.ribbon, this.meta, this.chain, this.backpack])
       for (const child of node.children.slice()) {
         child.removeFromParent();
@@ -854,7 +1025,13 @@ export class GpuLobby {
     plate.size(t.ribbon, t.name, this.compact ? 18 : 24);
     this.partnerParts.push(plate);
     this.ribbonPlate = plate;
-    this.ribbon.add(plate.panel);
+    // The shiny key stands before the name it recolours, only once the look is owned.
+    const owned = this.owns(shown);
+    this.shinyKey.panel.setProperties({ display: owned ? "flex" : "none" });
+    this.shinyKey.setOn(owned && this.wears(shown));
+    this.ribbon.add(this.shinyKey.panel, plate.panel);
+    if (!owned && this.controls[this.focused]?.kind === "shiny")
+      this.focused = this.picked(this.tiles, starterOrder.indexOf(shown));
     // The type tag (crest + name), then the best record on desktop.
     const tag = slantTag(
       typeNames[type],
@@ -899,7 +1076,9 @@ export class GpuLobby {
         justifyContent: "center",
         flexShrink: 0,
       });
-      circle.add(new Image({ src: `/art/portraits/${step.id}.webp`, width: "84%", height: "84%" }));
+      circle.add(
+        new Image({ src: portraitSrc(step.id, this.wears(shown)), width: "84%", height: "84%" }),
+      );
       chainHost.add(circle);
     }
     // The backpack: its label and only the items packed; nothing when empty.
@@ -965,7 +1144,7 @@ export class GpuLobby {
     if (state.pick.starter !== this.selected) {
       this.selected = state.pick.starter;
       this.showPartner();
-    } else if (changed) this.buildPartner();
+    } else if (changed) this.showPartner();
     this.difficulty = state.pick.difficulty;
     this.map = "forest";
     if (state.pick.trainer !== this.trainer || (changed && this.trainerPreview)) {
@@ -1446,14 +1625,20 @@ export class GpuLobby {
     ];
   }
 
-  /** Tab stops: the top row, the picked trainer, ‹ ›, the picked partner, the backpack, the
-   *  picked difficulty, 出发. */
+  /** The shiny key, while the picked partner's look is owned. */
+  private shinyStop(): number[] {
+    return this.owns(this.selected) ? [this.index("shiny")] : [];
+  }
+
+  /** Tab stops: the top row, the picked trainer, ‹ ›, the shiny key, the picked partner, the
+   *  backpack, the picked difficulty, 出发. */
   private tabStops(): number[] {
     return [
       ...this.topRow(),
       this.picked(this.trainerControls, trainerOrder.indexOf(this.trainer)),
       this.index("prev"),
       this.index("next"),
+      ...this.shinyStop(),
       this.picked(this.tiles, starterOrder.indexOf(this.selected)),
       ...this.stops("info"),
       this.picked(this.segments, this.difficulty),
@@ -1476,6 +1661,14 @@ export class GpuLobby {
   }
 
   physicalKey(event: UiKey): boolean {
+    // A held Enter / Space repeats: only a fresh press toggles the shiny key (a held key would
+    // otherwise toggle back and forth, or cancel the look it just asked for).
+    if (
+      event.repeat &&
+      this.controls[this.focused]?.kind === "shiny" &&
+      navigationAction(event.code, event.shift) === "confirm"
+    )
+      return true;
     if (!["KeyQ", "KeyE"].includes(event.code)) return false;
     if (!this.departing) {
       this.touchTip = -1;
@@ -1528,7 +1721,8 @@ export class GpuLobby {
   }
 
   /** Arrows: the groups pick sideways, 出发 switches partner sideways; up and down walk the
-   *  screen's regions (top row, trainer, stage, column, tray). */
+   *  screen's regions (top row, trainer, stage, column, tray). With the look owned, ↑ from the
+   *  tray reaches the shiny key, so a partner in the roster's second row wears it without a pick. */
   private arrow(current: Control, action: NavigationDirection): void {
     const sideways = action === "left" || action === "right";
     const step = action === "left" || action === "up" ? -1 : 1;
@@ -1548,6 +1742,10 @@ export class GpuLobby {
       } else if (current.kind === "info") {
         const at = infos.indexOf(this.focused);
         this.focus(infos[(at + step + infos.length) % infos.length]!);
+      } else if (current.kind === "shiny") {
+        // ← asks for the look off, → on, even while the saved look already matches: a look still
+        // loading is cancelled that way (the app drops a repeat).
+        this.requestShiny(step > 0);
       } else if (row.includes(this.focused)) {
         const at = row.indexOf(this.focused);
         this.focus(row[Math.min(row.length - 1, Math.max(0, at + step))]!);
@@ -1571,6 +1769,7 @@ export class GpuLobby {
       }
     }
     const below = infos[0] ?? segment;
+    const shiny = this.shinyStop()[0];
     const targets: Record<ControlKind, [number, number]> = {
       lab: [this.focused, trainer],
       codex: [this.focused, trainer],
@@ -1581,9 +1780,12 @@ export class GpuLobby {
       trainer: [this.index("lab"), this.focused],
       prev: [this.index("multiplayer"), trainer],
       next: [this.index("multiplayer"), segment],
-      tile: [this.index("settings"), below],
+      shiny: [this.index("settings"), tile],
+      tile: [shiny ?? this.index("settings"), below],
       info: [tile, segment],
-      difficulty: [infos.at(-1) ?? tile, this.index("start")],
+      // An owned look's key takes the tray's ↑: the picked partner wears it by ↓ ↑ and confirm
+      // without crossing the roster's rows (which pick), and its ↓ returns to that medal.
+      difficulty: [shiny ?? infos.at(-1) ?? tile, this.index("start")],
       start: [segment, this.focused],
     };
     this.focus(targets[current.kind][up ? 0 : 1]);
@@ -1714,5 +1916,5 @@ export class GpuLobby {
 
 /** Rows of the scrolling decision column (hit-tested and revealed inside it). */
 function inColumn(kind: ControlKind): boolean {
-  return kind === "tile" || kind === "info";
+  return kind === "tile" || kind === "info" || kind === "shiny";
 }

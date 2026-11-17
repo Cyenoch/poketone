@@ -60,7 +60,7 @@ export interface RunConfig {
   seed: number;
   difficulty: Difficulty;
   /** Each peer's lab bonuses and loadout travel with the config; omitted means none. */
-  players: readonly ({ starter: StarterId; lab?: LabBonuses } & Loadout)[];
+  players: readonly ({ starter: StarterId; shiny: boolean; lab?: LabBonuses } & Loadout)[];
 }
 
 /** Shared scratch grid; stepWorld is synchronous, so two worlds never use it at once. */

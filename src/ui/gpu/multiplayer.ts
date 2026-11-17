@@ -11,7 +11,7 @@ import { starterUnlocked, type Progress } from "../../run/progress";
 import { difficulties, type Difficulty } from "../../run/sim/content/difficulties";
 import { starterOrder, starters, type StarterId } from "../../run/sim/content/lines/index";
 import { trainerArt, trainerOrder, trainers, trainerUnlocked } from "../../trainers";
-import { BallBadge } from "./ball";
+import { BallBadge, portraitSrc } from "./ball";
 import { GameButton } from "./game-button";
 import { InnerScreenFrame } from "./inner-screen";
 import { RouteMap } from "./route-map";
@@ -246,10 +246,9 @@ export class GpuMultiplayer {
     // (the code cells over 加入房间, the keypad) ──
     const createCard = this.card("column");
     createCard.setProperties({ alignItems: "center", justifyContent: "center" });
-    const form = starters[pick.starter].stages[0].form;
     this.partner = new BallBadge(this.stage.motion, () => this.stage.invalidate(), 96);
-    this.partner.portrait(`/art/portraits/${form.id}.webp`);
-    this.partner.set({ selected: true, type: themeColors(form.types[0]!).theme });
+    this.partner.portrait(this.partnerPortrait());
+    this.showPartner();
     createCard.add(stack(this.partner.panel, 1));
     this.createButton = this.button(
       "menu",
@@ -592,7 +591,8 @@ export class GpuMultiplayer {
     const form = starters[id].stages[0].form;
     const type = themeColors(form.types[0]!).theme;
     const badge = new BallBadge(this.stage.motion, () => this.stage.invalidate(), 56);
-    badge.portrait(`/art/portraits/${form.id}.webp`);
+    // The player's own medals wear the looks they chose in the lobby.
+    badge.portrait(portraitSrc(form.id, this.progress.looks.worn.includes(id)));
     this.roster.add(badge.panel);
     this.badges.push(badge);
     const lock = () => starterLock(this.progress, id);
@@ -670,7 +670,22 @@ export class GpuMultiplayer {
     else getAudio().sfx("ui-move");
     this.pick = next;
     this.callbacks.pick(next);
+    if (change.starter) this.showPartner();
     this.refresh();
+  }
+
+  /** The player's current partner, in the look they wear. */
+  private partnerPortrait(): string {
+    const form = starters[this.pick.starter].stages[0].form;
+    return portraitSrc(form.id, this.progress.looks.worn.includes(this.pick.starter));
+  }
+
+  /** The create card's partner follows the pick made in the room: portrait and type ring. */
+  private showPartner(): void {
+    const form = starters[this.pick.starter].stages[0].form;
+    this.partner.setPortrait(this.partnerPortrait());
+    this.partner.set({ selected: true, type: themeColors(form.types[0]!).theme });
+    this.stage.invalidate();
   }
 
   /** A code was sent and the room has not answered yet. */
@@ -805,7 +820,9 @@ export class GpuMultiplayer {
     if (view && next === "room") {
       this.codeLabel.setProperties({ text: state!.room?.code ?? "——————" });
       (this.count.tag.children.at(-1) as Text).setProperties({ text: `${view.count}/4` });
-      this.seats.forEach((seat, i) => seat.update(view.seats[i]!));
+      this.seats.forEach((seat, i) =>
+        seat.update(view.seats[i]!, state!.room?.players[i]?.shiny ?? false),
+      );
       this.launch.setLabel(state!.self === 0 ? "出发" : "等待房主");
       this.launchSpinner.setProperties({ display: view.start.pending ? "flex" : "none" });
       const ready = view.link === "ready";

@@ -6,8 +6,29 @@ import {
   ShaderChunk,
   type Material,
   type Mesh,
+  type Texture,
 } from "three";
 import { inject, patchShader } from "./patchShader";
+import type { FormId } from "../sim/content/lines/index";
+import { shinyLook as applyPalette, shinyTextureUrl } from "./shiny";
+
+export interface ShinyFormLook {
+  form: FormId;
+  map?: Texture;
+}
+
+export function shinyLook(
+  material: MeshStandardMaterial | MeshLambertMaterial,
+  look: ShinyFormLook,
+): void {
+  const url = shinyTextureUrl(look.form);
+  if (url) {
+    if (!look.map) throw new Error(`${look.form} 缺少预载的异色贴图 ${url}。`);
+    material.map = look.map;
+  } else {
+    applyPalette(material, look.form, `shiny-form:${look.form}`);
+  }
+}
 
 /**
  * Lambert copy of a Tripo glTF material. Those are metalness 0 / roughness 0.9, so the PBR specular

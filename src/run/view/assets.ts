@@ -3,7 +3,10 @@ import {
   Box3,
   type Bone,
   Group,
+  LinearFilter,
+  LinearMipmapLinearFilter,
   Mesh,
+  MeshStandardMaterial,
   Object3D,
   RepeatWrapping,
   SRGBColorSpace,
@@ -37,6 +40,8 @@ import { SITE_POOLS } from "../sim/content/sites";
 import { markerAllowed } from "../sim/content/route";
 import type { SiteKind } from "../sim/state/field";
 import { siteModelHeight, siteModelOf, type SiteModel } from "./fieldSites";
+import { shinyLook, type ShinyFormLook } from "./materials";
+import { shinyTextureUrl } from "./shiny";
 
 export interface InstanceSource {
   geometry: BufferGeometry;
@@ -47,6 +52,7 @@ export interface InstanceSource {
 
 export interface PlayerModel {
   form: FormId;
+  look?: ShinyFormLook;
   /** Holder normalised to the form's height, feet on y = 0, facing +Z. */
   holder: Group;
   /** This player's copy of the canonical model (`instantiate`). */
@@ -521,15 +527,15 @@ export interface CanonicalModel {
   instance(height: number): InstanceSource;
 }
 
-/** A consumer's own copy of a canonical model: its skeleton and bones, sharing everything else. */
+/** A consumer owns its skeleton, bones and any turntable look materials; the store owns the maps. */
 export interface ModelInstance {
   readonly root: Object3D;
   readonly animations: AnimationClip[];
   /** The clone's tail chain, root first. */
   readonly tail: Bone[];
-  /** Context lost: frees the GPU copies the consumer owns (bone textures); they upload again. */
+  /** Frees this instance's GPU uploads; its next draw prepares them again. */
   releaseUploads(): void;
-  /** Frees only the consumer's copies (skeletons and their bone textures). */
+  /** Frees the instance's skeletons and any cloned look materials. */
   dispose(): void;
 }
 
@@ -730,12 +736,19 @@ const modelEntries = keyedStore<CanonicalModel>(
 const textureImages = new WeakMap<Texture, DecodedImage>();
 const textureEntries = keyedStore<Texture>(
   async (url, blob) => {
-    // Bitmaps are decoded upright; the texture must not flip them again.
-    const image = await resources().decodeImage(blob, true);
+    // World maps flip on decode; same-UV glTF replacements keep the embedded image's row order.
+    const gltfMap = url.startsWith("/textures/shiny/");
+    const image = await resources().decodeImage(blob, !gltfMap);
     const texture = resources().createTexture();
     texture.image = image.source;
     textureImages.set(texture, image);
     texture.flipY = false;
+    if (gltfMap) {
+      texture.wrapS = texture.wrapT = RepeatWrapping;
+      texture.magFilter = LinearFilter;
+      texture.minFilter = LinearMipmapLinearFilter;
+      texture.generateMipmaps = true;
+    }
     texture.colorSpace = url.endsWith("-detail.png") ? NoColorSpace : SRGBColorSpace;
     texture.needsUpdate = true;
     return texture;
@@ -772,12 +785,27 @@ export function bindModelStore(app: AppRenderer): void {
   modelEntries.offerWaiting();
 }
 
-/** A consumer's copy: its own skeleton (and bone texture), sharing geometry, materials, textures. */
-export function instantiate(canonical: CanonicalModel): ModelInstance {
+/** A consumer's copy, sharing canonical materials unless the turntable requests a look. */
+export function instantiate(canonical: CanonicalModel, look?: ShinyFormLook): ModelInstance {
   const root = cloneSkinned(canonical.model.root);
   const skeletons = new Set<Skeleton>();
+  const materials = new Map<Material, MeshStandardMaterial>();
+  const cloneMaterial = (source: Material) => {
+    const cached = materials.get(source);
+    if (cached) return cached;
+    if (!(source instanceof MeshStandardMaterial))
+      throw new Error(`${canonical.url} 的异色材质不支持 ${source.type}。`);
+    const material = source.clone();
+    shinyLook(material, look!);
+    materials.set(source, material);
+    return material;
+  };
   root.traverse((node) => {
     if (node instanceof SkinnedMesh) skeletons.add(node.skeleton);
+    if (look && node instanceof Mesh)
+      node.material = Array.isArray(node.material)
+        ? node.material.map(cloneMaterial)
+        : cloneMaterial(node.material);
   });
   const tail = canonical.tail.map((bone) => {
     const copy = root.getObjectByName(bone.name);
@@ -786,17 +814,17 @@ export function instantiate(canonical: CanonicalModel): ModelInstance {
     }
     return copy as Bone;
   });
+  const releaseUploads = () => {
+    for (const skeleton of skeletons) skeleton.dispose();
+    for (const material of materials.values()) material.dispose();
+  };
   return {
     root,
     animations: canonical.model.animations,
     tail,
     // Skeleton.dispose only frees the bone texture; the next draw computes and uploads it again.
-    releaseUploads() {
-      for (const skeleton of skeletons) skeleton.dispose();
-    },
-    dispose() {
-      for (const skeleton of skeletons) skeleton.dispose();
-    },
+    releaseUploads,
+    dispose: releaseUploads,
   };
 }
 
@@ -834,7 +862,7 @@ function hipAnchor(root: Object3D): Vector3 | null {
   return hip ? hip.getWorldPosition(new Vector3()) : null;
 }
 
-function normalisePlayer(model: ModelInstance, form: FormId): PlayerModel {
+function normalisePlayer(model: ModelInstance, form: FormId, look?: ShinyFormLook): PlayerModel {
   const { url } = formModels[form];
   const { height } = formDefs[form];
   model.root.updateMatrixWorld(true);
@@ -858,14 +886,20 @@ function normalisePlayer(model: ModelInstance, form: FormId): PlayerModel {
   facing.add(holder);
   const wrapper = new Group();
   wrapper.add(facing);
-  return { form, holder: wrapper, model, tail: model.tail };
+  return { form, holder: wrapper, model, tail: model.tail, look };
 }
 
-/** A line's model needs: every form, so evolving never waits (readiness design §2). */
-export function lineNeeds(starter: StarterId): Need<CanonicalModel>[] {
-  return lineForms(starter).map(({ id }) => {
+export function shinyMapNeed(form: FormId) {
+  const key = shinyTextureUrl(form);
+  return key ? { key, acquire: (lane: Lane) => models.acquireTexture(key, lane) } : null;
+}
+
+/** Every form and its required maps, so evolution never waits (readiness design §2). */
+export function lineNeeds(starter: StarterId, shiny = false): Need[] {
+  return lineForms(starter).flatMap(({ id }): Need[] => {
     const url = formModels[id].url;
-    return { key: url, acquire: (lane: Lane) => models.acquire(url, lane) };
+    const map = shiny && shinyMapNeed(id);
+    return [{ key: url, acquire: (lane) => models.acquire(url, lane) }, ...(map ? [map] : [])];
   });
 }
 
@@ -914,6 +948,7 @@ export async function loadRunAssets(
   world: World,
   signal: AbortSignal,
   progress?: (settled: number, total: number) => void,
+  shinySeats: readonly boolean[] = [],
 ): Promise<RunAssets> {
   const theme = stageThemes[world.stage];
   const handles: Handle<unknown>[] = [];
@@ -970,8 +1005,17 @@ export async function loadRunAssets(
       cliffDetail,
     ] = await Promise.all([
       Promise.all(
-        lines.map((forms) =>
-          Promise.all(forms.map((form) => hold(models.acquire(formModels[form].url, "critical")))),
+        lines.map((forms, seat) =>
+          Promise.all(
+            forms.map(async (form) => {
+              const need = shinySeats[seat] && shinyMapNeed(form);
+              const [canonical, map] = await Promise.all([
+                hold(models.acquire(formModels[form].url, "critical")),
+                need ? hold(need.acquire("critical")) : undefined,
+              ]);
+              return { canonical, look: shinySeats[seat] ? { form, map } : undefined };
+            }),
+          ),
         ),
       ),
       Promise.all(enemyIds.map((id) => hold(models.acquire(enemyModel(id), "critical")))),
@@ -999,9 +1043,10 @@ export async function loadRunAssets(
       (forms, i) =>
         new Map(
           forms.map((form, j) => {
-            const instance = instantiate(lineModels[i]![j]!);
+            const { canonical, look } = lineModels[i]![j]!;
+            const instance = instantiate(canonical);
             instances.push(instance);
-            return [form, normalisePlayer(instance, form)] as const;
+            return [form, normalisePlayer(instance, form, look)] as const;
           }),
         ),
     );

@@ -212,6 +212,10 @@ export class SilhouetteImageMaterial extends MeshBasicMaterial {
   }
 }
 
+/** A form's portrait, in its shiny colours when its player wears the line's shiny look. */
+export const portraitSrc = (form: string, shiny: boolean): string =>
+  `/art/portraits/${form}${shiny ? "-shiny" : ""}.webp`;
+
 /**
  * Portraits whose figure stands in an opaque haze (Gastly's gas): their silhouette draws a mask of
  * the body instead (`public/art/portraits/silhouettes/`).
@@ -314,6 +318,14 @@ export class BallBadge {
     this.add(box);
     setSilhouette(image, this.state.silhouette, src);
     this.portraitImage = { image, src };
+  }
+
+  /** Swaps the portrait's picture (a partner's normal or shiny look), keeping its silhouette state. */
+  setPortrait(src: string): void {
+    const shown = this.portraitImage;
+    if (!shown || shown.src === src) return;
+    shown.src = src;
+    setSilhouette(shown.image, this.state.silhouette, src);
   }
 
   set(next: Partial<BallBadgeState>): void {

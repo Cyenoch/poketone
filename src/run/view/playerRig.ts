@@ -16,7 +16,7 @@ import {
 import { formModels, type PlayerModel } from "./assets";
 import { shadeUnderClouds } from "./environment/clouds";
 import type { WindUniforms } from "./environment/wind";
-import { creatureLook, lambertCopy, ownShadowDepth } from "./materials";
+import { creatureLook, lambertCopy, ownShadowDepth, shinyLook } from "./materials";
 import { addOutlineNormals, selfOutlineMaterial } from "./outline";
 import { createSpineFollow } from "./spine";
 import { createTailSpring, type TailSpring } from "./tail";
@@ -81,6 +81,7 @@ export function mountRig(
   for (const mesh of skinned) {
     const looks = (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).map((source) => {
       const material = creatureLook(lambertCopy(source));
+      if (player.look) shinyLook(material, player.look);
       shadeUnderClouds(material, wind);
       // The visible body marks the stencil, so the silhouette never shows the player's own far limbs.
       material.stencilWrite = true;

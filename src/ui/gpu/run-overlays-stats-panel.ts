@@ -18,6 +18,7 @@ import { statTerms } from "../../run/glossary";
 import type { RunOverlayControl } from "./run-overlays-control";
 import { type ChoiceArt } from "./run-choice-surface";
 import { typeColors } from "./run-theme";
+import { portraitSrc } from "./ball";
 import { createRunStatIcon } from "./run-overlays-icons";
 import { BoxShadow, OutlineRing } from "./box-shadow";
 import { cubicBezier } from "./focus-mark";
@@ -53,6 +54,8 @@ import {
 export interface StatsPanelState {
   starter: StarterId;
   form: FormId;
+  /** The player's own look: the title portrait in its shiny colours. */
+  shiny: boolean;
   level: number;
   build: PlayerSheet;
 }
@@ -167,7 +170,8 @@ export class GpuStatsContent {
       flexShrink: 0,
     });
     this.header.add(this.surface.content);
-    this.portrait = state.form === state.starter ? portraitImage(state.form) : null;
+    this.portrait =
+      state.form === state.starter ? portraitImage(portraitSrc(state.form, state.shiny)) : null;
     if (this.portrait) this.header.add(this.portrait);
     this.title = this.text(def.name, "title", INK);
     this.title.setProperties({ whiteSpace: "pre", flexShrink: 0 });
@@ -671,10 +675,10 @@ export class GpuStatsContent {
   }
 }
 
-function portraitImage(form: FormId) {
+function portraitImage(src: string) {
   return stack(
     new Image({
-      src: `/art/portraits/${form}.webp`,
+      src,
       width: 48,
       height: 48,
       marginY: -4,

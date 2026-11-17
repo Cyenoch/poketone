@@ -66,7 +66,7 @@ document.body.textContent = String(import.meta.env.DEV);`,
           version: PROTOCOL_VERSION,
           build: "test",
           code: "",
-          player: { starter: "charmander", trainer: "chengxi" },
+          player: { starter: "charmander", trainer: "chengxi", shiny: false },
         }),
       );
     socket.onmessage = ({ data }) => accept(JSON.parse(data));

@@ -14,7 +14,6 @@ import {
   hasShinyRecord,
   type CodexBlock,
   type CodexEntry,
-  type CodexModel,
   type CodexRef,
 } from "../../run/codex";
 import { rarityNames } from "../../run/sim/upgrades";
@@ -22,7 +21,7 @@ import { starterLock } from "../../run/locks";
 import type { Progress } from "../../run/progress";
 import { lineForms, starterOrder, type StarterId } from "../../run/sim/content/lines/index";
 import { LockChip } from "./lock-chip";
-import { CodexModelStage, CodexThumbs, KEY_TURN } from "./codex-model";
+import { CodexModelStage, CodexThumbs, KEY_TURN, type CodexPicture } from "./codex-model";
 import {
   BallGround,
   CodexChip,
@@ -179,7 +178,8 @@ export class GpuCodex {
   private list: Part | undefined;
   private detail: Part | undefined;
   private modelNote: Text | undefined;
-  /** The enemy page whose model shows in its shiny palette (browsing only, never saved). */
+  /** The enemy or partner page whose model shows in its shiny colours (browsing only, never
+   *  saved: the partner's worn look is the lobby's). */
   private shinyOf: string | undefined;
   private readonly memory = new Map<string, string>();
   private section = 0;
@@ -591,15 +591,20 @@ export class GpuCodex {
     return [numbers!, dexBlock(this.options.progress.dex, model.id), ...rest];
   }
 
+  /** An enemy once a shiny of it has been defeated; a partner's form once its line's shiny look
+   *  is owned. */
   private shinyRecord(entry: CodexEntry): boolean {
     const model = entry.model;
-    return model?.kind === "enemy" && hasShinyRecord(this.options.progress.dex, model.id);
+    if (model?.kind === "enemy") return hasShinyRecord(this.options.progress.dex, model.id);
+    if (model?.kind !== "form") return false;
+    const owned = this.options.progress.looks.owned;
+    return owned.some((line) => lineForms(line).some((form) => form.id === model.id));
   }
 
-  /** The model the stage shows for `entry`: in the shiny palette while that is picked. */
-  private picture(entry: CodexEntry): CodexModel | undefined {
+  /** The model the stage shows for `entry`: in its shiny colours while that is picked. */
+  private picture(entry: CodexEntry): CodexPicture | undefined {
     const model = entry.model;
-    return model?.kind === "enemy" && this.shinyOf === entry.key
+    return model && model.kind !== "station" && this.shinyOf === entry.key
       ? { ...model, shiny: true }
       : model;
   }
@@ -629,8 +634,10 @@ export class GpuCodex {
     return tray.tray;
   }
 
+  /** Picks the page's colours; the picked segment pressed again after its model failed to load
+   *  asks for it again, in place. */
   private pickPalette(entry: CodexEntry, shiny: boolean): void {
-    if ((this.shinyOf === entry.key) === shiny) return;
+    if ((this.shinyOf === entry.key) === shiny && this.model.state !== "error") return;
     this.shinyOf = shiny ? entry.key : undefined;
     this.model.show(this.picture(entry));
     this.paintModelNote();
