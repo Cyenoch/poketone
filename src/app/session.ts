@@ -171,6 +171,7 @@ export async function createAppSession(
       settingsOpen,
       settings,
       canSave: route !== "run" && route !== "room",
+      solo: route !== "room" && !network,
       busy: transition.phase !== "idle",
       transition: transition.phase,
       transitionTitle: shown.title,
@@ -182,6 +183,8 @@ export async function createAppSession(
       modalActive: runModal(),
       sound: settings.sound,
       devMode: settings.devMode,
+      pauseOnBlur: settings.pauseOnBlur,
+      autoOpenCards: settings.autoOpenCards,
     });
     if (settings.devMode && screen) {
       if (!devBadge) {
@@ -321,6 +324,8 @@ export async function createAppSession(
         modalActive: runModal(),
         sound: settings.sound,
         devMode: settings.devMode,
+        pauseOnBlur: settings.pauseOnBlur,
+        autoOpenCards: settings.autoOpenCards,
         onStarted() {
           if (!network?.session.restored && carried.length)
             return change("背包", (current) => setBackpack(current, []));

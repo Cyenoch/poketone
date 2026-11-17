@@ -63,6 +63,8 @@ export interface GpuAppState {
   settingsOpen: boolean;
   settings: Settings;
   canSave: boolean;
+  /** Not in a co-op room or run: the card-timing preference applies. */
+  solo: boolean;
   busy: boolean;
   transition: SceneTransitionPhase;
   /** The page coming on, shown on the curtain. */
@@ -231,6 +233,7 @@ export async function createGpuAppHost(
   let dialog: SettingsDialog | undefined;
   let dialogSettings: Settings | undefined;
   let dialogCanSave = false;
+  let dialogSolo = false;
   let codex: GpuCodex | undefined;
   let codexLoading = false;
   /** Shown screens, bottom first; the last takes input. */
@@ -424,14 +427,20 @@ export async function createGpuAppHost(
     forceDraw = true;
   };
   const sameSettings = (a: Settings | undefined, b: Settings) =>
-    a?.sound === b.sound && a.devMode === b.devMode && a.uiScale === b.uiScale;
+    a?.sound === b.sound &&
+    a.devMode === b.devMode &&
+    a.uiScale === b.uiScale &&
+    a.pauseOnBlur === b.pauseOnBlur &&
+    a.autoOpenCards === b.autoOpenCards;
   const createDialog = () => {
     if (!state) return;
     dialogSettings = { ...state.settings };
     dialogCanSave = state.canSave;
+    dialogSolo = state.solo;
     closing = false;
     dialog = new SettingsDialog(fonts.families, {
       settings: state.settings,
+      solo: state.solo,
       onFocusChange: () => getAudio().sfx("ui-move"),
       onChange(next) {
         if (!state) return;
@@ -937,6 +946,7 @@ export async function createGpuAppHost(
     if (!state) return;
     const warm = new SettingsDialog(fonts.families, {
       settings: state.settings,
+      solo: true,
       onChange() {},
       onClose() {},
       onSave() {},
@@ -1485,7 +1495,9 @@ export async function createGpuAppHost(
       else if (
         dialog &&
         !closing &&
-        (!sameSettings(dialogSettings, next.settings) || dialogCanSave !== next.canSave)
+        (!sameSettings(dialogSettings, next.settings) ||
+          dialogCanSave !== next.canSave ||
+          dialogSolo !== next.solo)
       ) {
         cancelInput();
         fonts.release(dialog.stage);

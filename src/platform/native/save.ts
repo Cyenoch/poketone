@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "no
 import { dirname, join } from "node:path";
 import { decodeSave, encodeSave, SAVE_FORMAT, type SaveData } from "../../run/save";
 import { emptyProgress } from "../../run/progress";
+import { defaultSettings } from "../../settings";
 
 /** Schema versions are independent of app releases; legacy files stay untouched. */
 export function nativeSavePath(directory: string): string {
@@ -31,7 +32,7 @@ export function readSave(path: string): SaveData {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
     return {
       progress: emptyProgress(),
-      settings: { sound: true, devMode: false, uiScale: 1 },
+      settings: { ...defaultSettings },
     };
   }
   return decodeSave(text);

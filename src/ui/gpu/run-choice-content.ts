@@ -1083,14 +1083,15 @@ export class GpuChoiceContent {
       scrollbarWidth: 2,
       maxHeight: cardHeight,
     });
+    // The scroll clips what the cards draw outside themselves: room for the focus ring.
+    const ring = 6;
     this.cardsBox.setProperties({
       width: "100%",
       gap,
-      paddingTop: 4,
-      paddingBottom: 4,
+      padding: ring,
       alignItems: "stretch",
     });
-    const cardWidth = (width - gap * (this.cards.length - 1)) / this.cards.length;
+    const cardWidth = (width - 2 * ring - gap * (this.cards.length - 1)) / this.cards.length;
     // Read mid-fight: the card's room goes to the name, icon and effect, on the run's own sizes.
     const frame = 2,
       band = compactHeader ? 22 : 28,
@@ -1105,7 +1106,7 @@ export class GpuChoiceContent {
       card.surface.setMetrics(band, frame);
       card.panel.setProperties({
         width: cardWidth,
-        minHeight: Math.min(150, cardHeight - 8),
+        minHeight: Math.min(150, cardHeight - 2 * ring),
         paddingTop: band + 6,
         paddingX: padX,
         paddingBottom: this.coarse ? 10 : 26,

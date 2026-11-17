@@ -12,6 +12,8 @@ export type Command =
   | { t: "banish"; player: PlayerId; card: number; index: number }
   | { t: "ult"; player: PlayerId }
   | { t: "choices"; player: PlayerId; open: boolean }
+  /** Solo: level-up cards wait for the interact key (manual) instead of opening at once. */
+  | { t: "cardMode"; player: PlayerId; manual: boolean }
   /** Hypno: forget a move or an item for Pokécoins. */
   | {
       t: "forget";

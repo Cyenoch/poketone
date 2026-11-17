@@ -37,7 +37,14 @@ import { DASH_COOLDOWN } from "./sim/content/params/player";
 import { forgetRefund, stationHere } from "./sim/stations";
 import { zoneDef, zoneTime } from "./sim/currentZone";
 import { canLeave, enterZone, zoneAction, prepareZone } from "./sim/zones";
-import { cardShown, createWorldFromSeeds, isFrozen, stepWorld, type Loadout } from "./sim/world";
+import {
+  cardShown,
+  createWorldFromSeeds,
+  isFrozen,
+  manualCards,
+  stepWorld,
+  type Loadout,
+} from "./sim/world";
 import { bindModelStore, loadRunAssets, type RunAssets } from "./view/assets";
 import { afterFrame, drive, type Steps } from "../prepare/steps";
 import { bakeMap } from "./view/minimapBake";
@@ -148,7 +155,7 @@ export type InteractPrompt = StationKind | "summon" | "leave" | "choices" | "res
 function interactPrompt(world: World, player: World["players"][number]): InteractPrompt | null {
   if (!player.alive || player.dialog) return null;
   if (player.rescue || rescueTarget(world, player)) return "rescue";
-  if (world.players.length > 1) {
+  if (manualCards(world, player)) {
     const action = zoneAction(world, player);
     if (action && (action !== "leave" || canLeave(world))) return action;
     if (player.pending.length > 0) return "choices";
@@ -258,6 +265,8 @@ export interface RunHandle {
   setPaused(paused: boolean): void;
   setSound(enabled: boolean): void;
   setDevMode(enabled: boolean): void;
+  setPauseOnBlur(enabled: boolean): void;
+  setAutoOpenCards(enabled: boolean): void;
   /** The local player's build, read when the build panel opens (not part of the 10 Hz snapshot). */
   stats(): PlayerSheet;
   dispose(): void;
@@ -394,6 +403,10 @@ export function createRun(
     sound: boolean;
     /** Developer mode: hitboxes, nav mask, flow arrows and a stats panel. */
     devMode: boolean;
+    /** Solo: pause when the window loses focus. */
+    pauseOnBlur: boolean;
+    /** Solo: level-up cards open at once; off, they wait for the interact key. */
+    autoOpenCards: boolean;
     multiplayer?: MultiplayerRun;
   },
   callbacks: RunCallbacks,
@@ -421,6 +434,7 @@ export function createRun(
   let menuPaused = false;
   let mapOpen = false;
   let devMode = config.devMode;
+  let pauseOnBlur = config.pauseOnBlur;
   const layers = new Set<DebugLayer>();
   let panel = devMode ? makeReadout() : undefined;
   function makeReadout() {
@@ -637,7 +651,8 @@ export function createRun(
   }
   const blur = () => {
     cancelInput();
-    if (!network && started && world.outcome === "playing") callbacks.onPauseRequest("pause");
+    if (pauseOnBlur && !network && started && world.outcome === "playing")
+      callbacks.onPauseRequest("pause");
   };
 
   /** Freeze-frame for heavy impacts (Sakurai / Vlambeer "sleep"). */
@@ -1369,6 +1384,8 @@ export function createRun(
         return;
       }
       started = true;
+      if (!network && !config.autoOpenCards)
+        queue.push({ t: "cardMode", player: PLAYER, manual: true });
       audio.music.play("run");
       runTrack.release();
     } catch (error) {
@@ -1480,6 +1497,12 @@ export function createRun(
         })),
         items: player.items.map((item) => ({ ...item })),
       };
+    },
+    setPauseOnBlur(enabled) {
+      pauseOnBlur = enabled;
+    },
+    setAutoOpenCards(enabled) {
+      if (!network) queue.push({ t: "cardMode", player: PLAYER, manual: !enabled });
     },
     setDevMode(enabled) {
       if (devMode === enabled) return;

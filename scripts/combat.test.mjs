@@ -37,7 +37,7 @@ import { sampleSurface } from "../src/run/sim/surface.ts";
 import { TICK } from "../src/run/sim/state/world.ts";
 import { newMoveState } from "../src/run/sim/upgrades.ts";
 import { BASE_ITEM_SLOTS, BASE_MOVE_SLOTS } from "../src/run/sim/content/params/cards.ts";
-import { createWorld, stepWorld } from "../src/run/sim/world.ts";
+import { cardShown, createWorld, isFrozen, stepWorld } from "../src/run/sim/world.ts";
 
 function terrainOf(height) {
   const resolution = 2;
@@ -440,6 +440,51 @@ test("cards queued by one burst of XP stay legal when picked in turn, and a stal
     assert.ok(player.items.length <= BASE_ITEM_SLOTS, `seed ${seed}: ${player.items.length} items`);
     for (const item of player.items) assert.ok(item.level <= items[item.id].max);
   }
+});
+
+test("solo manual card mode lets the run continue on a level-up until the player opens the cards", () => {
+  const level = (manual) => {
+    const world = createWorld({
+      stage: "forest",
+      seed: 1,
+      difficulty: 0,
+      players: [{ starter: "charmander" }],
+    });
+    const player = world.players[0];
+    if (manual) stepWorld(world, [{ t: "cardMode", player: 0, manual: true }]);
+    world.pickups.push({
+      id: 9999,
+      kind: "xp",
+      x: player.x,
+      z: player.z,
+      value: 400,
+      magnet: true,
+    });
+    stepWorld(world, []);
+    return { world, player };
+  };
+  const auto = level(false);
+  assert.ok(auto.player.pending.length > 0);
+  assert.equal(isFrozen(auto.world), true, "the default opens the cards and holds the clock");
+
+  const { world, player } = level(true);
+  assert.ok(player.pending.length > 0);
+  assert.equal(cardShown(player), false);
+  const tick = world.tick;
+  stepWorld(world, []);
+  assert.equal(world.tick, tick + 1, "the clock keeps running while the cards wait");
+
+  stepWorld(world, [{ t: "interact", player: 0 }]);
+  assert.equal(cardShown(player), true, "interact opens them");
+  stepWorld(world, [{ t: "choices", player: 0, open: false }]);
+  assert.equal(cardShown(player), false, "and they can be set aside again");
+
+  stepWorld(world, [{ t: "interact", player: 0 }]);
+  while (player.pending.length > 0) {
+    const card = player.pending[0];
+    stepWorld(world, [{ t: "pick", player: 0, card: card.id, index: 0 }]);
+  }
+  assert.equal(player.choosing, false, "answering the last card closes the dialog for good");
 });
 
 test("a player standing at the arena wall gets spawns at full ring distance, never on top of them", () => {

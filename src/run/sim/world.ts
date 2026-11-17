@@ -225,6 +225,11 @@ export function isFrozen(world: World): boolean {
   );
 }
 
+/** Co-op, and solo with the manual preference: cards open only by the player's request. */
+export function manualCards(world: World, player: Player): boolean {
+  return world.players.length > 1 || player.manualCards === true;
+}
+
 /** Solo opens automatically after evolution; co-op opens only by the player's request. */
 export function cardShown(player: Player): boolean {
   return player.alive && player.choosing && player.pending.length > 0 && player.cardHold <= 0;
@@ -260,8 +265,14 @@ export function applyCommand(world: World, command: Command): void {
       if (applyMovementCommand(player, command, isFrozen(world)))
         world.events.push({ t: "dash", player: player.id });
       return;
+    case "cardMode":
+      if (world.players.length > 1) return;
+      if (command.manual) player.manualCards = true;
+      else delete player.manualCards;
+      player.choosing = !command.manual;
+      return;
     case "choices":
-      if (world.players.length === 1) return;
+      if (!manualCards(world, player)) return;
       player.choosing = command.open && player.pending.length > 0 && !player.dialog;
       if (player.choosing) player.rescue = null;
       return;
@@ -353,8 +364,8 @@ export function applyCommand(world: World, command: Command): void {
         return;
       }
       if (startRescue(world, player)) return;
-      if (world.players.length > 1 && interactInZone(world, player)) return;
-      if (world.players.length > 1 && player.pending.length > 0 && !player.dialog) {
+      if (manualCards(world, player) && interactInZone(world, player)) return;
+      if (manualCards(world, player) && player.pending.length > 0 && !player.dialog) {
         player.choosing = true;
         return;
       }
@@ -380,7 +391,7 @@ function stationOf(world: World, player: Player) {
 function nextCard(world: World, player: Player): void {
   player.pending.shift();
   const front = player.pending[0];
-  if (!front && world.players.length > 1) player.choosing = false;
+  if (!front && manualCards(world, player)) player.choosing = false;
   if (front) front.options = rollChoices(world.rng, player, front.source, world.partners);
 }
 

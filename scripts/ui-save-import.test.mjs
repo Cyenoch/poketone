@@ -85,7 +85,13 @@ test("invalid and unsupported imports never commit; valid boundary values export
       stardust: 123,
       best: { charmander: { difficulty: 0, victory: true, time: 540.5, kills: 300 } },
     },
-    settings: { sound: false, devMode: true, uiScale: 1.2 },
+    settings: {
+      sound: false,
+      devMode: true,
+      uiScale: 1.2,
+      pauseOnBlur: false,
+      autoOpenCards: false,
+    },
   };
   const previous = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
   const store = new Map([
@@ -180,7 +186,13 @@ test("unsupported stored settings use defaults with a warning and leave the orig
   });
   console.warn = (...args) => warnings.push(args);
   try {
-    assert.deepEqual(loadSettings(), { sound: true, devMode: false, uiScale: 1 });
+    assert.deepEqual(loadSettings(), {
+      sound: true,
+      devMode: false,
+      uiScale: 1,
+      pauseOnBlur: true,
+      autoOpenCards: true,
+    });
     assert.equal(warnings.length, 1);
     assert.match(warnings[0][1].message, /设置不受支持/);
     assert.equal(store.get(SETTINGS_STORAGE_KEY), raw);

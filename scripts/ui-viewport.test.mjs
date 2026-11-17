@@ -21,6 +21,13 @@ test("import requires a valid UI scale so corrupt values cannot hide the interfa
   }
 });
 
+test("settings added later default on when absent from old stored or exported data", () => {
+  const old = { sound: false, devMode: true, uiScale: 1.2 };
+  assert.deepEqual(parseSettings(old), { ...old, pauseOnBlur: true, autoOpenCards: true });
+  assert.throws(() => parseSettings({ ...old, pauseOnBlur: "no" }), /设置无效/);
+  assert.throws(() => parseSettings({ ...old, autoOpenCards: 0 }), /设置无效/);
+});
+
 test("shared fitting reserves vertical room on short wide screens and preserves touch targets", () => {
   const insets = { left: 0, right: 0, top: 0, bottom: 0 };
   for (const [width, height] of [

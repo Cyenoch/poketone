@@ -44,6 +44,8 @@ export interface RunSessionOptions {
   modalActive: boolean;
   sound: boolean;
   devMode: boolean;
+  pauseOnBlur: boolean;
+  autoOpenCards: boolean;
   onFinish: (result: RunResult) => { ok: true; note: string | null } | { ok: false; error: string };
   /** `note`: what the ended run unlocked, when it ends without its result window. */
   onRetry: (note?: string | null) => void;
@@ -64,6 +66,7 @@ const noticePriority = { info: 0, reward: 1, danger: 2 };
 /** Run flow belongs to the game; React and SDL only mount and update this session. */
 export function createRunSession(options: RunSessionOptions) {
   const { stage, starter, difficulty, lab, loadout, backpack, app, gpuHost, devMode } = options;
+  let autoOpenCards = options.autoOpenCards;
   let run: RunHandle;
   let snap: RunSnapshot | null = null;
   let status: "loading" | "ready" | "error" = "loading";
@@ -122,7 +125,7 @@ export function createRunSession(options: RunSessionOptions) {
     else if (pending && (!options.multiplayer || (!stats && !paused && !mapOpen)))
       overlay = {
         kind: "choice",
-        dismissible: Boolean(options.multiplayer),
+        dismissible: Boolean(options.multiplayer) || !autoOpenCards,
         pending,
         dealKey: `${pending.id}:${JSON.stringify(pending.options)}`,
         level: snap!.cardLevel,
@@ -278,6 +281,8 @@ export function createRunSession(options: RunSessionOptions) {
       loadout,
       sound,
       devMode,
+      pauseOnBlur: options.pauseOnBlur,
+      autoOpenCards,
       multiplayer: options.multiplayer,
     },
     {
@@ -363,9 +368,21 @@ export function createRunSession(options: RunSessionOptions) {
   return {
     hud,
     overlays,
-    update(next: { modalActive: boolean; sound: boolean; devMode: boolean }) {
+    update(next: {
+      modalActive: boolean;
+      sound: boolean;
+      devMode: boolean;
+      pauseOnBlur: boolean;
+      autoOpenCards: boolean;
+    }) {
       modalActive = next.modalActive;
       run.setDevMode(next.devMode);
+      run.setPauseOnBlur(next.pauseOnBlur);
+      if (autoOpenCards !== next.autoOpenCards) {
+        autoOpenCards = next.autoOpenCards;
+        run.setAutoOpenCards(autoOpenCards);
+        refresh();
+      }
       if (sound !== next.sound) {
         sound = next.sound;
         run.setSound(sound);

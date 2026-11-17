@@ -150,8 +150,10 @@ export interface Player {
   alive: boolean;
   /** Co-op: this guest left the run for good; never revived, rescued or counted in scaling. */
   departed?: true;
-  /** Manually opened in co-op; solo cards open automatically. */
+  /** Manually opened in co-op; solo cards open automatically unless `manualCards` is set. */
   choosing: boolean;
+  /** Solo preference: cards open by the interact key, as in co-op. */
+  manualCards?: true;
   rescue: { target: PlayerId; elapsed: number } | null;
   level: number;
   xp: number;

@@ -20,21 +20,17 @@ import { slantOf, ui } from "./tokens";
 
 interface SettingsDialogOptions {
   settings: Settings;
+  /** Solo only: shows the card-timing row. */
+  solo: boolean;
   onChange(settings: Settings): void;
   onClose(): void;
   onFocusChange?: () => void;
   onSave?: () => void;
 }
 
-const controlIndex = {
-  close: 0,
-  sound: 1,
-  devMode: 2,
-  minus: 3,
-  reset: 4,
-  plus: 5,
-  save: 6,
-} as const;
+const controlIndex = { close: 0 } as const;
+
+type Toggle = "sound" | "devMode" | "pauseOnBlur" | "autoOpenCards";
 
 interface PaintState {
   hovered: boolean;
@@ -88,12 +84,14 @@ export class SettingsDialog {
   private readonly rows: Container[] = [];
   private readonly trays: { dispose(): void }[] = [];
   private readonly switches: {
-    key: "sound" | "devMode";
+    key: Toggle;
     off: SegmentFace;
     on: SegmentFace;
     index: number;
   }[] = [];
   private readonly scaleFaces: SegmentFace[] = [];
+  /** The scale row's minus, reset and plus keys. */
+  private readonly scaleControls: number[] = [];
   private scaleRow!: Container;
   private hovered: number | null = null;
   private readonly point = new Vector3();
@@ -137,10 +135,13 @@ export class SettingsDialog {
       scrollbarWidth: 3,
       scrollbarColor: ui.line,
     });
-    for (const [key, label] of [
+    const toggles: (readonly [Toggle, string])[] = [
       ["sound", "声音"],
       ["devMode", "开发者模式"],
-    ] as const) {
+      ["pauseOnBlur", "失去焦点时暂停"],
+      ...(options.solo ? [["autoOpenCards", "升级时弹出构筑选择"] as const] : []),
+    ];
+    for (const [key, label] of toggles) {
       const row = this.addRow(label, () => this.changeBoolean(key, !this.settings[key]));
       const { tray, ...plate } = segmentTray();
       this.trays.push(plate);
@@ -269,6 +270,7 @@ export class SettingsDialog {
       this.scaleFaces.push(face);
       tray.add(stack(face.panel, 1));
       let ink = "";
+      this.scaleControls.push(this.controls.length);
       this.controls.push({
         panel: face.panel,
         activate,
@@ -433,7 +435,7 @@ export class SettingsDialog {
     this.options.onChange({ ...settings });
   }
 
-  private changeBoolean(key: "sound" | "devMode", value: boolean): void {
+  private changeBoolean(key: Toggle, value: boolean): void {
     if (this.settings[key] === value) return;
     this.commit({ ...this.settings, [key]: value });
   }
@@ -630,7 +632,7 @@ export class SettingsDialog {
     } else if (action === "left" || action === "right") {
       const toggle = this.switches.find((toggle) => toggle.index === this.selected);
       if (toggle) this.changeBoolean(toggle.key, action === "right");
-      else if (this.selected >= controlIndex.minus && this.selected <= controlIndex.plus)
+      else if (this.scaleControls.includes(this.selected))
         this.changeScale(action === "right" ? 1 : -1);
     }
     return true;
