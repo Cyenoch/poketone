@@ -104,6 +104,23 @@ export function runWindowSamples(starter: StarterId): NonNullable<RunOverlayStat
       banishes: 1,
       banishing: false,
     })),
+    // The route's special offers: a guardian's trophy and Gengar's deal (its free 放弃 action).
+    ...(["trophy", "deal"] as const).map((kind, i) => ({
+      kind: "choice" as const,
+      theme,
+      pending: {
+        id: deals.length + i,
+        source: "chest" as const,
+        options: deals[0]!,
+        offer: kind === "trophy" ? { kind } : { kind, site: 0 },
+      },
+      dealKey: `sample:${kind}`,
+      level: 2,
+      rerolls: 1,
+      skips: 1,
+      banishes: 1,
+      banishing: false,
+    })),
     result("victory"),
     result("defeat"),
   ];

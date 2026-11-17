@@ -36,7 +36,8 @@ export type SiteKind =
   | "egg"
   | "glint"
   | "ghost"
-  | "silph-scope";
+  | "silph-scope"
+  | "gengar-deal";
 
 export interface CarriedEgg {
   species: EnemyId;
@@ -67,6 +68,8 @@ export interface Site {
     species?: EnemyId;
     trap?: boolean;
     egg?: CarriedEgg;
+    /** Personal accepted trades at this field's altar. */
+    traded?: PlayerId[];
   };
 }
 

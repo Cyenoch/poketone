@@ -58,6 +58,7 @@ import * as currentZone from "../src/run/sim/currentZone.ts";
 import { forest } from "../src/run/sim/content/stages/forest.ts";
 import { desert } from "../src/run/sim/content/stages/desert.ts";
 import { coast } from "../src/run/sim/content/stages/coast.ts";
+import { routeStep } from "../src/run/sim/content/campaign.ts";
 
 const guardianConfigs = [forest, desert, coast].flatMap((stage) =>
   stage.zones.map(({ guardian }) => ({ stage: stage.id, guardian })),
@@ -88,6 +89,7 @@ function flatTerrain() {
 function arena(stage = "forest", species) {
   const world = createWorld({
     stage,
+    route: stage === "forest" ? [stage] : ["forest", stage],
     seed: 3,
     difficulty: 0,
     players: [{ starter: "bulbasaur" }],
@@ -293,7 +295,7 @@ test("vine lash slows the player it catches", () => {
 });
 
 /** Seconds of chase before an attack: a raised guardian's chase clock runs faster (params/guardian.ts). */
-const chase = (world) => BOSS_CHASE_MIN / (furyOf(world.stage, world.zone.index)?.chaseRate ?? 1);
+const chase = (world) => BOSS_CHASE_MIN / (furyOf(routeStep(world))?.chaseRate ?? 1);
 
 /** The guardian's phases, collapsed to the order they change in. */
 function phases(world, boss, seconds, track) {
@@ -538,6 +540,7 @@ test("desert maps stamp their patches, and no pad stands on one", () => {
   for (const seed of [1, 2, 3]) {
     const w = createWorld({
       stage: "desert",
+      route: ["forest", "desert"],
       seed,
       difficulty: 0,
       players: [{ starter: "bulbasaur" }],
@@ -709,11 +712,12 @@ test("coast variants: each holds its full warning, then lands", () => {
   }
 });
 
-/** The coast's seed-1 field: the player moved to `ashore` metres from the sea along +z (its open water). */
+/** The coast's seed-8 field has open water along +z. */
 function shore(ashore) {
   const w = createWorld({
     stage: "coast",
-    seed: 1,
+    route: ["forest", "coast"],
+    seed: 8,
     difficulty: 0,
     players: [{ starter: "bulbasaur" }],
   });
@@ -723,7 +727,8 @@ function shore(ashore) {
   player.hp = player.maxHp = 1e9;
   w.enemies = [];
   let edge = 0;
-  while (sampleSurface(w.map.terrain.surface, 0, edge).waterDepth < SWIM_DEPTH) edge += 0.25;
+  while (edge < 40 && sampleSurface(w.map.terrain.surface, 0, edge).waterDepth < SWIM_DEPTH)
+    edge += 0.25;
   assert.ok(edge < 40, "the coast has open water along +z");
   player.x = player.px = 0;
   player.z = player.pz = edge - ashore;

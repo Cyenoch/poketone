@@ -115,6 +115,8 @@ export interface PendingChoice {
   options: Choice[];
   /** Event chests retain their rarity floor across queueing and rerolls. */
   minRarity?: Rarity;
+  /** Special rewards keep the existing card UI and command identity. */
+  offer?: { kind: "trophy" } | { kind: "deal"; site: number };
 }
 
 /** One status on a body (sim/status.ts); present only while `time` > 0. */
@@ -191,6 +193,8 @@ export interface Player {
   lab: LabBonuses;
   /** 训练 cards taken, per stat. */
   training: Record<TrainStat, number>;
+  /** Permanent for this run; each accepted Gengar trade multiplies the remaining max HP. */
+  tradeHp: number;
   ult: UltState;
   /** 招式学习器盒 owned: move level cap 10, fusion star cap +1. */
   tmCase: boolean;
@@ -388,12 +392,14 @@ export interface Hazard {
 
 export interface Pickup {
   id: number;
-  kind: "xp" | "berry" | "chest" | "stardust";
+  kind: "xp" | "berry" | "chest" | "stardust" | "trophy" | "flash" | "defog";
   x: number;
   z: number;
   value: number;
   magnet: boolean;
   minRarity?: Rarity;
+  /** Required for a trophy; other pickups retain their existing shared/nearest rules. */
+  owner?: PlayerId;
 }
 
 /** Map stations on the guaranteed building pads (sim/stations.ts). */

@@ -891,18 +891,25 @@ export class Vfx {
     let stardust = 0;
     const bob = Math.sin(this.fx.time * 4) * 0.08;
     for (const pickup of world.pickups) {
-      const mesh = {
-        xp: this.candies,
-        berry: this.berries,
-        chest: this.chests,
-        stardust: this.stardust,
-      }[pickup.kind];
+      // A guardian's trophy is a bigger chest; the Flash / Defog machines a big star under a beacon
+      // (routeBeacons.ts).
+      const boxed = pickup.kind === "chest" || pickup.kind === "trophy";
+      const starred =
+        pickup.kind === "stardust" || pickup.kind === "flash" || pickup.kind === "defog";
+      const mesh =
+        pickup.kind === "xp"
+          ? this.candies
+          : pickup.kind === "berry"
+            ? this.berries
+            : boxed
+              ? this.chests
+              : this.stardust;
       const index =
         pickup.kind === "xp"
           ? candies++
           : pickup.kind === "berry"
             ? berries++
-            : pickup.kind === "chest"
+            : boxed
               ? chests++
               : stardust++;
       if (index >= mesh.instanceMatrix.count) continue;
@@ -912,18 +919,21 @@ export class Vfx {
           ? Math.min(2.2, 1 + Math.log10(pickup.value) * 0.6)
           : pickup.kind === "stardust"
             ? Math.min(1.8, 1 + Math.log10(pickup.value / 5) * 0.6)
-            : 1;
-      const lift = pickup.kind === "chest" ? 0.3 : 0.45;
+            : pickup.kind === "trophy"
+              ? 1.3
+              : starred
+                ? 1.7
+                : 1;
+      const lift = boxed ? 0.3 : 0.45;
       dummy.position.set(
         pickup.x,
         this.fx.ground.heightAt(pickup.x, pickup.z) + lift + bob,
         pickup.z,
       );
       // A flat star never turns edge-on: it sways toward the camera instead of spinning.
-      const yaw =
-        pickup.kind === "stardust"
-          ? this.fx.viewYaw + Math.sin(this.fx.time * 2.5 + pickup.id) * 0.6
-          : this.fx.time * 2 + pickup.id;
+      const yaw = starred
+        ? this.fx.viewYaw + Math.sin(this.fx.time * 2.5 + pickup.id) * 0.6
+        : this.fx.time * 2 + pickup.id;
       dummy.rotation.set(0, yaw, 0);
       dummy.scale.setScalar(big);
       dummy.updateMatrix();

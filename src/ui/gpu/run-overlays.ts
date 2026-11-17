@@ -40,7 +40,7 @@ import { GameButton } from "./game-button";
 import { SlantPlate } from "./slant-plate";
 import { SNAP } from "./motion";
 import { RADIUS_INNER, slantOf, ui } from "./tokens";
-import { GpuChoiceContent, type ChoiceState } from "./run-choice-content";
+import { GpuChoiceContent, dismissCommand, type ChoiceState } from "./run-choice-content";
 import { ChoiceArt } from "./run-choice-surface";
 import { themeColors } from "./run-theme";
 import { createRunCommandIcon } from "./run-overlays-icons";
@@ -754,9 +754,10 @@ export class GpuRunOverlays {
       getAudio().sfx("ui-back");
     if (state.kind === "pause")
       (state.quitting ? this.callbacks.cancelQuit : this.callbacks.resume)();
-    else if (state.kind === "choice" && state.dismissible)
-      this.callbacks.send({ t: "choices", open: false });
-    else if (state.kind === "stats") this.callbacks.closeStats();
+    else if (state.kind === "choice") {
+      const command = dismissCommand(state);
+      if (command) this.callbacks.send(command);
+    } else if (state.kind === "stats") this.callbacks.closeStats();
     else if (state.kind === "station") this.callbacks.send({ t: "leave", dialog: state.view.id });
     else if (state.kind === "error" || state.kind === "reconnecting") this.callbacks.exit();
   }

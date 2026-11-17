@@ -6,6 +6,7 @@ import type { World } from "../sim/state/world";
 import type { MapTransform } from "./minimapLayers";
 import { loadMapIcon } from "./minimapLayers";
 import { MapInk } from "./mapInk";
+import { routeSight } from "./routeLook";
 
 /**
  * Each site's map and prompt icon, from the item art players know (the Poké Flute wakes Snorlax,
@@ -21,6 +22,7 @@ export const siteIcons: Partial<Record<SiteKind, string>> = {
   egg: "/art/icons/items/lucky-egg.webp",
   ghost: "/art/icons/items/cleanse-tag.webp",
   "silph-scope": "/art/icons/items/silph-scope.webp",
+  "gengar-deal": "/art/icons/items/reaper-cloth.webp",
 };
 
 export interface FieldMark {
@@ -131,7 +133,10 @@ export class FieldMapMarks {
       map.oy + map.zx * x + map.zz * z,
     ];
     const inside = (x: number, y: number) => Math.hypot(x - centre, y - centre) <= radius;
+    // Fog hides every site, a dark cave all but the lit ones (routeLook.ts).
+    const sight = routeSight(world, alpha);
     for (const mark of fieldMarks(world)) {
+      if (!sight(mark.x, mark.z)) continue;
       const [x, y] = at(mark.x, mark.z);
       if (!inside(x, y)) continue;
       const opacity = mark.ready ? 1 : 0.55;
@@ -151,6 +156,7 @@ export class FieldMapMarks {
       if (!enemy.shiny) continue;
       const wx = enemy.px + (enemy.x - enemy.px) * alpha,
         wz = enemy.pz + (enemy.z - enemy.pz) * alpha;
+      if (!sight(wx, wz)) continue;
       const [x, y] = at(wx, wz);
       if (!inside(x, y)) continue;
       const ring = unit * (9 + 10 * wave);

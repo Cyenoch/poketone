@@ -12,6 +12,8 @@ import { canReach, refreshFlowFields, requestFlowField } from "./nav/index";
 import { chance, range } from "./rng";
 import { stageDefs } from "./content/stages/index";
 import { zoneClock } from "./content/params/zones";
+import { routeStep } from "./content/campaign";
+import { routeSpawnFactors } from "./route-rewards";
 import { landmarkOf, zoneDef, zoneFactors, zoneTime } from "./currentZone";
 import { ARENA_HALF, type World } from "./state/world";
 import type { Enemy, Player } from "./state/entities";
@@ -96,11 +98,11 @@ export function enemyHealthScaling(
 
 /** The swarm's multipliers now: the curves at the zone's clock, times the zone's own factors. */
 export function zoneScaling(world: World): EnemyScaling {
-  const zone = world.zone.index;
+  const step = routeStep(world);
   const stage = stageDefs[world.stage];
   const factors = zoneFactors(world);
-  const clock = zoneClock(stage, zone, zoneTime(world));
-  const rampageSince = world.rampage ? zoneClock(stage, zone, stage.duration) : null;
+  const clock = zoneClock(step, zoneTime(world));
+  const rampageSince = world.rampage ? zoneClock(step, stage.duration) : null;
   const base = enemyScaling(clock, world.difficulty, rampageSince);
   return {
     hp:
@@ -193,7 +195,7 @@ export function spawnEnemy(
   const guardian = boss ? enemyScaling(GUARDIAN_REFERENCE_SECONDS, world.difficulty, null) : null;
   const hp = boss
     ? bossHp(species, world.difficulty) * factors.guardianHp * coopScaling(teamSize(world)).bossHp
-    : base.hp * s.hp * (elite ? ELITE.hp : 1);
+    : base.hp * s.hp * (elite ? ELITE.hp * routeSpawnFactors(world).eliteHp : 1);
   const enemy: Enemy = {
     id: world.nextId++,
     species,
@@ -464,7 +466,7 @@ export function updateDirector(world: World, dt: number): void {
   const stage = stageDefs[world.stage];
   const zone = zoneDef(world);
   const factors = zoneFactors(world);
-  const clock = zoneClock(stage, world.zone.index, t);
+  const clock = zoneClock(routeStep(world), t);
   const early = difficulties[world.difficulty].earlyBy;
   for (const [at, species] of zone.roster) {
     if (t >= at && !world.spawn.pool.includes(species)) world.spawn.pool.push(species);
@@ -499,7 +501,10 @@ export function updateDirector(world: World, dt: number): void {
     const stats = currentStats(target);
     world.spawn.credit -= 1 / stats.spawns;
     const species = encounterSpecies(world);
-    const elite = chance(world.rng, diff.eliteChance * stats.elites);
+    const elite = chance(
+      world.rng,
+      diff.eliteChance * stats.elites * routeSpawnFactors(world).eliteRate,
+    );
     spawnOnRing(world, species, target, SPAWN_RING.min, SPAWN_RING.max, elite);
     if (world.enemies.length >= cap) break;
   }

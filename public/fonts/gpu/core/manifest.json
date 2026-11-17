@@ -8,51 +8,51 @@
     "libwebp": "1.6.0"
   },
   "ui-500": {
-    "json": "ui-500.adba9beff95cec8c.json",
-    "sha256": "adba9beff95cec8cfe2ebeac0c37359078cf4ef1fe4eb3116b444addfd5e7ed2",
+    "json": "ui-500.758c958b58eb9809.json",
+    "sha256": "758c958b58eb9809f6f74b60520a5437f0a4a64e7c6b01b33ee0c843e1cb1f75",
     "weight": 500,
-    "glyphs": 1267,
+    "glyphs": 1280,
     "pages": 2,
     "unavailable": "−",
     "chromePages": 1,
     "source": "public/fonts/noto-sans-sc-game.woff2",
     "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
-    "jsonBytes": 51983,
+    "jsonBytes": 52526,
     "pageBytes": [
-      1550084,
-      1240460
+      1562434,
+      1263042
     ]
   },
   "ui-700": {
-    "json": "ui-700.0493fc65143ebf7d.json",
-    "sha256": "0493fc65143ebf7dd2f8d3802a4d1d554eaa80132335b88b5e73e98e3148f0cd",
+    "json": "ui-700.1b18cbbb3c494323.json",
+    "sha256": "1b18cbbb3c494323f699deae3c68bf33649352def9436a08a49cd4632c458398",
     "weight": 700,
-    "glyphs": 1267,
+    "glyphs": 1280,
     "pages": 2,
     "unavailable": "−",
     "chromePages": 1,
     "source": "public/fonts/noto-sans-sc-game.woff2",
     "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
-    "jsonBytes": 52043,
+    "jsonBytes": 52586,
     "pageBytes": [
-      1556952,
-      1248078
+      1570558,
+      1270484
     ]
   },
   "ui-800": {
-    "json": "ui-800.66f53b8bddf0dafc.json",
-    "sha256": "66f53b8bddf0dafc8869037cc17da3651c2f93a2c529c00baa598705537eb311",
+    "json": "ui-800.5cd4add9eff9a6a2.json",
+    "sha256": "5cd4add9eff9a6a2d261c1a761b9748b1d5632b18a7fb1381aa9ef938a8b7e80",
     "weight": 800,
-    "glyphs": 1267,
+    "glyphs": 1280,
     "pages": 2,
     "unavailable": "−",
     "chromePages": 1,
     "source": "public/fonts/noto-sans-sc-game.woff2",
     "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
-    "jsonBytes": 52086,
+    "jsonBytes": 52634,
     "pageBytes": [
-      1556796,
-      1246054
+      1568932,
+      1268512
     ]
   },
   "display": {

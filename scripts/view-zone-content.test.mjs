@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { routeTo } from "./fixtures/route.mjs";
 import { stat } from "node:fs/promises";
 import { MeshLambertMaterial, ShaderLib } from "three";
 import { installResources } from "../src/platform/resources.ts";
@@ -47,9 +48,32 @@ test("stage preparation includes every roster, beat, guardian and only that map'
   assert.equal(enemyModel("marowak-ghost"), enemyModel("marowak"));
 });
 
+test("route altars are ready and mountable on glacier and volcano", async () => {
+  for (const stage of ["glacier", "volcano"]) {
+    assert.ok(
+      runSharedNeeds(stage).some((need) => need.key === "/models/field-sites/gengar-altar.glb"),
+      stage,
+    );
+    const world = createWorld({
+      stage,
+      route: routeTo(stage),
+      seed: 5,
+      difficulty: 0,
+      players: [{ starter: "charmander" }],
+    });
+    const assets = await loadRunAssets(world, new AbortController().signal);
+    try {
+      assert.ok(assets.sites["gengar-altar"]?.geometry.getAttribute("position").count > 0, stage);
+    } finally {
+      assets.dispose();
+    }
+  }
+});
+
 test("tower loader reuses alias geometry and releases actual model resources", async () => {
   const world = createWorld({
     stage: "tower",
+    route: routeTo("tower"),
     seed: 154,
     difficulty: 0,
     players: [{ starter: "charmander" }],
@@ -69,6 +93,8 @@ test("tower loader reuses alias geometry and releases actual model resources", a
     target: null,
     returning: false,
   });
+  // A restored field loads its live species, including aliases outside the base roster.
+  for (const species of ["marowak-ghost", "haunter-guardian"]) spawnEnemy(world, species, 8, 0);
   const controller = new AbortController();
   const assets = await loadRunAssets(world, controller.signal);
   let disposed = 0;
@@ -76,7 +102,7 @@ test("tower loader reuses alias geometry and releases actual model resources", a
   try {
     assert.deepEqual(
       new Set(Object.keys(assets.enemies)),
-      new Set([...stageEnemyIds("tower"), "marowak"]),
+      new Set([...stageEnemyIds("tower"), "marowak", "marowak-ghost", "haunter-guardian"]),
     );
     assert.equal(assets.enemies.haunter, assets.enemies["haunter-guardian"]);
     assert.equal(assets.enemies.marowak, assets.enemies["marowak-ghost"]);
@@ -90,6 +116,7 @@ test("tower loader reuses alias geometry and releases actual model resources", a
 function withFx(t, stage = "tower") {
   const world = createWorld({
     stage,
+    route: routeTo(stage),
     seed: 154,
     difficulty: 0,
     players: [{ starter: "charmander" }],
@@ -272,6 +299,56 @@ test("species material patches compose with the real Lambert shader and leave sh
   const silhouette = towerEnemySilhouette();
   assert.equal(silhouette.depthWrite, false);
   silhouette.dispose();
+});
+
+test("Flash keeps moving feet lit until the whole cave is bright", async (t) => {
+  const { createWebGL2Context } = await import("webgl-node");
+  const { PerspectiveCamera, Scene, WebGLRenderer } = await import("three");
+  const { createDarkness } = await import("../src/run/view/grade.ts");
+  const native = createWebGL2Context(64, 64, { canvas: false });
+  const gl = native.gl;
+  const renderer = new WebGLRenderer({ canvas: null, context: gl });
+  const darkness = createDarkness();
+  t.after(() => {
+    darkness.dispose();
+    renderer.dispose();
+    native.destroy();
+  });
+  renderer.setSize(64, 64, false);
+  renderer.setClearColor(0xffffff);
+  const scene = new Scene();
+  scene.add(darkness.mesh);
+  const camera = new PerspectiveCamera(50, 1, 0.1, 100);
+  camera.position.set(0, 12, 14);
+  camera.lookAt(0, 0.6, 0);
+  camera.updateMatrixWorld();
+  const redAt = (x, y) => {
+    const pixel = new Uint8Array(4);
+    gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+    return pixel[0];
+  };
+  const player = { starter: "squirtle", stage: 0, alive: true, x: 0, z: 0, px: 0, pz: 0 };
+  const world = { modifier: "dark-cave", players: [player] };
+  darkness.update(world, 1, () => 0, camera, 1);
+  renderer.render(scene, camera);
+  const centre = redAt(32, 32);
+  const edge = redAt(2, 2);
+  assert.ok(centre > edge);
+  world.modifier = null;
+  for (const [delta, position] of [
+    [1 / 60, 0],
+    [0.43, 12],
+    [1, 12],
+  ]) {
+    player.x = position;
+    camera.position.x = position;
+    camera.lookAt(position, 0.6, 0);
+    camera.updateMatrixWorld();
+    darkness.update(world, 1, () => 0, camera, delta);
+    renderer.render(scene, camera);
+    assert.ok(redAt(32, 32) >= centre);
+  }
+  assert.equal(redAt(2, 2), centre);
 });
 
 test("new decal, note and creature patches compile and render on a real EGL context", async (t) => {

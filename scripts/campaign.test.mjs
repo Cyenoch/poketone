@@ -3,18 +3,27 @@ import test from "node:test";
 import { MultiplayerRun } from "../src/network/run.ts";
 import { pack, unpack } from "../src/network/wire.ts";
 import { damageEnemy } from "../src/run/sim/combat.ts";
-import { nextField } from "../src/run/sim/content/campaign.ts";
+import {
+  ALL_ROUTES,
+  ROUTE_TIERS,
+  routeFields,
+  routeStep,
+  nextField,
+} from "../src/run/sim/content/campaign.ts";
 import { STARDUST } from "../src/run/sim/content/params/economy.ts";
 import { coopScaling } from "../src/run/sim/content/params/coop.ts";
 import { stageDefs } from "../src/run/sim/content/stages/index.ts";
 import { difficulties } from "../src/run/sim/content/difficulties.ts";
 import { updateDirector } from "../src/run/sim/director.ts";
-import { landmarkOf } from "../src/run/sim/currentZone.ts";
+import { atExit, clearZone, landmarkOf } from "../src/run/sim/currentZone.ts";
 import { EnemyGrid } from "../src/run/sim/grid.ts";
+import { queueCard } from "../src/run/sim/progression.ts";
 import { mapDigest, restoreWorld, snapshotWorld } from "../src/run/sim/snapshot.ts";
 import { currentStats, playerStats, xpForLevel } from "../src/run/sim/stats.ts";
 import { TICK } from "../src/run/sim/state/world.ts";
 import {
+  applyCommand,
+  cardShown,
   collectRemainingPickups,
   createWorld,
   isFrozen,
@@ -23,7 +32,11 @@ import {
 } from "../src/run/sim/world.ts";
 import { enterZone, prepareZone, sweepClearedField } from "../src/run/sim/zones.ts";
 
-const ROUTE = ["forest", "desert", "coast", "glacier", "volcano", "tower"];
+const ROUTE = ALL_ROUTES[0];
+const fields = ROUTE_TIERS.flat().map((stage) => {
+  const path = ALL_ROUTES.find((route) => route.includes(stage));
+  return { stage, route: path.slice(0, path.indexOf(stage) + 1) };
+});
 const config = {
   stage: "forest",
   seed: 7,
@@ -31,9 +44,78 @@ const config = {
   players: [{ starter: "charmander" }, { starter: "squirtle" }],
 };
 
+test("direct starts require a legal, explicit entered prefix outside the forest", () => {
+  for (const [stage, route] of [
+    ["coast"],
+    ["tower", []],
+    ["coast", ["coast"]],
+    ["volcano", ["forest", "volcano"]],
+    ["glacier", ["forest", "coast", "volcano"]],
+  ])
+    assert.throws(() => createWorld({ ...config, stage, route }), /路线前缀/);
+});
+
+test("all four routes commit only the first chosen exit and generate the same destination map", () => {
+  const maps = new Map();
+  for (const path of ALL_ROUTES) {
+    const world = createWorld(config);
+    for (const { stage, step } of routeFields(path)) {
+      assert.equal(world.stage, stage);
+      assert.equal(routeStep(world), step);
+      assert.deepEqual(world.route, path.slice(0, step + 1));
+      const digest = mapDigest(world.map);
+      if (!maps.has(stage)) maps.set(stage, digest);
+      assert.equal(digest, maps.get(stage), `${path.join(" → ")}: same ${stage} across branches`);
+
+      clearZone(world, 0, 0);
+      const to = path[step + 1] ?? null;
+      const index = world.zone.exits.findIndex((e) => e.to === to);
+      assert.ok(index >= 0);
+      const exit = world.zone.exits[index];
+      const other = world.zone.exits[(index + 1) % world.zone.exits.length];
+      Object.assign(world.players[1], { x: exit.x, z: exit.z });
+      Object.assign(world.players[0], { x: other.x, z: other.z });
+      assert.equal(atExit(world, world.players[1]), index);
+      assert.equal(nextField(world), null, "a cleared field has no chosen destination yet");
+      assert.equal(world.outcome, "playing");
+      const eventStart = world.events.length;
+      stepWorld(world, [
+        { t: "interact", player: 1 },
+        { t: "interact", player: 0 },
+      ]);
+      assert.equal(world.zone.leaving, index);
+      assert.deepEqual(
+        world.events.slice(eventStart).filter((e) => e.t === "route" && e.kind === "exit"),
+        [{ t: "route", kind: "exit", player: 1, x: exit.x, z: exit.z }],
+      );
+      if (!to) {
+        assert.equal(world.outcome, "victory");
+        break;
+      }
+      const before = snapshotWorld(world);
+      const ready = prepareZone(world);
+      const retry = prepareZone(world);
+      assert.deepEqual(retry, ready);
+      assert.deepEqual(snapshotWorld(world), before);
+      enterZone(world, ready);
+      assert.equal(world.marker, exit.marker);
+      assert.equal(world.zone.leaving, null);
+      assert.deepEqual(world.zone.exits, []);
+      assert.throws(() => enterZone(world, retry));
+    }
+  }
+  assert.equal(maps.size, 6);
+  for (const { stage, route } of fields)
+    assert.equal(
+      mapDigest(createWorld({ ...config, stage, route }).map),
+      maps.get(stage),
+      `direct and entered ${stage} maps agree`,
+    );
+});
+
 test("later-map entry builds ordinary supply without advancing rosters, beats or guardians", () => {
-  for (const stage of ROUTE) {
-    const world = createWorld({ ...config, stage, players: [config.players[0]] });
+  for (const { stage, route } of fields) {
+    const world = createWorld({ ...config, stage, route, players: [config.players[0]] });
     const zone = stageDefs[stage].zones[0];
     for (const difficulty of [0, 1, 2]) {
       world.difficulty = difficulty;
@@ -76,7 +158,7 @@ test("later-map entry builds ordinary supply without advancing rosters, beats or
 
 /** On the landmark while the zone is active, on the exit the guardian opened once it has fallen. */
 function standAtMarker(world) {
-  const spot = world.zone.exit ?? landmarkOf(world);
+  const spot = world.zone.exits[0] ?? landmarkOf(world);
   Object.assign(world.players[0], { x: spot.x, z: spot.z, inputX: 0, inputZ: 0, vx: 0, vz: 0 });
 }
 
@@ -122,6 +204,169 @@ const rewards = (world) =>
     kills: player.kills,
     chests: player.pending.filter((card) => card.source === "chest").length,
   }));
+
+function answerThroughTrophies(world, player) {
+  while (player.pending.some((card) => card.offer?.kind === "trophy")) {
+    const card = player.pending[0];
+    applyCommand(world, { t: "pick", player: player.id, card: card.id, index: 0 });
+    assert.notEqual(player.pending[0]?.id, card.id);
+  }
+}
+
+test("tower exit settles flying rewards before solo auto or manual picks and the final interaction", () => {
+  for (const manual of [false, true]) {
+    const world = createWorld({
+      ...config,
+      stage: "tower",
+      route: ROUTE,
+      seed: 5,
+      players: [config.players[0]],
+    });
+    const [player] = world.players;
+    applyCommand(world, { t: "cardMode", player: 0, manual });
+    defeatGuardian(world);
+    standAtMarker(world);
+    const interact = { t: "interact", player: 0 };
+    stepWorld(world, [interact]);
+    assert.equal(world.outcome, "playing");
+    assert.equal(world.zone.leaving, null);
+    assert.ok(cardShown(player));
+    assert.equal(player.pending.filter((card) => card.offer?.kind === "trophy").length, 1);
+    while (player.pending.length) {
+      const card = player.pending[0];
+      stepWorld(world, [{ t: "pick", player: 0, card: card.id, index: 0 }]);
+      assert.notEqual(player.pending[0]?.id, card.id);
+    }
+    stepWorld(world, [interact, interact]);
+    assert.equal(world.outcome, "victory");
+    assert.equal(world.events.filter((event) => event.kind === "exit").length, 1);
+  }
+});
+
+test("the final flying chest opens its ordinary choice before solo victory", () => {
+  const world = createWorld({
+    ...config,
+    stage: "tower",
+    route: ROUTE,
+    seed: 5,
+    players: [config.players[0]],
+  });
+  const [player] = world.players;
+  applyCommand(world, { t: "cardMode", manual: true, player: 0 });
+  clearZone(world, 0, 0);
+  standAtMarker(world);
+  world.pickups.push({ id: world.nextId++, kind: "chest", x: 20, z: 20, value: 1, magnet: true });
+  const exit = { t: "interact", player: 0 };
+  stepWorld(world, [exit, exit]);
+  assert.equal(world.outcome, "playing");
+  assert.equal(world.pickups.length, 0);
+  assert.equal(player.pending.length, 1);
+  assert.ok(cardShown(player));
+  stepWorld(world, [{ t: "pick", player: 0, card: player.pending[0].id, index: 0 }, exit]);
+  assert.equal(world.outcome, "victory");
+});
+
+test("terminal waits for a teammate's queued trophy, accepts a paid skip, and leaves later ordinary cards optional", () => {
+  const world = createWorld({ ...config, stage: "tower", route: ROUTE, seed: 5 });
+  const [, guest] = world.players;
+  clearZone(world, 0, 0);
+  standAtMarker(world);
+  queueCard(world, guest, "level");
+  queueCard(world, guest, "chest", undefined, { kind: "trophy" });
+  queueCard(world, guest, "chest");
+  const interact = { t: "interact", player: 0 };
+  stepSharedWorld(world, [interact]);
+  assert.equal(world.outcome, "playing");
+  applyCommand(world, { t: "pick", player: 1, card: guest.pending[0].id, index: 0 });
+  const skip = { t: "skip", player: 1, card: guest.pending[0].id };
+  stepSharedWorld(world, [skip, interact]);
+  assert.equal(world.outcome, "playing");
+  guest.skips = 1;
+  stepSharedWorld(world, [skip, interact]);
+  assert.equal(guest.skips, 0);
+  assert.equal(guest.pending.length, 1);
+  assert.equal(world.outcome, "victory");
+});
+
+test("departed and temporarily offline seats cannot strand the tower exit", async (t) => {
+  for (const departed of [false, true]) {
+    const settings = { ...config, stage: "tower", route: ROUTE, seed: 5 };
+    const world = createWorld(settings);
+    const { sessions } = encodedSessions(2);
+    const [host, guest] = sessions.map((session) => new MultiplayerRun(session, settings));
+    t.after(() => [host, guest].forEach((run) => run.dispose(false)));
+    host.publishMap(world);
+    guest.loading(await guest.initial());
+    await guest.ready();
+    await host.ready();
+    defeatGuardian(world);
+    standAtMarker(world);
+    const exit = { t: "interact", player: 0 };
+    host.step(world, host.submit([exit]));
+    assert.equal(world.outcome, "playing");
+    answerThroughTrophies(world, world.players[0]);
+    host.step(world, host.submit([exit]));
+    assert.equal(world.outcome, "playing");
+    const trophy = world.players[1].pending.find((card) => card.offer?.kind === "trophy");
+    assert.ok(trophy);
+    if (departed) sessions[0].onDeparted(1);
+    else sessions[0].onPath(1, false);
+    host.step(world, host.submit([exit]));
+    assert.equal(world.outcome, "victory");
+    if (!departed) assert.ok(world.players[1].pending.includes(trophy));
+  }
+});
+
+for (const blocker of ["trophy", "station dialog"]) {
+  test(`a returning guest can resolve their ${blocker} after receiving the map and before the host exits`, async (t) => {
+    const tower = blocker === "trophy";
+    const settings = tower ? { ...config, stage: "tower", route: ROUTE, seed: 5 } : config;
+    const world = createWorld(settings);
+    const { sessions } = encodedSessions(2);
+    const [host, guest] = sessions.map((session) => new MultiplayerRun(session, settings));
+    t.after(() => [host, guest].forEach((run) => run.dispose(false)));
+    host.publishMap(world);
+    guest.loading(await guest.initial());
+    await guest.ready();
+    await host.ready();
+    clearZone(world, 0, 0);
+    standAtMarker(world);
+    const peer = world.players[1];
+    if (tower) queueCard(world, peer, "chest", undefined, { kind: "trophy" });
+    else {
+      const { x, z } = world.stations[0];
+      Object.assign(peer, { x, z });
+      guest.submit([{ t: "interact", player: 1 }]);
+      host.step(world, host.submit([]));
+      assert.ok(peer.dialog);
+    }
+    sessions[0].onPath(1, false);
+    sessions[0].onPath(1, true);
+    sessions[1].send({ t: "hello", revision: 0, ready: false });
+    const map = guest.takeMap();
+    assert.ok(map);
+    guest.loading(map);
+    const exit = { t: "interact", player: 0 };
+    const commands = host.submit([exit]);
+    assert.deepEqual(commands, [exit]);
+    host.step(world, commands);
+    assert.equal(world.zone.leaving, null);
+    assert.equal(world.outcome, "playing");
+
+    const seat = map.players[1];
+    await guest.ready();
+    guest.submit([
+      tower
+        ? { t: "pick", card: seat.pending[0].id, index: 0, player: 1 }
+        : { t: "leave", dialog: seat.dialog.id, player: 1 },
+    ]);
+    host.step(world, host.submit([exit]));
+    assert.equal(peer.pending.length, 0);
+    assert.equal(peer.dialog, null);
+    assert.equal(world.zone.leaving, 0);
+    assert.equal(tower ? world.outcome : world.zone.phase, tower ? "victory" : "transitioning");
+  });
+}
 
 function carried(world) {
   return structuredClone({
@@ -182,7 +427,7 @@ function carried(world) {
   });
 }
 
-test("six single-field maps advance through early guardian exits, preserving builds and settling each reward once", () => {
+test("four single-field maps advance through early guardian exits, preserving builds and settling each reward once", () => {
   const world = createWorld({
     ...config,
     players: config.players.map((player) => ({
@@ -225,7 +470,7 @@ test("six single-field maps advance through early guardian exits, preserving bui
     assert.equal(world.stage, stage);
     assert.equal(stageDefs[stage].zones.length, 1, `${stage} is one complete field`);
     const { schedule, ...zone } = world.zone;
-    assert.deepEqual(zone, { index: 0, tick: 0, phase: "active", exit: null });
+    assert.deepEqual(zone, { index: 0, tick: 0, phase: "active", exits: [], leaving: null });
     assert.ok(schedule.length > 0, `${stage}: entry schedules the field`);
     assert.equal(world.outcome, "playing");
     assert.throws(() => prepareZone(world), /还没有离开/);
@@ -258,6 +503,7 @@ test("six single-field maps advance through early guardian exits, preserving bui
       magnet: true,
     });
     const xp = world.pickups.filter((p) => p.kind === "xp").reduce((sum, p) => sum + p.value, 0);
+    const sharedChests = world.pickups.filter((p) => p.kind === "chest").length;
     standAtMarker(world);
     stepWorld(world, [
       { t: "interact", player: 0 },
@@ -269,7 +515,7 @@ test("six single-field maps advance through early guardian exits, preserving bui
         xp: reward.xp + xp * currentStats(world.players[player]).xp * coopScaling(2).xp,
         dust: reward.dust + STARDUST.guardian + 7,
         kills: reward.kills + (player === 0 ? 1 : 0),
-        chests: reward.chests + 1,
+        chests: reward.chests + sharedChests + 1, // this player's personal guardian trophy
       })),
       `${stage}: guardian drops and in-flight rewards settle exactly once`,
     );
@@ -278,9 +524,13 @@ test("six single-field maps advance through early guardian exits, preserving bui
     const next = index + 1 < ROUTE.length ? { stage: ROUTE[index + 1], zone: 0 } : null;
     assert.deepEqual(nextField(world), next, `${stage}: only the tower ends the route`);
     if (!next) {
-      assert.equal(world.outcome, "victory");
+      assert.equal(world.outcome, "playing");
+      for (const player of world.players) answerThroughTrophies(world, player);
       stepWorld(world, [{ t: "interact", player: 0 }]);
-      assert.deepEqual(rewards(world), earned);
+      assert.equal(world.outcome, "victory");
+      const final = rewards(world);
+      stepWorld(world, [{ t: "interact", player: 0 }]);
+      assert.deepEqual(rewards(world), final);
       break;
     }
     assert.equal(world.outcome, "playing");
@@ -296,6 +546,8 @@ test("six single-field maps advance through early guardian exits, preserving bui
     assert.deepEqual(snapshotWorld(world), waiting, "preparation does not mutate the live world");
     assert.deepEqual({ stage: prepared.stage, zone: prepared.zone }, next);
     const kept = carried(world);
+    if (prepared.marker === "pokecenter")
+      kept.players.forEach((p, i) => (p.hp = currentStats(world.players[i]).maxHp));
     const identity = [world.seed, world.tick, world.time];
     enterZone(world, prepared);
     assert.deepEqual(
@@ -316,8 +568,8 @@ test("six single-field maps advance through early guardian exits, preserving bui
 });
 
 test("every map waits 600 local seconds for forced guardians and keeps playing in rampage", () => {
-  for (const stage of ROUTE) {
-    const world = createWorld({ ...config, stage });
+  for (const { stage, route } of fields) {
+    const world = createWorld({ ...config, stage, route });
     world.time = 3600;
     world.zone.tick = Math.round(600 / TICK) - 2;
     stepWorld(world, []);
@@ -394,7 +646,7 @@ function encodedSessions(count) {
   return { sessions, packets };
 }
 
-test("encoded network maps carry the six-field campaign through current-map ready barriers and one terminal result", async (t) => {
+test("encoded network maps carry the four-field campaign through current-map ready barriers and one terminal result", async (t) => {
   const settings = { ...config, players: [...config.players, { starter: "bulbasaur" }] };
   const world = createWorld(settings);
   const { sessions, packets } = encodedSessions(settings.players.length);
@@ -449,7 +701,13 @@ test("encoded network maps carry the six-field campaign through current-map read
     if (stage !== "tower") {
       assert.equal(world.zone.phase, "transitioning");
       assert.equal(world.outcome, "playing");
+      host.publish(world, world.events.splice(0), TICK, true);
+      for (const [index, guest] of guests.entries()) guest.apply(remotes[index], 0.25);
       enterZone(world, prepareZone(world));
+    } else {
+      assert.equal(world.outcome, "playing");
+      for (const player of world.players) answerThroughTrophies(world, player);
+      stepSharedWorld(world, [{ t: "interact", player: 0 }]);
     }
   }
   assert.equal(world.outcome, "victory");

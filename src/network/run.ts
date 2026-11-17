@@ -89,6 +89,7 @@ const HOST_SILENCE = 2;
 interface GuestState {
   /** The map this guest was last sent; 0 means it holds no map of the current world. */
   revision: number;
+  field?: { stage: World["stage"]; zoneIndex: number };
   /** offline: unreachable; loading: map sent, waiting for ready; playing: receives frames. */
   phase: "offline" | "loading" | "playing" | "departed";
   receivedSequence: number;
@@ -188,6 +189,14 @@ export class MultiplayerRun {
 
   readonly session: MultiplayerSession;
   readonly config: MultiplayerConfig;
+  readonly isSeatPresent = (id: number): boolean => {
+    if (id === 0 || id === this.player) return true;
+    if (this.host) {
+      const phase = this.guests.get(id)?.phase;
+      return phase === "loading" || phase === "playing";
+    }
+    return this.session.state.room?.online.includes(id) ?? true;
+  };
   constructor(session: MultiplayerSession, config: MultiplayerConfig) {
     this.session = session;
     this.config = config;
@@ -293,16 +302,25 @@ export class MultiplayerRun {
         break;
       case "map": {
         if (this.host) throw new Error("客机不能发送世界。");
+        const previous = !this.suspended && !this.reconnecting ? this.world : undefined;
         this.suspended = true;
         const world = restoreWorld(packet.map, packet.snapshot);
+        const changingField =
+          previous &&
+          packet.revision > this.revision &&
+          world.outcome === "playing" &&
+          (world.stage !== previous.stage || world.zone.index !== previous.zone.index);
         this.terminal = world.outcome !== "playing";
         this.revision = packet.revision;
         this.revisions.set(world, packet.revision);
-        this.resetPlayback();
         // Restored state has no occurrence clock: retain its facts, never replay its notice text.
+        world.events = world.events.filter(
+          (event) => event.t !== "route" || (event.kind !== "exit" && event.kind !== "trophy"),
+        );
         for (const event of world.events) this.eventTimes.set(event, -Infinity);
+        if (changingField) world.events.unshift(...this.departureCues());
+        this.resetPlayback();
         this.seedPlayback(world, packet.nextId, packet.clock);
-        this.events = [];
         if (this.mapResolve) {
           this.mapResolve(world);
           this.mapResolve = undefined;
@@ -372,22 +390,31 @@ export class MultiplayerRun {
     }
     if (this.host) this.onPacket();
   }
+  private departureCues(): RunEvent[] {
+    const cues: RunEvent[] = [];
+    for (const batch of this.events)
+      for (const event of batch.events) {
+        if (event.t !== "route") continue;
+        if (event.kind === "exit" || (event.kind === "trophy" && event.player === this.player))
+          cues.push(event);
+      }
+    return cues;
+  }
   private acceptTerminal(packet: Extract<Packet, { t: "terminal" }>) {
     const world = restoreWorld(packet.map, packet.snapshot);
     if (world.outcome === "playing") throw new Error("终局仍在进行中。");
+    const changedField =
+      this.world &&
+      (this.world.stage !== world.stage || this.world.zone.index !== world.zone.index);
     world.events = [
-      ...this.events.flatMap((batch) => batch.events),
+      ...(changedField ? [] : this.events.flatMap((batch) => batch.events)),
       ...packet.events[this.player]!.flatMap((batch) => batch.events),
       ...world.events,
     ];
-    this.events = [];
     this.resetPlayback();
     this.pendingTerminal = undefined;
     this.terminal = true;
     this.terminalWorld = world;
-    const changedField =
-      this.world &&
-      (this.world.stage !== world.stage || this.world.zone.index !== world.zone.index);
     // A result from a later field must replace the scene/assets through the normal loading path.
     this.map = changedField ? world : undefined;
     this.suspended = !!changedField;
@@ -578,7 +605,7 @@ export class MultiplayerRun {
   step(world: World, commands: readonly Command[]) {
     this.restoreHost(world);
     const start = world.events.length;
-    stepSharedWorld(world, commands);
+    stepSharedWorld(world, commands, this.isSeatPresent);
     const transitions = world.events.slice(start);
     for (const [id, guest] of this.guests)
       if (
@@ -715,6 +742,7 @@ export class MultiplayerRun {
     const guest = this.guests.get(id)!;
     const player = world.players[id]!;
     guest.revision = ++this.revision;
+    guest.field = { stage: world.stage, zoneIndex: world.zone.index };
     guest.phase = "loading";
     guest.receivedSequence = guest.ack = 0;
     guest.elapsed = 0;
@@ -838,11 +866,12 @@ export class MultiplayerRun {
         t: "terminal",
         map: world.map,
         snapshot,
-        events: world.players.map(
-          (player) =>
-            this.guests.get(player.id)?.events.map(({ clock, events }) => ({ clock, events })) ??
-            [],
-        ),
+        events: world.players.map(({ id }) => {
+          const guest = this.guests.get(id);
+          if (guest?.field?.stage !== world.stage || guest.field.zoneIndex !== world.zone.index)
+            return [];
+          return guest.events.map(({ clock, events }) => ({ clock, events }));
+        }),
       });
       this.readyResolve?.();
       return;
@@ -978,7 +1007,8 @@ export class MultiplayerRun {
             if (!Object.hasOwn(next, key)) Reflect.deleteProperty(player, key);
           Object.assign(player, next);
         }
-        world.events.push(...events);
+        // Scene installation already copied the terminal event array into the live world.
+        if (world.events !== events) world.events.push(...events);
       }
       return true;
     }
@@ -1137,6 +1167,7 @@ export class MultiplayerRun {
   }
   private resetPlayback() {
     this.readyRevision = 0;
+    this.events = [];
     this.frames = [];
     this.hostEvents = [];
     this.ownerCommands = [];

@@ -14,6 +14,7 @@ import { staggerFrom, yieldTo } from "./poise";
 import { chance, range } from "./rng";
 import { currentStats, earnStardust, itemRule, type PlayerStats } from "./stats";
 import { BERRY, LOOT, STARDUST } from "./content/params/economy";
+import { ROUTE_REWARD } from "./content/params/route";
 import { apply, consume, find, held, inflict, targetable, vulnerability, wake } from "./status";
 import type { Enemy, Pickup, Player, Rarity } from "./state/entities";
 import type { World } from "./state/world";
@@ -321,6 +322,7 @@ export function heal(player: Player, amount: number): number {
 /** A null killer is an environmental death: base loot and zone rewards, no personal credit. */
 export function killEnemy(ctx: Ctx, enemy: Enemy, killer: Player | null): void {
   const { world } = ctx;
+  if (enemy.boss && world.zone.phase !== "active") return;
   if (killer) killer.kills += 1;
   recordDefeat(world, enemy, killer);
   world.events.push({
@@ -338,7 +340,19 @@ export function killEnemy(ctx: Ctx, enemy: Enemy, killer: Player | null): void {
   }
   if (enemy.boss) {
     // The guardian bonus is immediate; existing field drops fly to the team after the clear.
-    for (const player of present(world)) earnStardust(player, STARDUST.guardian);
+    for (const player of present(world)) {
+      earnStardust(player, STARDUST.guardian);
+      if (player.alive)
+        world.pickups.push({
+          id: world.nextId++,
+          kind: "trophy",
+          owner: player.id,
+          x: enemy.x,
+          z: enemy.z,
+          value: 1,
+          magnet: true,
+        });
+    }
     clearZone(world, enemy.x, enemy.z);
     world.events.push({ t: "banner", text: "守卫倒下了！", tone: "boss", kind: "clear" });
   }
@@ -356,14 +370,21 @@ function dropLoot(world: World, enemy: Enemy, killer: Player | null, chest?: Rar
       ...(kind === "chest" && chest !== undefined && chest !== null ? { minRarity: chest } : {}),
     });
   if (enemy.elite || enemy.boss) {
-    if (chest !== null) add("chest", 1, LOOT.chestSpread);
+    const count =
+      enemy.elite && !enemy.boss && world.marker === "elite-nest" ? ROUTE_REWARD.nestChests : 1;
+    if (chest !== null) for (let i = 0; i < count; i++) add("chest", 1, LOOT.chestSpread);
     for (let i = 0; i < LOOT.eliteXpCount; i++)
       add("xp", Math.ceil(enemy.xp / LOOT.eliteXpCount), LOOT.eliteXpSpread);
     if (!enemy.boss) add("stardust", STARDUST.elite, LOOT.eliteStardustSpread);
   } else {
     if (chest !== undefined && chest !== null) add("chest", 1, LOOT.chestSpread);
     add("xp", enemy.xp, LOOT.xpSpread);
-    if (chance(world.rng, STARDUST.ordinary.chance))
+    if (
+      chance(
+        world.rng,
+        STARDUST.ordinary.chance * (world.marker === "research" ? ROUTE_REWARD.researchRate : 1),
+      )
+    )
       add("stardust", STARDUST.ordinary.value, LOOT.stardustSpread);
   }
   // Poké Radar: the killer's items raise the berry chance by a share.

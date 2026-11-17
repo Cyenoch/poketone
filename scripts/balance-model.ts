@@ -1,7 +1,7 @@
 // Analytical balance model (docs/BALANCE.md): per-minute tables per starter across the skill band,
 // build scenarios, move / item power budgets and advisory warnings.
-// Usage: bun run balance:model [difficulty=0] [lab=none|mid|slots4|luck|party] [stage=campaign|forest|…] [zones=1] [summonSeconds=510,30,30,30,30,30]
-// Default: all six maps with one carried build. An explicit map runs that map alone.
+// bun run balance:model [difficulty=0] [lab=none] [campaign|stage] [step=0] [summonSeconds] [--json]
+// Campaign: four separate continuous routes. --json: average-profile calibration, no budget tables.
 import {
   clock,
   FUSION_TIME,
@@ -25,7 +25,17 @@ import { difficulties, type Difficulty } from "../src/run/sim/content/difficulti
 import { moves } from "../src/run/sim/content/moves.ts";
 import { stageDefs, type StageId } from "../src/run/sim/content/stages/index.ts";
 import { starterOrder, starters } from "../src/run/sim/content/lines/index.ts";
-import { CAMPAIGN_FIELDS } from "../src/run/sim/content/campaign.ts";
+import {
+  ALL_ROUTES,
+  ROUTE_TIERS,
+  routeFields,
+  type RouteStep,
+} from "../src/run/sim/content/campaign.ts";
+import {
+  ROUTE_GROWTH,
+  ROUTE_ENTRY_CLOCK,
+  ENTRY_RAMP_SECONDS,
+} from "../src/run/sim/content/params/campaign.ts";
 import { GUARDIAN_REFERENCE_SECONDS } from "../src/run/sim/content/params/pacing.ts";
 import type { EntryWindow } from "../src/run/balance/entry-windows.ts";
 import { FIELD_MODEL_LIMITS } from "../src/run/balance/field-events.ts";
@@ -41,10 +51,12 @@ if (selectedStarters.some((id) => !starterOrder.includes(id as (typeof starterOr
 const roster = starterOrder.filter((id) => selectedStarters.includes(id));
 const entryCell = (w: EntryWindow | null) =>
   w
-    ? `${w.complete}/${w.samples} full, ${fixed(w.seconds)}s, mass ${fixed(w.weight, 2)} · stock ${fixed(w.living, 1)}+${fixed(w.elites, 1)} elites (${fixed(w.fill, 2)} cap), backlog ${fixed(w.backlog, 1)}s · cap/in ${fixed(w.pressure, 2)} · landed ${fixed(w.landed * 100, 3)}% HP/s, loss ${fixed(w.lost, 2)} HP · field raw ${fixed(w.fieldRaw * 100, 3)}% HP/s · HP ${pct(w.frac)}, survive ${w.survive === null ? "censored" : pct(w.survive)} · partners ${fixed(w.partnerDps)} HP/s`
+    ? `${w.complete}/${w.samples} full, ${fixed(w.seconds)}s, mass ${fixed(w.weight, 2)} · stock ${fixed(w.living, 1)} (incl. ${fixed(w.elites, 1)} elites; ${fixed(w.fill, 2)} cap), backlog ${fixed(w.backlog, 1)}s · cap/in ${fixed(w.pressure, 2)} · landed ${fixed(w.landed * 100, 3)}% HP/s, loss ${fixed(w.lost, 2)} HP · field raw ${fixed(w.fieldRaw * 100, 3)}% HP/s · HP ${pct(w.frac)}, survive ${w.survive === null ? "censored" : pct(w.survive)} · partners ${fixed(w.partnerDps)} HP/s`
     : "not observed";
 
-const difficulty = Number(process.argv[2] ?? 0) as Difficulty;
+const json = process.argv.includes("--json");
+const args = process.argv.filter((arg) => arg !== "--json");
+const difficulty = Number(args[2] ?? 0) as Difficulty;
 if (!difficulties[difficulty]) throw new Error(`未知难度 ${process.argv[2]}（0/1/2）。`);
 /** Lab presets: mid = 10 levels; slots4 = four move slots and one extra item slot. */
 const labPresets: Record<string, LabLevels> = {
@@ -56,29 +68,23 @@ const labPresets: Record<string, LabLevels> = {
   /** 支援队伍 (3 partner slots) and nothing else. */
   party: { party: 1 },
 };
-const labName = process.argv[3] ?? "none";
+const labName = args[3] ?? "none";
 const preset = labPresets[labName];
 if (!preset) throw new Error(`未知研究所预设 ${labName}（${Object.keys(labPresets).join("/")}）。`);
 const lab = labBonuses(preset);
-const campaign = (process.argv[4] ?? "campaign") === "campaign";
+const campaign = (args[4] ?? "campaign") === "campaign";
 // Campaign runModel selects its own fields; standalone power budgets still use a real map.
-const stage = (campaign ? "forest" : process.argv[4]) as StageId;
+const stage = (campaign ? "forest" : args[4]) as StageId;
 if (!stageDefs[stage])
   throw new Error(`未知关卡 ${process.argv[4]}（campaign/${Object.keys(stageDefs).join("/")}）。`);
-const zones = Number(process.argv[5] ?? 1);
-if (!(Number.isInteger(zones) && zones >= 1 && zones <= stageDefs[stage].zones.length))
-  throw new Error(`未知区域数 ${process.argv[5]}（1–${stageDefs[stage].zones.length}）。`);
+const step = Number(args[5] ?? (stage === "forest" ? 0 : NaN)) as RouteStep;
+if (!ROUTE_TIERS[step]?.some((id) => id === stage))
+  throw new Error(`单图参考需提供 ${stage} 的合法路线位置（0–3），整局从 0 开始。`);
+const routeElites = process.env.BALANCE_ROUTE_ELITES !== "0";
 const started = performance.now();
-const fields = campaign
-  ? CAMPAIGN_FIELDS
-  : Array.from({ length: zones }, (_, zone) => ({ stage, zone }));
-const summonSeconds = process.argv[6]
-  ? process.argv[6].split(",").map(Number)
-  : fields.map(() => GUARDIAN_REFERENCE_SECONDS);
-const scope = campaign
-  ? `campaign ${fields.map((field) => field.stage).join(" → ")} (${fields.length} fields)`
-  : `single map ${stageDefs[stage].name} (${stage}, ${zones} field${zones > 1 ? "s" : ""})`;
-const finalStage = fields.at(-1)!.stage;
+const summonSeconds =
+  args[6]?.split(",").map(Number) ??
+  Array<number>(campaign ? ROUTE_TIERS.length : 1).fill(GUARDIAN_REFERENCE_SECONDS);
 
 const band = (runs: readonly RunModel[], value: (run: RunModel) => string) =>
   runs.map(value).join("/");
@@ -94,200 +100,314 @@ const fightAt = (run: RunModel, field: number) => {
   return `${count}·${fixed(fight.seconds)}s·${fixed(fight.cost, 2)} HP${fight.completed < fight.attempted ? `·${fight.attempted - fight.completed} incomplete` : ""}`;
 };
 
-console.log(
-  `poketone analytical balance model — ${difficulties[difficulty].name} (difficulty ${difficulty}), lab ${labName}; ${scope}; bands are ${profiles.map((p) => p.name).join(" / ")}`,
-);
-console.log(
-  `Normal field limits: ${fields.map((field) => `${stageDefs[field.stage].name} ${clock(stageDefs[field.stage].duration)}`).join(" · ")}; guardian overtime may extend elapsed time.`,
-);
-console.log(
-  `Guardian calibration: ${clock(GUARDIAN_REFERENCE_SECONDS)}; local summons: ${summonSeconds.map(clock).join(" → ")}.`,
-);
-console.log(`Build samples per run: ${samples ?? BUILD_SAMPLES}; starters: ${roster.join(", ")}.`);
-console.log(
-  `Field mechanisms: ${fieldEvents ? "enabled, rewards consumed during progression" : "disabled for paired comparison"}; main beats use the shared seeded window scheduler.`,
-);
+const routes = campaign ? ALL_ROUTES : [null];
+const options = { difficulty, lab, summonSeconds, samples, fieldEvents, routeElites };
+if (json) {
+  const rows = routes.flatMap((route) =>
+    roster.map((starter) => {
+      const run = runModel({
+        ...options,
+        ...(route ? { route } : { stage, step }),
+        starter,
+        skill: average,
+      });
 
-const all: RunModel[] = [];
-for (const starter of roster) {
-  const runs = profiles.map((skill) =>
-    runModel({
-      stage,
-      starter,
-      difficulty,
-      skill,
-      lab,
-      zones,
-      campaign,
-      summonSeconds,
-      samples,
-      fieldEvents,
+      return {
+        route,
+        starter,
+        zoneClears: run.zoneClears,
+        evolutions: run.evolutions,
+        outcome: run.outcome,
+        fights: run.fights,
+        entryWindows: run.entryWindows,
+        fieldEvents: run.fieldEvents,
+        ultimate: run.ultimate,
+        kills: run.kills,
+        stardust: run.stardust,
+      };
     }),
   );
-  all.push(...runs);
-  const mid = runs[profiles.indexOf(average)]!;
   console.log(
-    `\n${starter} ${starters[starter].stages[0].form.name}  reach final guardian (${stageDefs[finalStage].name}) ${band(runs, (r) => pct(r.outcome.reachBoss))}  ${campaign ? "campaign" : "map"} clear ${band(runs, (r) => pct(r.outcome.clear))}  mean run ${band(runs, (r) => clock(r.outcome.meanSurvival))}`,
-  );
-  console.log(
-    "  min  level      moves items  AoE cap  inHP/s  pressure        fill  boss/s  in/s   EHP  alive",
-  );
-  const lastMinute = Math.max(...runs.map((run) => run.minutes.at(-1)?.t ?? 0));
-  for (let t = 60; t <= lastMinute; t += 60) {
-    const rows = runs.map((run) => at(run, t));
-    const m = rows[profiles.indexOf(average)];
-    if (rows.every((row) => !row)) break;
-    console.log(
-      [
-        pad(String(t / 60), 5),
-        pad(rows.map((r) => fixed(r?.level)).join("/"), 10),
-        pad(fixed(m?.moves, 1), 6),
-        pad(fixed(m?.items, 1), 5),
-        pad(fixed(m?.capacity), 8),
-        pad(fixed(m?.incoming), 7),
-        pad(rows.map((r) => fixed(r?.pressure, 1)).join("/"), 15),
-        pad(fixed(m?.fill, 2), 5),
-        pad(fixed(m?.single), 7),
-        pad(fixed(m?.inDps, 1), 5),
-        pad(fixed(m?.ehp), 5),
-        "  " + rows.map((r) => (r ? pct(r.alive) : "—")).join("/"),
-      ].join(" "),
-    );
-  }
-  const reached = (run: RunModel, level: number) => {
-    const t = run.levelAt[level];
-    return t === undefined ? "—" : clock(t);
-  };
-  // Mean level of the samples still running at `t` (the per-minute rows).
-  const levelAt = (run: RunModel, t: number) => fixed(at(run, t)?.level);
-  const evolutions = starters[starter].stages.slice(1);
-  console.log(
-    `  pacing: ${[4, 8, 16].map((level) => `L${level} ${band(runs, (r) => reached(r, level))}`).join(" · ")} · level ${[60, 180, 300, 480].map((t) => `@${clock(t)} ${band(runs, (r) => levelAt(r, t))}`).join(" ")}`,
-  );
-  console.log(
-    `  evolution/maturity (cumulative time, reached samples): ${evolutions.map((st) => `${st.kind === "evolve" ? st.form.name : "成熟"} L${st.at} ${band(runs, (r) => reached(r, st.at))}`).join(" · ")}`,
-  );
-  console.log(
-    "  fields: reach/clear probabilities from starting samples (reach = alive when the guardian fight starts) · level/time at clear · guardian completed/attempted·seconds·cost in max HP (completed samples only)",
-  );
-  console.log(
-    "  incomplete = no full-fight estimate, not an easy fight; not attempted = no exposure",
-  );
-  for (const [index, field] of mid.zoneClears.entries())
-    console.log(
-      `    ${index + 1}. ${stageDefs[field.stage].name} (${field.stage}) reach ${band(runs, (r) => pct(r.zoneClears[index]!.reach))} · clear ${band(runs, (r) => pct(r.zoneClears[index]!.clear))} · L${band(runs, (r) => fixed(r.zoneClears[index]!.level, 1))} · elapsed ${band(runs, (r) => (r.zoneClears[index]!.t === null ? "—" : clock(r.zoneClears[index]!.t!)))} · guardian ${band(runs, (r) => fightAt(r, index))}`,
-    );
-  if (campaign) {
-    console.log(
-      "  entry windows (average; alive-weighted analytical estimates; loss includes poison, before healing):",
-    );
-    for (const w of mid.entryWindows) {
-      console.log(`    ${fields[w.field]!.stage} 0–120s: ${entryCell(w.entry)}`);
-      console.log(`      previous final 120s (guardian included): ${entryCell(w.exit)}`);
-      console.log(`      previous pre-summon 120s (swarm): ${entryCell(w.preSummon)}`);
-    }
-  }
-  console.log(
-    "  field event income (alive-weighted per starting run; parentheses conditional on entering; no final-account top-up):",
-  );
-  for (const field of mid.fieldEvents) {
-    const income = field.income,
-      conditional = field.conditional;
-    console.log(
-      `    ${field.stage}: entered ${field.entered}/${samples ?? BUILD_SAMPLES}, completed ${field.completed}/${field.entered}, entry mass ${fixed(field.entryWeight, 3)} · +XP ${fixed(income.xp, 1)}, cards ${fixed(income.cards, 2)}, 星星沙子 ${fixed(income.stardust, 1)} (${conditional ? `${fixed(conditional.xp, 1)}/${fixed(conditional.cards, 2)}/${fixed(conditional.stardust, 1)}` : "not reached"}) · exploring ${fixed(income.occupiedSeconds, 1)}s, XP opportunity ${fixed(income.opportunityXp, 1)}, unfinished ${fixed(income.unfinished, 2)} · weather loss ${fixed(income.weatherHpCost, 1)} HP`,
-    );
-  }
-  console.log(
-    `  ultimate: preparation ${mid.ultimate.timing.windup}s / protection ${mid.ultimate.timing.protection}s; accepted ${fixed(mid.ultimate.casts, 1)} / released ${fixed(mid.ultimate.releases, 1)}; first ${fixed(mid.ultimate.firstCast, 1)} → ${fixed(mid.ultimate.firstRelease, 1)}s; protected ${fixed(mid.ultimate.protectedSeconds, 1)}s, prevented ${fixed(mid.ultimate.preventedDamage, 1)} HP (alive-weighted).`,
-  );
-  console.log(
-    `  wind-ups staggered: ${[180, 300, 420].map((t) => `${clock(t)} ${band(runs, (r) => (at(r, t) ? pct(at(r, t)!.cancelled) : "—"))}`).join(" · ")}`,
-  );
-  console.log(
-    `  learned (average): ${mid.learned.map((l) => `${l.move} ${clock(l.t)}${l.share < 0.95 ? ` (${pct(l.share)})` : ""}`).join(" · ")}`,
-  );
-  console.log(
-    `  fused (novice/average/expert): ${band(runs, (r) => `${pct(r.fused.share)}${r.fused.share > 0 ? ` @${clock(r.fused.t)}` : ""}`)}`,
-  );
-  const novice = runs[0]!;
-  console.log(
-    `  damage share (novice): ${novice.damageShare.map((d) => `${d.move} ${pct(d.share)}`).join(" · ")}`,
-  );
-  const end = (run: RunModel) => run.minutes.at(-1);
-  console.log(
-    `  partners at the end (novice/average/expert): ${band(runs, (r) => fixed(end(r)?.partners, 2))} · ${band(runs, (r) => fixed(end(r)?.partnerDps))} dmg/s`,
-  );
-  console.log(
-    `  ultimate every ${band(runs, (r) => fixed(r.ultEvery ?? undefined))} s · kills per run swarm ${band(runs, (r) => fixed(r.kills.swarm))} · elites ${band(runs, (r) => fixed(r.kills.elites, 1))} · guardian ${band(runs, (r) => pct(r.kills.guardian))} · 星星沙子 ${band(runs, (r) => fixed(r.stardust))}`,
-  );
-  const worst = [...mid.beats].sort((a, b) => b.clear - a.clear).slice(0, 3);
-  console.log(
-    `  slowest spikes (average, local field time): ${worst.map((b) => `${b.beat}@${fields[b.zone]!.stage}:${clock(b.t)} ${b.clear.toFixed(0)} s`).join(" · ")}`,
-  );
-}
-
-// Card exposure (average skill, all starters): the share of level-up offers an item could be in, was
-// shown in, and the share of samples that took it.
-const exposure = new Map<
-  string,
-  { eligible: number; offered: number; acquired: number; at: number }
->();
-const mids = all.filter((run) => run.skill === average.name);
-for (const run of mids)
-  for (const [key, e] of run.exposure) {
-    if (!key.startsWith("item:")) continue;
-    const sum = exposure.get(key) ?? { eligible: 0, offered: 0, acquired: 0, at: 0 };
-    sum.eligible += e.eligible / mids.length;
-    sum.offered += e.offered / mids.length;
-    sum.acquired += e.acquired / mids.length;
-    sum.at += (e.acquired > 0 ? e.at : 0) / mids.length;
-    exposure.set(key, sum);
-  }
-console.log(
-  `\ncard exposure (average skill, level-up offers): eligible / offered / owned at the end`,
-);
-for (const rarity of [0, 1, 2, 3]) {
-  const rows = [...exposure].filter(
-    ([key]) => items[key.slice(5) as keyof typeof items].rarity === rarity,
-  );
-  const avg = (field: "eligible" | "offered" | "acquired") =>
-    rows.reduce((sum, [, e]) => sum + e[field], 0) / Math.max(1, rows.length);
-  console.log(
-    `  rarity ${rarity} (${rows.length} items): ${pct(avg("eligible"))} / ${(100 * avg("offered")).toFixed(1)}% / ${pct(avg("acquired"))}`,
-  );
-}
-const owned = [...exposure].sort((a, b) => b[1].acquired - a[1].acquired);
-const cell = ([key, e]: (typeof owned)[number]) =>
-  `${key.slice(5)} ${pct(e.eligible)}/${(100 * e.offered).toFixed(1)}%/${pct(e.acquired)}`;
-console.log(`  most owned: ${owned.slice(0, 8).map(cell).join(" · ")}`);
-console.log(`  least owned: ${owned.slice(-8).map(cell).join(" · ")}`);
-
-console.log(
-  `\nbuild scenarios (average skill, ${scope}): clear · final guardian completed/attempted·seconds·cost in max HP (completed only) · level at 5:00`,
-);
-for (const starter of roster) {
-  const cells = scenarios.map(({ name, picks }) => {
-    const run = runModel({
-      stage,
-      starter,
+    JSON.stringify({
       difficulty,
-      skill: average,
-      picks,
-      lab,
-      zones,
-      campaign,
-      summonSeconds,
-      samples,
+      lab: labName,
+      profile: average.name,
+      samples: samples ?? BUILD_SAMPLES,
       fieldEvents,
+      routeElites,
+      summonSeconds,
+      growth: ROUTE_GROWTH,
+      entryClock: ROUTE_ENTRY_CLOCK,
+      ramp: ENTRY_RAMP_SECONDS,
+      limits: FIELD_MODEL_LIMITS,
+      rows,
+    }),
+  );
+  process.exit(0);
+}
+const budgets = moveBudgets(step, stage, difficulty, average);
+const values = itemValues(step, stage, difficulty, average);
+const fusions = fusionBudgets(step, stage, difficulty, average);
+const range = (r: Range, f = pct) => `${f(r.min)}–${f(r.max)}`;
+const mark = (ok: boolean) => (ok ? "ok" : "OUT");
+for (const route of routes) {
+  const location = route ? { route } : { stage, step };
+  const fields = route ? routeFields(route) : [{ stage, step, zone: 0 }];
+  const scope = route ? `campaign ${route.join(" → ")}` : `single map ${stage} (step ${step})`;
+  const finalStage = fields.at(-1)!.stage;
+  console.log(
+    `poketone analytical balance model — ${difficulties[difficulty].name} (difficulty ${difficulty}), lab ${labName}; ${scope}; bands are ${profiles.map((p) => p.name).join(" / ")}`,
+  );
+  console.log(
+    `Normal field limits: ${fields.map((field) => `${stageDefs[field.stage].name} ${clock(stageDefs[field.stage].duration)}`).join(" · ")}; guardian overtime may extend elapsed time.`,
+  );
+  console.log(
+    `Guardian calibration: ${clock(GUARDIAN_REFERENCE_SECONDS)}; local summons: ${summonSeconds.map(clock).join(" → ")}.`,
+  );
+  console.log(
+    `Build samples per run: ${samples ?? BUILD_SAMPLES}; starters: ${roster.join(", ")}.`,
+  );
+  console.log(
+    `Route elite rates ${routeElites ? "enabled" : "neutral control"}. Field mechanisms: ${fieldEvents ? "enabled, rewards consumed during progression" : "disabled for paired comparison"}; main beats use the shared seeded window scheduler.`,
+  );
+
+  const all: RunModel[] = [];
+  for (const starter of roster) {
+    const runs = profiles.map((skill) =>
+      runModel({
+        ...location,
+        ...options,
+        starter,
+        skill,
+      }),
+    );
+    all.push(...runs);
+    const mid = runs[profiles.indexOf(average)]!;
+    console.log(
+      `\n${starter} ${starters[starter].stages[0].form.name}  reach final guardian (${stageDefs[finalStage].name}) ${band(runs, (r) => pct(r.outcome.reachBoss))}  ${campaign ? "campaign" : "map"} clear ${band(runs, (r) => pct(r.outcome.clear))}  mean run ${band(runs, (r) => clock(r.outcome.meanSurvival))}`,
+    );
+    console.log(
+      "  min  level      moves items  AoE cap  inHP/s  pressure        fill  boss/s  in/s   EHP  alive",
+    );
+    const lastMinute = Math.max(...runs.map((run) => run.minutes.at(-1)?.t ?? 0));
+    for (let t = 60; t <= lastMinute; t += 60) {
+      const rows = runs.map((run) => at(run, t));
+      const m = rows[profiles.indexOf(average)];
+      if (rows.every((row) => !row)) break;
+      console.log(
+        [
+          pad(String(t / 60), 5),
+          pad(rows.map((r) => fixed(r?.level)).join("/"), 10),
+          pad(fixed(m?.moves, 1), 6),
+          pad(fixed(m?.items, 1), 5),
+          pad(fixed(m?.capacity), 8),
+          pad(fixed(m?.incoming), 7),
+          pad(rows.map((r) => fixed(r?.pressure, 1)).join("/"), 15),
+          pad(fixed(m?.fill, 2), 5),
+          pad(fixed(m?.single), 7),
+          pad(fixed(m?.inDps, 1), 5),
+          pad(fixed(m?.ehp), 5),
+          "  " + rows.map((r) => (r ? pct(r.alive) : "—")).join("/"),
+        ].join(" "),
+      );
+    }
+    const reached = (run: RunModel, level: number) => {
+      const t = run.levelAt[level];
+      return t === undefined ? "—" : clock(t);
+    };
+    // Mean level of the samples still running at `t` (the per-minute rows).
+    const levelAt = (run: RunModel, t: number) => fixed(at(run, t)?.level);
+    const evolutions = starters[starter].stages.slice(1);
+    console.log(
+      `  pacing: ${[4, 8, 16].map((level) => `L${level} ${band(runs, (r) => reached(r, level))}`).join(" · ")} · level ${[60, 180, 300, 480].map((t) => `@${clock(t)} ${band(runs, (r) => levelAt(r, t))}`).join(" ")}`,
+    );
+    console.log(
+      `  evolution/maturity (cumulative time, reached samples): ${evolutions.map((st) => `${st.kind === "evolve" ? st.form.name : "成熟"} L${st.at} ${band(runs, (r) => reached(r, st.at))}`).join(" · ")}`,
+    );
+    for (const e of mid.evolutions)
+      console.log(
+        `    L${e.level} (average; build counts and mean local times): ${fields
+          .map((f) => {
+            const p = e.points.filter((p) => p.step === f.step);
+            return `${f.stage} ${p.length}${p.length ? ` @${clock(p.reduce((s, p) => s + p.local, 0) / p.length)}` : ""}`;
+          })
+          .join(" · ")} · unreached ${e.unreached}`,
+      );
+    console.log(
+      "  fields: reach/clear probabilities from starting samples (reach = alive when the guardian fight starts) · level/time at clear · guardian completed/attempted·seconds·cost in max HP (completed samples only)",
+    );
+    console.log(
+      "  incomplete = no full-fight estimate, not an easy fight; not attempted = no exposure",
+    );
+    for (const [index, field] of mid.zoneClears.entries())
+      console.log(
+        `    ${index + 1}. ${stageDefs[field.stage].name} (${field.stage}) entry ${band(runs, (r) => pct(r.fieldEvents[index]!.entryWeight))} · guardian reach ${band(runs, (r) => pct(r.zoneClears[index]!.reach))} · clear ${band(runs, (r) => pct(r.zoneClears[index]!.clear))} · L${band(runs, (r) => fixed(r.zoneClears[index]!.level, 1))} · elapsed ${band(runs, (r) => (r.zoneClears[index]!.t === null ? "—" : clock(r.zoneClears[index]!.t!)))} · guardian ${band(runs, (r) => fightAt(r, index))}`,
+      );
+    if (campaign) {
+      console.log(
+        "  entry windows (average; alive-weighted analytical estimates; loss includes poison, before healing):",
+      );
+      for (const w of mid.entryWindows) {
+        console.log(`    ${fields[w.field]!.stage} 0–120s: ${entryCell(w.entry)}`);
+        console.log(`      previous final 120s (guardian included): ${entryCell(w.exit)}`);
+        console.log(`      previous pre-summon 120s (swarm): ${entryCell(w.preSummon)}`);
+      }
+    }
+    console.log(
+      "  field event income (alive-weighted per starting run; parentheses conditional on entering; no final-account top-up):",
+    );
+    for (const field of mid.fieldEvents) {
+      const income = field.income,
+        conditional = field.conditional;
+      console.log(
+        `    ${field.stage}: entered ${field.entered}/${samples ?? BUILD_SAMPLES}, completed ${field.completed}/${field.entered}, entry mass ${fixed(field.entryWeight, 3)} · +XP ${fixed(income.xp, 1)}, cards ${fixed(income.cards, 2)}, 星星沙子 ${fixed(income.stardust, 1)} (${conditional ? `${fixed(conditional.xp, 1)}/${fixed(conditional.cards, 2)}/${fixed(conditional.stardust, 1)}` : "not reached"}) · exploring ${fixed(income.occupiedSeconds, 1)}s, XP opportunity ${fixed(income.opportunityXp, 1)}, unfinished ${fixed(income.unfinished, 2)} · weather loss ${fixed(income.weatherHpCost, 1)} HP`,
+      );
+    }
+    console.log(
+      `  ultimate: preparation ${mid.ultimate.timing.windup}s / protection ${mid.ultimate.timing.protection}s; accepted ${fixed(mid.ultimate.casts, 1)} / released ${fixed(mid.ultimate.releases, 1)}; first ${fixed(mid.ultimate.firstCast, 1)} → ${fixed(mid.ultimate.firstRelease, 1)}s; protected ${fixed(mid.ultimate.protectedSeconds, 1)}s, prevented ${fixed(mid.ultimate.preventedDamage, 1)} HP (alive-weighted).`,
+    );
+    console.log(
+      `  wind-ups staggered: ${[180, 300, 420].map((t) => `${clock(t)} ${band(runs, (r) => (at(r, t) ? pct(at(r, t)!.cancelled) : "—"))}`).join(" · ")}`,
+    );
+    console.log(
+      `  learned (average): ${mid.learned.map((l) => `${l.move} ${clock(l.t)}${l.share < 0.95 ? ` (${pct(l.share)})` : ""}`).join(" · ")}`,
+    );
+    console.log(
+      `  fused (novice/average/expert): ${band(runs, (r) => `${pct(r.fused.share)}${r.fused.share > 0 ? ` @${clock(r.fused.t)}` : ""}`)}`,
+    );
+    const novice = runs[0]!;
+    console.log(
+      `  damage share (novice): ${novice.damageShare.map((d) => `${d.move} ${pct(d.share)}`).join(" · ")}`,
+    );
+    const end = (run: RunModel) => run.minutes.at(-1);
+    console.log(
+      `  partners at the end (novice/average/expert): ${band(runs, (r) => fixed(end(r)?.partners, 2))} · ${band(runs, (r) => fixed(end(r)?.partnerDps))} dmg/s`,
+    );
+    console.log(
+      `  ultimate every ${band(runs, (r) => fixed(r.ultEvery ?? undefined))} s · kills per run swarm ${band(runs, (r) => fixed(r.kills.swarm))} · elites ${band(runs, (r) => fixed(r.kills.elites, 1))} · guardian ${band(runs, (r) => pct(r.kills.guardian))} · 星星沙子 ${band(runs, (r) => fixed(r.stardust))}`,
+    );
+    const worst = [...mid.beats].sort((a, b) => b.clear - a.clear).slice(0, 3);
+    console.log(
+      `  slowest spikes (average, local field time): ${worst.map((b) => `${b.beat}@${fields[b.zone]!.stage}:${clock(b.t)} ${b.clear.toFixed(0)} s`).join(" · ")}`,
+    );
+  }
+
+  // Card exposure (average skill, all starters): the share of level-up offers an item could be in, was
+  // shown in, and the share of samples that took it.
+  const exposure = new Map<
+    string,
+    { eligible: number; offered: number; acquired: number; at: number }
+  >();
+  const mids = all.filter((run) => run.skill === average.name);
+  for (const run of mids)
+    for (const [key, e] of run.exposure) {
+      if (!key.startsWith("item:")) continue;
+      const sum = exposure.get(key) ?? { eligible: 0, offered: 0, acquired: 0, at: 0 };
+      sum.eligible += e.eligible / mids.length;
+      sum.offered += e.offered / mids.length;
+      sum.acquired += e.acquired / mids.length;
+      sum.at += (e.acquired > 0 ? e.at : 0) / mids.length;
+      exposure.set(key, sum);
+    }
+  console.log(
+    `\ncard exposure (average skill, level-up offers): eligible / offered / owned at the end`,
+  );
+  for (const rarity of [0, 1, 2, 3]) {
+    const rows = [...exposure].filter(
+      ([key]) => items[key.slice(5) as keyof typeof items].rarity === rarity,
+    );
+    const avg = (field: "eligible" | "offered" | "acquired") =>
+      rows.reduce((sum, [, e]) => sum + e[field], 0) / Math.max(1, rows.length);
+    console.log(
+      `  rarity ${rarity} (${rows.length} items): ${pct(avg("eligible"))} / ${(100 * avg("offered")).toFixed(1)}% / ${pct(avg("acquired"))}`,
+    );
+  }
+  const owned = [...exposure].sort((a, b) => b[1].acquired - a[1].acquired);
+  const cell = ([key, e]: (typeof owned)[number]) =>
+    `${key.slice(5)} ${pct(e.eligible)}/${(100 * e.offered).toFixed(1)}%/${pct(e.acquired)}`;
+  console.log(`  most owned: ${owned.slice(0, 8).map(cell).join(" · ")}`);
+  console.log(`  least owned: ${owned.slice(-8).map(cell).join(" · ")}`);
+
+  console.log(
+    `\nbuild scenarios (average skill, ${scope}): clear · final guardian completed/attempted·seconds·cost in max HP (completed only) · level at 5:00`,
+  );
+  for (const starter of roster) {
+    const cells = scenarios.map(({ name, picks }) => {
+      const run = runModel({
+        ...location,
+        ...options,
+        starter,
+        skill: average,
+        picks,
+      });
+      return `${name} ${pct(run.outcome.clear)} · ${fightAt(run, run.fights.length - 1)} · L${fixed(at(run, 300)?.level)}`;
     });
-    return `${name} ${pct(run.outcome.clear)} · ${fightAt(run, run.fights.length - 1)} · L${fixed(at(run, 300)?.level)}`;
-  });
-  console.log(`  ${starter.padEnd(10)} ${cells.join("   ")}`);
+    console.log(`  ${starter.padEnd(10)} ${cells.join("   ")}`);
+  }
+
+  // Targets (docs/BALANCE.md「目标」): hints to read the results against, never gates.
+  const of = (skill: string) => all.filter((run) => run.skill === skill);
+  console.log(
+    `\ntargets (${campaign ? "legacy single-map reference ranges; campaign comparisons are uncalibrated; " : ""}hints, not gates)`,
+  );
+  const clearTarget = TARGETS.averageClear[difficulty];
+  console.log(
+    `  average clear ${range(clearTarget)}: ${of(average.name)
+      .map(
+        (r) =>
+          `${r.starter} ${pct(r.outcome.clear)} ${mark(inRange(r.outcome.clear, clearTarget))}`,
+      )
+      .join(" · ")}`,
+  );
+  console.log(
+    `  expert clear ≥ ${pct(TARGETS.expertClear.min)}: ${of(expert.name)
+      .map(
+        (r) =>
+          `${r.starter} ${pct(r.outcome.clear)} ${mark(inRange(r.outcome.clear, TARGETS.expertClear))}`,
+      )
+      .join(" · ")}`,
+  );
+  if (difficulty === 0)
+    console.log(
+      `  novice clear ${range(TARGETS.noviceClear)} is the bot's to measure (bun run balance); model: ${of(
+        "novice",
+      )
+        .map((r) => `${r.starter} ${pct(r.outcome.clear)}`)
+        .join(" · ")}`,
+    );
+  for (const run of of(average.name)) {
+    const levels = Object.entries(TARGETS.levelAt).map(([level, want]) => {
+      const got = run.levelAt[Number(level)];
+      const ok = got !== undefined && Math.abs(got - want) <= TARGETS.levelSlack;
+      return `L${level} ${got === undefined ? "—" : clock(got)} (≈${clock(want)}) ${mark(ok)}`;
+    });
+    const at8 = run.levelAt.reduce(
+      (last, at, level) => (level >= 1 && at <= 480 ? level : last),
+      1,
+    );
+    const ttk = run.bossTtk ?? Infinity;
+    const ult = run.ultEvery;
+    console.log(
+      `  ${run.starter.padEnd(10)} ${levels.join(" · ")} · level at 8:00 ${at8} ${mark(inRange(at8, TARGETS.levelAt8))} · last observed guardian arrival TTK ${fixed(run.bossTtk ?? undefined)} s ${mark(ttk <= TARGETS.bossTtk.max)} · ult every ${fixed(ult ?? undefined)} s ${mark(ult !== null && inRange(ult, TARGETS.ultEvery))}`,
+    );
+  }
+  for (const skill of profiles) {
+    const clears = of(skill.name).map((r) => r.outcome.clear);
+    const spread = Math.max(...clears) - Math.min(...clears);
+    console.log(
+      `  starter spread (${skill.name}) ≤ ${Math.round(TARGETS.starterSpread * 100)} pp: ${Math.round(spread * 100)} pp ${mark(spread <= TARGETS.starterSpread)}`,
+    );
+  }
+
+  const found = warnings(all, budgets, values);
+  console.log(
+    `\nwarnings (advisory${campaign ? "; single-map heuristics, not campaign calibration" : ""}) — ${found.length}`,
+  );
+  for (const line of found) console.log(`  · ${line}`);
 }
 
-const budgets = moveBudgets(stage, difficulty, average);
 console.log(
-  `\nmove budgets (${stageDefs[stage].name}, ${stage}): each move alone, ${REFERENCE_UPGRADES} expected upgrades, level ${REFERENCE_LEVEL}, ${clock(REFERENCE_TIME)} crowd, type-neutral`,
+  `\nmove budgets (${stageDefs[stage].name}, ${stage}, step ${step}): each move alone, ${REFERENCE_UPGRADES} expected upgrades, level ${REFERENCE_LEVEL}, ${clock(REFERENCE_TIME)} crowd, type-neutral`,
 );
 console.log(
   "  move           archetype  targets  AoE/s   ×median  base ×median  boss/s  ×median  control",
@@ -307,7 +427,7 @@ for (const b of budgets) {
     ].join(" "),
   );
 }
-const kits = starterKits(stage, difficulty, average);
+const kits = starterKits(step, stage, difficulty, average);
 console.log(
   `  full kits with type matchups: ${kits.map((k) => `${k.starter} AoE ${k.aoe.toFixed(0)} · boss ${k.single.toFixed(0)}`).join("   ")}`,
 );
@@ -315,12 +435,11 @@ console.log(
 console.log(
   `\nfusion budgets: ★1 fusion over its two max-level parts (${clock(FUSION_TIME)} crowd, type-neutral)`,
 );
-for (const f of fusionBudgets(stage, difficulty, average))
+for (const f of fusions)
   console.log(
     `  ${f.starter.padEnd(10)} ${f.move.padEnd(13)} AoE ${f.aoe.toFixed(0).padStart(5)} (${f.aoeRel.toFixed(2)}× parts)  boss ${f.single.toFixed(0).padStart(4)} (${f.singleRel.toFixed(2)}× parts)  vs 2 median maxed: AoE ${f.aoeMid.toFixed(2)}× boss ${f.singleMid.toFixed(2)}×  ★5/★1 ${f.aoeGrowth.toFixed(2)}×/${f.singleGrowth.toFixed(2)}×`,
   );
 
-const values = itemValues(stage, difficulty, average);
 console.log(
   `\nitem marginal value (build value gain of the first level, full kit, level ${REFERENCE_LEVEL})`,
 );
@@ -331,69 +450,8 @@ for (const v of values) {
   );
 }
 
-// Targets (docs/BALANCE.md「目标」): hints to read the results against, never gates.
-const fusions = fusionBudgets(stage, difficulty, average);
-const mark = (ok: boolean) => (ok ? "ok" : "OUT");
-const range = (r: Range, f = pct) => `${f(r.min)}–${f(r.max)}`;
-const of = (skill: string) => all.filter((run) => run.skill === skill);
-console.log(
-  `\ntargets (${campaign ? "legacy single-map reference ranges; campaign comparisons are uncalibrated; " : ""}hints, not gates)`,
-);
-const clearTarget = TARGETS.averageClear[difficulty];
-console.log(
-  `  average clear ${range(clearTarget)}: ${of(average.name)
-    .map(
-      (r) => `${r.starter} ${pct(r.outcome.clear)} ${mark(inRange(r.outcome.clear, clearTarget))}`,
-    )
-    .join(" · ")}`,
-);
-console.log(
-  `  expert clear ≥ ${pct(TARGETS.expertClear.min)}: ${of(expert.name)
-    .map(
-      (r) =>
-        `${r.starter} ${pct(r.outcome.clear)} ${mark(inRange(r.outcome.clear, TARGETS.expertClear))}`,
-    )
-    .join(" · ")}`,
-);
-if (difficulty === 0)
-  console.log(
-    `  novice clear ${range(TARGETS.noviceClear)} is the bot's to measure (bun run balance); model: ${of(
-      "novice",
-    )
-      .map((r) => `${r.starter} ${pct(r.outcome.clear)}`)
-      .join(" · ")}`,
-  );
-for (const run of of(average.name)) {
-  const levels = Object.entries(TARGETS.levelAt).map(([level, want]) => {
-    const got = run.levelAt[Number(level)];
-    const ok = got !== undefined && Math.abs(got - want) <= TARGETS.levelSlack;
-    return `L${level} ${got === undefined ? "—" : clock(got)} (≈${clock(want)}) ${mark(ok)}`;
-  });
-  const at8 = run.levelAt.reduce((last, at, level) => (level >= 1 && at <= 480 ? level : last), 1);
-  const ttk = run.bossTtk ?? Infinity;
-  const ult = run.ultEvery;
-  console.log(
-    `  ${run.starter.padEnd(10)} ${levels.join(" · ")} · level at 8:00 ${at8} ${mark(inRange(at8, TARGETS.levelAt8))} · last observed guardian arrival TTK ${fixed(run.bossTtk ?? undefined)} s ${mark(ttk <= TARGETS.bossTtk.max)} · ult every ${fixed(ult ?? undefined)} s ${mark(ult !== null && inRange(ult, TARGETS.ultEvery))}`,
-  );
-}
 console.log(
   `  fusion vs 2 median maxed moves, swarm ${range(TARGETS.fusionSwarm, (v) => `${v}×`)} / guardian ${range(TARGETS.fusionGuardian, (v) => `${v}×`)}: ${fusions.map((f) => `${f.starter} ${f.aoeMid.toFixed(2)}× ${mark(inRange(f.aoeMid, TARGETS.fusionSwarm))} / ${f.singleMid.toFixed(2)}× ${mark(inRange(f.singleMid, TARGETS.fusionGuardian))}`).join(" · ")}`,
-);
-for (const skill of profiles) {
-  const clears = of(skill.name).map((r) => r.outcome.clear);
-  const spread = Math.max(...clears) - Math.min(...clears);
-  console.log(
-    `  starter spread (${skill.name}) ≤ ${Math.round(TARGETS.starterSpread * 100)} pp: ${Math.round(spread * 100)} pp ${mark(spread <= TARGETS.starterSpread)}`,
-  );
-}
-
-const found = warnings(all, budgets, values);
-console.log(
-  `\nwarnings (advisory${campaign ? "; single-map heuristics, not campaign calibration" : ""}) — ${found.length}`,
-);
-for (const line of found) console.log(`  · ${line}`);
-console.log(
-  `\nScope: runs and build scenarios = ${scope}; move/fusion/item budgets = ${stageDefs[stage].name} (${stage}) reference points.`,
 );
 console.log(
   "Analytical estimates, not measured playthroughs; completed-only guardian costs have survivor bias, and incomplete fights cannot establish ease.",

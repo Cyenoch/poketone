@@ -204,6 +204,11 @@
     "hitMs": 341,
     "peakMs": 521
   },
+  "exit-pick.flac": {
+    "lenMs": 356,
+    "hitMs": 0,
+    "peakMs": 20
+  },
   "freeze-1.flac": {
     "lenMs": 416,
     "hitMs": 0,
@@ -213,6 +218,16 @@
     "lenMs": 401,
     "hitMs": 0,
     "peakMs": 5
+  },
+  "gengar-deal-1.flac": {
+    "lenMs": 476,
+    "hitMs": 0,
+    "peakMs": 0
+  },
+  "gengar-deal-2.flac": {
+    "lenMs": 321,
+    "hitMs": 25,
+    "peakMs": 30
   },
   "hit-1.flac": {
     "lenMs": 220,
@@ -543,6 +558,16 @@
     "lenMs": 251,
     "hitMs": 40,
     "peakMs": 40
+  },
+  "trophy-1.flac": {
+    "lenMs": 907,
+    "hitMs": 0,
+    "peakMs": 346
+  },
+  "trophy-2.flac": {
+    "lenMs": 626,
+    "hitMs": 0,
+    "peakMs": 5
   },
   "ui-back.flac": {
     "lenMs": 411,

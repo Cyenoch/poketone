@@ -67,6 +67,13 @@ import {
 } from "../src/run/sim/world.ts";
 
 const SECONDS = 60;
+const desertRoute = ["forest", "desert", "glacier", "tower"];
+const coastRoute = ["forest", "coast", "volcano", "tower"];
+const prefixes = [
+  ...desertRoute.map((_, i) => desertRoute.slice(0, i + 1)),
+  coastRoute.slice(0, 2),
+  coastRoute.slice(0, 3),
+];
 
 test("model schedules use the real seeded scheduler and retain used events across fields", () => {
   const world = createWorld({
@@ -94,7 +101,7 @@ test("model schedules use the real seeded scheduler and retain used events acros
 
 test("weather affects move derivation and enemy streams once, without changing neutral contact", () => {
   const player = createPlayer(0, "charmander", 0);
-  const target = targetFor(fieldAt("forest", 300, 0, false), 30, average);
+  const target = targetFor(fieldAt(0, "forest", 300, 0, false), 30, average);
   const dry = moveOutput(newMoveState("ember"), playerStats(player), target);
   const sunny = moveOutput(newMoveState("ember"), playerStats(player), {
     ...target,
@@ -213,6 +220,7 @@ test("site items enter the progressing build and a zero-touch strategy earns no 
   };
   const options = {
     stage: "forest",
+    step: 0,
     starter: "bulbasaur",
     difficulty: 0,
     skill: expert,
@@ -276,6 +284,7 @@ test("outbreak replacement XP is consumed before later choices without an extra 
     enemies.rattata.xp = 3;
     const options = {
       stage: "forest",
+      step: 0,
       starter: "bulbasaur",
       difficulty: 0,
       skill: expert,
@@ -335,6 +344,7 @@ function withModelEgg(check) {
     }
     check({
       stage: "forest",
+      step: 0,
       starter: "squirtle",
       difficulty: 0,
       skill: { ...expert, chests: 0.9 },
@@ -402,7 +412,14 @@ test("runModel carries egg distance and species into the next map without replac
     desert.sites = ["egg"];
     const speed = playerStats(createPlayer(0, "squirtle", 0)).speed;
     SITE.eggDistance = speed * FIELD_MODEL_ASSUMPTIONS.movingShare * 50;
-    const route = { ...options, campaign: true, summonSeconds: [20, 180, 180, 180, 180, 180] };
+    const route = {
+      starter: options.starter,
+      difficulty: options.difficulty,
+      skill: options.skill,
+      samples: options.samples,
+      route: desertRoute,
+      summonSeconds: [20, 180, 180, 180],
+    };
     const run = runModel(route);
     assert.equal(run.zoneClears[0].t, 20);
     assert.equal(run.fieldEvents[0].income.partners, 0, "the egg has not hatched at the exit");
@@ -443,7 +460,7 @@ test("runModel carries egg distance and species into the next map without replac
 
 test("ultimate preparation delays the original pulses instead of paying their damage at trigger", () => {
   const player = createPlayer(0, "charmander", 0);
-  const target = targetFor(fieldAt("forest", 300, 0, false), 30, average);
+  const target = targetFor(fieldAt(0, "forest", 300, 0, false), 30, average);
   const timing = ultimateTiming();
   const preparing = ultCast(player, target, { from: 0, to: timing.windup });
   assert.equal(preparing.useful + preparing.single + preparing.heal, 0);
@@ -472,7 +489,7 @@ test("item previews preserve the seeded immediate effect of a newly granted Load
   world.rng = createRng(391);
   const player = world.players[0];
   const choice = { kind: "item", item: "loaded-dice" };
-  const target = targetFor(fieldAt("forest", 60, 0, false), 10, average);
+  const target = targetFor(fieldAt(0, "forest", 60, 0, false), 10, average);
   const state = world.rng.state;
   const preview = previewChoice(player, choice, world.rng, target, average);
   assert.equal(world.rng.state, state, "a preview does not consume the committed reward stream");
@@ -485,7 +502,7 @@ test("item previews preserve the seeded immediate effect of a newly granted Load
 test("poison contributes persistent damage but extra applications refresh instead of stacking", () => {
   const player = createPlayer(0, "gastly", 0);
   player.moves = [newMoveState("sludge-bomb")];
-  const target = targetFor(fieldAt("forest", 300, 0, false), 20, average);
+  const target = targetFor(fieldAt(0, "forest", 300, 0, false), 20, average);
   const one = buildOutput(player, target);
   assert.ok(one.useful > one.direct, "surviving poisoned enemies lose HP between hits");
   assert.ok(one.bossBurn > 0, "poison continues against a guardian");
@@ -500,6 +517,7 @@ test("poison contributes persistent damage but extra applications refresh instea
 test("guardian exposure excludes unfinished fights instead of scoring early death as a cheap kill", () => {
   const options = {
     stage: "forest",
+    step: 0,
     starter: "bulbasaur",
     difficulty: 0,
     skill: expert,
@@ -528,25 +546,25 @@ test("guardian exposure excludes unfinished fights instead of scoring early deat
 
 test("campaign pre-summon windows exclude the second when guardian combat begins", () => {
   const options = {
-    stage: "forest",
+    route: desertRoute,
     starter: "bulbasaur",
     difficulty: 0,
     skill: expert,
     samples: 1,
-    campaign: true,
   };
-  const immediate = runModel({ ...options, summonSeconds: Array(6).fill(1) });
+  const immediate = runModel({ ...options, summonSeconds: Array(4).fill(1) });
   assert.ok(immediate.entryWindows.length > 0);
   assert.equal(immediate.entryWindows[0].preSummon, null, "no pre-combat second was observed");
-  const delayed = runModel({ ...options, summonSeconds: Array(6).fill(10) });
+  const delayed = runModel({ ...options, summonSeconds: Array(4).fill(10) });
   const before = delayed.entryWindows[0].preSummon;
   assert.ok(before);
   assert.equal(before.seconds, 9);
+  assert.equal(before.complete, 0, "nine pre-summon seconds do not make a full two-minute window");
   assert.equal(before.guardianRaw, 0, "the swarm baseline excludes guardian damage");
 });
 
 test("extra guardian exposure waits for the first cast and slows with phase and paralysis delays", () => {
-  const fury = furyOf("desert", 2);
+  const fury = furyOf(1);
   const extra = (status, seconds = 60) =>
     bossHits("aerodactyl", 2, 1, 1, 0, true, 0.43, status, fury, seconds).at(-1).rate;
   const clear = { stopped: 0, delay: 0, interrupts: 0 };
@@ -562,6 +580,7 @@ test("extra guardian exposure waits for the first cast and slows with phase and 
 test("guardian tuning changes both actual hazards and their modelled exposure", () => {
   const world = createWorld({
     stage: "tower",
+    route: desertRoute,
     seed: 11,
     difficulty: 0,
     players: [{ starter: "squirtle" }],
@@ -723,7 +742,7 @@ test("guardian conditional damage follows applied control and statuses in both m
   const dummy = spawnEnemy(world, "scyther", 6, 0);
   world.bossId = dummy.id;
   const ctx = { world, grid: new EnemyGrid() };
-  const target = targetFor(fieldAt("forest", 30, 0, false), 1, average);
+  const target = targetFor(fieldAt(0, "forest", 30, 0, false), 1, average);
   target.boss.speed = 0;
   const measure = (move, item, sourceItem) => {
     world.rng = createRng(3);
@@ -783,7 +802,7 @@ test("guardian conditional damage follows applied control and statuses in both m
 });
 
 test("a stronger move gets a bigger budget, tougher enemies a lower pressure and survival", () => {
-  const budget = () => moveBudgets("forest", 0, average).find((b) => b.move === "ember");
+  const budget = () => moveBudgets(0, "forest", 0, average).find((b) => b.move === "ember");
   const before = budget();
   const dmg = moves.ember.dmg;
   moves.ember.dmg = dmg * 1.5;
@@ -795,7 +814,14 @@ test("a stronger move gets a bigger budget, tougher enemies a lower pressure and
   }
 
   const run = () =>
-    runModel({ stage: "forest", starter: "bulbasaur", difficulty: 0, skill: novice, samples: 8 });
+    runModel({
+      stage: "forest",
+      step: 0,
+      starter: "bulbasaur",
+      difficulty: 0,
+      skill: novice,
+      samples: 8,
+    });
   const easy = run();
   const hp = difficulties[0].hp;
   difficulties[0].hp = hp * 1.5;
@@ -813,9 +839,12 @@ test("a stronger move gets a bigger budget, tougher enemies a lower pressure and
 
 test("the model and the sim give each zone of every stage the same guardian HP", () => {
   // Field time changes the swarm, while every guardian keeps its fixed map challenge.
-  for (const stage of Object.keys(stageDefs)) {
+  for (const route of prefixes) {
+    const stage = route.at(-1),
+      step = route.length - 1;
     const world = createWorld({
       stage,
+      route,
       seed: 3,
       difficulty: 0,
       players: [{ starter: "bulbasaur" }],
@@ -826,8 +855,8 @@ test("the model and the sim give each zone of every stage the same guardian HP",
         world.zone.tick = at / TICK;
         world.rampage = at >= stageDefs[stage].duration;
         const sim = spawnEnemy(world, zone.guardian.species, 0, 10);
-        const model = coopBudget(stage, 0, at, world.players, average, index).guardianHp;
-        const target = targetFor(fieldAt(stage, at, 0, world.rampage, index), 1, average);
+        const model = coopBudget(step, stage, 0, at, world.players, average, index).guardianHp;
+        const target = targetFor(fieldAt(step, stage, at, 0, world.rampage, index), 1, average);
         assert.ok(
           Math.abs(sim.maxHp / model - 1) < 1e-9,
           `${stage} at ${at}: ${sim.maxHp} vs ${model}`,
@@ -839,9 +868,12 @@ test("the model and the sim give each zone of every stage the same guardian HP",
 });
 
 test("modelled swarm stats match spawned enemies through entry ramp, growth and rampage", () => {
-  for (const stage of Object.values(stageDefs)) {
+  for (const route of prefixes) {
+    const stage = stageDefs[route.at(-1)],
+      step = route.length - 1;
     const world = createWorld({
       stage: stage.id,
+      route,
       seed: 3,
       difficulty: 0,
       players: [{ starter: "squirtle" }],
@@ -858,7 +890,7 @@ test("modelled swarm stats match spawned enemies through entry ramp, growth and 
           for (const time of [0, 1, 4, 8, 20, 60, 120, 480, stage.duration + 60]) {
             world.zone.tick = time / TICK;
             world.rampage = time > stage.duration;
-            const field = fieldAt(stage.id, time, difficulty, world.rampage, index);
+            const field = fieldAt(step, stage.id, time, difficulty, world.rampage, index);
             const enemy = spawnEnemy(world, "rattata", 0, 10);
             const elite = spawnEnemy(world, "rattata", 0, 10, true);
             const label = `${stage.id}/${index}/${difficulty}/${time}`;
@@ -892,6 +924,7 @@ function withEliteField(check) {
   };
   const options = {
     stage: "forest",
+    step: 0,
     starter: "squirtle",
     fieldEvents: false,
     difficulty: 0,
@@ -935,11 +968,11 @@ test("mixed alpha and elite batches spend crossing damage at their own birth cos
       { window: [58, 58], beat: { kind: "elite-wave" } },
     ];
     const run = runModel(options);
-    const alphaHp = fieldAt("forest", 57, 0, false).hp * ELITE.hp * ALPHA_HP;
-    const eliteHp = fieldAt("forest", 58, 0, false).hp * ELITE.hp;
+    const alphaHp = fieldAt(0, "forest", 57, 0, false).hp * ELITE.hp * ALPHA_HP;
+    const eliteHp = fieldAt(0, "forest", 58, 0, false).hp * ELITE.hp;
     const raw = buildOutput(
       player,
-      targetFor(fieldAt("forest", 57, 0, false), 10, options.skill),
+      targetFor(fieldAt(0, "forest", 57, 0, false), 10, options.skill),
     ).raw;
     const damage = raw * 0.3; // The model allocates 30% to elites while any remain.
     assert.ok(Math.abs(run.beats[0].clear - alphaHp / damage) < 1e-9);
@@ -951,7 +984,7 @@ test("mixed alpha and elite batches spend crossing damage at their own birth cos
       eliteKills > 1 && eliteKills < 1 + ELITE_WAVE_SIZE,
       "the sampled interval clears alpha and partially spends the next batch",
     );
-    const swarmRate = empty.minutes[0].useful / fieldAt("forest", 60, 0, false).hp;
+    const swarmRate = empty.minutes[0].useful / fieldAt(0, "forest", 60, 0, false).hp;
     const swarmKills = empty.minutes[0].kills - 4 * swarmRate * 0.3;
     assert.ok(Math.abs(run.minutes[0].kills - swarmKills - eliteKills) < 1e-9);
     assert.ok(Math.abs(run.kills.elites - (1 + ELITE_WAVE_SIZE)) < 1e-9);
@@ -968,8 +1001,8 @@ test("mixed alpha and elite batches spend crossing damage at their own birth cos
     for (let i = 0; i < 1 + ELITE_WAVE_SIZE; i++)
       applyChoice(player, { kind: "upgrade", move: "water-gun", rarity: 1, rolls: [] });
     const expected =
-      buildOutput(player, targetFor(fieldAt("forest", 120, 0, false), 10, options.skill)).single *
-      options.skill.bossFocus;
+      buildOutput(player, targetFor(fieldAt(0, "forest", 120, 0, false), 10, options.skill))
+        .single * options.skill.bossFocus;
     assert.ok(
       Math.abs(rewarded.minutes[1].single - expected) < 1e-9,
       "fractional kills across seconds still settle the final whole chest",
@@ -1023,7 +1056,7 @@ test("cleared mixed batches grant one chest and capture chance each; fixed partn
       const row = run.minutes[1];
       const expected = buildOutput(
         player,
-        targetFor(fieldAt("forest", row.t, 0, false), 10, options.skill),
+        targetFor(fieldAt(0, "forest", row.t, 0, false), 10, options.skill),
       );
       assert.ok(
         Math.abs(row.single - expected.single * options.skill.bossFocus) < 1e-9,
@@ -1069,7 +1102,7 @@ test("mixed batches pay XP and ultimate charge for their count, not their extra 
     }
     collectRemainingPickups(actual);
     assert.equal(actual.players[0].level, rounded.levelAt.length - 1);
-    assert.equal(fieldAt("forest", 180, 0, false).eliteXp, LOOT.eliteXpCount);
+    assert.equal(fieldAt(0, "forest", 180, 0, false).eliteXp, LOOT.eliteXpCount);
 
     // Put the full charge boundary between four and five kills; a phantom alpha kill would cast at 60.
     zone.beats = [
@@ -1079,7 +1112,7 @@ test("mixed batches pay XP and ultimate charge for their count, not their extra 
     enemies.rattata.xp = 0.01;
     const quiet = runModel(options);
     const row = quiet.minutes[0];
-    const swarmRate = row.useful / fieldAt("forest", 60, 0, false).hp;
+    const swarmRate = row.useful / fieldAt(0, "forest", 60, 0, false).hp;
     const xpWorth = (row.kills - swarmRate + count * (ELITE.xp - 1)) * enemies.rattata.xp;
     const charge = 59 * ULT_CHARGE.time + xpWorth * ULT_CHARGE.perXp;
     const halfElite = (ELITE.xp * enemies.rattata.xp * ULT_CHARGE.perXp) / 2;
@@ -1109,37 +1142,77 @@ test("mixed batches pay XP and ultimate charge for their count, not their extra 
   });
 });
 
-test("the continuous model reaches the tower after five maps and carries its evolved build", () => {
+test("the continuous model reaches the tower after three maps and carries its evolved build", () => {
   const run = runModel({
-    stage: "forest",
-    campaign: true,
+    route: desertRoute,
     starter: "bulbasaur",
     difficulty: 0,
     skill: expert,
     samples: 4,
   });
-  assert.equal(run.zoneClears.length, 6);
+  assert.equal(run.zoneClears.length, desertRoute.length);
   assert.deepEqual(
     run.zoneClears.map((c) => c.stage),
-    Object.keys(stageDefs),
+    desertRoute,
   );
   assert.ok(run.bossWindow > 0);
   for (const field of run.zoneClears) assert.ok(field.clear > 0, `${field.stage} reachable`);
-  assert.ok(run.zoneClears[5].level > run.zoneClears[0].level);
-  assert.ok(run.levelAt[55] < run.zoneClears[5].t);
+  assert.ok(run.zoneClears.at(-1).level > run.zoneClears[0].level);
+  assert.ok(run.levelAt[55] < run.zoneClears.at(-1).t);
+});
+
+test("route elite rates change the admitted crowd, carried rewards and next combat", () => {
+  const options = {
+    route: desertRoute,
+    starter: "bulbasaur",
+    difficulty: 1,
+    skill: average,
+    samples: 1,
+  };
+  const control = runModel({ ...options, routeElites: false });
+  const run = runModel(options);
+  const first = run.fieldEvents.findIndex((f) => f.eliteRates.some((rate) => rate > 1));
+  assert.ok(first > 0, "this seeded route encounters an elite-rate marker or modifier");
+  assert.deepEqual(run.zoneClears.slice(0, first), control.zoneClears.slice(0, first));
+  assert.notEqual(
+    run.entryWindows[first - 1].entry.incoming,
+    control.entryWindows[first - 1].entry.incoming,
+  );
+  assert.notEqual(run.kills.elites, control.kills.elites);
+  assert.notEqual(run.fieldEvents[first].earned.xp, control.fieldEvents[first].earned.xp);
+  assert.equal(run.outcome.reachBoss, run.zoneClears.at(-1).reach);
+  assert.equal(run.outcome.clear, run.zoneClears.at(-1).clear);
+  for (const { level, points, unreached } of run.evolutions) {
+    assert.equal(points.length + unreached, options.samples);
+    for (const { t, step, local } of points) {
+      assert.equal(t, run.levelAt[level]);
+      assert.equal(t - local, step ? run.zoneClears[step - 1].t : 0);
+      assert.ok(local > 0);
+    }
+  }
+});
+
+test("single-field diagnostics need an explicit route position; campaigns need a complete route", () => {
+  const build = { starter: "charmander", difficulty: 0, skill: average, samples: 1 };
+  for (const location of [
+    { stage: "tower" },
+    { stage: "coast", step: 2 },
+    { route: desertRoute.slice(0, 3) },
+    { route: ["forest", "coast", "desert", "tower"] },
+  ])
+    assert.throws(() => runModel({ ...build, ...location }), /legal route/);
 });
 
 test("per-field summon times shorten the continuous route and retain its earned growth", () => {
   const options = {
-    stage: "forest",
-    campaign: true,
+    route: desertRoute,
     starter: "bulbasaur",
     difficulty: 0,
     skill: expert,
     samples: 1,
   };
   const fixed = runModel(options);
-  const summonSeconds = [GUARDIAN_REFERENCE_SECONDS, 30, 30, 30, 30, 30];
+  const summonSeconds = [GUARDIAN_REFERENCE_SECONDS, 30, 30, 30];
   const early = runModel({ ...options, summonSeconds });
   assert.deepEqual(
     early.zoneClears[0],
@@ -1158,7 +1231,7 @@ test("per-field summon times shorten the continuous route and retain its earned 
     early.zoneClears.at(-1).level < fixed.zoneClears.at(-1).level,
     "skipped farming cannot grant its XP",
   );
-  for (const times of [[30], [0, 30, 30, 30, 30, 30], [601, 30, 30, 30, 30, 30]])
+  for (const times of [[30], [0, 30, 30, 30], [601, 30, 30, 30]])
     assert.throws(() => runModel({ ...options, summonSeconds: times }), /summonSeconds/);
 });
 
@@ -1166,7 +1239,14 @@ test("an eruption hurts the player without adding enemies", () => {
   // An eruption spanning the 1:00 sample of the volcano's first zone, against the same run without.
   const zone = stageDefs.volcano.zones[0];
   const run = () =>
-    runModel({ stage: "volcano", starter: "squirtle", difficulty: 0, skill: average, samples: 4 });
+    runModel({
+      stage: "volcano",
+      step: 2,
+      starter: "squirtle",
+      difficulty: 0,
+      skill: average,
+      samples: 4,
+    });
   const calm = run();
   const beats = zone.beats;
   zone.beats = [...beats, { window: [55, 55], beat: { kind: "eruption" } }];
@@ -1184,7 +1264,7 @@ test("an eruption hurts the player without adding enemies", () => {
 
 test("guardian chests and rounded XP carry real build strength into later zones", () => {
   // Only guardians grant rewards. Zero pickup/chest skill must not discount automatic exit loot.
-  const fields = Object.values(stageDefs);
+  const fields = desertRoute.map((stage) => stageDefs[stage]);
   const zones = fields.map((stage) => stage.zones[0]);
   const saved = zones.map((zone) => ({
     beats: zone.beats,
@@ -1195,12 +1275,11 @@ test("guardian chests and rounded XP carry real build strength into later zones"
   const rolls = moves["vine-whip"].stats;
   const skill = { ...expert, pickup: 0, chests: 0, picks: { prefer: "move", greedy: 0 } };
   const options = {
-    stage: "forest",
+    route: desertRoute,
     starter: "bulbasaur",
     difficulty: 0,
     skill,
     samples: 1,
-    campaign: true,
     fieldEvents: false,
   };
   try {
@@ -1221,8 +1300,12 @@ test("guardian chests and rounded XP carry real build strength into later zones"
     const player = world.players[0];
     for (let zone = 0; zone < zones.length; zone++) {
       world.stage = fields[zone].id;
+      world.route = desertRoute.slice(0, zone + 1);
+      world.zone.phase = "active";
       const boss = spawnEnemy(world, zones[zone].guardian.species, 0, 10);
       killEnemy({ world, grid: new EnemyGrid() }, boss, player);
+      // The trophy is outside this ordinary guardian-chest comparison.
+      world.pickups = world.pickups.filter((p) => p.kind !== "trophy");
       collectRemainingPickups(world);
       assert.deepEqual(
         player.pending.map((card) => card.source),
@@ -1233,7 +1316,11 @@ test("guardian chests and rounded XP carry real build strength into later zones"
       const clear = chestsOnly.zoneClears[zone].t;
       assert.notEqual(clear, null);
       const row = chestsOnly.minutes.find((minute) => minute.t > clear);
-      const target = targetFor(fieldAt(fields[zone + 1].id, row.t - clear, 0, false, 0), 0, skill);
+      const target = targetFor(
+        fieldAt(zone + 1, fields[zone + 1].id, row.t - clear, 0, false, 0),
+        0,
+        skill,
+      );
       const expected = buildOutput(player, target);
       assert.ok(
         Math.abs(row.single - (expected.single * skill.bossFocus + expected.bossBurn)) < 1e-9,
@@ -1241,8 +1328,7 @@ test("guardian chests and rounded XP carry real build strength into later zones"
       );
     }
 
-    // 19 XP becomes 24, 30 and 36 after each zone's scale and six per-drop ceilings.
-    // Unrounded rewards miss level 2 in zone 1 and level 4 at the final exit.
+    // Six individually rounded candies must match the rewards banked on each exit.
     for (const zone of zones) enemies[zone.guardian.species].xp = 19;
     const rewarded = runModel(options);
     const xpWorld = createWorld({
@@ -1253,6 +1339,8 @@ test("guardian chests and rounded XP carry real build strength into later zones"
     });
     for (let zone = 0; zone < zones.length; zone++) {
       xpWorld.stage = fields[zone].id;
+      xpWorld.route = desertRoute.slice(0, zone + 1);
+      xpWorld.zone.phase = "active";
       const boss = spawnEnemy(xpWorld, zones[zone].guardian.species, 0, 10);
       killEnemy({ world: xpWorld, grid: new EnemyGrid() }, boss, xpWorld.players[0]);
       collectRemainingPickups(xpWorld);
@@ -1283,11 +1371,11 @@ test("guardian chests and rounded XP carry real build strength into later zones"
 
 test("candy previews match real picks, including partial XP, evolution and all additional cards", () => {
   const skill = { ...expert, picks: { prefer: "move", greedy: 0 } };
-  const target = targetFor(fieldAt("forest", 300, 0, false), 40, skill);
+  const target = targetFor(fieldAt(0, "forest", 300, 0, false), 40, skill);
   for (const [level, owned] of [
-    [1, 0],
+    [9, 0],
     [15, 0],
-    [34, 1],
+    [27, 1],
   ]) {
     const world = createWorld({
       stage: "forest",
@@ -1316,6 +1404,7 @@ test("candy previews match real picks, including partial XP, evolution and all a
     player.pending = [{ id: world.nextId++, source: "level", options: [choice] }];
     applyCommand(world, { t: "pick", player: 0, card: player.pending[0].id, index: 0 });
     assert.equal(player.level, level + 2);
+    if (owned) assert.ok(player.stage > before.stage, "the two candy levels cross an evolution");
     assert.equal(player.xp, 0, "candy fills the partial bar, it does not preserve its remainder");
     assert.equal(player.pending.length, 2);
     while (player.pending.length) {
@@ -1341,6 +1430,7 @@ test("candy's immediate cards affect run growth and its published item value", (
   const levels = candy.onPick.levels;
   const options = {
     stage: "forest",
+    step: 0,
     starter: "charmander",
     difficulty: 0,
     skill: average,
@@ -1351,10 +1441,14 @@ test("candy's immediate cards affect run growth and its published item value", (
     for (const [item] of rarities) item.rarity = item === candy ? 0 : 3;
     candy.onPick.levels = 0;
     const passive = runModel(options);
-    const passiveValue = itemValues("forest", 0, average).find((row) => row.item === "rare-candy");
+    const passiveValue = itemValues(0, "forest", 0, average).find(
+      (row) => row.item === "rare-candy",
+    );
     candy.onPick.levels = levels;
     const active = runModel(options);
-    const activeValue = itemValues("forest", 0, average).find((row) => row.item === "rare-candy");
+    const activeValue = itemValues(0, "forest", 0, average).find(
+      (row) => row.item === "rare-candy",
+    );
     const acquired = active.exposure.get("item:rare-candy");
     assert.equal(acquired.acquired, 1);
     assert.equal(acquired.at, passive.exposure.get("item:rare-candy").at);
@@ -1373,9 +1467,17 @@ test("candy's immediate cards affect run growth and its published item value", (
 });
 
 test("guardian damage charges the ultimate from the same route- and difficulty-scaled XP in model and sim", () => {
-  for (const stage of ["forest", "tower"])
+  for (const route of [["forest"], desertRoute])
     for (const difficulty of [0, 1, 2]) {
-      const world = createWorld({ stage, difficulty, seed: 3, players: [{ starter: "squirtle" }] });
+      const stage = route.at(-1),
+        step = route.length - 1;
+      const world = createWorld({
+        stage,
+        route,
+        difficulty,
+        seed: 3,
+        players: [{ starter: "squirtle" }],
+      });
       const player = world.players[0];
       const boss = spawnEnemy(world, stageDefs[stage].zones[0].guardian.species, 0, 5);
       player.ult.room = ULT_CHARGE.room;
@@ -1388,8 +1490,8 @@ test("guardian damage charges the ultimate from the same route- and difficulty-s
         ) < 1e-12,
       );
       assert.equal(
-        fieldAt(stage, 0, difficulty, false).xp,
-        fieldAt(stage, 0, 0, false).xp * difficulties[difficulty].xp,
+        fieldAt(step, stage, 0, difficulty, false).xp,
+        fieldAt(step, stage, 0, 0, false).xp * difficulties[difficulty].xp,
       );
     }
 });

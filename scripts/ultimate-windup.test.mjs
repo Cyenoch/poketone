@@ -26,6 +26,7 @@ import { EnemyGrid } from "../src/run/sim/grid.ts";
 import { TICK } from "../src/run/sim/state/world.ts";
 import { snapshotWorld, restoreWorld } from "../src/run/sim/snapshot.ts";
 import { enterZone, prepareZone } from "../src/run/sim/zones.ts";
+import { selectTestExit } from "./fixtures/route.mjs";
 
 function fixture(ids = ["bulbasaur"]) {
   const world = createWorld({
@@ -241,7 +242,7 @@ test("entering the next field cancels preparation and protection without refund"
     p = w.players[0];
   start(w);
   ticks(w, 10);
-  w.zone.phase = "transitioning";
+  selectTestExit(w, "desert");
   enterZone(w, prepareZone(w));
   assert.equal(p.ult.elapsed, -1);
   assert.equal(p.ult.protection, 0);

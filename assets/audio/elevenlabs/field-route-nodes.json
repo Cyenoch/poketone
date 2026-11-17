@@ -6,7 +6,7 @@
     "nodeCreation": [37, 72],
     "estimateOnly": 75
   },
-  "note": "Only the 15 add-field-events:1.4 nodes. Creation/estimate activity references identify the original shared source, not field-only prices. All original and reworked field generations and scoped actual costs are preserved in field-route-production.json; do not regenerate.",
+  "note": "Field and route nodes only. The source activity identifies the shared batch; per-generation costs are in field-route-production.json.",
   "tasks": {
     "add-field-events:1.4": {
       "weather-sun": "skDu2B3XBWEtgDMJenhU",
@@ -24,6 +24,11 @@
       "shiny": "KQkIAzfzdmaomZB2aMI7",
       "egg-hatch": "2iALtnxwwmoRTAXOEitK",
       "tell-voltorb": "36DyoYcW4QmMI4tPx866"
+    },
+    "add-route-branches:4.2": {
+      "exit-pick": "yye6nANx47X428O7RDyA",
+      "gengar-deal": "VjTLlr3gwVsQcReQBcnc",
+      "trophy": "zaYK2xgCdn5QKGyZUzLO"
     }
   }
 }

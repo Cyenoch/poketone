@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { routeTo, selectTestExit } from "./fixtures/route.mjs";
 import test from "node:test";
 import { EnemyGrid } from "../src/run/sim/grid.ts";
 import { labBonuses, labItem, nextCost } from "../src/run/lab.ts";
@@ -233,15 +234,15 @@ test("an ordinary kill's stardust is decided by the seeded roll: one pickup wort
 });
 
 test("an elite always drops one pickup worth 20; the guardian credits 100 and drops none", () => {
-  const w = world();
-  const player = w.players[0];
   for (let state = 0; state < 50; state++) {
+    const w = world();
     assert.deepEqual(killAt(w, state, "caterpie", true), [STARDUST.elite]);
-    const before = player.stardust;
     assert.deepEqual(killAt(w, state, "scyther"), []);
-    // A guardian that is also flagged elite still gives its 100 only.
-    assert.deepEqual(killAt(w, state, "scyther", true), []);
-    assert.equal(player.stardust - before, 2 * STARDUST.guardian);
+    assert.equal(w.players[0].stardust, STARDUST.guardian);
+    // One guardian per field. An elite-flagged guardian still gives only its guardian bonus.
+    const other = world();
+    assert.deepEqual(killAt(other, state, "scyther", true), []);
+    assert.equal(other.players[0].stardust, STARDUST.guardian);
   }
 });
 
@@ -266,6 +267,7 @@ test("a stardust pickup is credited once, scaled by stardust gain", () => {
 test("the last guardian reward and remaining ground stardust are carried out exactly once", () => {
   const w = createWorld({
     stage: "tower",
+    route: routeTo("tower"),
     seed: 7,
     difficulty: 0,
     players: [{ starter: "charmander" }],
@@ -279,12 +281,16 @@ test("the last guardian reward and remaining ground stardust are carried out exa
   assert.equal(w.zone.phase, "cleared");
   assert.equal(w.outcome, "playing");
   assert.equal(player.stardust, STARDUST.guardian);
-  // The fallen guardian opens the exit: leaving the last zone wins the run.
-  const exit = w.zone.exit;
-  assert.ok(exit);
-  player.x = exit.x;
-  player.z = exit.z;
-  stepWorld(w, [{ t: "interact", player: 0 }]);
+  const exit = w.zone.exits[0];
+  Object.assign(player, { x: exit.x, px: exit.x, z: exit.z, pz: exit.z });
+  stepWorld(w, [{ t: "interact", player: player.id }]);
+  assert.equal(w.outcome, "playing");
+  assert.equal(player.stardust, STARDUST.guardian + 5);
+  while (player.pending.length) {
+    const card = player.pending[0];
+    stepWorld(w, [{ t: "pick", player: player.id, card: card.id, index: 0 }]);
+  }
+  selectTestExit(w, null);
   assert.equal(w.outcome, "victory");
   // The ended world no longer moves, so what the run carries out is fixed.
   for (let i = 0; i < 30; i++) stepWorld(w, []);

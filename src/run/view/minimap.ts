@@ -23,10 +23,12 @@ import {
   MapLayers,
   PRESSURE_SECTORS,
   loadMapIcon,
+  loadMarkerIcons,
   stationIconUrls,
   type MapTransform,
 } from "./minimapLayers";
 import { FieldMapMarks, loadSiteIcons } from "./fieldMapMarks";
+import { routeLights } from "./routeLook";
 
 const MINI_RADIUS = 22,
   ICON_RIM = 0.84,
@@ -59,6 +61,12 @@ class TerrainPaint {
     terrain: { value: null as DataTexture | null },
     mapAlpha: { value: 1 },
     paintAlpha: { value: 1 },
+    /** Fog modifier: the paper washes to mist (0–1). */
+    mapMist: { value: 0 },
+    /** Dark cave: paper outside the lights (world x, z, r) shades toward navy. */
+    mapDark: { value: 0 },
+    mapLightCount: { value: 0 },
+    mapLights: { value: Array.from({ length: 4 }, () => new Vector3()) },
     pressure: { value: new Float32Array(PRESSURE_SECTORS * 4) },
   };
   private readonly geometry = new PlaneGeometry(1, 1);
@@ -79,6 +87,7 @@ class TerrainPaint {
       shader.fragmentShader =
         `varying vec2 mapUv;uniform float mapSize;uniform vec4 mapAffine;uniform vec2 mapOrigin;
         uniform sampler2D terrain;uniform float mapAlpha;uniform float paintAlpha;
+        uniform float mapMist;uniform float mapDark;uniform int mapLightCount;uniform vec3 mapLights[4];
         ${full ? "" : `uniform vec4 pressure[${PRESSURE_SECTORS}];`}
         float mapSegment(vec2 p,vec2 a,vec2 b){vec2 v=b-a;return length(p-a-v*clamp(dot(p-a,v)/dot(v,v),0.,1.));}\n` +
         shader.fragmentShader;
@@ -91,6 +100,10 @@ class TerrainPaint {
         vec2 world=vec2(mapAffine.w*p.x-mapAffine.y*p.y,-mapAffine.z*p.x+mapAffine.x*p.y)/determinant;
         vec2 coord=(world+${BAKE_HALF.toFixed(1)})/${(BAKE_HALF * 2).toFixed(1)};
         vec4 color=texture2D(terrain,coord);
+        float mapLit=0.;
+        for(int i=0;i<4;i++){if(i>=mapLightCount)break;mapLit=max(mapLit,1.-smoothstep(mapLights[i].z*.8,mapLights[i].z,length(world-mapLights[i].xy)));}
+        color.rgb=mix(color.rgb,sRGBTransferEOTF(vec4(.106,.153,.255,1.)).rgb,.62*mapDark*(1.-mapLit));
+        color.rgb=mix(color.rgb,sRGBTransferEOTF(vec4(.875,.906,.918,1.)).rgb,.78*mapMist);
         float valid=step(0.,coord.x)*step(coord.x,1.)*step(0.,coord.y)*step(coord.y,1.);
         ${
           full
@@ -149,6 +162,16 @@ class TerrainPaint {
     this.uniforms.mapOrigin.value.set(map.ox, map.oy);
     this.uniforms.paintAlpha.value = alpha;
   }
+  /** The map modifier's paper: mist under fog, the lit circles in a dark cave. */
+  setModifier(world: World, alpha: number): void {
+    this.uniforms.mapMist.value = world.modifier === "fog" ? 1 : 0;
+    const lights = routeLights(world, alpha);
+    this.uniforms.mapDark.value = world.modifier === "dark-cave" ? 1 : 0;
+    const count = Math.min(4, lights.length);
+    this.uniforms.mapLightCount.value = count;
+    for (let i = 0; i < count; i++)
+      this.uniforms.mapLights.value[i]!.set(lights[i]!.x, lights[i]!.z, lights[i]!.r);
+  }
   restore(): void {
     this.material.needsUpdate = true;
   }
@@ -175,6 +198,7 @@ export function createMinimap(
     loadMapIcon(url, () => stage.invalidate()),
   );
   const siteTextures = loadSiteIcons(world, () => stage.invalidate());
+  const markerTextures = loadMarkerIcons(() => stage.invalidate());
   const mini = new Container({
     width: 184,
     height: 184,
@@ -232,8 +256,8 @@ export function createMinimap(
   });
   mini.add(miniTerrain.content, mapCap);
   fullPanel.add(fullTerrain.content);
-  const miniLayers = new MapLayers(mini, 1.6, textures, 10, local),
-    fullLayers = new MapLayers(fullPanel, 2.4, textures, 21, local);
+  const miniLayers = new MapLayers(mini, 1.6, textures, 10, local, markerTextures),
+    fullLayers = new MapLayers(fullPanel, 2.4, textures, 21, local, markerTextures);
   miniTerrain.uniforms.pressure.value = miniLayers.pressure;
   const miniSites = new FieldMapMarks(mini, siteTextures, 10),
     fullSites = new FieldMapMarks(fullPanel, siteTextures, 21);
@@ -270,6 +294,7 @@ export function createMinimap(
       });
       danger += (threat(lastWorld, px, pz) - danger) * Math.min(1, dt * 2.5);
       miniTerrain.setMap(map, miniSize, 0.86 + 0.12 * danger);
+      miniTerrain.setModifier(lastWorld, alpha);
       miniLayers.update(
         lastWorld,
         alpha,
@@ -287,6 +312,7 @@ export function createMinimap(
       const k = fullSize / (FULL_HALF * 2);
       Object.assign(map, { xx: k, xz: 0, zx: 0, zz: k, ox: fullSize / 2, oy: fullSize / 2 });
       fullTerrain.setMap(map, fullSize, 1);
+      fullTerrain.setModifier(lastWorld, alpha);
       fullLayers.update(lastWorld, alpha, yaw, map, fullSize, 1.5, Infinity, 1, true);
       fullSites.update(lastWorld, alpha, map, fullSize, 1.5, Infinity, true);
     }
@@ -401,7 +427,8 @@ export function createMinimap(
     restore() {
       // Three reuploads the retained CPU data / icon images into whichever UI context is restored.
       base.needsUpdate = true;
-      for (const texture of [...textures, ...siteTextures.values()]) texture.needsUpdate = true;
+      for (const texture of [...textures, ...siteTextures.values(), ...markerTextures.values()])
+        texture.needsUpdate = true;
       miniTerrain.restore();
       fullTerrain.restore();
       miniLayers.restore();
@@ -420,7 +447,8 @@ export function createMinimap(
       fullSites.releaseUploads();
       // These textures are borrowed by shader closures, outside the stage's material traversal.
       base.dispose();
-      for (const texture of [...textures, ...siteTextures.values()]) texture.dispose();
+      for (const texture of [...textures, ...siteTextures.values(), ...markerTextures.values()])
+        texture.dispose();
     },
     dispose() {
       stage.motion.cancel(pose);
@@ -430,7 +458,8 @@ export function createMinimap(
       fullSites.dispose();
       miniTerrain.dispose();
       fullTerrain.dispose();
-      for (const texture of [...textures, ...siteTextures.values()]) texture.dispose();
+      for (const texture of [...textures, ...siteTextures.values(), ...markerTextures.values()])
+        texture.dispose();
       base.dispose();
       mapCap.dispose();
       closeCap.dispose();

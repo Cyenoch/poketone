@@ -6,14 +6,24 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 import { isMainThread, parentPort, Worker, workerData } from "node:worker_threads";
 import { pack, unpack } from "../src/network/wire.ts";
+import { killEnemy } from "../src/run/sim/combat.ts";
 import { stageDefs } from "../src/run/sim/content/stages/index.ts";
+import { spawnEnemy } from "../src/run/sim/director.ts";
+import { EnemyGrid } from "../src/run/sim/grid.ts";
 import { generateMap } from "../src/run/sim/mapgen/index.ts";
 import { cos, sin } from "../src/run/sim/math.ts";
 import { mobilityClasses } from "../src/run/sim/content/mobility.ts";
 import { refreshFlowFields, requestFlowField } from "../src/run/sim/nav/index.ts";
 import { restoreWorld, snapshotWorld } from "../src/run/sim/snapshot.ts";
 import { playerStats } from "../src/run/sim/stats.ts";
-import { createWorld, stepWorld } from "../src/run/sim/world.ts";
+import {
+  createWorld,
+  createWorldFromSeeds,
+  stepSharedWorld,
+  stepWorld,
+} from "../src/run/sim/world.ts";
+import { enterZone, prepareZone } from "../src/run/sim/zones.ts";
+import { routeTo, selectTestExit } from "./fixtures/route.mjs";
 import { answerCard, eventFacts, project, SAMPLE_EVERY, STAGE_TICKS } from "./golden.mjs";
 
 /** Golden's "coop/charmander+squirtle/d1/s7" case (determinism/run.mjs exports golden's CASES itself). */
@@ -158,7 +168,11 @@ function restoreInWorker(snapshot, commands) {
 if (isMainThread) {
   for (const stage of Object.keys(stageDefs)) {
     test(`${stage}: a real co-op map and snapshot survive the network codec and continue identically`, () => {
-      const world = createWorld({ stage, ...CASE });
+      let seed = CASE.seed;
+      const world = createWorldFromSeeds(
+        { stage, route: routeTo(stage), difficulty: CASE.difficulty, players: CASE.players },
+        () => seed++,
+      );
       const snapshot = snapshotWorld(world);
       assert.deepStrictEqual(
         JSON.parse(JSON.stringify(snapshot.navigation)),
@@ -182,7 +196,7 @@ if (isMainThread) {
 
   for (const mobility of ["swim", "amphibious"]) {
     test(`coast: codec restoration preserves a running ${mobility} field and its published routes`, () => {
-      const world = createWorld({ stage: "coast", ...CASE });
+      const world = createWorld({ stage: "coast", route: routeTo("coast"), ...CASE });
       for (const player of world.players) player.x += 3;
       const layer = requestFlowField(world.nav, mobilityClasses[mobility]);
       world.nav.cursor = world.nav.layers.indexOf(layer);
@@ -200,8 +214,95 @@ if (isMainThread) {
     });
   }
 
+  test("快照保留已选出口、实走路线、入图标记和词条，以及各自的耿鬼交易", () => {
+    const world = createWorld({ stage: "forest", ...CASE, seed: 2 });
+    selectTestExit(world, "coast");
+    enterZone(world, prepareZone(world));
+    const leaving = selectTestExit(world, "volcano");
+    const chosen = world.zone.exits[leaving];
+    const { modifier } = prepareZone(world);
+    assert.equal(chosen.marker, "gengar-deal");
+    assert.ok(modifier, "种子 2 的火山应带地图词条");
+
+    const traveling = restoreWorld(world.map, unpack(pack(snapshotWorld(world))));
+    assert.deepEqual(traveling.route, ["forest", "coast"]);
+    assert.deepEqual(traveling.zone.exits, world.zone.exits);
+    assert.equal(traveling.zone.leaving, leaving);
+    enterZone(traveling, prepareZone(traveling));
+    assert.equal(traveling.stage, "volcano");
+
+    const altar = traveling.sites.find((site) => site.kind === "gengar-deal");
+    assert.ok(altar);
+    for (const player of traveling.players)
+      Object.assign(player, { x: altar.x, z: altar.z, px: altar.x, pz: altar.z });
+    const [host, guest] = traveling.players;
+    stepSharedWorld(traveling, [
+      { t: "interact", player: host.id },
+      { t: "interact", player: guest.id },
+    ]);
+    const [hostDeal] = host.pending;
+    const [guestDeal] = guest.pending;
+    assert.equal(hostDeal?.offer?.site, altar.id);
+    assert.equal(guestDeal?.offer?.site, altar.id);
+    stepSharedWorld(traveling, [{ t: "pick", player: host.id, card: hostDeal.id, index: 0 }]);
+    assert.ok(host.tradeHp < 1, "房主先完成自己的交易");
+
+    const restored = restoreWorld(traveling.map, unpack(pack(snapshotWorld(traveling))));
+    assert.deepEqual(restored.route, ["forest", "coast", "volcano"]);
+    assert.equal(restored.marker, chosen.marker);
+    assert.equal(restored.modifier, modifier);
+    const [restoredHost, restoredGuest] = restored.players;
+    const restoredAltar = restored.sites.find((site) => site.id === altar.id);
+    assert.deepEqual(restoredAltar.data.traded, [host.id]);
+    assert.deepEqual(
+      restored.players.map((player) => player.tradeHp),
+      [host.tradeHp, 1],
+    );
+    assert.deepEqual(restoredGuest.pending[0], guestDeal);
+
+    stepSharedWorld(restored, [
+      { t: "interact", player: restoredHost.id },
+      { t: "pick", player: restoredGuest.id, card: guestDeal.id, index: 0 },
+    ]);
+    assert.ok(restoredHost.pending.every((card) => card.offer?.kind !== "deal"));
+    assert.deepEqual(restoredAltar.data.traded, [host.id, guest.id]);
+    assert.deepEqual(
+      restored.players.map((player) => player.tradeHp),
+      [host.tradeHp, host.tradeHp],
+    );
+  });
+
+  test("恢复飞行中的守卫奖杯后，离区只向所属席位结算", () => {
+    const world = createWorld({ stage: "forest", ...CASE });
+    const [host, guest] = world.players;
+    const guardian = spawnEnemy(world, "scyther", host.x, host.z);
+    guardian.hp = 0;
+    killEnemy({ world, grid: new EnemyGrid() }, guardian, null);
+    const restored = restoreWorld(world.map, unpack(pack(snapshotWorld(world))));
+    assert.deepEqual(
+      restored.pickups.filter((pickup) => pickup.kind === "trophy").map((pickup) => pickup.owner),
+      [host.id, guest.id],
+    );
+    selectTestExit(restored, "coast");
+    enterZone(restored, prepareZone(restored));
+    const trophies = restored.players.map((player) =>
+      player.pending.filter((card) => card.offer?.kind === "trophy"),
+    );
+    assert.deepEqual(
+      trophies.map((cards) => cards.length),
+      [1, 1],
+    );
+    assert.notEqual(trophies[0][0].id, trophies[1][0].id);
+    assert.deepEqual(
+      restored.events
+        .filter((event) => event.t === "route" && event.kind === "trophy")
+        .map((event) => event.player),
+      [host.id, guest.id],
+    );
+  });
+
   test("snapshot boundaries reject invalid mobility, layer order, format and non-finite data", () => {
-    const world = createWorld({ stage: "coast", ...CASE });
+    const world = createWorld({ stage: "coast", route: routeTo("coast"), ...CASE });
     const snapshot = snapshotWorld(world);
     for (const [mutate, error] of [
       [(value) => (value.navigation.layers[1].mobility = "toString"), /机动类别无效/],
@@ -211,10 +312,17 @@ if (isMainThread) {
       [(value) => (value.version -= 1), /快照格式/],
       [(value) => delete value.spawn.pressure, /快照增援压力无效/],
       [(value) => (value.spawn.pressure = 2), /快照增援压力无效/],
-      [(value) => delete value.zone.exit, /快照出口无效/],
-      [(value) => (value.zone.exit = { x: 0 }), /快照出口无效/],
+      [(value) => delete value.zone.exits, /快照出口无效/],
+      [(value) => (value.zone.leaving = 0), /快照出口无效/],
       [(value) => (value.zone.phase = "cleared"), /快照出口无效/],
-      [(value) => (value.zone.exit = { x: 0, z: 0 }), /快照出口无效/],
+      [
+        (value) =>
+          Object.assign(value.zone, {
+            phase: "cleared",
+            exits: [{ x: 0, z: 0, to: "tower", marker: "chests" }],
+          }),
+        /快照出口无效/,
+      ],
       [(value) => delete value.zone.schedule, /zone.schedule/],
       [(value) => (value.spawn.fired = [value.zone.schedule.length]), /spawn.fired/],
       [(value) => (value.eventsUsed = ["horde", "horde"]), /eventsUsed/],
@@ -231,6 +339,42 @@ if (isMainThread) {
     }
     world.nav.clock = Infinity;
     assert.throws(() => snapshotWorld(world), /不是有限数/);
+  });
+
+  test("route snapshots preserve a complete exit group and only award victory at a selected tower exit", () => {
+    const world = createWorld({ stage: "forest", ...CASE });
+    selectTestExit(world, "coast");
+    const snapshot = snapshotWorld(world);
+    for (const [mutate, error] of [
+      [(value) => (value.modifier = "fog"), /modifier/],
+      [(value) => (value.marker = "research"), /marker/],
+      [(value) => (value.zone.exits[0].marker = "gengar-deal"), /快照出口无效/],
+      [(value) => (value.zone.exits[1].marker = value.zone.exits[0].marker), /快照出口无效/],
+      [
+        (value) => {
+          value.zone.exits = [value.zone.exits[0]];
+          value.zone.leaving = 0;
+        },
+        /快照出口无效/,
+      ],
+      [
+        (value) => {
+          value.zone.phase = "cleared";
+          value.outcome = "victory";
+        },
+        /快照出口无效/,
+      ],
+    ]) {
+      const invalid = structuredClone(snapshot);
+      mutate(invalid);
+      assert.throws(() => restoreWorld(world.map, invalid), error);
+    }
+    const tower = createWorld({ ...CASE, stage: "tower", route: routeTo("tower") });
+    selectTestExit(tower, null);
+    const terminal = snapshotWorld(tower);
+    assert.equal(restoreWorld(tower.map, terminal).outcome, "victory");
+    terminal.zone.leaving = null;
+    assert.throws(() => restoreWorld(tower.map, terminal), /快照出口无效/);
   });
 
   test("snapshots exclude static map data and restore against the complete GeneratedMap", () => {

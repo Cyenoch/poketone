@@ -48,6 +48,8 @@ export const siteModelOf: Record<SiteKind, SiteModel | "snorlax" | null> = {
   glint: null,
   ghost: "gengar-altar",
   "silph-scope": "item-ball",
+  // Gengar's deal shares the altar prop until its own model lands (add-route-branches 4.1).
+  "gengar-deal": "gengar-altar",
 };
 
 const GOLD = "#ffd45b",

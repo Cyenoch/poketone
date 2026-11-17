@@ -4,7 +4,7 @@
   "sourceThread": "thread:delegated-task:command%3Amcp%3A7eedaf2b-1ef9-4672-8be7-6649f1cdcb08%3Adelegate-task%3A15e3d4d6-3ccd-46ed-b2ef-394149266c3a",
   "humanAudition": false,
   "published": false,
-  "scope": "add-field-events:1.4 only. Per-asset records retain all generated take IDs, prices, rejections and rawRetained flags. Status/QC describes original production, not a new runtime or device acceptance. Shared batch estimates and verification are not allocated to field; the original mixed source remains for subsequent changes.",
+  "scope": "add-field-events:1.4 + add-route-branches:4.2. Status, humanAudition and published describe the original production session. Current shipping selections are in manifest.json and bank.json. Costs are actual per-generation credits.",
   "assets": {
     "weather-sun": {
       "task": "add-field-events:1.4",
@@ -3480,17 +3480,348 @@
         "published": false,
         "costScope": "Hail rework only; mixed-batch cumulative totals remain in the original source, outside field expenditure."
       }
+    },
+    "exit-pick": {
+      "task": "add-route-branches:4.2",
+      "nodeId": "yye6nANx47X428O7RDyA",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-exit-pick-1.mp3",
+          "sessionId": "PVR4CZs3HLDllhSBUMwo",
+          "generationId": "JvsJTPgl4MFxWVx0TmBi",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "7bcd95c4a2b2c32f7a24c52b1d347e76bcd42cdfba28a5fbf03d9de3967f0c09",
+          "rawQc": {
+            "lenMs": 1000,
+            "peakDb": -8.313756993913024,
+            "onsetMs": 0,
+            "attackMs": 20.045351473922903,
+            "decayMs": 240.54421768707482,
+            "centroidHz": 877.3047007282597,
+            "above4kPercent": 0.012229524002504,
+            "tonalPercent": 49.311635775410615,
+            "flags": []
+          },
+          "selected": true,
+          "rawRetained": true,
+          "prompt": "A soft warm rounded whoosh sweeping forward like stepping through a doorway, with a gentle low wooden thud at the start, mid-range audible on a small speaker, no sparkle, no bell, no high-pitched tone, no hiss, dry close-mic, no reverb, no music, no voice",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-exit-pick-2.mp3",
+          "sessionId": "RyJ8WgtHOsb7kr1L4wMn",
+          "generationId": "z2Ag46f9ha8Ijrfm1TFS",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "1549ea194bc5d3a49a88e9b9f3410a386eed4bc32c9a4606c622b7bd3b4e3af2",
+          "rawQc": {
+            "lenMs": 1000.0,
+            "peakDb": -7.0,
+            "onsetMs": 0.0,
+            "attackMs": 30.0,
+            "decayMs": 286.0,
+            "centroidHz": 299.0,
+            "above4kPercent": 0.0,
+            "tonalPercent": 44.0,
+            "flags": ["LOW"]
+          },
+          "selected": false,
+          "rawRetained": false
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "intendedShip": "exit-pick",
+      "masters": [
+        {
+          "file": "exit-pick.flac",
+          "raw": "sfx-exit-pick-1.mp3",
+          "rmsDb": -22.0114072501228,
+          "peakDb": -8.980989180081764,
+          "centroidHz": 885.0134621461351,
+          "above4kPercent": 0.009694099232189304,
+          "tonalPercent": 49.8453556344413,
+          "flags": [],
+          "lenMs": 356,
+          "hitMs": 0,
+          "peakMs": 20,
+          "sha256": "ffe47ca70277dda76e55f30865404fddbe69765985dd8ff5b7ab5f0aef4adec6",
+          "bytes": 21064
+        }
+      ],
+      "visualTimingSuggestion": {
+        "keyMs": 0,
+        "verified": false,
+        "note": "Proposed only. Use this lead-in only if actual VFX has preparation up to this key; otherwise use keyMs=0 with source offset. Bound playback by actual effect end.",
+        "formula": "startAt = event + keyMs - hitMs; never start before event; a negative delay uses source offset."
+      },
+      "qcAdvisories": []
+    },
+    "gengar-deal": {
+      "task": "add-route-branches:4.2",
+      "nodeId": "VjTLlr3gwVsQcReQBcnc",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-gengar-deal-1.mp3",
+          "sessionId": "zfE9yjVzuZ5wO1kKhH8Z",
+          "generationId": "CXOkqkyBiPCSqxxTH7dK",
+          "credits": 5.9994,
+          "bytes": 46426,
+          "sha256": "51624be20f42094411ba28d2489790443745e2a8b26e6b2246a479135cba3133",
+          "rawQc": {
+            "lenMs": 1760,
+            "peakDb": -23.60492372503449,
+            "onsetMs": 0,
+            "attackMs": 25.05668934240363,
+            "decayMs": 641.4512471655329,
+            "centroidHz": 155.85222455148926,
+            "above4kPercent": 0.0011573193087840701,
+            "tonalPercent": 21.884789496261423,
+            "flags": ["LOW"]
+          },
+          "prompt": "A slow ominous deal being struck: a heavy dull wooden knock, then a low rounded hollow descending hum with a soft eerie airy whoosh, mysterious but not scary, mid-range audible on a small speaker, no voice, no whisper, no laugh, no siren, no high-pitched tone, dry close-mic, no reverb, no music",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-gengar-deal-2.mp3",
+          "sessionId": "2Uto4x8lSnFoODS0qmlG",
+          "generationId": "6jBZy6ANhakWMYJfFN8X",
+          "credits": 5.9994,
+          "bytes": 46426,
+          "sha256": "636a091061de4d03eeba092b48b7db357fec001e0fa49084e209d2a8077b6d09",
+          "rawQc": {
+            "lenMs": 1760,
+            "peakDb": -28.809149689664842,
+            "onsetMs": 0,
+            "attackMs": 35.07936507936508,
+            "decayMs": 456.031746031746,
+            "centroidHz": 181.99273819120648,
+            "above4kPercent": 0.0026898904995307947,
+            "tonalPercent": 28.25261533171166,
+            "flags": ["LOW"]
+          },
+          "prompt": "A slow ominous deal being struck: a heavy dull wooden knock, then a low rounded hollow descending hum with a soft eerie airy whoosh, mysterious but not scary, mid-range audible on a small speaker, no voice, no whisper, no laugh, no siren, no high-pitched tone, dry close-mic, no reverb, no music",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-gengar-deal-3.mp3",
+          "sessionId": "I1ILBTr8FMIWpCuJr3BQ",
+          "generationId": "Lyu0OVdG03jGdIMIhH3F",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "3055bc71cdaaee7458466bec16fa35055ceae836ae4f3231e223bab49921ba76",
+          "prompt": "A mischievous cartoon hollow wooden knock followed by a rubbery descending wobble, throaty midrange body, no sub-bass, no voice, no laugh, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 1000,
+            "peakDb": -9.112522711621475,
+            "onsetMs": 0,
+            "attackMs": 0,
+            "decayMs": 90.20408163265306,
+            "centroidHz": 676.6302294708037,
+            "above4kPercent": 0.023847733081407686,
+            "tonalPercent": 32.463566277953376,
+            "flags": []
+          }
+        },
+        {
+          "file": "sfx-gengar-deal-4.mp3",
+          "sessionId": "ILbNyKFiRx5Inpaqgrrf",
+          "generationId": "Pq1eCQhsDdyuWxGuz1ZO",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "0ba634d66372e84eee6a580421bdb3a856e7cb52ad2b5f734d3e8752c543bdf8",
+          "prompt": "A mischievous cartoon hollow wooden knock followed by a rubbery descending wobble, throaty midrange body, no sub-bass, no voice, no laugh, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 1000,
+            "peakDb": -0.3850129965270829,
+            "onsetMs": 0,
+            "attackMs": 30.068027210884352,
+            "decayMs": 95.21541950113378,
+            "centroidHz": 857.7258544853793,
+            "above4kPercent": 0.019990044750977987,
+            "tonalPercent": 20.63192670921974,
+            "flags": []
+          }
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "blockingFlags": ["LOW"],
+      "masters": [
+        {
+          "file": "gengar-deal-1.flac",
+          "raw": "sfx-gengar-deal-3.mp3",
+          "rmsDb": -22.497908005771563,
+          "peakDb": -2.9992390013763655,
+          "centroidHz": 676.2763636928449,
+          "above4kPercent": 0.0016691263249344493,
+          "tonalPercent": 33.3457043864286,
+          "flags": [],
+          "lenMs": 476,
+          "hitMs": 0,
+          "peakMs": 0,
+          "sha256": "1ebf6afae68c27e6c366012395eda5ae2d0e831d539de27bdd705a231d16981d",
+          "bytes": 24879
+        },
+        {
+          "file": "gengar-deal-2.flac",
+          "raw": "sfx-gengar-deal-4.mp3",
+          "rmsDb": -22.00089927851185,
+          "peakDb": -4.142833839229848,
+          "centroidHz": 861.7048221159916,
+          "above4kPercent": 0.01983937429238653,
+          "tonalPercent": 20.586496027255862,
+          "flags": [],
+          "lenMs": 321,
+          "hitMs": 25,
+          "peakMs": 30,
+          "sha256": "b9c2ae5ddfdfd7f815a61dea7930624af69cff48cd22e698515cee1209c5f790",
+          "bytes": 19176
+        }
+      ],
+      "visualTimingSuggestion": {
+        "keyMs": 0,
+        "verified": false,
+        "note": "Proposed only. Use this lead-in only if actual VFX has preparation up to this key; otherwise use keyMs=0 with source offset. Bound playback by actual effect end.",
+        "formula": "startAt = event + keyMs - hitMs; never start before event; a negative delay uses source offset."
+      },
+      "qcAdvisories": []
+    },
+    "trophy": {
+      "task": "add-route-branches:4.2",
+      "nodeId": "zaYK2xgCdn5QKGyZUzLO",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-trophy-1.mp3",
+          "sessionId": "KpaPoYMITChhR5FtDVbU",
+          "generationId": "ih0wJzdSpblyUjl3jkAl",
+          "credits": 4.9995,
+          "bytes": 41828,
+          "sha256": "fb417d2b620202b4eff8d6fb9c737628f9c493724ca1ec3b9ea06063def96164",
+          "rawQc": {
+            "lenMs": 1480,
+            "peakDb": -1.8064399682756944,
+            "onsetMs": 0,
+            "attackMs": 345.78231292517006,
+            "decayMs": 496.1224489795918,
+            "centroidHz": 969.0200906298395,
+            "above4kPercent": 0.0004353906027678521,
+            "tonalPercent": 32.87318200480539,
+            "flags": []
+          },
+          "selected": true,
+          "rawRetained": true,
+          "prompt": "A warm rounded mini fanfare of two short mellow brass notes rising, with a soft felt-mallet marimba flourish, triumphant but gentle, no bell, no sparkle, no shrill, no high-pitched tone, dry close-mic, no reverb, no voice",
+          "params": {
+            "duration_seconds": 1.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-trophy-2.mp3",
+          "sessionId": "6uSk8INPtMHLMes0rCkn",
+          "generationId": "05RKTyBK3BXM52VbDzYW",
+          "credits": 4.9995,
+          "bytes": 41828,
+          "sha256": "ef7f6fb525bdd7c5b278dce4d3d356188ec7540f98fb8e12ac4bd3fd9c2b9762",
+          "rawQc": {
+            "lenMs": 1480,
+            "peakDb": -15.716266710851954,
+            "onsetMs": 0,
+            "attackMs": 5.011337868480726,
+            "decayMs": 165.37414965986395,
+            "centroidHz": 1150.318335591745,
+            "above4kPercent": 0.008628141899327778,
+            "tonalPercent": 30.81423311768352,
+            "flags": []
+          },
+          "selected": true,
+          "rawRetained": true,
+          "prompt": "A warm rounded mini fanfare of two short mellow brass notes rising, with a soft felt-mallet marimba flourish, triumphant but gentle, no bell, no sparkle, no shrill, no high-pitched tone, dry close-mic, no reverb, no voice",
+          "params": {
+            "duration_seconds": 1.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "intendedShip": "trophy",
+      "masters": [
+        {
+          "file": "trophy-1.flac",
+          "raw": "sfx-trophy-1.mp3",
+          "rmsDb": -18.002856338905694,
+          "peakDb": -4.895421976300231,
+          "centroidHz": 973.265878651042,
+          "above4kPercent": 0.00042060449913905164,
+          "tonalPercent": 33.02771427201608,
+          "flags": [],
+          "lenMs": 907,
+          "hitMs": 0,
+          "peakMs": 346,
+          "sha256": "0629a8a6763ee353b95cbb5c627d3271f0bbe2976044b9be5e1944eb08516779",
+          "bytes": 45978
+        },
+        {
+          "file": "trophy-2.flac",
+          "raw": "sfx-trophy-2.mp3",
+          "rmsDb": -18.893541982693186,
+          "peakDb": -1.0025315996254927,
+          "centroidHz": 1155.525570436239,
+          "above4kPercent": 0.006750740079561101,
+          "tonalPercent": 31.26575467238748,
+          "flags": [],
+          "lenMs": 626,
+          "hitMs": 0,
+          "peakMs": 5,
+          "sha256": "d776ce09d2f0630bf34000d17bc8e5a58bb21023438976ae68c5573d8c4a6f8b",
+          "bytes": 31450
+        }
+      ],
+      "visualTimingSuggestion": {
+        "keyMs": 0,
+        "verified": false,
+        "note": "Proposed only. Use this lead-in only if actual VFX has preparation up to this key; otherwise use keyMs=0 with source offset. Bound playback by actual effect end.",
+        "formula": "startAt = event + keyMs - hitMs; never start before event; a negative delay uses source offset."
+      },
+      "qcAdvisories": []
     }
   },
   "generationSummary": {
-    "nodesReused": 15,
-    "originalCompletedTakes": 34,
-    "originalCredits": 552.6114,
-    "reworkCompletedTakes": 64,
-    "reworkCredits": 589.2744,
-    "completedTakes": 98,
+    "nodesReused": 18,
+    "originalCompletedTakes": 40,
+    "originalCredits": 581.2752,
+    "reworkCompletedTakes": 66,
+    "reworkCredits": 595.9404,
+    "completedTakes": 106,
     "failedGenerations": 0,
-    "credits": 1141.8858,
+    "credits": 1177.2156,
     "costSource": "creative_get_flow_run_status generation.price.credits, not rounded run credit_costs. Estimates recorded per round; every round <1000 credits.",
     "generationCallsPerNode": {
       "weather-sun": 2,
@@ -3507,10 +3838,13 @@
       "loop-weather-sun": 3,
       "loop-weather-rain": 4,
       "loop-weather-sand": 1,
-      "loop-weather-hail": 5
+      "loop-weather-hail": 5,
+      "exit-pick": 1,
+      "gengar-deal": 2,
+      "trophy": 1
     },
-    "unselectedTakes": 69,
-    "retainedRawFiles": 31,
+    "unselectedTakes": 72,
+    "retainedRawFiles": 36,
     "rawRetentionNote": "Previously deleted unselected raw files are represented by their complete generation metadata and rawRetained:false. This split neither deletes nor regenerates audio."
   },
   "frequencyPolicy": "Repeated casts, digging and tell pools requested 4 takes, rare interactions/achievements/assists and each weather loop requested 2. frequent=true applies conservative QC to repeated-cue candidates; it is not a measured per-second runtime rate.",
@@ -3527,10 +3861,11 @@
         "egg-hatch",
         "tell-voltorb",
         "loop-weather-sun",
-        "loop-weather-rain"
+        "loop-weather-rain",
+        "gengar-deal"
       ],
-      "actualCredits": 153.9846,
-      "downloadedGenerations": 24,
+      "actualCredits": 160.6506,
+      "downloadedGenerations": 26,
       "generationIds": [
         "2c5ArunhBnMdhAAq8ffY",
         "DKLMilGSWnk8ruWKDeG3",
@@ -3555,7 +3890,9 @@
         "TWtEbd2hA7XOUZUquMob",
         "8B4q5QS3mZPuc2UVnUKV",
         "NDSsLFRII6PJerIM5ICh",
-        "3It9xvvc7E6rfBuOQ73v"
+        "3It9xvvc7E6rfBuOQ73v",
+        "Lyu0OVdG03jGdIMIhH3F",
+        "Pq1eCQhsDdyuWxGuz1ZO"
       ],
       "status": "completed-downloaded-decoded-measured"
     },
@@ -3670,6 +4007,9 @@
     "assets/audio/elevenlabs/manifest.json",
     "assets/audio/elevenlabs/master/egg-hatch-1.flac",
     "assets/audio/elevenlabs/master/egg-hatch-2.flac",
+    "assets/audio/elevenlabs/master/exit-pick.flac",
+    "assets/audio/elevenlabs/master/gengar-deal-1.flac",
+    "assets/audio/elevenlabs/master/gengar-deal-2.flac",
     "assets/audio/elevenlabs/master/loop-weather-hail.m4a",
     "assets/audio/elevenlabs/master/loop-weather-rain.m4a",
     "assets/audio/elevenlabs/master/loop-weather-sand.m4a",
@@ -3690,6 +4030,8 @@
     "assets/audio/elevenlabs/master/tell-voltorb-2.flac",
     "assets/audio/elevenlabs/master/tell-voltorb-3.flac",
     "assets/audio/elevenlabs/master/timing.json",
+    "assets/audio/elevenlabs/master/trophy-1.flac",
+    "assets/audio/elevenlabs/master/trophy-2.flac",
     "assets/audio/elevenlabs/master/weather-hail-1.flac",
     "assets/audio/elevenlabs/master/weather-hail-2.flac",
     "assets/audio/elevenlabs/master/weather-rain-1.flac",
@@ -3700,6 +4042,9 @@
     "assets/audio/elevenlabs/master/weather-sun-2.flac",
     "assets/audio/elevenlabs/raw/sfx-egg-hatch-7.mp3",
     "assets/audio/elevenlabs/raw/sfx-egg-hatch-8.mp3",
+    "assets/audio/elevenlabs/raw/sfx-exit-pick-1.mp3",
+    "assets/audio/elevenlabs/raw/sfx-gengar-deal-3.mp3",
+    "assets/audio/elevenlabs/raw/sfx-gengar-deal-4.mp3",
     "assets/audio/elevenlabs/raw/sfx-loop-weather-hail-1.mp3",
     "assets/audio/elevenlabs/raw/sfx-loop-weather-hail-2.mp3",
     "assets/audio/elevenlabs/raw/sfx-loop-weather-hail-9.mp3",
@@ -3721,6 +4066,8 @@
     "assets/audio/elevenlabs/raw/sfx-tell-voltorb-15.mp3",
     "assets/audio/elevenlabs/raw/sfx-tell-voltorb-19.mp3",
     "assets/audio/elevenlabs/raw/sfx-tell-voltorb-20.mp3",
+    "assets/audio/elevenlabs/raw/sfx-trophy-1.mp3",
+    "assets/audio/elevenlabs/raw/sfx-trophy-2.mp3",
     "assets/audio/elevenlabs/raw/sfx-weather-hail-3.mp3",
     "assets/audio/elevenlabs/raw/sfx-weather-hail-4.mp3",
     "assets/audio/elevenlabs/raw/sfx-weather-rain-3.mp3",
@@ -3736,6 +4083,9 @@
     "public/audio/bank.json",
     "public/audio/sfx/egg-hatch-1.flac",
     "public/audio/sfx/egg-hatch-2.flac",
+    "public/audio/sfx/exit-pick.flac",
+    "public/audio/sfx/gengar-deal-1.flac",
+    "public/audio/sfx/gengar-deal-2.flac",
     "public/audio/sfx/shiny-1.flac",
     "public/audio/sfx/shiny-2.flac",
     "public/audio/sfx/site-den-1.flac",
@@ -3751,6 +4101,8 @@
     "public/audio/sfx/tell-voltorb-1.flac",
     "public/audio/sfx/tell-voltorb-2.flac",
     "public/audio/sfx/tell-voltorb-3.flac",
+    "public/audio/sfx/trophy-1.flac",
+    "public/audio/sfx/trophy-2.flac",
     "public/audio/sfx/weather-hail-1.flac",
     "public/audio/sfx/weather-hail-2.flac",
     "public/audio/sfx/weather-rain-1.flac",

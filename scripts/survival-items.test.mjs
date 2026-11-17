@@ -124,6 +124,7 @@ test("S.S. Ticket adds a partner slot and Max Ether raises five-level items' cap
 
 test("Rare Candy's pick grants two whole levels and queues their cards behind the answered one", () => {
   const { world, player } = setup();
+  player.level = 10;
   player.pending.push({
     id: 77,
     source: "level",

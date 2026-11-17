@@ -94,7 +94,7 @@ Owner 简写：除 [createRun.ts](../../src/run/createRun.ts) 指 [src/run/creat
 
 - **所有者/定位**：[zones.ts:133,147](../../src/run/sim/zones.ts#L133)；[createRun.ts:824,1046](../../src/run/createRun.ts#L824)
 - **编码与逻辑状态**：`zone.phase=transitioning`、prepared.zone、`changingZone`、incoming World；requested→assembling→committed→scene/warm/ready→active
-- **守卫与转换**：出口置 transitioning；changeZone 单飞 guard；prepare 生成 scratch；enterZone 检查下一 index；guest incoming 整体替换；ready 才放开 changingZone
+- 房主按命令顺序将第一个有效出口序号写入 `zone.leaving`。去往下一图时，`prepareZone` 在临时世界生成该分支的地图、奖励标记与词条。`enterZone` 核对所选出口后提交，并将新地图追加到 `world.route`。客机接收完整地图并确认就绪，再恢复推进。
 - **终态/取消/恢复**：失败走 fail，不能继续 tick；disposed 中止；R/网络新地图恢复；本地 old view 先 dispose
 - **关键不变量**：prepare 不改 live world；新场景完成前即使 world.phase 已 active，也不能 advance；站点使用次数跨区
 - **测试/风险**：[zones.test.mjs:130,187,207](../../scripts/zones.test.mjs#L130)、[coop.test.mjs:125,444](../../scripts/coop.test.mjs#L125)。风险：模拟提交先于 scene 成功；失败没有回滚旧地图，依靠 failed 停止
@@ -127,7 +127,7 @@ Owner 简写：除 [createRun.ts](../../src/run/createRun.ts) 指 [src/run/creat
 
 - **所有者/定位**：[director.ts:378,429](../../src/run/sim/director.ts#L378)；[currentZone.ts:42](../../src/run/sim/currentZone.ts#L42)；[zones.ts:31,71](../../src/run/sim/zones.ts#L31)
 - **编码与逻辑状态**：`zone.phase,bossId,rampage`；未召唤→守卫存活→cleared/出口→transitioning 或 victory；rampage 是并行 latch
-- **守卫与转换**：活跃地标且 bossId=null 主动召唤；zone 时间>=stage.duration 自动 rampage 并补召唤；boss kill clearZone
+- 在活跃地标可主动召唤守卫，地图时限到达则进入狂暴并补召。守卫倒下后，`clearZone` 开出下一层各目的地的奖励出口。玩家通过自己所在的出口离开，紫苑塔的终点出口结算胜利。
 - **终态/取消/恢复**：Q 清场；Z 重置守卫/rampage；R 保留；clear 时已生成奖励后走普通拾取
 - **关键不变量**：在正规 interact/director 入口每区一守卫；summonGuardian 本身不做重复 guard；守卫出生生命/伤害/速度使用固定参考时点，不读取局部召唤时刻或玩家战力；狂暴仍增强增援；清场无额外击杀/掉落
 - **测试/风险**：[zones.test.mjs:57,102,130,394](../../scripts/zones.test.mjs#L57)。风险：直接调用 summonGuardian 绕过调用者 guard；rampage 清场后仍为 true 至 Z，不能单独用它判断战斗中
@@ -140,8 +140,9 @@ Owner 简写：除 [createRun.ts](../../src/run/createRun.ts) 指 [src/run/creat
 - **编码与逻辑状态**：pickup array、`magnet/kind/value`；ground→homing→collected；XP 可并堆
 - **守卫与转换**：非 chest 进入吸取半径开 magnet；clear 全开；距离<=0.8 结算移除；出口立即收剩余；>260 合并未磁吸 XP
 - **终态/取消/恢复**：Z 不带 pickups，离开前结清；全灭后停止；R 带磁吸/当前位置
-- **关键不变量**：XP/chest/stardust 发给全队（包括倒地），berry 仅最近活人；同一物体只一次 credit
-- **测试/风险**：[coop.test.mjs:92,330](../../scripts/coop.test.mjs#L92)、[zones.test.mjs:394,444](../../scripts/zones.test.mjs#L394)、[lab.test.mjs:191,209](../../scripts/lab.test.mjs#L191)。风险：最后出口结清会新排卡，此时可直接 victory；这是清场奖励与选卡的接缝
+- XP、宝箱与星尘发给全队，树果给最近的活人，奖杯按掉落时记录的席位结算。每份掉落只入账一次。
+- 塔关出口先收取剩余掉落，再检查选卡队列。单人处理完全部待选卡，多人等待在席玩家处理各自的奖杯。重连载入中的席位算在席，临时离线的席位保留待选卡。
+- 此流程由 [campaign.test.mjs](../../scripts/campaign.test.mjs)、[route-rewards.test.mjs](../../scripts/route-rewards.test.mjs) 与 [coop.test.mjs](../../scripts/coop.test.mjs) 覆盖。
 
 ## 2. 玩家生命、动作、成长与站点
 

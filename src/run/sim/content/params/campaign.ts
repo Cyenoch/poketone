@@ -1,34 +1,20 @@
-import type { StageId } from "../stages/index";
-
 /** Seconds per field; one continuous field per map, including the tower. */
 export const FIELD_SECONDS = { outdoor: 600, tower: 600 } as const;
 
 /** Reach of the exit a fallen guardian opens, and the rings searched for walkable ground around its fall. */
 export const EXIT_RADIUS = 2.4;
-export const EXIT_SEARCH = { rings: 12, step: 1 } as const;
+export const EXIT_SEARCH = { rings: 12, step: 1, branchRadius: 6, extraChance: 0.25 } as const;
 
 /** Seconds added to swarm and partner growth after entering each map. */
-export const CAMPAIGN_ENTRY_CLOCK: Record<StageId, number> = {
-  forest: 0,
-  desert: 480,
-  coast: 480,
-  glacier: 480,
-  volcano: 480,
-  tower: 480,
-};
+export const ROUTE_ENTRY_CLOCK = [0, 480, 480, 480] as const;
 
 /** Seconds to blend in the map's entry clock. */
 export const ENTRY_RAMP_SECONDS = 8;
 
 /** Fixed route baselines, independent of a player's equipment or elapsed loading time. */
-export const CAMPAIGN_GROWTH: Record<
-  StageId,
-  { hp: number; dmg: number; xp: number; guardian: number }
-> = {
-  forest: { hp: 0.8, dmg: 0.6, xp: 1, guardian: 0.24 },
-  desert: { hp: 1.2, dmg: 0.8, xp: 1.1, guardian: 0.65 },
-  coast: { hp: 2, dmg: 0.9, xp: 1.2, guardian: 1.6 },
-  glacier: { hp: 3, dmg: 1, xp: 1.3, guardian: 2.2 },
-  volcano: { hp: 4.5, dmg: 1.1, xp: 1.4, guardian: 3 },
-  tower: { hp: 6.5, dmg: 1.1, xp: 1.5, guardian: 3.5 },
-};
+export const ROUTE_GROWTH = [
+  { hp: 0.8, dmg: 0.6, xp: 1, guardian: 0.24 },
+  { hp: 1.13, dmg: 0.75, xp: 1, guardian: 0.78 },
+  { hp: 2.475, dmg: 0.9, xp: 1.65, guardian: 1.725 },
+  { hp: 6.5, dmg: 1.1, xp: 1.5, guardian: 3.5 },
+] as const;

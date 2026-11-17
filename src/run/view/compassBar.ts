@@ -6,13 +6,14 @@ import type { UiInsets } from "../../ui/gpu/viewport";
 import { cameraForward, cameraRight } from "../cameraYaw";
 import { findPlayer } from "../sim/combat";
 import { stationOpen } from "../sim/stations";
-import { landmarkOf } from "../sim/currentZone";
+import { landmarkOf, nearestExit } from "../sim/currentZone";
 import type { PlayerId } from "../sim/state/entities";
 import type { World } from "../sim/state/world";
 import { MapInk } from "./mapInk";
 import { loadMapIcon, stationIconUrls } from "./minimapLayers";
 import { fieldMarks, loadSiteIcons } from "./fieldMapMarks";
 import type { SiteKind } from "../sim/state/field";
+import { exitAccent, routeSight } from "./routeLook";
 const SPAN = (100 * Math.PI) / 180,
   PIN = (80 * Math.PI) / 180,
   TICK = (15 * Math.PI) / 180,
@@ -212,9 +213,10 @@ export function createCompassBar(
     const pin = (
       key: string,
       angle: number,
-      kind: "station" | "chest" | "boss" | "landmark" | "site",
+      kind: "station" | "chest" | "boss" | "landmark" | "site" | "exit",
       icon = 0,
       site?: SiteKind,
+      accent?: string,
     ) => {
       seen.add(key);
       let side = sides.get(key) ?? 1;
@@ -239,6 +241,7 @@ export function createCompassBar(
             ?.add(x, y, markSize - 8, markSize - 8, 9, "#fff", "#0d233f", 0, 0, opacity);
         }
       } else if (kind === "chest") shapes.add(x, y, 16, 16, 2, "#ffd45b", "#b48129", 2, 0, opacity);
+      else if (kind === "exit") shapes.add(x, y, 18, 18, 0, accent!, "#0d233f", 2.5, 0, opacity);
       else if (kind === "landmark") {
         const fill = value.zone.phase === "active" ? "#ffd45b" : "#bff4ff";
         shapes.add(x, y, 18, 18, 0, fill, "#0d233f", 2.5, 0, opacity);
@@ -258,8 +261,10 @@ export function createCompassBar(
         );
     };
     if (player.alive) {
+      // Fog keeps only the guardian's way; a dark cave only what its lights reach (routeLook.ts).
+      const sight = routeSight(value, alpha);
       for (const station of value.stations)
-        if (stationOpen(station, player))
+        if (stationOpen(station, player) && sight(station.x, station.z))
           pin(
             `station:${station.id}`,
             bearing(station.x - px, station.z - pz),
@@ -267,16 +272,29 @@ export function createCompassBar(
             station.kind === "hypno" ? 0 : 1,
           );
       for (const mark of fieldMarks(value))
-        if (mark.ready) pin(mark.key, bearing(mark.x - px, mark.z - pz), "site", 0, mark.kind);
+        if (mark.ready && sight(mark.x, mark.z))
+          pin(mark.key, bearing(mark.x - px, mark.z - pz), "site", 0, mark.kind);
       for (const pickup of value.pickups)
-        if (pickup.kind === "chest")
+        if ((pickup.kind === "chest" || pickup.kind === "trophy") && sight(pickup.x, pickup.z))
           pin(`chest:${pickup.id}`, bearing(pickup.x - px, pickup.z - pz), "chest");
       const boss = value.enemies.find((enemy) => enemy.boss);
       if (boss) pin("boss", bearing(boss.x - px, boss.z - pz), "boss");
-      // The landmark where the guardian is summoned, then the exit it opened where it fell.
+      // The landmark where the guardian is summoned; once it falls, the nearest exit it opened.
       else {
-        const spot = (value.zone.phase === "cleared" && value.zone.exit) || landmarkOf(value);
-        pin("landmark", bearing(spot.x - px, spot.z - pz), "landmark");
+        const exit = value.zone.phase === "cleared" ? nearestExit(value, player) : null;
+        if (exit)
+          pin(
+            "exit",
+            bearing(exit.x - px, exit.z - pz),
+            "exit",
+            0,
+            undefined,
+            exitAccent(exit).light,
+          );
+        else {
+          const spot = landmarkOf(value);
+          pin("landmark", bearing(spot.x - px, spot.z - pz), "landmark");
+        }
       }
     }
     for (const key of sides.keys()) if (!seen.has(key)) sides.delete(key);

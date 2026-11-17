@@ -170,8 +170,10 @@ if (!process.argv.includes("--run-session-fixture")) {
       let reported = false;
       let active = false;
       let disposed = false;
+      const stage = config.multiplayer?.session.restored ? "coast" : config.stage;
       const world = createWorld({
-        stage: config.stage,
+        stage,
+        route: routeTo(stage),
         seed: 7,
         difficulty: config.difficulty,
         players: [{ starter: config.starter }],
@@ -217,6 +219,7 @@ if (!process.argv.includes("--run-session-fixture")) {
   installRuntime({ nextFrame: () => Promise.resolve() });
   const { createAppSession } = await import(at("src/app/session.ts"));
   const { createWorld, stepWorld } = await import(at("src/run/sim/world.ts"));
+  const { routeTo, selectTestExit } = await import("./fixtures/route.mjs");
   const { emptyProgress, parseProgress } = await import(at("src/run/progress.ts"));
   const settings = { sound: false, devMode: false, uiScale: 1 };
   async function setup(initial, { needsSave = false, failWrite = false } = {}) {
@@ -366,8 +369,7 @@ if (!process.argv.includes("--run-session-fixture")) {
     const t = await setup(emptyProgress());
     try {
       await t.start();
-      const first = controller.config.stage,
-        next = nextField(controller.world).stage;
+      const first = controller.config.stage;
       assert.equal(hostState.transition, "covering");
       assert.equal(hostState.transitionTitle, stageDefs[first].name);
       controller.callbacks.onLoadProgress(0.4);
@@ -378,6 +380,8 @@ if (!process.argv.includes("--run-session-fixture")) {
       assert.equal(hostState.transition, "idle");
       // The ended load keeps its map and bar on the curtain while it opens.
       assert.deepEqual(drawn(from), new Set([`${stageDefs[first].name}:0.4`]));
+      selectTestExit(controller.world, "desert");
+      const next = nextField(controller.world).stage;
       controller.callbacks.onZoneLoading(true, next);
       await settle();
       assert.equal(hostState.transition, "covering");
@@ -428,7 +432,7 @@ if (!process.argv.includes("--run-session-fixture")) {
       });
       await rejoin.next(before);
       await settle();
-      const later = nextField(controller.world).stage;
+      const later = controller.world.stage;
       assert.notEqual(later, pick.stage);
       assert.equal(hostState.transition, "covering");
       assert.notEqual(hostState.transitionTitle, stageDefs[pick.stage].name);

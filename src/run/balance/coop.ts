@@ -6,6 +6,7 @@ import { coopScaling, COOP_SCALING } from "../sim/content/params/coop";
 import { ELITE } from "../sim/content/params/pacing";
 import { zoneClock, zoneFactorsFor } from "../sim/content/params/zones";
 import type { Difficulty } from "../sim/content/difficulties";
+import type { RouteStep } from "../sim/content/campaign";
 import { stageDefs, type StageId } from "../sim/content/stages/index";
 import { bossHp, liveCap, spawnRate } from "../sim/director";
 import type { Player } from "../sim/state/entities";
@@ -16,6 +17,7 @@ import { WEATHER } from "../sim/content/params/field-events";
 
 /** Saturated crowd with everyone grouped, or evenly split; all roster members contribute output. */
 export function coopBudget(
+  step: RouteStep,
   stage: StageId,
   difficulty: Difficulty,
   time: number,
@@ -27,9 +29,9 @@ export function coopBudget(
   if (players.length < 1 || players.length > COOP_SCALING.length)
     throw new Error("联机分析需要 1–4 名玩家。");
   const team = coopScaling(players.length);
-  const factors = zoneFactorsFor(stageDefs[stage], zone);
-  const clock = zoneClock(stageDefs[stage], zone, time);
-  const base = fieldAt(stage, time, difficulty, false, zone, { weather, outbreak: null });
+  const factors = zoneFactorsFor(step, stageDefs[stage], zone);
+  const clock = zoneClock(step, time);
+  const base = fieldAt(step, stage, time, difficulty, false, zone, { weather, outbreak: null });
   const field = { ...base, hp: base.hp * team.hp };
   const cap = liveCap(clock, difficulty) * factors.cap * team.cap;
   const spawns = spawnRate(clock, difficulty, false) * factors.spawns * team.spawns;

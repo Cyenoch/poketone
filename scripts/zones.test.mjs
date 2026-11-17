@@ -8,7 +8,14 @@ import { EnemyGrid } from "../src/run/sim/grid.ts";
 import { enterZone, prepareZone, zoneAction } from "../src/run/sim/zones.ts";
 import { createWorld, isFrozen, stepWorld } from "../src/run/sim/world.ts";
 import { stageDefs } from "../src/run/sim/content/stages/index.ts";
-import { STAGE_ROUTE } from "../src/run/sim/content/campaign.ts";
+import { ALL_ROUTES, ROUTE_TIERS, routeStep } from "../src/run/sim/content/campaign.ts";
+import { clearZone as openExits, nearestExit, atExit } from "../src/run/sim/currentZone.ts";
+import { stageBodies } from "../src/run/sim/mapgen/playable.ts";
+import { cellAt, bodyFits, routeReach } from "../src/run/sim/nav/index.ts";
+import { mobilityClasses } from "../src/run/sim/content/mobility.ts";
+import { EXIT_RADIUS } from "../src/run/sim/content/params/campaign.ts";
+import { SITE } from "../src/run/sim/content/params/sites.ts";
+import { sites as siteDefs } from "../src/run/sim/content/sites.ts";
 import { enemies } from "../src/run/sim/content/enemies.ts";
 import { difficulties, SWARM_HP } from "../src/run/sim/content/difficulties.ts";
 import { coopScaling } from "../src/run/sim/content/params/coop.ts";
@@ -25,11 +32,64 @@ import { damagePlayer } from "../src/run/sim/hurt.ts";
 import { fireBeat } from "../src/run/sim/beats.ts";
 import { TICK } from "../src/run/sim/state/world.ts";
 import { formOf } from "../src/run/sim/evolution.ts";
-import { xpForLevel } from "../src/run/sim/stats.ts";
+import { currentStats, xpForLevel } from "../src/run/sim/stats.ts";
 import { stationHere } from "../src/run/sim/stations.ts";
 import { STATION_REACH } from "../src/run/sim/content/params/stations.ts";
 
 const landmark = (world) => world.map.pads.find((pad) => pad.tag === "landmark");
+
+function prefix(stage) {
+  const path = ALL_ROUTES.find((route) => route.includes(stage));
+  return path.slice(0, path.indexOf(stage) + 1);
+}
+
+test("every outdoor destination offers a non-overlapping, two-way exit for the largest form", () => {
+  for (const stage of ROUTE_TIERS.flat().filter((s) => s !== "tower")) {
+    for (const seed of [3, 7, 11]) {
+      const world = createWorld({
+        stage,
+        route: prefix(stage),
+        seed,
+        difficulty: 0,
+        players: [{ starter: "geodude" }],
+      });
+      const pad = landmark(world);
+      const body = stageBodies(stageDefs[stage]).playerMax;
+      const home = [cellAt(world.nav.grid, pad.x, pad.z)];
+      const ground = mobilityClasses.ground;
+      const both = [false, true].map((back) => routeReach(world.nav, ground, home, back));
+      const fall = seed === 3 ? pad : seed === 7 ? world.sites[0] : { x: 44, z: 44 };
+      openExits(world, fall.x, fall.z);
+      const exits = world.zone.exits;
+      assert.equal(atExit(world, pad), null);
+      assert.deepEqual(new Set(exits.map((e) => e.to)), new Set(ROUTE_TIERS[routeStep(world) + 1]));
+      assert.ok(exits.length >= 2 && exits.length <= 3);
+      assert.ok(exits.every((e) => e.marker !== null));
+      assert.equal(new Set(exits.map((e) => e.marker)).size, exits.length);
+      for (const [i, e] of exits.entries()) {
+        assert.equal(nearestExit(world, e), e);
+        assert.equal(atExit(world, e), i);
+        const d = (p) => Math.hypot(e.x - p.x, e.z - p.z);
+        assert.ok(exits.slice(0, i).every((other) => d(other) >= 2 * EXIT_RADIUS + 1));
+        assert.ok(
+          world.stations.every((s) => d(s) > s.radius + body + STATION_REACH + EXIT_RADIUS),
+        );
+        assert.ok(
+          world.sites.every(
+            (s) =>
+              d(s) >
+              s.radius +
+                body +
+                (siteDefs[s.kind].interact === "pickup" ? SITE.pickup : SITE.reach) +
+                EXIT_RADIUS,
+          ),
+        );
+        assert.ok(bodyFits(world.nav, ground, e.x, e.z, body));
+        assert.ok(both.every((reach) => reach[cellAt(world.nav.grid, e.x, e.z)]));
+      }
+    }
+  }
+});
 
 test("ordinary reinforcements respond to nearby pressure without changing bodies or authored encounters", () => {
   function run(near, start, injured = false, guardian = false) {
@@ -117,13 +177,13 @@ test("enemy durability ramps after the unchanged opening without changing its da
     });
     const def = enemies.pidgey;
     const stage = stageDefs[world.stage];
-    const zone = zoneFactorsFor(stage, 0);
+    const zone = zoneFactorsFor(routeStep(world), stage, 0);
     let previousDurability = 1;
     for (const time of [0, 60, 120, 480]) {
       world.time = time;
       world.zone.tick = Math.round(time / TICK);
       const enemy = spawnEnemy(world, "pidgey", 0, 0);
-      const base = enemyScaling(zoneClock(stage, 0, time), difficulty, null);
+      const base = enemyScaling(zoneClock(routeStep(world), time), difficulty, null);
       const before = def.hp * base.hp * SWARM_HP * zone.hp * coopScaling(seats).hp;
       const durability = enemy.hp / before;
       if (time === 0) assert.ok(Math.abs(durability - 1) < 1e-12, "opening is unchanged");
@@ -166,8 +226,9 @@ test("each map's guardian keeps its challenge across summon times and player gro
   });
   const player = world.players[0];
   const attributes = (enemy) => ({ hp: enemy.maxHp, dmg: enemy.dmg, speed: enemy.speed });
-  for (const stage of STAGE_ROUTE) {
+  for (const stage of ROUTE_TIERS.flat()) {
     world.stage = stage;
+    world.route = prefix(stage);
     const species = stageDefs[stage].zones[0].guardian.species;
     for (const difficulty of [0, 1, 2]) {
       world.difficulty = difficulty;
@@ -208,10 +269,15 @@ test("later maps ramp new enemies and carried partners together while preserving
     difficulty: 0,
     players: [{ starter: "squirtle" }],
   });
-  for (const stageId of STAGE_ROUTE.slice(1)) {
+  for (const stageId of ALL_ROUTES[0].slice(1)) {
     world.time += 600;
-    world.zone.phase = "transitioning";
     const player = world.players[0];
+    answerAll(world);
+    openExits(world, player.x, player.z);
+    const exit = world.zone.exits.find((e) => e.to === stageId);
+    player.x = exit.x;
+    player.z = exit.z;
+    stepWorld(world, [{ t: "interact", player: 0 }]);
     const level = player.level;
     const moves = structuredClone(player.moves);
     enterZone(world, prepareZone(world));
@@ -220,7 +286,7 @@ test("later maps ramp new enemies and carried partners together while preserving
     assert.equal(player.level, level);
     assert.deepEqual(player.moves, moves);
     const stage = stageDefs[stageId];
-    const factors = zoneFactorsFor(stage, 0);
+    const factors = zoneFactorsFor(routeStep(world), stage, 0);
     const opening = spawnEnemy(world, "pidgey", 0, 0);
     const openingBody = { ...opening };
     const partner = { species: "pidgey" };
@@ -233,7 +299,7 @@ test("later maps ramp new enemies and carried partners together while preserving
     for (const time of [4, 8, 120]) {
       world.zone.tick = Math.round(time / TICK);
       const enemy = spawnEnemy(world, "pidgey", 0, 0);
-      const clock = zoneClock(stage, 0, time);
+      const clock = zoneClock(routeStep(world), time);
       const base = enemyScaling(clock, 0, null);
       const expectedHp = enemies.pidgey.hp * enemyHealthScaling(clock, 0, null) * factors.hp;
       assert.ok(Math.abs(enemy.hp / expectedHp - 1) < 1e-12);
@@ -294,8 +360,8 @@ function clearZone(world) {
   killEnemy({ world, grid: new EnemyGrid() }, boss, player);
   stepWorld(world, []);
   answerAll(world);
-  player.x = world.zone.exit.x;
-  player.z = world.zone.exit.z;
+  player.x = world.zone.exits[0].x;
+  player.z = world.zone.exits[0].z;
 }
 
 test("the guardian is summoned once at the landmark; its fall clears the field and the co-op exit carries queued cards", () => {
@@ -324,7 +390,7 @@ test("the guardian is summoned once at the landmark; its fall clears the field a
   killEnemy({ world, grid: new EnemyGrid() }, boss, player);
   stepWorld(world, []);
   assert.equal(world.zone.phase, "cleared");
-  assert.deepEqual(world.zone.exit, fall, "the exit opens where the guardian fell");
+  assert.equal(atExit(world, fall), 0, "the first exit opens where the guardian fell");
   assert.equal(world.enemies.length + world.projectiles.length + world.hazards.length, 0);
   assert.ok(
     world.pickups.some((pickup) => pickup.x === 40 && pickup.magnet),
@@ -361,9 +427,10 @@ test("guardian rewards can evolve a player without letting the exit steal statio
   const station = world.stations.find((entry) => entry.kind === "hypno");
   const pad = landmark(world);
   Object.assign(player, {
-    level: 27,
-    xpNext: xpForLevel(27),
-    xp: xpForLevel(27) - 1,
+    stage: 1,
+    level: 53,
+    xpNext: xpForLevel(53),
+    xp: xpForLevel(53) - 1,
     x: pad.x,
     z: pad.z,
   });
@@ -372,9 +439,11 @@ test("guardian rewards can evolve a player without letting the exit steal statio
   assert.ok(boss);
   Object.assign(boss, { x: station.x + 3.9, z: station.z, hp: 0 });
   killEnemy({ world, grid: new EnemyGrid() }, boss, player);
-  Object.assign(player, world.zone.exit);
-  for (let i = 0; i < 120 && player.stage === 0; i++) stepWorld(world, []);
-  assert.equal(player.stage, 1, "the guardian's normal XP pickups evolve the player");
+  player.x = world.zone.exits[0].x;
+  player.z = world.zone.exits[0].z;
+  for (let i = 0; i < 120 && player.stage === 1; i++) stepWorld(world, []);
+  assert.equal(player.stage, 2, "the guardian's own XP pickups evolve the player to Golem");
+  assert.equal(formOf(player).radius, stageBodies(stageDefs.forest).playerMax);
   answerAll(world);
   player.cardHold = 0;
   Object.assign(player, {
@@ -398,7 +467,7 @@ test("a guardian nobody summoned comes on its own with the final swarm", () => {
 
 /** What a player carries from zone to zone. */
 const growth = (world) =>
-  JSON.stringify(
+  structuredClone(
     world.players.map(
       ({ level, xp, moves, items, hp, shield, stardust, kills, ult, revives, fx }) => ({
         level,
@@ -446,17 +515,20 @@ test("the next map keeps every player's growth and resets the field, clock and g
   assert.equal(world.zone.phase, "transitioning");
   const carried = growth(world);
   const { nextId, time } = world;
-  enterZone(world, prepareZone(world));
+  const prepared = prepareZone(world);
+  if (prepared.marker === "pokecenter")
+    carried.forEach((p, i) => (p.hp = currentStats(world.players[i]).maxHp));
+  enterZone(world, prepared);
 
   assert.equal(world.stage, "desert");
   const { schedule, ...zone } = world.zone;
-  assert.deepEqual(zone, { index: 0, tick: 0, phase: "active", exit: null });
+  assert.deepEqual(zone, { index: 0, tick: 0, phase: "active", exits: [], leaving: null });
   assert.ok(schedule.length > 0, "the new map arrives with its authored encounters scheduled");
   assert.equal(world.time, time, "the run clock carries on");
   assert.ok(world.nextId > nextId, "new sites continue the live ID sequence");
   assert.ok(world.sites.every((site) => site.id >= nextId && site.id < world.nextId));
   assert.notDeepEqual(Array.from(world.map.terrain.heights.slice(0, 64)), terrain, "a new map");
-  assert.equal(growth(world), carried);
+  assert.deepEqual(growth(world), carried);
   const [partner] = world.partners;
   assert.equal(partner?.owner, 1);
   assert.ok(Math.hypot(partner.x - b.x, partner.z - b.z) < 3, "the partner arrives with its owner");
@@ -465,10 +537,7 @@ test("the next map keeps every player's growth and resets the field, clock and g
     stations,
     "stations keep their identity and Bill stays used",
   );
-  assert.equal(
-    world.enemies.length + world.pickups.length + world.projectiles.length + world.areas.length,
-    0,
-  );
+  assert.equal(world.enemies.length + world.projectiles.length + world.areas.length, 0);
   assert.equal(world.bossId, null);
   assert.equal(world.rampage, false);
   assert.deepEqual(world.spawn, {
@@ -530,6 +599,11 @@ test("entering the tower carries growth, installs its walls and ends only at its
         delete kept[key];
       delete kept.ult.elapsed;
       delete kept.ult.crossed;
+      delete kept.ult.protection;
+      if (kept.egg) {
+        delete kept.egg.x;
+        delete kept.egg.z;
+      }
       return kept;
     });
   const wallCells = (nav) =>
@@ -546,6 +620,7 @@ test("entering the tower carries growth, installs its walls and ends only at its
   const play = () => {
     const world = createWorld({
       stage: "volcano",
+      route: ["forest", "coast", "volcano"],
       seed: 7919,
       difficulty: 1,
       players: [{ starter: "charmander" }, { starter: "squirtle" }],
@@ -582,7 +657,9 @@ test("entering the tower carries growth, installs its walls and ends only at its
       a.dashCooldown = 0.8;
       a.statuses = [{ id: "poison", time: 5, power: 2, source: -1 }];
       a.ult.elapsed = 0.2;
+      a.ult.protection = 0.5;
       a.ult.crossed = [1];
+      a.egg = { species: "pidgey", distance: 11, x: a.x, z: a.z };
       world.pickups.push({
         id: world.nextId++,
         kind: "xp",
@@ -614,6 +691,14 @@ test("entering the tower carries growth, installs its walls and ends only at its
       });
       stepWorld(world, [{ t: "interact", player: 0 }]);
       if (stage === "tower") {
+        assert.equal(world.outcome, "playing", "the tower waits for the carried trophies");
+        for (const player of world.players) {
+          while (player.pending.some((card) => card.offer?.kind === "trophy")) {
+            const card = player.pending[0];
+            stepWorld(world, [{ t: "pick", player: player.id, card: card.id, index: 0 }]);
+          }
+        }
+        stepWorld(world, [{ t: "interact", player: 0 }]);
         assert.equal(world.outcome, "victory", "only leaving the cleared tower wins");
         break;
       }
@@ -634,7 +719,7 @@ test("entering the tower carries growth, installs its walls and ends only at its
       enterZone(world, prepared);
       assert.equal(world.stage, "tower");
       const { schedule, ...zone } = world.zone;
-      assert.deepEqual(zone, { index: 0, tick: 0, phase: "active", exit: null });
+      assert.deepEqual(zone, { index: 0, tick: 0, phase: "active", exits: [], leaving: null });
       assert.ok(schedule.length > 0);
       assert.equal(
         world.map.terrain.walls.template,
@@ -651,16 +736,14 @@ test("entering the tower carries growth, installs its walls and ends only at its
         stations,
       );
       assert.equal(
-        world.pickups.length +
-          world.hazards.length +
-          world.projectiles.length +
-          world.enemies.length +
-          world.areas.length,
+        world.hazards.length + world.projectiles.length + world.enemies.length + world.areas.length,
         0,
       );
       assert.equal(a.statuses.length, 0);
       assert.equal(a.ult.elapsed, -1);
+      assert.equal(a.ult.protection, 0);
       assert.deepEqual(a.ult.crossed, []);
+      assert.deepEqual(a.egg, { species: "pidgey", distance: 11, x: a.x, z: a.z });
       for (const player of world.players) assert.equal(player.z, player.pz);
       for (const partner of world.partners) {
         const owner = world.players.find((player) => player.id === partner.owner);
@@ -758,6 +841,8 @@ test("leaving during absorption settles remaining rewards without waiting and ca
     ];
     clearZone(world, p.x, p.z);
     sweepClearedField(world);
+    p.x = world.zone.exits[0].x;
+    p.z = world.zone.exits[0].z;
     assert(canLeave(world), "in-flight drops do not gate departure");
     assert(interactInZone(world, p));
     assert.equal(world.zone.phase, "transitioning");

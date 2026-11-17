@@ -8,7 +8,6 @@ export const glacier = {
   ...forest,
   id: "glacier",
   name: "天空冰川",
-  enemyHp: 0.75,
   zones: [
     {
       ...fieldContent("glacier"),

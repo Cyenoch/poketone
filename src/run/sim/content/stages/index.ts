@@ -66,12 +66,6 @@ export interface StageDef<Id extends string = StageId> {
   map: MapSpec;
   zones: readonly [StageZone, ...StageZone[]];
   rampage: { banner: string };
-  /**
-   * × every enemy's HP on this stage (swarm, elites, guardians) on top of the zone factors; 1 when
-   * absent. Lowers a map whose roster resists some starters' types without removing the resistance
-   * (docs/BALANCE.md「地图强度」).
-   */
-  enemyHp?: number;
   /** One station per building pad, claimed in this order. */
   stations: readonly StationKind[];
 }

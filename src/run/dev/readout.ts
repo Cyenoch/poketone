@@ -2,7 +2,7 @@ import type { FrameStats, PassCounts } from "../../rendering/app-renderer";
 import { difficulties } from "../sim/content/difficulties";
 import { statIds } from "../sim/content/effects";
 import { zoneClock } from "../sim/content/params/zones";
-import { stageDefs } from "../sim/content/stages/index";
+import { routeStep } from "../sim/content/campaign";
 import { liveCap, spawnRate, zoneScaling } from "../sim/director";
 import { zoneFactors, zoneTime } from "../sim/currentZone";
 import { steepnessAt } from "../sim/nav/index";
@@ -100,7 +100,7 @@ export function createDevReadout(
   function run(world: World): string[] {
     const diff = difficulties[world.difficulty];
     const t = zoneTime(world);
-    const clockT = zoneClock(stageDefs[world.stage], world.zone.index, t);
+    const clockT = zoneClock(routeStep(world), t);
     const factors = zoneFactors(world);
     const swarm = zoneScaling(world);
     const early = diff.earlyBy;

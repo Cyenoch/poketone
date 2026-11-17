@@ -111,8 +111,6 @@ export const coast = {
   id: "coast",
   name: "风暴海岸",
   duration: 600,
-  /** Water resists fire; × this keeps Charmander near its forest clear (docs/BALANCE.md「地图强度」). */
-  enemyHp: 0.65,
   map: {
     terrain: {
       levels: 1,

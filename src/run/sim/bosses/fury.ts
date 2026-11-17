@@ -1,4 +1,5 @@
 import { FURY_CAST, furyOf, type FuryCast } from "../content/params/guardian";
+import { routeStep } from "../content/campaign";
 import { enemies } from "../content/enemies";
 import { attacksBlocked } from "../status";
 import { atan2, cos, sin } from "../math";
@@ -14,7 +15,7 @@ import { predictTarget } from "../enemy-aim";
  * attacks; their locked positions and full warnings preserve the player's chance to escape.
  */
 export function furyStep(world: World, boss: Enemy, target: Player, dt: number): void {
-  const fury = furyOf(world.stage, world.zone.index);
+  const fury = furyOf(routeStep(world));
   if (!fury) return;
   const state = (boss.fury ??= { timer: fury.first, casts: 0 });
   state.timer -= dt;

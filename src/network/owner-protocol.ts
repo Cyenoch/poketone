@@ -17,6 +17,8 @@ export function validateOwner(frame: OwnerFrame, player: Player): void {
   const events: OwnerFrame["events"] = [];
   const eventAges: number[] = [];
   for (const [i, event] of frame.events.entries()) {
+    // Route feedback comes from the shared world, never the owner's presentation.
+    if (record(event) && event.t === "route") continue;
     if (record(event) && (event.t === "ult" || event.t === "ult-release")) {
       // A broken cut-in must not interrupt movement or hits in the same packet.
       if (

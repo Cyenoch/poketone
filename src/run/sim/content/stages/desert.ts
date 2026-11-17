@@ -113,11 +113,6 @@ export const desert = {
   id: "desert",
   name: "岩石沙漠",
   duration: 600,
-  /**
-   * Ground / rock resist fire and shrug off electric; × this keeps Charmander and Pikachu near their
-   * forest clear (docs/BALANCE.md「地图强度」).
-   */
-  enemyHp: 0.8,
   map: {
     surface: { ground: "sand", shallowSpeed: 1, liquids: [] },
     terrain: {

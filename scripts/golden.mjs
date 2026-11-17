@@ -121,6 +121,16 @@ export function project(world) {
     tick: world.tick,
     outcome: world.outcome,
     boss: [world.bossId !== null, world.stage, world.zone.index, world.zone.phase, world.rampage],
+    ...(world.route.length > 1 || world.zone.exits.length
+      ? {
+          route: [
+            world.route,
+            world.marker,
+            world.modifier,
+            world.zone.exits.map((exit) => [exit.to, exit.marker, q(exit.x), q(exit.z)]),
+          ],
+        }
+      : {}),
     players: world.players.map((player) => projectPlayer(world, player)),
     enemies: byId(world.enemies).map(projectEnemy),
     partners: byId(world.partners).map((p) => [p.owner, p.species, q(p.x), q(p.z)]),
@@ -163,6 +173,8 @@ export function eventFacts(e) {
       return [e.t, e.player, e.level];
     case "pickup":
       return [e.t, e.kind];
+    case "route":
+      return [e.t, e.kind, e.player, q(e.x), q(e.z)];
     case "cast":
       return [e.t, e.player, e.move];
     case "dash":
@@ -311,8 +323,13 @@ function* stationVisit(world, player, seen) {
 }
 
 /** Steps the player onto the zone's landmark (the guardian's altar), or the exit once it has fallen. */
-function toLandmark(world, player) {
-  const spot = world.zone.exit ?? world.map.pads.find((p) => p.tag === "landmark");
+function toLandmark(world, player, route) {
+  const spot =
+    world.zone.phase === "cleared"
+      ? world.zone.exits.find((exit) => exit.to === (route[world.route.length] ?? null))
+      : world.map.pads.find((p) => p.tag === "landmark");
+  if (!spot)
+    throw new Error(`golden: ${world.stage} has no interaction spot for ${route.join("/")}`);
   player.x = player.px = spot.x;
   player.z = player.pz = spot.z;
 }
@@ -326,12 +343,12 @@ const GUARDIAN_FIGHT = 60;
  * left once the cards are answered, and the next one readied the way the host does it, between two
  * ticks. Leaving the last zone wins.
  */
-function* campaign(world, player, seen) {
+function* campaign(world, player, seen, route = SOLO_ROUTE) {
   const id = player.id;
   for (;;) {
     while (world.zone.tick < GUARDIAN_REFERENCE_SECONDS * 30 || player.pending.length > 0) yield [];
     if (world.bossId === null) {
-      toLandmark(world, player);
+      toLandmark(world, player, route);
       yield [{ t: "interact", player: id }];
     }
     const until = world.zone.tick + GUARDIAN_FIGHT * 30;
@@ -340,7 +357,7 @@ function* campaign(world, player, seen) {
     if (guardian) killEnemy({ world, grid: new EnemyGrid() }, guardian, player);
     while (world.zone.phase === "cleared") {
       while (player.pending.length > 0) yield [];
-      toLandmark(world, player);
+      toLandmark(world, player, route);
       yield [{ t: "interact", player: id }];
     }
     if (world.zone.phase !== "transitioning") return;
@@ -362,8 +379,20 @@ function* poisonFloor(world, player) {
 const STARTERS = Object.keys(starters);
 // Fixed map/build samples keep real evolution and elite capture coverage under the continuing route.
 const SEEDS = [61, 11];
+const BUILD_SEEDS = {
+  "abra/1": 5,
+  "abra/2": 11,
+  "gastly/1": 11,
+  "gastly/2": 5,
+  "pikachu/1": 5,
+  "squirtle/0": 61,
+  "squirtle/2": 7,
+};
 
-/** The solo case that plays the whole six-map run: the scripted line that levels fastest. */
+const SOLO_ROUTE = ["forest", "desert", "glacier", "tower"];
+const COOP_ROUTE = ["forest", "coast", "volcano", "tower"];
+
+/** The solo case that plays a full route: the scripted line that levels fastest. */
 const FULL_RUN = "solo/pikachu/d1/s5";
 
 const CASES = [
@@ -373,16 +402,7 @@ const CASES = [
     STARTERS.map((starter, i) => {
       const difficulty = (i + s) % 3;
       // Durable enemies and adaptive supply move the loot path; keep evolution/capture in real runs.
-      const seed =
-        starter === "abra" || (s === 1 && starter === "pikachu")
-          ? 5
-          : s === 1 && starter === "squirtle"
-            ? 61
-            : starter === "gastly"
-              ? difficulty === 2
-                ? 5
-                : 11
-              : baseSeed;
+      const seed = BUILD_SEEDS[`${starter}/${difficulty}`] ?? baseSeed;
       const name = `solo/${starter}/d${difficulty}/s${seed}`;
       const full = name === FULL_RUN;
       return {
@@ -393,14 +413,15 @@ const CASES = [
         refill: true,
         ticks: STAGE_TICKS * 3,
         script: campaign,
-        ...(full ? { ticks: 6 * 2 * STAGE_TICKS, script: campaign } : {}),
+        ...(full ? { ticks: SOLO_ROUTE.length * 2 * STAGE_TICKS } : {}),
         ...([
-          "solo/squirtle/d2/s61",
+          "solo/squirtle/d2/s7",
           "solo/squirtle/d0/s61",
           "solo/pikachu/d0/s61",
           "solo/abra/d1/s5",
+          "solo/abra/d2/s11",
         ].includes(name)
-          ? { ticks: 6 * 2 * STAGE_TICKS }
+          ? { ticks: SOLO_ROUTE.length * 2 * STAGE_TICKS }
           : {}),
         covers: [
           full ? "evolve:2" : "evolve:1",
@@ -412,9 +433,7 @@ const CASES = [
           "guardian",
           "capture",
           ...(starter === "pikachu" ? ["reaction:shock"] : []),
-          ...(full
-            ? ["map:desert", "map:coast", "map:glacier", "map:volcano", "map:tower", "victory"]
-            : []),
+          ...(full ? [...SOLO_ROUTE.slice(1).map((stage) => `map:${stage}`), "victory"] : []),
         ],
       };
     }),
@@ -425,7 +444,8 @@ const CASES = [
     difficulty: 1,
     players: [{ starter: "charmander" }, { starter: "squirtle" }],
     refill: true,
-    ticks: 6 * 2 * STAGE_TICKS,
+    ticks: COOP_ROUTE.length * 2 * STAGE_TICKS,
+    route: COOP_ROUTE,
     script: campaign,
     covers: [
       "evolve:2",
@@ -434,11 +454,7 @@ const CASES = [
       "guardian",
       "capture",
       "reaction:steam",
-      "map:desert",
-      "map:coast",
-      "map:glacier",
-      "map:volcano",
-      "map:tower",
+      ...COOP_ROUTE.slice(1).map((stage) => `map:${stage}`),
       "victory",
     ],
   },
@@ -483,7 +499,7 @@ function replay(spec) {
   const seen = new Set();
   const decisions = world.players.map(() => 0);
   const scripts = world.players.map((player) =>
-    spec.script && player.id === 0 ? spec.script(world, player, seen) : null,
+    spec.script && player.id === 0 ? spec.script(world, player, seen, spec.route) : null,
   );
   const samples = [];
   let chain = "";

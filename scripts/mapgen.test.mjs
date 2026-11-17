@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { routeTo } from "./fixtures/route.mjs";
 import { spawnEnemy } from "../src/run/sim/director.ts";
 import {
   checkPlayable,
@@ -266,7 +267,13 @@ test("the desert's stamps run through the same pipeline: each ramp climbs its la
   }
   // createWorld runs the final acceptance (stations, spawns, every passage and ramp) and throws on failure.
   for (const seed of SEEDS.slice(0, 4)) {
-    const config = { stage: "desert", seed, difficulty: 0, players: [{ starter: "pikachu" }] };
+    const config = {
+      stage: "desert",
+      route: routeTo("desert"),
+      seed,
+      difficulty: 0,
+      players: [{ starter: "pikachu" }],
+    };
     assert.doesNotThrow(() => createWorld(config), `desert seed ${seed}`);
   }
 });
@@ -480,6 +487,7 @@ test("a finite crevasse cannot cut a required passage: its crossing stays a wide
 test("lava hurts through the hazard hit path, stays walkable, and never douses an existing burn", () => {
   const world = createWorld({
     stage: "volcano",
+    route: routeTo("volcano"),
     seed: 7919,
     difficulty: 0,
     players: [{ starter: "pikachu" }],

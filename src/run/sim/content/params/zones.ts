@@ -1,5 +1,6 @@
 import type { StageDef } from "../stages/index";
-import { CAMPAIGN_ENTRY_CLOCK, CAMPAIGN_GROWTH, ENTRY_RAMP_SECONDS } from "./campaign";
+import type { RouteStep } from "../campaign";
+import { ROUTE_ENTRY_CLOCK, ROUTE_GROWTH, ENTRY_RAMP_SECONDS } from "./campaign";
 
 export interface ZoneDef {
   /**
@@ -37,26 +38,28 @@ const FIELD: ZoneTable = [
   },
 ];
 
-/** `stage`'s zone factors, without its `enemyHp` (partner growth reads these). */
+/** Field basis shared with partners, before enemy-only growth. */
 export function zonesOf(_stage: Pick<StageDef, "id">): ZoneTable {
   return FIELD;
 }
 
-/** Zone `zone`'s factors on `stage`: its HP factors × the stage's `enemyHp`. */
-export function zoneFactorsFor(stage: Pick<StageDef, "id" | "enemyHp">, zone: number): ZoneDef {
+export function zoneFactorsFor(
+  step: RouteStep,
+  stage: Pick<StageDef, "id">,
+  zone: number,
+): ZoneDef {
   const z = zonesOf(stage)[zone]!;
-  const hp = stage.enemyHp ?? 1;
-  const route = CAMPAIGN_GROWTH[stage.id];
+  const route = ROUTE_GROWTH[step];
   return {
     ...z,
-    hp: z.hp * hp * route.hp,
-    guardianHp: z.guardianHp * hp * route.guardian,
+    hp: z.hp * route.hp,
+    guardianHp: z.guardianHp * route.guardian,
     dmg: z.dmg * route.dmg,
     xp: z.xp * route.xp,
   };
 }
 
-/** The stage clock the swarm curves read in `stage`'s zone `zone` (0-based) at `t` seconds into it. */
-export function zoneClock(stage: Pick<StageDef, "id">, _zone: number, t: number): number {
-  return t + CAMPAIGN_ENTRY_CLOCK[stage.id] * Math.min(1, t / ENTRY_RAMP_SECONDS);
+/** Shared swarm and partner clock at `t` local seconds. */
+export function zoneClock(step: RouteStep, t: number): number {
+  return t + ROUTE_ENTRY_CLOCK[step] * Math.min(1, t / ENTRY_RAMP_SECONDS);
 }

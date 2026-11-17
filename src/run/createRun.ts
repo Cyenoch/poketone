@@ -21,7 +21,8 @@ import { archetypes } from "./sim/archetypes/index";
 import { playerStats, statBreakdown, type StatBreakdown } from "./sim/stats";
 import { TICK, type World } from "./sim/state/world";
 import { stageDefs } from "./sim/content/stages/index";
-import { nextField } from "./sim/content/campaign";
+import { nextField, routeStep } from "./sim/content/campaign";
+import type { ZoneExit } from "./sim/state/route";
 import type { Command } from "./sim/state/commands";
 import type {
   LabBonuses,
@@ -45,7 +46,7 @@ import { DEPLOYMENT_MS } from "./view/deployment";
 import { COOP } from "./sim/content/params/coop";
 import { DASH_COOLDOWN } from "./sim/content/params/player";
 import { forgetRefund, stationHere } from "./sim/stations";
-import { zoneDef, zoneTime } from "./sim/currentZone";
+import { nearestExit, zoneDef, zoneTime } from "./sim/currentZone";
 import { canLeave, enterZone, zoneAction, prepareZone } from "./sim/zones";
 import {
   cardShown,
@@ -108,6 +109,8 @@ export interface TeamMate {
 
 export interface RunSnapshot {
   stage: StageId;
+  routeStep: number;
+  exit: ZoneExit | null;
   time: number;
   hp: number;
   maxHp: number;
@@ -170,12 +173,16 @@ export interface RunSnapshot {
 /** A station's prompt, the landmark's summon, or the exit the fallen guardian opened. */
 export type InteractPrompt = StationKind | SiteKind | "summon" | "leave" | "choices" | "rescue";
 
-function interactPrompt(world: World, player: World["players"][number]): InteractPrompt | null {
+function interactPrompt(
+  world: World,
+  player: World["players"][number],
+  isSeatPresent?: (id: number) => boolean,
+): InteractPrompt | null {
   if (!player.alive || player.dialog) return null;
   if (player.rescue || rescueTarget(world, player)) return "rescue";
   // Match the command's rescue → zone → field site → choices → station order.
   const action = zoneAction(world, player);
-  if (action === "summon" || (action === "leave" && canLeave(world))) return action;
+  if (action === "summon" || (action === "leave" && canLeave(world, isSeatPresent))) return action;
   const site = siteHere(world, player);
   if (site) return site.kind;
   if (manualCards(world, player) && player.pending.length > 0) return "choices";
@@ -337,7 +344,11 @@ function moveReadiness(move: MoveState, cd: number): { ready: number; cd: number
   return { ready: move.waiting ? 1 : 1 - Math.max(0, move.cooldown) / cd, cd };
 }
 
-function snapshot(world: World, playerId: PlayerId): RunSnapshot {
+function snapshot(
+  world: World,
+  playerId: PlayerId,
+  isSeatPresent?: (id: number) => boolean,
+): RunSnapshot {
   const player = world.players[playerId]!;
   const stats = playerStats(player);
   const boss = world.enemies.find((enemy) => enemy.id === world.bossId);
@@ -410,10 +421,12 @@ function snapshot(world: World, playerId: PlayerId): RunSnapshot {
       finalSwarm: stageDefs[world.stage].duration,
     },
     stage: world.stage,
+    routeStep: routeStep(world),
+    exit: nearestExit(world, player),
     outcome: world.outcome,
     tmCase: player.tmCase,
     dialog: stationView(world, playerId),
-    prompt: interactPrompt(world, player),
+    prompt: interactPrompt(world, player, isSeatPresent),
     team: world.players
       .filter((mate) => mate.id !== playerId && !mate.departed)
       .map((mate) => ({
@@ -435,8 +448,9 @@ export function createRun(
   app: AppRenderer,
   hud: GpuRunHud,
   config: {
-    /** The initial map; formal lobby starts the six-map route at forest. */
+    /** The lobby starts a fresh run in the forest. */
     stage: StageId;
+    route?: readonly StageId[];
     starter: StarterId;
     trainer: TrainerId;
     difficulty: Difficulty;
@@ -894,6 +908,11 @@ export function createRun(
             audio.sfx("kill");
           }
           break;
+        case "route":
+          if (event.kind === "exit") audio.sfx("exit-pick");
+          else if (event.player === PLAYER && event.kind === "deal") audio.sfx("gengar-deal");
+          else if (event.player === PLAYER && event.kind === "trophy") audio.sfx("trophy");
+          break;
         case "pickup":
           if (event.kind === "xp") {
             const now = performance.now();
@@ -1178,7 +1197,7 @@ export function createRun(
       snapshotTimer = 0.1;
       lastPending = pending;
       lastDialog = self.dialog;
-      const snap = snapshot(world, PLAYER);
+      const snap = snapshot(world, PLAYER, network?.isSeatPresent);
       // A paused world (open window) yields the same snapshot every 0.1 s; republishing it would
       // re-run the HUD and keep the UI canvas redrawing for nothing.
       const key = JSON.stringify(snap);
@@ -1288,6 +1307,7 @@ export function createRun(
           : createWorldFromSeeds(
               {
                 stage: config.stage,
+                route: network?.config.route ?? config.route,
                 difficulty: config.difficulty,
                 players: network?.config.players ?? [
                   { starter: config.starter, lab: config.lab, ...config.loadout },
@@ -1448,7 +1468,7 @@ export function createRun(
         callbacks.onReady();
         committed = true;
         if (disposed || failed) return;
-        callbacks.onSnapshot(snapshot(world, PLAYER));
+        callbacks.onSnapshot(snapshot(world, PLAYER, network?.isSeatPresent));
         releaseWorld = app.setWorld({ advance, draw });
       }
       // Teammates are waited for before the deployment, so the cover lifts once, onto it.

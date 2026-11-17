@@ -8,6 +8,8 @@ import { moves, type MoveId } from "../sim/content/moves";
 import { starterOrder, starters, type StarterId } from "../sim/content/lines/index";
 import { signatureFusions } from "../sim/content/fusions";
 import type { Difficulty } from "../sim/content/difficulties";
+import type { RouteStep } from "../sim/content/campaign";
+import { zoneClock } from "../sim/content/params/zones";
 import { liveCap } from "../sim/director";
 import { playerStats, xpForLevel } from "../sim/stats";
 import { createRng } from "../sim/rng";
@@ -65,14 +67,15 @@ function referencePlayer(starter: StarterId, kit: readonly MoveId[], upgrades: n
 }
 
 function referenceTarget(
+  step: RouteStep,
   stage: StageId,
   difficulty: Difficulty,
   skill: SkillProfile,
   neutral: boolean,
   time = REFERENCE_TIME,
 ): Target {
-  const field = fieldAt(stage, time, difficulty, false);
-  const target = targetFor(field, liveCap(time, difficulty) / 2, skill);
+  const field = fieldAt(step, stage, time, difficulty, false);
+  const target = targetFor(field, liveCap(zoneClock(step, time), difficulty) / 2, skill);
   if (!neutral) return target;
   const flat = Object.fromEntries(Object.keys(target.typeVs).map((type) => [type, 1]));
   const typeVs = flat as Target["typeVs"];
@@ -101,11 +104,12 @@ export interface MoveBudget {
 
 /** Each kit and evolution move alone at the reference point, type-neutral, normalised to the median move. */
 export function moveBudgets(
+  step: RouteStep,
   stage: StageId,
   difficulty: Difficulty,
   skill: SkillProfile,
 ): MoveBudget[] {
-  const target = referenceTarget(stage, difficulty, skill, true);
+  const target = referenceTarget(step, stage, difficulty, skill, true);
   const rows = starterOrder.flatMap((starter) =>
     [...starters[starter].kit, ...starters[starter].evolutionMoves].map((move) => {
       const output = (upgrades: number) => {
@@ -159,11 +163,12 @@ export interface FusionBudget {
  * replaces, at the budget reference point, type-neutral. A fusion also frees a slot, so ≈ 1× is break-even.
  */
 export function fusionBudgets(
+  step: RouteStep,
   stage: StageId,
   difficulty: Difficulty,
   skill: SkillProfile,
 ): FusionBudget[] {
-  const target = referenceTarget(stage, difficulty, skill, true, FUSION_TIME);
+  const target = referenceTarget(step, stage, difficulty, skill, true, FUSION_TIME);
   const maxed = starterOrder.flatMap((starter) =>
     [...starters[starter].kit, ...starters[starter].evolutionMoves].map((id) => {
       const player = referencePlayer(starter, [id], MAXED_UPGRADES);
@@ -216,11 +221,12 @@ const REFERENCE_RUN = { kills: 400, killRate: 3, hurtRate: 0.5, frac: 0.7 };
 
 /** Marginal value of one item level on a full reference kit (2 expected upgrades per move). */
 export function itemValues(
+  step: RouteStep,
   stage: StageId,
   difficulty: Difficulty,
   skill: SkillProfile,
 ): ItemValue[] {
-  const target = referenceTarget(stage, difficulty, skill, false);
+  const target = referenceTarget(step, stage, difficulty, skill, false);
   const ids = Object.keys(items) as ItemId[];
   const rows = ids.map((item) => {
     const value = Object.fromEntries(
@@ -247,8 +253,13 @@ export function itemValues(
 }
 
 /** Kit strength per starter at the reference point with the real type matchups. */
-export function starterKits(stage: StageId, difficulty: Difficulty, skill: SkillProfile) {
-  const target = referenceTarget(stage, difficulty, skill, false);
+export function starterKits(
+  step: RouteStep,
+  stage: StageId,
+  difficulty: Difficulty,
+  skill: SkillProfile,
+) {
+  const target = referenceTarget(step, stage, difficulty, skill, false);
   return starterOrder.map((starter) => {
     const out = buildOutput(referencePlayer(starter, starters[starter].kit, 2), target);
     return { starter, aoe: out.useful, single: out.single };

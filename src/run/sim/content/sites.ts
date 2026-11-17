@@ -43,4 +43,8 @@ export const sites: Record<SiteKind, SiteDef> = {
   glint: site("glint", "闪光点", "pickup"),
   ghost: site("ghost", "未识破的幽灵", "instant"),
   "silph-scope": site("silph-scope", "西尔佛检视镜", "pickup"),
+  "gengar-deal": {
+    ...site("gengar-deal", "耿鬼的交易", "instant"),
+    stages: ["glacier", "volcano", "tower"],
+  },
 };

@@ -153,7 +153,7 @@ test("co-op cards leave the center and touch corners open, with persistent 44px 
       );
       assert.equal(
         overlays.content.actions.some((action) => action.kind === "skip"),
-        false,
+        sample.skips !== null,
       );
       assert.equal(
         overlays.content.actions.some((action) => action.kind === "banish"),

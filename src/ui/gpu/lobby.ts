@@ -20,7 +20,7 @@ import {
   XIAQING_UNLOCK_KILLS,
   type TrainerId,
 } from "../../trainers";
-import { STAGE_ROUTE } from "../../run/sim/content/campaign";
+import { ROUTE_TIERS } from "../../run/sim/content/campaign";
 import { formatTime, typeNames } from "../../run/labels";
 import { difficultyLock, starterLock } from "../../run/locks";
 import { starterUnlocked, type Progress } from "../../run/progress";
@@ -36,7 +36,7 @@ import { LockChip } from "./lock-chip";
 import { fade, stack } from "./layer";
 import { balanceLines, textWidth } from "./line-break";
 import type { LobbyScene } from "./lobby-scene";
-import { MapSwatch } from "./map-swatch";
+import { RouteMap } from "./route-map";
 import { EASE, LIFT, SNAP, stagger } from "./motion";
 import { themeColors } from "./run-theme";
 import { revealInScroller } from "./scroll-reveal";
@@ -107,6 +107,8 @@ function tokens(compact: boolean) {
     chain: compact ? 30 : 52,
     slot: compact ? 40 : 40,
     swatch: compact ? 22 : 34,
+    tierGap: compact ? 14 : 22,
+    pairGap: compact ? 4 : 6,
     brand: compact ? 30 : 38,
     section: compact ? 8 : 14,
   };
@@ -336,14 +338,21 @@ export class GpuLobby {
     justifyContent: "flex-end",
     alignItems: "center",
   });
+  /** Compact: the route and the backpack share the column's last row (wrapping when full). */
+  private readonly belt = new Container({
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexShrink: 0,
+  });
   private readonly routeName = new Text({
-    text: "6 关探险",
+    text: `${ROUTE_TIERS.length} 关探险`,
     fontWeight: 800,
     color: ui.muted,
     whiteSpace: "pre",
   });
-  private readonly swatches: MapSwatch[] = [];
-  private swatchSize = 0;
+  private readonly routeMap = new RouteMap();
   private readonly go = new Container({
     positionType: "absolute",
     flexDirection: "row",
@@ -519,8 +528,10 @@ export class GpuLobby {
       stack(this.chain, 1),
       this.divider,
       stack(this.roster, 1),
-      stack(this.backpack, 1),
+      stack(this.belt, 1),
     );
+    this.belt.add(this.backpack);
+    this.route.add(this.routeName, this.routeMap.panel);
     this.column.add(this.columnContent);
 
     // Bottom right: the route, then the difficulty tray and 出发.
@@ -671,41 +682,6 @@ export class GpuLobby {
       };
       this.trainerControls.push(control);
       this.controls.push(control);
-    }
-  }
-
-  /** The route: six round map thumbnails joined by dotted lines, after its name (not
-   *  interactive). Rebuilt when the thumbnail size changes (the swatch's corner is fixed). */
-  private buildRoute(size: number): void {
-    if (size === this.swatchSize) return;
-    this.swatchSize = size;
-    for (const swatch of this.swatches.splice(0)) swatch.dispose();
-    for (const child of this.route.children.slice()) {
-      child.removeFromParent();
-      if (child !== this.routeName) disposeTree(child);
-    }
-    this.route.add(this.routeName);
-    for (const [i, id] of STAGE_ROUTE.entries()) {
-      if (i > 0) {
-        const dots = new Container({ flexDirection: "row", gap: 2, flexShrink: 0 });
-        for (let d = 0; d < 3; d++)
-          dots.add(
-            new Container({ width: 2.5, height: 2.5, borderRadius: 2, backgroundColor: ui.ink }),
-          );
-        this.route.add(dots);
-      }
-      const panel = new Container({
-        width: size,
-        height: size,
-        borderRadius: 999,
-        borderWidth: 2,
-        borderColor: ui.ink,
-        flexShrink: 0,
-      });
-      const swatch = new MapSwatch(id, size / 2 - 2);
-      panel.add(swatch.content);
-      this.route.add(panel);
-      this.swatches.push(swatch);
     }
   }
 
@@ -1107,16 +1083,20 @@ export class GpuLobby {
     this.roster.setProperties({ width: colW, gap, flexShrink: 0 });
     for (const { badge: b } of this.badges)
       b.panel.setProperties({ width: badge, height: badge, minWidth: badge, minHeight: badge });
-    this.backpack.setProperties({ marginTop: t.section + 2, flexShrink: 0 });
+    this.backpack.setProperties({ flexShrink: 0 });
     for (const control of this.controls)
       if (control.kind === "info")
         control.panel.setProperties({
           width: Math.max(t.slot, min),
           height: Math.max(t.slot, min),
         });
-    this.routeName.setProperties({ fontSize: this.compact ? 12 : 13, marginRight: 8 });
-    this.route.setProperties({ gap: this.compact ? 3 : 6 });
-    this.buildRoute(t.swatch);
+    // Compact drops the route's name: the lattice alone fits beside a packed backpack.
+    this.routeName.setProperties({
+      display: this.compact ? "none" : "flex",
+      fontSize: 13,
+      marginRight: 10,
+    });
+    this.routeMap.resize({ swatch: t.swatch, column: t.tierGap, row: t.pairGap, links: true });
     // The tray and 出发 span the column's width: one block with the column above it.
     this.go.setProperties({
       positionRight: pad.right,
@@ -1125,21 +1105,29 @@ export class GpuLobby {
       minWidth: this.compact ? 0 : colW,
     });
     this.startButton.panel.setProperties({ flexGrow: 1 });
-    // The route is the column's last row on compact screens (no room above the tray).
-    const routeHome = this.compact ? this.columnContent : this.stage.root;
+    // Compact: the route shares the column's last row with the backpack (no room above the tray).
+    const routeHome = this.compact ? this.belt : this.stage.root;
     if (this.route.parentContainer.value !== routeHome) {
       this.route.removeFromParent();
-      routeHome.add(this.route);
+      this.backpack.removeFromParent();
+      if (this.compact) this.belt.add(this.route, this.backpack);
+      else {
+        this.belt.add(this.backpack);
+        this.stage.root.add(stack(this.route, 1));
+      }
     }
+    // The belt carries the backpack's old top margin; a packed backpack keeps to the right.
+    this.belt.setProperties({
+      display: this.compact || this.progress.backpack.length > 0 ? "flex" : "none",
+      width: colW,
+      marginTop: t.section + 2,
+      gapRow: 6,
+      gapColumn: 8,
+    });
+    this.backpack.setProperties({ marginTop: 0, marginLeft: "auto" });
     this.route.setProperties(
       this.compact
-        ? {
-            positionType: "relative",
-            positionRight: 0,
-            marginTop: t.section,
-            flexShrink: 0,
-            minWidth: 0,
-          }
+        ? { positionType: "relative", positionRight: 0, marginTop: 0, flexShrink: 0, minWidth: 0 }
         : { positionType: "absolute", positionRight: pad.right, marginTop: 0, minWidth: colW },
     );
     this.legalLaid = "";
@@ -1703,7 +1691,7 @@ export class GpuLobby {
     );
     this.tooltip.update();
     for (const control of this.controls) control.update(deltaMs);
-    for (const swatch of this.swatches) swatch.update();
+    this.routeMap.update();
     // 出发's light sweep steps on the idle clock while the lobby shows.
     if (!this.covered && this.revealed) this.startButton.update(deltaMs);
   }
@@ -1715,8 +1703,7 @@ export class GpuLobby {
 
   dispose(): void {
     for (const control of this.controls) control.dispose();
-    for (const part of [...this.partnerParts, ...this.disposables, ...this.swatches])
-      part.dispose();
+    for (const part of [...this.partnerParts, ...this.disposables, this.routeMap]) part.dispose();
     for (const button of this.keyed) button.dispose();
     for (const { entry } of this.badges) this.stage.motion.cancel(entry);
     this.balancePlate.dispose();

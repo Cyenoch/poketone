@@ -4,12 +4,15 @@ import { moves } from "./content/moves";
 import type { Difficulty } from "./content/difficulties";
 import { items, type ItemId } from "./content/items";
 import { stageDefs, type StageId } from "./content/stages/index";
+import { initialRoute } from "./content/campaign";
 import { updateAreas, updateMoves, updateProjectiles } from "./attacks";
 import { heal, type Ctx } from "./combat";
 import { nearestPlayer, primeEnemyNav, updateDirector } from "./director";
 import { updateEnemies } from "./enemies";
 import { updateHazards } from "./hazards";
-import { gainXp, pickEffects, queueCard, rollDice } from "./progression";
+import { gainXp, manualCards, nextCard, pickEffects, queueCard, rollDice } from "./progression";
+export { manualCards } from "./progression";
+import { cancelRouteDeal, collectRoutePickup, pickRouteReward } from "./route-rewards";
 import { fuseMoves } from "./fusion";
 import { EnemyGrid } from "./grid";
 import { checkPlayable, generateMap, MapGenError, stageBodies } from "./mapgen/index";
@@ -25,8 +28,8 @@ import { forget, interact, placeStations } from "./stations";
 import { STATION_REACH } from "./content/params/stations";
 import { SITE } from "./content/params/sites";
 import { sites as siteDefs } from "./content/sites";
-import { sweepClearedField, interactInZone } from "./zones";
-import { applyChoice, banishKey, newMoveState, offerKey, rollChoices } from "./upgrades";
+import { fieldRng, sweepClearedField, interactInZone, withFieldSeed, zoneSeed } from "./zones";
+import { applyChoice, banishKey, newMoveState, offerKey, rollRewardChoices } from "./upgrades";
 import { TICK, type World } from "./state/world";
 import type { Command } from "./state/commands";
 import type { LabBonuses, Pickup, Player } from "./state/entities";
@@ -52,6 +55,8 @@ export interface Loadout {
 
 export interface RunConfig {
   stage: StageId;
+  /** Non-forest fixtures and tools provide the entered-map prefix explicitly. */
+  route?: readonly StageId[];
   seed: number;
   difficulty: Difficulty;
   /** Each peer's lab bonuses and loadout travel with the config; omitted means none. */
@@ -116,6 +121,7 @@ export function createPlayer(
     stardust: 0,
     lab,
     training: { dmg: 0, hp: 0, speed: 0, area: 0, cd: 0 },
+    tradeHp: 1,
     ult: newUltState(),
     tmCase: false,
     dialog: null,
@@ -157,11 +163,23 @@ export function createWorldFromSeeds(
 export function createWorld(config: RunConfig): World {
   if (config.players.length === 0) throw new Error("至少需要一名玩家。");
   if (config.players.length > COOP_SCALING.length) throw new Error("最多支持四名玩家。");
-  const built = generateMap(config.seed, stageDefs[config.stage].map);
+  const route = initialRoute(config.stage, config.route);
+  if (config.stage === "forest")
+    return buildWorld(config, route, config.seed, createRng(config.seed));
+  return withFieldSeed(zoneSeed(config.seed, config.stage), (draw) =>
+    buildWorld(config, route, draw, fieldRng(draw)),
+  );
+}
+
+function buildWorld(config: RunConfig, route: StageId[], draw: number, rng: Rng): World {
+  const built = generateMap(draw, stageDefs[config.stage].map);
   const world: World = {
     stage: config.stage,
+    route,
+    marker: null,
+    modifier: null,
     seed: config.seed,
-    rng: createRng(config.seed),
+    rng,
     difficulty: config.difficulty,
     time: 0,
     tick: 0,
@@ -192,7 +210,7 @@ export function createWorld(config: RunConfig): World {
       shinySpawned: false,
     },
     bossId: null,
-    zone: { index: 0, tick: 0, phase: "active", exit: null, schedule: [] },
+    zone: { index: 0, tick: 0, phase: "active", exits: [], leaving: null, schedule: [] },
     rampage: false,
     events: [],
   };
@@ -253,17 +271,16 @@ export function isFrozen(world: World): boolean {
   );
 }
 
-/** Co-op, and solo with the manual preference: cards open only by the player's request. */
-export function manualCards(world: World, player: Player): boolean {
-  return world.players.length > 1 || player.manualCards === true;
-}
-
 /** Solo opens automatically after evolution; co-op opens only by the player's request. */
 export function cardShown(player: Player): boolean {
   return player.alive && player.choosing && player.pending.length > 0 && player.cardHold <= 0;
 }
 
-export function applyCommand(world: World, command: Command): void {
+export function applyCommand(
+  world: World,
+  command: Command,
+  isSeatPresent?: (id: number) => boolean,
+): void {
   switch (command.t) {
     case "pause":
       world.paused = command.paused;
@@ -281,6 +298,14 @@ export function applyCommand(world: World, command: Command): void {
     return;
   }
   if (!player.alive) return;
+  if (
+    player.pending[0]?.offer?.kind === "deal" &&
+    (command.t === "reroll" ||
+      command.t === "banish" ||
+      command.t === "skip" ||
+      (command.t === "choices" && !command.open))
+  )
+    return;
 
   switch (command.t) {
     case "ult":
@@ -297,7 +322,7 @@ export function applyCommand(world: World, command: Command): void {
       if (world.players.length > 1) return;
       if (command.manual) player.manualCards = true;
       else delete player.manualCards;
-      player.choosing = !command.manual;
+      player.choosing = player.pending[0]?.offer?.kind === "deal" || !command.manual;
       return;
     case "choices":
       if (!manualCards(world, player)) return;
@@ -308,7 +333,7 @@ export function applyCommand(world: World, command: Command): void {
       const pending = player.pending[0];
       if (pending?.id !== command.card) return;
       const choice = pending.options[command.index];
-      if (!choice) return;
+      if (!choice || !pickRouteReward(world, player, pending, choice)) return;
       world.events.push({
         t: "card",
         player: player.id,
@@ -322,7 +347,8 @@ export function applyCommand(world: World, command: Command): void {
       return;
     }
     case "skip": {
-      if (player.pending[0]?.id !== command.card || player.skips <= 0) return;
+      if (player.pending[0]?.id !== command.card) return;
+      if (player.skips <= 0) return;
       player.skips -= 1;
       world.events.push({ t: "card", player: player.id, card: command.card, action: "skip" });
       nextCard(world, player);
@@ -346,13 +372,7 @@ export function applyCommand(world: World, command: Command): void {
 
       // New options are a new card: a pick still in flight for the old one must not land on them.
       pending.id = world.nextId++;
-      pending.options = rollChoices(
-        world.rng,
-        player,
-        pending.source,
-        world.partners,
-        pending.minRarity,
-      );
+      pending.options = rollRewardChoices(world, player, pending);
       return;
     }
     case "forget":
@@ -389,6 +409,7 @@ export function applyCommand(world: World, command: Command): void {
       return;
     }
     case "leave":
+      if (player.pending[0]?.id === command.dialog && cancelRouteDeal(world, player)) return;
       if (player.dialog?.id === command.dialog) player.dialog = null;
       return;
     case "interact":
@@ -398,7 +419,7 @@ export function applyCommand(world: World, command: Command): void {
         return;
       }
       if (startRescue(world, player)) return;
-      if (interactInZone(world, player)) return;
+      if (interactInZone(world, player, isSeatPresent)) return;
       if (interactSite(world, player)) return;
       if (manualCards(world, player) && player.pending.length > 0 && !player.dialog) {
         player.choosing = true;
@@ -412,13 +433,7 @@ export function applyCommand(world: World, command: Command): void {
       player.rerolls -= 1;
       world.events.push({ t: "card", player: player.id, card: pending.id, action: "reroll" });
       pending.id = world.nextId++;
-      pending.options = rollChoices(
-        world.rng,
-        player,
-        pending.source,
-        world.partners,
-        pending.minRarity,
-      );
+      pending.options = rollRewardChoices(world, player, pending);
       return;
     }
   }
@@ -426,15 +441,6 @@ export function applyCommand(world: World, command: Command): void {
 
 function stationOf(world: World, player: Player) {
   return world.stations.find((station) => station.id === player.dialog?.station);
-}
-
-/** Drops the answered front card and rolls the next one against the kit as it is now. */
-function nextCard(world: World, player: Player): void {
-  player.pending.shift();
-  const front = player.pending[0];
-  if (!front && manualCards(world, player)) player.choosing = false;
-  if (front)
-    front.options = rollChoices(world.rng, player, front.source, world.partners, front.minRarity);
 }
 
 function revive(world: World, player: Player): void {
@@ -447,12 +453,21 @@ export function stepWorld(world: World, commands: readonly Command[]): void {
 }
 
 /** Multiplayer host advances shared life and its own attacks; guests own their motion and casts. */
-export function stepSharedWorld(world: World, commands: readonly Command[]): void {
-  step(world, commands, true);
+export function stepSharedWorld(
+  world: World,
+  commands: readonly Command[],
+  isSeatPresent?: (id: number) => boolean,
+): void {
+  step(world, commands, true, isSeatPresent);
 }
 
-function step(world: World, commands: readonly Command[], shared: boolean): void {
-  for (const command of commands) applyCommand(world, command);
+function step(
+  world: World,
+  commands: readonly Command[],
+  shared: boolean,
+  isSeatPresent?: (id: number) => boolean,
+): void {
+  for (const command of commands) applyCommand(world, command, isSeatPresent);
   if (world.outcome !== "playing" || isFrozen(world)) return;
 
   const dt = TICK;
@@ -540,11 +555,20 @@ export function stepOwnedPlayer(ctx: Ctx, player: Player): void {
   updateAreas(ctx, TICK);
 }
 
+function pickupRecipient(world: World, pickup: Pickup): Player | undefined {
+  return pickup.kind === "trophy"
+    ? world.players.find((player) => player.id === pickup.owner && !player.departed)
+    : nearestPlayer(world, pickup.x, pickup.z);
+}
+
 function updatePickups(world: World, dt: number): void {
   const kept = [];
   for (const pickup of world.pickups) {
-    const player = nearestPlayer(world, pickup.x, pickup.z);
-    if (!player) return;
+    const player = pickupRecipient(world, pickup);
+    if (!player || !player.alive) {
+      if (player || pickup.kind !== "trophy") kept.push(pickup);
+      continue;
+    }
     const dx = player.x - pickup.x;
     const dz = player.z - pickup.z;
     const distance = hypot(dx, dz);
@@ -573,6 +597,7 @@ function updatePickups(world: World, dt: number): void {
 
 /** One reward path for ordinary collection and drops still travelling when the team leaves. */
 function collectPickup(world: World, pickup: Pickup, player: Player): void {
+  if (collectRoutePickup(world, pickup, player)) return;
   world.events.push({ t: "pickup", kind: pickup.kind });
   switch (pickup.kind) {
     case "xp":
@@ -598,8 +623,10 @@ function collectPickup(world: World, pickup: Pickup, player: Player): void {
 
 /** Explicit departure settles remaining drops once; absorption never blocks a zone transition. */
 export function collectRemainingPickups(world: World): void {
-  for (const pickup of world.pickups)
-    collectPickup(world, pickup, nearestPlayer(world, pickup.x, pickup.z)!);
+  for (const pickup of world.pickups) {
+    const player = pickupRecipient(world, pickup);
+    if (player) collectPickup(world, pickup, player);
+  }
   world.pickups = [];
 }
 

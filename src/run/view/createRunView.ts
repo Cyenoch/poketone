@@ -56,6 +56,9 @@ import type { PropLook } from "./stageThemes";
 import { zoneTheme } from "./zoneThemes";
 import { createLandmark } from "./landmark";
 import { createExitPortal } from "./exitPortal";
+import { createDarkness } from "./grade";
+import { createRouteBeacons } from "./routeBeacons";
+import { createRouteMist } from "./routeMist";
 import { zoneDef } from "../sim/currentZone";
 import { playerRings } from "./player-rings";
 import { Deployment } from "./deployment";
@@ -387,6 +390,14 @@ export function* createRunView(
   const exitPortal = createExitPortal(ground);
   scene.add(exitPortal.root);
   disposables.push(exitPortal);
+  // Map modifiers: Flash / Defog beacons, the dark cave's shade and the fog's close mist.
+  const beacons = createRouteBeacons(ground);
+  scene.add(beacons.root);
+  disposables.push(beacons);
+  const darkness = createDarkness();
+  scene.add(darkness.mesh);
+  disposables.push(darkness);
+  const mist = createRouteMist(fog);
   // Field sites: props, state rings and their light; Snorlax sleeps as its own species model.
   const fieldSites = createFieldSites(
     { ...assets.sites, snorlax: assets.enemies.snorlax },
@@ -914,7 +925,8 @@ export function* createRunView(
       frameStations(dt);
       fieldSites.frame(world, alpha, elapsed, dt);
       landmark.update(world, elapsed);
-      exitPortal.update(world, elapsed);
+      exitPortal.update(world, elapsed, local);
+      beacons.update(world, elapsed);
       for (const body of avatars)
         frameAvatar(body, alpha, dt, remotePlayerSpeeds?.get(body.player.id));
       deployment.frame(yaw);
@@ -937,6 +949,8 @@ export function* createRunView(
       decoration?.update?.(cameraTarget);
       water?.update(cameraTarget.x, cameraTarget.z);
       weather?.frame(world.weather, world.time - (1 - alpha) * TICK, cameraTarget, dt);
+      mist.frame(world.modifier === "fog", dt);
+      darkness.update(world, alpha, ground, camera, dt);
       frameSun(yaw);
     },
     project(x, y, z, width, height) {

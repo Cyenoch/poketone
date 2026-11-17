@@ -35,6 +35,7 @@ import { UprightPlate } from "./run-overlays-surface";
 import { HARD_SHADOW, RADIUS_INNER, slantOf, ui } from "./tokens";
 import { balanceLines, breakLines, textWidth } from "./line-break";
 import { createMenuIcon } from "./icons";
+import { ROUTE_REWARD } from "../../run/sim/content/params/route";
 import { actionTerms } from "../../run/glossary";
 import { createRunCommandIcon } from "./run-overlays-icons";
 import { fade, stack } from "./layer";
@@ -76,6 +77,19 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const lineBox = (size: number) => Math.round(1.095 * size) + Math.round(0.353 * size);
 /** UIKit reads a numeric line height as a multiple of the font size. */
 const lineHeight = (size: number, px: number) => px / size;
+
+/** The ribbon is stamped again for a new card, source or special offer. */
+const bannerKey = (state: ChoiceState) =>
+  `${state.pending.id}:${state.pending.source}:${state.pending.offer?.kind ?? ""}`;
+
+/** What turning this card away sends: a Gengar deal is left for free by its card id (the run
+ *  ignores a stale one); another card is only put off, and only where it may be. */
+export function dismissCommand(
+  state: Pick<ChoiceState, "pending" | "dismissible">,
+): LocalCommand | null {
+  if (state.pending.offer?.kind === "deal") return { t: "leave", dialog: state.pending.id };
+  return state.dismissible ? { t: "choices", open: false } : null;
+}
 
 const kindNames: Record<CardKind, string> = { move: "招式", item: "道具", train: "训练" };
 const trainNames = { dmg: "伤害", hp: "HP", speed: "速度", area: "范围", cd: "冷却" };
@@ -229,7 +243,7 @@ interface Card {
   applied: string;
   dimmed: boolean;
 }
-type Action = "reroll" | "skip" | "banish" | "defer";
+type Action = "reroll" | "skip" | "banish" | "defer" | "decline";
 interface ActionButton {
   kind: Action;
   panel: Container;
@@ -250,6 +264,8 @@ interface Banner {
   plate: Container;
   slant: SlantPlate;
   kicker: { tag: Container; dispose(): void } | null;
+  /** A Gengar deal's price, chipped after the word. */
+  cost: { tag: Container; dispose(): void } | null;
   words: { text: Text; size: "word" | "number" | "chest" }[];
   line: Container;
   reveal: { value: number };
@@ -371,7 +387,7 @@ export class GpuChoiceContent {
     const before = this.state;
     this.state = state;
     // The run rerolls a card in place (new id, same object), so compare the id the ribbon was built for.
-    if (this.bannerCard !== `${state.pending.id}:${state.pending.source}`) {
+    if (this.bannerCard !== bannerKey(state)) {
       this.clearBanner();
       this.buildBanner();
     }
@@ -384,7 +400,8 @@ export class GpuChoiceContent {
     }
     if (
       (before.skips === null) !== (state.skips === null) ||
-      (before.banishes === null) !== (state.banishes === null)
+      (before.banishes === null) !== (state.banishes === null) ||
+      before.pending.offer?.kind !== state.pending.offer?.kind
     ) {
       this.clearActions();
       this.buildActions();
@@ -488,7 +505,9 @@ export class GpuChoiceContent {
   /** The level (or chest) on a slanted plate that unrolls from the left: the type's deep colour
    *  under its card face with a type stripe, the chest an ink plate with a gold stripe. */
   private buildBanner(): void {
-    const chest = this.state.pending.source === "chest";
+    // A guardian's trophy and Gengar's deal are chest-like special offers on the same gold plate.
+    const offer = this.state.pending.offer?.kind ?? null;
+    const chest = this.state.pending.source === "chest" || offer !== null;
     const theme = themeColors(this.state.theme);
     const root = new Container({ flexDirection: "row", alignItems: "center", flexShrink: 0 });
     const plate = new Container({
@@ -514,7 +533,9 @@ export class GpuChoiceContent {
       words.push({ text: t, size });
     };
     let kicker: Banner["kicker"] = null;
-    if (chest) word("宝箱", "chest");
+    let cost: Banner["cost"] = null;
+    if (chest)
+      word(offer === "trophy" ? "奖杯" : offer === "deal" ? "耿鬼的交易" : "宝箱", "chest");
     else {
       kicker = slantTag("升级", { face: ui.white, ink: ui.ink, size: 13 });
       stack(kicker.tag, 1);
@@ -523,16 +544,27 @@ export class GpuChoiceContent {
       word(String(this.state.level), "number");
     }
     plate.add(line);
+    if (offer === "deal") {
+      // The price is plain before any pick: every deal card costs the same share of max HP.
+      cost = slantTag(`最大生命 -${Math.round((1 - ROUTE_REWARD.tradeHp) * 100)}%`, {
+        face: "#a83243",
+        ink: ui.white,
+        size: 13,
+      });
+      stack(cost.tag, 1);
+      plate.add(cost.tag);
+    }
     root.add(plate);
     this.bannerBox.add(root);
     const reveal = { value: 0 },
       ink = { value: 0 };
-    this.banner = { root, plate, slant, kicker, words, line, reveal, ink };
-    this.bannerCard = `${this.state.pending.id}:${this.state.pending.source}`;
+    this.banner = { root, plate, slant, kicker, cost, words, line, reveal, ink };
+    this.bannerCard = bannerKey(this.state);
     const apply = () => {
       slant.set({ reveal: reveal.value });
       fade(line, ink.value);
       if (kicker) fade(kicker.tag, ink.value);
+      if (cost) fade(cost.tag, ink.value);
       this.stage.invalidate();
     };
     // Name-plate unroll 0.4s SNAP; the words come up as it passes.
@@ -750,7 +782,7 @@ export class GpuChoiceContent {
   // ---------------------------------------------------------------- actions
 
   private count(kind: Action): number {
-    if (kind === "defer") return 1;
+    if (kind === "defer" || kind === "decline") return 1;
     return kind === "reroll"
       ? this.state.rerolls
       : kind === "skip"
@@ -758,9 +790,13 @@ export class GpuChoiceContent {
         : (this.state.banishes ?? 0);
   }
   private buildActions(): void {
-    const kinds: Action[] = ["reroll"];
-    if (this.state.dismissible) kinds.push("defer");
-    if (this.state.banishes !== null) kinds.push("banish");
+    // A deal is answered or turned down for free: no reroll, banish or later, nothing spent.
+    const kinds: Action[] = this.state.pending.offer?.kind === "deal" ? ["decline"] : ["reroll"];
+    if (kinds[0] === "reroll") {
+      if (this.state.skips !== null) kinds.push("skip");
+      if (this.state.dismissible) kinds.push("defer");
+      if (this.state.banishes !== null) kinds.push("banish");
+    }
     for (const kind of kinds) {
       const panel = new Container({
         minHeight: 44,
@@ -781,8 +817,18 @@ export class GpuChoiceContent {
       const label = stack(this.text("", 15, ui.ink), 1);
       const badge = stack(
         new InputGlyph(
-          kind === "defer" ? "back" : this.docked ? "choiceConfirm" : "confirm",
-          kind === "reroll" ? "R" : kind === "skip" ? "X" : kind === "defer" ? "Esc" : "Z",
+          kind === "defer" || kind === "decline"
+            ? "back"
+            : this.docked
+              ? "choiceConfirm"
+              : "confirm",
+          kind === "reroll"
+            ? "R"
+            : kind === "skip"
+              ? "X"
+              : kind === "defer" || kind === "decline"
+                ? "Esc"
+                : "Z",
         ),
         1,
       );
@@ -864,7 +910,9 @@ export class GpuChoiceContent {
           this.count(action.kind) > 0
             ? action.kind === "defer"
               ? "保留选择机会"
-              : actionTerms[action.kind]
+              : action.kind === "decline"
+                ? "最大生命不变"
+                : actionTerms[action.kind]
             : "本局已用完",
         action: () => this.actionPressed(action.kind),
         selfDrawn: true,
@@ -934,7 +982,9 @@ export class GpuChoiceContent {
         text:
           action.kind === "defer"
             ? "稍后"
-            : `${action.kind === "reroll" ? "重抽" : action.kind === "skip" ? "跳过" : "放逐"} ${count}`,
+            : action.kind === "decline"
+              ? "放弃"
+              : `${action.kind === "reroll" ? "重抽" : action.kind === "skip" ? "跳过" : "放逐"} ${count}`,
       });
       this.refreshAction(action);
     }
@@ -981,10 +1031,13 @@ export class GpuChoiceContent {
     this.stage.invalidate();
   }
   actionPressed(kind: Action): void {
-    if (this.flight || this.count(kind) <= 0) return;
+    // Only the actions this card shows: a deal has no reroll behind the dock's interact key.
+    if (this.flight || this.count(kind) <= 0 || !this.actions.some((a) => a.kind === kind)) return;
     getAudio().sfx("ui-confirm");
-    if (kind === "defer") this.callbacks.send({ t: "choices", open: false });
-    else if (kind === "banish") this.callbacks.toggleBanish();
+    if (kind === "defer" || kind === "decline") {
+      const command = dismissCommand(this.state);
+      if (command) this.callbacks.send(command);
+    } else if (kind === "banish") this.callbacks.toggleBanish();
     else this.callbacks.send({ t: kind, card: this.state.pending.id });
   }
   /** 1–4 pick, R reroll, X skip, Z banish mode. */
@@ -1487,6 +1540,7 @@ export class GpuChoiceContent {
     this.stage.motion.cancel(b.ink);
     b.slant.dispose();
     b.kicker?.dispose();
+    b.cost?.dispose();
     this.disposeTree(b.root);
     this.banner = null;
   }

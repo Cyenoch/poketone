@@ -5,6 +5,7 @@ import { stageDefs } from "../src/run/sim/content/stages/index.ts";
 import { MapGenError } from "../src/run/sim/mapgen/index.ts";
 import { createWorld } from "../src/run/sim/world.ts";
 import { createHash } from "node:crypto";
+import { routeTo } from "./fixtures/route.mjs";
 
 const count = Number(process.argv[2] ?? 200);
 const stages = (process.argv[3] ?? Object.keys(stageDefs).join(",")).split(",");
@@ -24,7 +25,7 @@ for (const stage of stages) {
     const seed = k * 7919;
     const start = performance.now();
     try {
-      const world = createWorld({ stage, seed, difficulty: 0, players });
+      const world = createWorld({ stage, route: routeTo(stage), seed, difficulty: 0, players });
       digest.update(Buffer.from(world.map.terrain.heights.buffer));
       digest.update(Buffer.from(world.map.water.depth.values.buffer));
       digest.update(JSON.stringify([world.map.pads, world.map.water.puddles, world.map.obstacles]));

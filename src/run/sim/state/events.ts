@@ -10,6 +10,13 @@ import type { BuffCue } from "../content/triggers";
 import type { SiteKind, WeatherId } from "./field";
 
 export type RunEvent =
+  | {
+      t: "route";
+      kind: "exit" | "trophy" | "deal" | "flash" | "defog";
+      player: PlayerId;
+      x: number;
+      z: number;
+    }
   | { t: "weather"; id: WeatherId; phase: "forecast" | "start" | "end" }
   | {
       t: "site";

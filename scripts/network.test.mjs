@@ -5,6 +5,7 @@ import { MultiplayerSession } from "../src/network/session.ts";
 import { MultiplayerRun } from "../src/network/run.ts";
 import { encode, decode } from "../src/network/codec.ts";
 import { createWorld, stepSharedWorld as stepWorld } from "../src/run/sim/world.ts";
+import { routeTo, selectTestExit } from "./fixtures/route.mjs";
 import { mapDigest } from "../src/run/sim/snapshot.ts";
 import { enterZone, prepareZone } from "../src/run/sim/zones.ts";
 import { applyEntityDelta, entityDelta, entityState } from "../src/network/delta.ts";
@@ -100,7 +101,7 @@ test("Harbor 房间 → 房主出发 → 地图、操作与分区同步；客机
   assert.equal(world.players[1].dashX, 0);
   assert.equal(world.players[1].dashZ, 1, "冲刺使用按下时的方向，不能被后来的移动覆盖");
 
-  world.zone.phase = "transitioning";
+  selectTestExit(world, "desert");
   enterZone(world, prepareZone(world));
   a.publishMap(world);
   let next;
@@ -275,7 +276,7 @@ test("队友重开客户端用原凭据重返，旧载入确认不能解除新�
   assert.equal(c.config.players[1].trainer, "yewei", "原席位重返保留训练师");
   c.loading(restored);
   // Host changes map while this renderer is warming the preceding snapshot.
-  world.zone.phase = "transitioning";
+  selectTestExit(world, "desert");
   enterZone(world, prepareZone(world));
   a.publishMap(world);
   let latest;
@@ -780,8 +781,8 @@ test("终局越过直连在途帧时等待可靠屏障，迟到地图与重复�
 
 test("离线客机收到后图终局时先载入最终场地，再显示一次结果", async () => {
   const { wire, host, guest, remote } = await memoryRun();
-  const tower = createWorld({ ...config, stage: "tower" });
-  tower.outcome = "victory";
+  const tower = createWorld({ ...config, stage: "tower", route: routeTo("tower") });
+  selectTestExit(tower, null);
   wire.start();
   host.publish(tower, [], 0, true);
   const terminal = wire.sent.find((entry) => entry.packet.t === "terminal").packet;
@@ -1653,7 +1654,7 @@ for (const count of [3, 4])
       assert.equal(received.find((command) => command.player === id).z, id / 4);
     }
     assert.equal(world.players[0].inputX, 0, "伪造 player:0 不可控制房主");
-    world.zone.phase = "transitioning";
+    selectTestExit(world, "desert");
     enterZone(world, prepareZone(world));
     host.publishMap(world);
     for (let id = 1; id < count; id++) {
@@ -1859,7 +1860,7 @@ test("新地图已排队时终局替代它，正式 apply/takeMap 顺序不会�
   const { runs, worlds, world } = await startParty(sessions);
   for (const run of runs.slice(1)) await run.ready();
   await until(() => runs.every((run) => !run.suspended));
-  world.zone.phase = "transitioning";
+  selectTestExit(world, "desert");
   enterZone(world, prepareZone(world));
   runs[0].publishMap(world);
   await until(() => runs[1].map && runs[2].map);

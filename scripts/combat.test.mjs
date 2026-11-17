@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { routeTo } from "./fixtures/route.mjs";
 import test from "node:test";
 import { moveParams, updateAreas, updateMoves, updateProjectiles } from "../src/run/sim/attacks.ts";
 import { playerStats, xpForLevel } from "../src/run/sim/stats.ts";
@@ -1192,7 +1193,8 @@ test("a burn kill credits the player whose hit burned the enemy, not the one sta
 function lavaWorld() {
   const world = createWorld({
     stage: "volcano",
-    seed: 7,
+    route: routeTo("volcano"),
+    seed: 13, // The stage-derived map has lava at the combat fixture's (7, -24).
     difficulty: 0,
     players: [{ starter: "charmander" }, { starter: "squirtle" }],
   });

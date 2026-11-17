@@ -252,6 +252,18 @@
     "tell-voltorb": {
       "files": ["sfx/tell-voltorb-1.flac", "sfx/tell-voltorb-2.flac", "sfx/tell-voltorb-3.flac"],
       "hitMs": [25, 20, 40]
+    },
+    "exit-pick": {
+      "files": ["sfx/exit-pick.flac"],
+      "hitMs": [0]
+    },
+    "gengar-deal": {
+      "files": ["sfx/gengar-deal-1.flac", "sfx/gengar-deal-2.flac"],
+      "hitMs": [0, 25]
+    },
+    "trophy": {
+      "files": ["sfx/trophy-1.flac", "sfx/trophy-2.flac"],
+      "hitMs": [0, 0]
     }
   },
   "music": {

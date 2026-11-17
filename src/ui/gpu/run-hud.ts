@@ -1,6 +1,6 @@
 import { MAX_ITEM_SLOTS } from "../../run/sim/content/params/cards";
 import { ULT_INVULNERABLE } from "../../run/sim/content/params/ultimates";
-import { STAGE_ROUTE } from "../../run/sim/content/campaign";
+import { ROUTE_TIERS } from "../../run/sim/content/campaign";
 import { stageDefs } from "../../run/sim/content/stages/index";
 import { FullscreenIcon } from "./fullscreen-icon";
 import { type NavigationAction } from "../../platform/input";
@@ -13,6 +13,7 @@ import { LIFT, SNAP } from "./motion";
 import { RADIUS_INNER, slantOf, ui } from "./tokens";
 import { GpuEdgeGlow } from "./run-edge-glow";
 import { GpuEdgeIndicators } from "./run-edge-indicators";
+import { GpuExitLabels } from "./run-exit-labels";
 import type { World } from "../../run/sim/state/world";
 import type { PlayerId } from "../../run/sim/state/entities";
 import type { PerspectiveCamera } from "three";
@@ -163,6 +164,7 @@ export class GpuRunHud {
   readonly numbers: GpuDamageNumbers;
   private readonly edges = new GpuEdgeGlow(this.stage);
   private readonly indicators: GpuEdgeIndicators;
+  private readonly exitLabels: GpuExitLabels;
   private devReadout: GpuDevReadout | null = null;
   readonly compassSlot = new Container({ height: 36, width: "100%", justifyContent: "center" });
   readonly mapSlot = new Container({
@@ -533,6 +535,15 @@ export class GpuRunHud {
       this.mapSlot,
       this.bottom,
       this.interact.row,
+    ]);
+    // Crowns stand mid-field, so they yield only to what is drawn there, not to whole HUD rows.
+    this.exitLabels = new GpuExitLabels(this.stage, () => [
+      this.vitals,
+      this.center,
+      this.mapSlot,
+      this.slots,
+      this.interact.panel,
+      ...this.controls.map((control) => control.panel),
     ]);
     this.surfaces.push(this.xp, this.hp, this.hpChip, this.bossHp, this.bossChip);
     this.xp.uniforms.hudColor.value.set("#59c8ff");
@@ -1232,7 +1243,7 @@ export class GpuRunHud {
     this.clockPlate.set({ fill: plateInk });
     this.metaPlate.set({ fill: plateInk });
     this.metaText.setProperties({
-      text: `${STAGE_ROUTE.indexOf(snap.stage) + 1}/6 ${stageDefs[snap.stage].name} ${zoneState(snap)} · ${snap.kills}`,
+      text: `${snap.routeStep + 1}/${ROUTE_TIERS.length} ${stageDefs[snap.stage].name} ${zoneState(snap)} · ${snap.kills}`,
     });
     if (previous && previous.stardust !== snap.stardust) this.popStardust();
     // This run's earnings, written as a gain (the banked total shows only in the lobby).
@@ -1329,9 +1340,7 @@ export class GpuRunHud {
       state.blocked || this.choiceOpen,
       snap.pendingCount,
       snap.rescueProgress ?? snap.siteProgress,
-      snap.stage === "tower"
-        ? "完成探险"
-        : `前往${stageDefs[STAGE_ROUTE[STAGE_ROUTE.indexOf(snap.stage) + 1]!].name}`,
+      snap.exit,
     );
     this.controls.find((c) => c.action === "interact")!.enabled =
       Boolean(snap.prompt) && !this.choiceOpen;
@@ -1573,14 +1582,9 @@ export class GpuRunHud {
     alpha: number,
     delta: number,
   ) {
-    this.indicators.update(
-      world,
-      local,
-      camera,
-      alpha,
-      delta,
-      !!this.state?.visible && !this.state.blocked,
-    );
+    const visible = !!this.state?.visible && !this.state.blocked;
+    this.exitLabels.update(world, local, camera, delta, visible && !this.choiceOpen);
+    this.indicators.update(world, local, camera, alpha, delta, visible);
   }
   afterLayout(deltaMs: number): void {
     // Under the left column (vitals, teammates, the notice): its foot from the stage top.
@@ -1994,6 +1998,7 @@ export class GpuRunHud {
   dispose(): void {
     this.trainers.dispose();
     this.indicators.dispose();
+    this.exitLabels.dispose();
     this.numbers.dispose();
     this.edges.dispose();
     this.devReadout?.dispose();

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { routeTo, selectTestExit } from "./fixtures/route.mjs";
 import { damageEnemy, killEnemy } from "../src/run/sim/combat.ts";
 import { enemies } from "../src/run/sim/content/enemies.ts";
 import { items } from "../src/run/sim/content/items.ts";
@@ -35,6 +36,7 @@ import { itemCap, itemSlots, newMoveState, rollChoices } from "../src/run/sim/up
 function arena(players = 2, stage = "forest") {
   const w = createWorld({
     stage,
+    route: routeTo(stage),
     seed: 5,
     difficulty: 0,
     players: Array.from({ length: players }, () => ({ starter: "charmander" })),
@@ -105,7 +107,7 @@ test("real maps allocate four site pads, approved kinds, separate buildings and 
     for (const seed of [5, 11, 4242]) {
       let attempt = seed;
       const w = createWorldFromSeeds(
-        { stage, difficulty: 0, players: [{ starter: "charmander" }] },
+        { stage, route: routeTo(stage), difficulty: 0, players: [{ starter: "charmander" }] },
         () => attempt++,
       );
       const pads = w.map.pads.filter((pad) => pad.tag === "site");
@@ -140,6 +142,7 @@ test("real maps allocate four site pads, approved kinds, separate buildings and 
       }
       const again = createWorld({
         stage,
+        route: routeTo(stage),
         seed: w.seed,
         difficulty: 0,
         players: [{ starter: "charmander" }],
@@ -565,7 +568,7 @@ test("egg preserves walking distance through knockout, handoff and a real field 
   b.z = dropped.z;
   assert.equal(interactSite(w, b), true);
   assert.equal(b.egg.distance, 40);
-  w.zone.phase = "transitioning";
+  selectTestExit(w, "desert");
   const before = b.egg.distance;
   const prepared = prepareZone(w);
   enterZone(w, prepared);

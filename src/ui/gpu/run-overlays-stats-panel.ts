@@ -74,6 +74,8 @@ const kindColors = {
   lab: "#2165a4",
   train: "#5d7389",
   ability: "#a35ce0",
+  /** Gengar's deal: the max HP it took, in the ghost type's violet. */
+  deal: "#6b5a9e",
 } as const;
 
 const ease = (t: number) => cubicBezier(t, 0, 0, 0.58, 1);

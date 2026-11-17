@@ -69,6 +69,7 @@ test("ultimate protection reduces existing combat damage in a progressing run an
     ULT_CHARGE.time = 0.25;
     const options = {
       stage: "forest",
+      step: 0,
       starter: "charmander",
       difficulty: 0,
       skill: average,
@@ -130,6 +131,7 @@ test("ultimate protection blocks weather in a progressing run and improves survi
     FIELD_MODEL_ASSUMPTIONS.reach.average = 0;
     const options = {
       stage: "desert",
+      step: 1,
       starter: "charmander",
       difficulty: 0,
       skill: average,

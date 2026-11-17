@@ -7,6 +7,7 @@ import type { Rng } from "../rng";
 import type { Area, Enemy, Hazard, Partner, Pickup, Player, Projectile, Station } from "./entities";
 import type { RunEvent } from "./events";
 import type { FieldEventId, ScheduledBeat, Site, WeatherState } from "./field";
+import type { MarkerId, ModifierId, ZoneExit } from "./route";
 
 /** Simulation tick. Fixed so a future host can step every peer's world identically. */
 export const TICK = 1 / 30;
@@ -37,13 +38,19 @@ export interface ZoneState {
   /** Ticks fought in this zone; its clock (roster, beats, curves, final swarm) is `tick × TICK`. */
   tick: number;
   phase: "active" | "cleared" | "transitioning";
-  /** Where the fallen guardian opened the way out; set when the zone is cleared. */
-  exit: { x: number; z: number } | null;
+  /** Frozen destinations after the guardian falls; index zero is a valid selection. */
+  exits: ZoneExit[];
+  leaving: number | null;
   schedule: ScheduledBeat[];
 }
 
 export interface World {
   stage: StageId;
+  /** Entered maps, including the current one; append only when field preparation commits. */
+  route: StageId[];
+  marker: MarkerId | null;
+  /** Cleared illumination effects become null; they do not return on snapshot restore. */
+  modifier: ModifierId | null;
   seed: number;
   rng: Rng;
   difficulty: Difficulty;

@@ -298,16 +298,19 @@ if (!fixture) {
       host.publishMap(world);
       networkPair = { host, guest, world };
     }
+    const stage =
+      scenario === "reaction-feedback"
+        ? "volcano"
+        : scenario === "field-feedback"
+          ? "coast"
+          : "forest";
+    const { routeTo, selectTestExit } = await import("./fixtures/route.mjs");
     controller = createRun(
       app,
       hud,
       {
-        stage:
-          scenario === "reaction-feedback"
-            ? "volcano"
-            : scenario === "field-feedback"
-              ? "coast"
-              : "forest",
+        stage,
+        route: routeTo(stage),
         starter: scenario === "reaction-feedback" ? "squirtle" : "charmander",
         trainer: "chengxi",
         difficulty: 0,
@@ -406,11 +409,8 @@ if (!fixture) {
           assert.ok(actualWorld.tick > 0);
         }
         if (scenario === "zone-destination") {
-          const { nextField } = await import(at("src/run/sim/content/campaign.ts"));
-          const from = actualWorld.stage,
-            to = nextField(actualWorld).stage;
-          assert.notEqual(to, from);
-          actualWorld.zone.phase = "transitioning";
+          const to = "coast";
+          selectTestExit(actualWorld, to);
           client.advance(100);
           for (let i = 0; i < 1000 && zoneLoads.length < 2 && !errors.length; i++) await flush();
           assert.deepEqual(errors, []);

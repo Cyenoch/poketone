@@ -3,7 +3,7 @@
 // in content/difficulties.ts.
 // 时间为秒，距离/高度/半径为世界单位 u，速度 u/s，spread / turn 为弧度。
 // damage 为接触伤害乘数，below 为当前生命/最大生命的阶段阈值；不改变基础生命。
-import type { StageId } from "../stages/index";
+import type { RouteStep } from "../campaign";
 
 /** Guardian dash: speed (u/s) and duration; the telegraph line shows exactly this reach. */
 export const BOSS_DASH_SPEED = 14;
@@ -277,9 +277,8 @@ export const GUARDIAN_FURY = [
   { chaseRate: 2, first: 4, every: 3, lowEvery: 0.75, casts: ["rain", "barrage", "pincer"] },
 ] as const satisfies readonly (GuardianFury | null)[];
 
-/** The fixed map's guardian tier; internal field index does not add another multiplier. */
-export function furyOf(stage: StageId, _zone: number): GuardianFury | null {
-  return stage === "forest" ? null : GUARDIAN_FURY[stage === "desert" || stage === "coast" ? 1 : 2];
+export function furyOf(step: RouteStep): GuardianFury | null {
+  return GUARDIAN_FURY[step === 3 ? 2 : step];
 }
 
 export interface GuardianFury {

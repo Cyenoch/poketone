@@ -161,7 +161,9 @@ import {
   type Save,
 } from "./survival";
 import { ultCast, ultChargeRate, ultimateTiming, type UltimateTiming } from "./ultimate";
-import { CAMPAIGN_FIELDS } from "../sim/content/campaign";
+import { ROUTE_TIERS, routeFields, type RouteStep } from "../sim/content/campaign";
+import { rollExitMarkers, rollRouteModifier } from "../sim/content/route";
+import { routeSpawnFactors } from "../sim/route-rewards";
 import {
   FIELD_MODEL_ASSUMPTIONS,
   awakenModelSite,
@@ -298,6 +300,7 @@ const mean = (values: readonly number[]) =>
 
 /** The enemy side `time` seconds into `stage`'s zone `zone` (0-based), from that zone's roster. */
 export function fieldAt(
+  step: RouteStep,
   stage: StageId,
   time: number,
   difficulty: Difficulty,
@@ -309,11 +312,11 @@ export function fieldAt(
   },
 ): Field {
   const stageDef = stageDefs[stage];
-  const z = zoneFactorsFor(stageDef, zone);
+  const z = zoneFactorsFor(step, stageDef, zone);
   const zoneDef = stageDef.zones[zone]!;
   const pool = poolAt(zoneDef, time);
-  const clock = zoneClock(stageDef, zone, time);
-  const rampageSince = rampage ? zoneClock(stageDef, zone, stageDef.duration) : null;
+  const clock = zoneClock(step, time);
+  const rampageSince = rampage ? zoneClock(step, stageDef.duration) : null;
   const base = enemyScaling(clock, difficulty, rampageSince);
   const s = {
     hp: enemyHealthScaling(clock, difficulty, rampageSince) * z.hp,
@@ -1096,10 +1099,17 @@ export interface RunModel {
   damageShare: { move: MoveId; share: number }[];
   /** Mean second the samples reached each level (`levelAt[level]`, over samples that did). */
   levelAt: number[];
+  /** Each reached build's actual field and time; rewards on an exit second belong to the old field. */
+  evolutions: {
+    level: number;
+    unreached: number;
+    points: { step: RouteStep; t: number; local: number; alive: number }[];
+  }[];
   /** Per zone: chance of killing its guardian, and when (clear-weighted; null: none does). */
   zoneClears: {
     stage: StageId;
     zone: number;
+    step: RouteStep;
     reach: number;
     clear: number;
     t: number | null;
@@ -1121,6 +1131,7 @@ export interface RunModel {
     entered: number;
     completed: number;
     entryWeight: number;
+    eliteRates: number[];
     income: EventIncome;
     conditional: EventIncome | null;
     earned: { xp: number; cards: number; stardust: number };
@@ -1150,8 +1161,10 @@ export interface Outcome {
   meanSurvival: number;
 }
 
-export interface RunOptions {
-  stage: StageId;
+export type RunOptions = (
+  | { route: readonly StageId[]; stage?: never; step?: never }
+  | { stage: StageId; step: RouteStep; route?: never }
+) & {
   starter: StarterId;
   difficulty: Difficulty;
   skill: SkillProfile;
@@ -1160,10 +1173,8 @@ export interface RunOptions {
   samples?: number;
   /** Lab bonuses the run starts with (none by default). */
   lab?: LabBonuses;
-  /** Zones the run crosses (1 to the stage's zone count); each guardian kill but the last opens the next. */
-  zones?: number;
-  /** All six maps, preserving every sample's build between their fields. */
-  campaign?: boolean;
+  /** Compare the same route and seeds with neutral elite rates (all other route effects are unmodeled). */
+  routeElites?: boolean;
   /** One integer second per field, from 1 through its forced-summon time. Default: reference time. */
   summonSeconds?: readonly number[];
   /** Paired diagnostic: keep the same randomized main beats, omit extra field mechanisms. */
@@ -1171,7 +1182,7 @@ export interface RunOptions {
   seed?: number;
   /** Analysis-only historical comparison; defaults are read from shared sim parameters. */
   ultimateTiming?: UltimateTiming;
-}
+};
 
 /** What one build sample brings this second, at HP share `frac` (low HP turns on Blaze / Torrent). */
 interface Means {
@@ -2354,10 +2365,12 @@ interface Track {
   /** Captures and the species they bring (kept apart so they do not shift the card rolls). */
   captureRng: Rng;
   fieldRng: Rng;
+  routeRng: Rng;
   eventsUsed: FieldEventId[];
   fieldState: ModelFieldEvents | null;
   fieldIncome: {
     entryAlive: number;
+    eliteRate: number;
     income: EventIncome;
     earned: { xp: number; cards: number; stardust: number };
     schedule: ScheduledBeat[];
@@ -2403,7 +2416,6 @@ interface Track {
   beats: BeatSpike[];
   /** Alive at each second while running (the run's end freezes it). */
   survival: number[];
-  reachBoss: number;
   clearAt: number | null;
   clear: number;
   meanSurvival: number;
@@ -2436,6 +2448,7 @@ function newTrack(
     rng: createRng(seed + i * 7919),
     captureRng: createRng(0xca97 + i * 104729),
     fieldRng: createRng(seed + i * 7919),
+    routeRng: createRng((seed + i * 7919) ^ 0x726f7574),
     eventsUsed: [],
     fieldState: null,
     fieldIncome: [],
@@ -2477,7 +2490,6 @@ function newTrack(
     rows: [],
     beats: [],
     survival: [],
-    reachBoss: 0,
     clearAt: null,
     clear: 0,
     meanSurvival: 0,
@@ -2515,7 +2527,7 @@ function partnerList(track: Track): Partner[] {
 
 interface RunEnv {
   options: RunOptions;
-  fields: { stage: StageId; zone: number }[];
+  fields: ReturnType<typeof routeFields>;
   zones: number;
   summonSeconds: readonly number[];
   policy: PickPolicy;
@@ -2791,21 +2803,31 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   const diff = difficulties[difficulty];
   const { player } = track;
   const fieldIndex = track.zone;
-  const { stage: stageId, zone } = env.fields[fieldIndex]!;
+  const { stage: stageId, zone, step } = env.fields[fieldIndex]!;
   const stage = stageDefs[stageId];
   const { guardian: zoneGuardian } = stage.zones[zone]!;
   const guardian = zoneGuardian.species;
-  const zoneDef = zoneFactorsFor(stage, zone);
+  const zoneDef = zoneFactorsFor(step, stage, zone);
   const guardianXp = enemies[guardian].xp * zoneDef.xp * diff.xp;
   // Stage time in this zone, and the clock the swarm curves read.
   const tz = t - track.zoneStart;
-  const clock = zoneClock(stage, zone, tz);
+  const clock = zoneClock(step, tz);
   const summon = env.summonSeconds[fieldIndex]!;
   const rampage = tz >= stage.duration && (track.boss !== null || tz >= summon);
   if (!track.fieldState) {
     track.fieldState = newModelFieldEvents(stageId, zone, track.fieldRng, track.eventsUsed, skill);
+    // Fixed-route policy: take the first exit to this map. Optional duplicates come later and
+    // cannot change its marker. Use a separate stream so the paired control keeps its field beats.
+    const tier: readonly StageId[] = ROUTE_TIERS[step];
+    const marker =
+      options.route && step > 0
+        ? rollExitMarkers(track.routeRng, tier)[tier.indexOf(stageId)]!
+        : null;
+    const modifier = options.route ? rollRouteModifier(track.routeRng, step) : null;
     track.fieldIncome[fieldIndex] = {
       entryAlive: track.alive,
+      eliteRate:
+        options.routeElites === false ? 1 : routeSpawnFactors({ marker, modifier }).eliteRate,
       income: emptyEventIncome(),
       earned: { xp: 0, cards: 0, stardust: 0 },
       schedule: track.fieldState.schedule,
@@ -2845,8 +2867,8 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
     enabled && fieldState.outbreak && tz < fieldState.outbreak.until
       ? fieldState.outbreak.species
       : null;
-  const field = fieldAt(stageId, tz, difficulty, rampage, zone, { weather, outbreak });
-  const baseField = outbreak ? fieldAt(stageId, tz, difficulty, rampage, zone) : field;
+  const field = fieldAt(step, stageId, tz, difficulty, rampage, zone, { weather, outbreak });
+  const baseField = outbreak ? fieldAt(step, stageId, tz, difficulty, rampage, zone) : field;
   const eliteEach = field.hp * ELITE.hp;
 
   // Timeline beats (fired this second): swarms and stampedes join the crowd, elites the elite stock.
@@ -2882,11 +2904,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
         track.livingHordeHp +=
           added *
           enemies[firedBeat.species].hp *
-          enemyHealthScaling(
-            clock,
-            difficulty,
-            rampage ? zoneClock(stage, zone, stage.duration) : null,
-          ) *
+          enemyHealthScaling(clock, difficulty, rampage ? zoneClock(step, stage.duration) : null) *
           zoneDef.hp;
       }
       if (enabled && "species" in firedBeat) {
@@ -2898,11 +2916,8 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
           ids,
           () => 1 / ids.length,
           tz,
-          enemyHealthScaling(
-            clock,
-            difficulty,
-            rampage ? zoneClock(stage, zone, stage.duration) : null,
-          ) * zoneDef.hp,
+          enemyHealthScaling(clock, difficulty, rampage ? zoneClock(step, stage.duration) : null) *
+            zoneDef.hp,
           zoneDef.xp * diff.xp,
           skill,
           beat === "horde",
@@ -2997,7 +3012,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
             enemyHealthScaling(
               clock,
               difficulty,
-              rampage ? zoneClock(stage, zone, stage.duration) : null,
+              rampage ? zoneClock(step, stage.duration) : null,
             ) * zoneDef.hp,
           xpScale: zoneDef.xp * diff.xp,
           dmgScale: field.dmgScale,
@@ -3042,7 +3057,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   const partnerDps =
     track.partners.reduce((sum, species) => sum + partnerPower(species, target), 0) *
     enemyScaling(clock, difficulty, null).hp *
-    // The zone's own HP factor, not the stage's `enemyHp`: partner hits do not scale with the map.
+    // Partners read the field basis, before enemy-only growth.
     zonesOf(stage)[zone]!.hp *
     stats.damage *
     m.partnerDamage *
@@ -3052,7 +3067,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   const bossFocus = boss ? skill.bossFocus : 0;
   const belowHalf = boss !== null && boss.hp < boss.max * guardianLowHealth(guardian);
   // Hidden or shielded stretches of the guardian's cycle take its direct hits (not its burn).
-  const fury = furyOf(stage.id, zone);
+  const fury = furyOf(step);
   const exposure = boss ? guardianExposure(guardian, difficulty, belowHalf, fury) : 1;
   const bossDps = (m.out.single * skill.bossFocus * exposure + m.out.bossBurn) * (1 - siteFocus);
   // The guardian figures (TTK, HP left) are the last zone's.
@@ -3219,14 +3234,21 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   const spawnsNow =
     spawnRate(clock, difficulty, rampage) * zoneDef.spawns * SPAWN_SUCCESS * m.spawns * spawnScale;
   const spawned = spawnsNow * STEP;
+  const eliteChance = Math.min(
+    1,
+    diff.eliteChance * m.elites * track.fieldIncome[fieldIndex]!.eliteRate,
+  );
+  const incoming = spawnsNow * (field.hp + eliteChance * (eliteEach - field.hp));
+  const eliteStock = track.elites.reduce((sum, cohort) => sum + cohort.n, 0);
   const admits =
     track.living +
       track.approaching +
+      eliteStock +
       (enabled && fieldState.active?.encounter ? 1 : 0) +
       (enabled && fieldState.shiny ? 1 : 0) <
     cap;
   if (admits) {
-    const elites = spawned * diff.eliteChance * m.elites;
+    const elites = spawned * eliteChance;
     const ordinary = spawned - elites;
     track.approaching += ordinary;
     track.approachingXp += ordinary * field.xp;
@@ -3249,11 +3271,8 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
         field.pool,
         field.share,
         tz,
-        enemyHealthScaling(
-          clock,
-          difficulty,
-          rampage ? zoneClock(stage, zone, stage.duration) : null,
-        ) * zoneDef.hp,
+        enemyHealthScaling(clock, difficulty, rampage ? zoneClock(step, stage.duration) : null) *
+          zoneDef.hp,
         zoneDef.xp * diff.xp,
         skill,
         false,
@@ -3435,31 +3454,31 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   player.hp = track.frac * m.maxHp;
   track.meanSurvival += track.alive * STEP;
   track.survival.push(track.alive);
-  if (tz === summon && fieldIndex === env.zones - 1) track.reachBoss = track.alive;
 
-  if (options.campaign) {
+  const elites = track.elites.reduce((sum, cohort) => sum + cohort.n, 0);
+  const living =
+    track.living +
+    track.approaching +
+    elites +
+    Number(!!fieldState.shiny) +
+    Number(!!fieldState.active?.encounter);
+  if (options.route) {
     const rawShare = (list: readonly { rate: number; dmg: number }[]) =>
       list.reduce((sum, h) => sum + h.rate * h.dmg, 0) / m.maxHp;
     track.probes[fieldIndex]!.push({
       tz,
       alive: aliveBefore,
       frac: track.frac,
-      living:
-        track.living +
-        track.approaching +
-        (fieldState.shiny ? 1 : 0) +
-        (fieldState.active?.encounter ? 1 : 0),
-      elites:
-        track.elites.reduce((sum, cohort) => sum + cohort.n, 0) +
-        (fieldState.active?.encounter?.elite ? 1 : 0),
+      living,
+      elites: elites + (fieldState.active?.encounter?.elite ? 1 : 0),
       stockHp:
         stockHp() +
         track.elites.reduce((sum, cohort) => sum + cohort.n * cohort.hp, 0) +
         (fieldState.active?.encounter?.hp ?? 0) +
         (fieldState.shiny?.hp ?? 0),
       cap,
-      incoming: spawnsNow * field.hp,
-      admitted: admits ? spawnsNow * field.hp : 0,
+      incoming,
+      admitted: admits ? incoming : 0,
       capacity: buildOutput(player, targetFor(field, cap, skill)).useful * (1 - siteFocus),
       spawnScale,
       hp: field.hp,
@@ -3485,7 +3504,6 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   if (t % 60 === 0) {
     const capacity =
       measure(player, targetFor(field, cap, skill), skill, track.frac).out.useful * (1 - siteFocus);
-    const incoming = spawnsNow * field.hp;
     track.rows.push({
       t,
       level: player.level,
@@ -3496,17 +3514,8 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
       incoming,
       pressure: capacity / incoming,
       spawnScale,
-      fill:
-        (track.living +
-          track.approaching +
-          (fieldState.shiny ? 1 : 0) +
-          (fieldState.active?.encounter ? 1 : 0)) /
-        cap,
-      living:
-        track.living +
-        track.approaching +
-        (fieldState.shiny ? 1 : 0) +
-        (fieldState.active?.encounter ? 1 : 0),
+      fill: living / cap,
+      living,
       kills: track.killed + track.eliteKilled,
       single: bossDps,
       inDps: meanDps + poison * ultimateExposed + weatherLoss / STEP,
@@ -3627,7 +3636,7 @@ function entryComparisons(tracks: readonly Track[], env: RunEnv): EntryCompariso
       const window = (zone: number, from: number, to: number): WindowSample => {
         const start = tr.zoneStarts[zone]!;
         const end = Math.min(to, (tr.zoneClears[zone]?.t ?? tr.survival.length) - start);
-        const complete = end >= to;
+        const complete = end - from >= ENTRY_WINDOW;
         return {
           probes: tr.probes[zone]!.filter((probe) => probe.tz > from && probe.tz <= end),
           aliveStart: aliveAt(start + from),
@@ -3655,7 +3664,6 @@ function entryComparisons(tracks: readonly Track[], env: RunEnv): EntryCompariso
 /** The samples' runs, averaged. */
 export function runModel(options: RunOptions): RunModel {
   const { starter, difficulty } = options;
-  const stage = stageDefs[options.stage];
   const count = options.samples ?? BUILD_SAMPLES;
   if (!Number.isInteger(count) || count < 1)
     throw new RangeError("runModel: samples must be a positive integer");
@@ -3665,12 +3673,17 @@ export function runModel(options: RunOptions): RunModel {
   const tracks = Array.from({ length: count }, (_, i) =>
     newTrack(i, starter, options.lab, options.seed),
   );
-  const zones = options.campaign ? CAMPAIGN_FIELDS.length : (options.zones ?? 1);
-  if (!(Number.isInteger(zones) && zones >= 1 && (options.campaign || zones <= stage.zones.length)))
-    throw new RangeError(`runModel: zones ${zones} (1–${stage.zones.length})`);
-  const fields = options.campaign
-    ? CAMPAIGN_FIELDS
-    : Array.from({ length: zones }, (_, zone) => ({ stage: options.stage, zone }));
+  const fields = options.route
+    ? routeFields(options.route)
+    : [{ stage: options.stage, step: options.step, zone: 0 }];
+  if (
+    (options.route && fields.length !== ROUTE_TIERS.length) ||
+    fields.some(({ stage, step }) => !ROUTE_TIERS[step]?.some((id) => id === stage))
+  )
+    throw new RangeError(
+      "runModel: expected a complete legal route or an explicit stage and route step",
+    );
+  const zones = fields.length;
   const summonSeconds = options.summonSeconds ?? fields.map(() => GUARDIAN_REFERENCE_SECONDS);
   if (
     options.summonSeconds &&
@@ -3780,13 +3793,13 @@ export function runModel(options: RunOptions): RunModel {
     .map(({ spike, clears }) => ({ ...spike, clear: mean(clears) }))
     .sort((a, b) => a.zone - b.zone || a.t - b.t);
   return {
-    stage: options.stage,
+    stage: fields[0]!.stage,
     starter,
     difficulty,
     skill: options.skill.name,
     minutes,
     outcome: {
-      reachBoss: mean(tracks.map((tr) => tr.reachBoss)),
+      reachBoss: mean(tracks.map((tr) => tr.guardianReach[zones - 1] ?? 0)),
       clear: mean(tracks.map((tr) => tr.clear)),
       clearAt:
         clearWeight > 0
@@ -3815,6 +3828,22 @@ export function runModel(options: RunOptions): RunModel {
     })),
     ultEvery: intervals.length > 0 ? mean(intervals) : null,
     levelAt,
+    evolutions: starters[starter].stages.slice(1).map(({ at: level }) => {
+      const points = tracks.flatMap((tr) => {
+        const t = tr.levelAt[level];
+        if (t === undefined) return [];
+        const index = tr.zoneStarts.findLastIndex((start) => start < t);
+        return [
+          {
+            step: fields[index]!.step,
+            t,
+            local: t - tr.zoneStarts[index]!,
+            alive: tr.survival[t - 1]!,
+          },
+        ];
+      });
+      return { level, unreached: count - points.length, points };
+    }),
     fights: Array.from({ length: zones }, (_, z) => {
       const fights = tracks.flatMap((tr) => (tr.fights[z] ? [tr.fights[z]!] : []));
       const completed = fights.filter((fight) => fight.complete);
@@ -3849,7 +3878,7 @@ export function runModel(options: RunOptions): RunModel {
     },
     stardust: mean(tracks.map((tr) => tr.stardust)),
     exposure,
-    entryWindows: options.campaign ? entryComparisons(tracks, env) : [],
+    entryWindows: options.route ? entryComparisons(tracks, env) : [],
     fieldEvents: fields.map((field, index) => {
       const parts = tracks.flatMap((track) =>
         track.fieldIncome[index] ? [track.fieldIncome[index]!] : [],
@@ -3867,6 +3896,7 @@ export function runModel(options: RunOptions): RunModel {
         entered: parts.length,
         completed: tracks.filter((track) => track.zoneClears[index]).length,
         entryWeight: weight / count,
+        eliteRates: parts.map((part) => part.eliteRate),
         income,
         conditional,
         earned: {

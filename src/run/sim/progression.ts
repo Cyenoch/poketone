@@ -4,7 +4,7 @@ import { next, type Rng } from "./rng";
 import type { PendingChoice, Player, Rarity } from "./state/entities";
 import type { World } from "./state/world";
 import { refreshStats, xpForLevel } from "./stats";
-import { rollChoices } from "./upgrades";
+import { rollRewardChoices } from "./upgrades";
 
 /** Only the front card is rolled: one queued behind it would be rolled against an outdated kit. */
 export function queueCard(
@@ -12,14 +12,28 @@ export function queueCard(
   player: Player,
   source: PendingChoice["source"],
   minRarity?: Rarity,
+  offer?: PendingChoice["offer"],
 ): void {
-  const front = player.pending.length === 0;
-  player.pending.push({
+  const card: PendingChoice = {
     id: world.nextId++,
     source,
-    options: front ? rollChoices(world.rng, player, source, world.partners, minRarity) : [],
+    options: [],
     ...(minRarity === undefined ? {} : { minRarity }),
-  });
+    ...(offer ? { offer } : {}),
+  };
+  if (!player.pending.length) card.options = rollRewardChoices(world, player, card);
+  player.pending.push(card);
+}
+
+export function manualCards(world: World, player: Player): boolean {
+  return world.players.length > 1 || player.manualCards === true;
+}
+
+export function nextCard(world: World, player: Player): void {
+  player.pending.shift();
+  const front = player.pending[0];
+  if (front) front.options = rollRewardChoices(world, player, front);
+  else if (manualCards(world, player)) player.choosing = false;
 }
 
 /**

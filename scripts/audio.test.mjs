@@ -25,6 +25,7 @@ test("every registered effect ships its selected masters and measured timing", (
   const published = new URL("../public/audio/", import.meta.url);
   const json = (url) => JSON.parse(readFileSync(url, "utf8"));
   const manifest = json(new URL("manifest.json", source));
+  const production = json(new URL("field-route-production.json", source));
   const timing = json(new URL("master/timing.json", source));
   const bank = json(new URL("bank.json", published));
   const byName = (a, b) => a.localeCompare(b);
@@ -41,8 +42,14 @@ test("every registered effect ships its selected masters and measured timing", (
       assert.ok(take?.generationId, `${id}: missing generation provenance for ${raw}`);
       assert.ok(readFileSync(new URL(`raw/${raw}`, source)).length > 0);
       const master = `${id}${asset.pick.length > 1 ? `-${i + 1}` : ""}.flac`;
+      const measured = production.assets[id]?.masters[i];
+      const publishedBytes = readFileSync(new URL(entry.files[i], published));
+      if (production.assets[id]) {
+        assert.equal(measured?.raw, raw, `${id}: published variant must match the QC pick`);
+        assert.equal(createHash("sha256").update(publishedBytes).digest("hex"), measured.sha256);
+      }
       assert.deepEqual(
-        readFileSync(new URL(entry.files[i], published)),
+        publishedBytes,
         readFileSync(new URL(`master/${master}`, source)),
         `${id}: published audio differs from its master`,
       );

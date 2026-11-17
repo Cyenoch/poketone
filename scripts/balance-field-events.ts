@@ -1,5 +1,5 @@
 // bun scripts/balance-field-events.ts [difficulty=0] [samples=8] [--json]
-// Paired continuous six-field runs. Rewards are consumed at the actual sample step, not added here.
+// Paired continuous four-map runs. BALANCE_ROUTE selects a comma-separated complete route.
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -11,6 +11,7 @@ import { ultimateTiming } from "../src/run/balance/ultimate.ts";
 import { difficulties, type Difficulty } from "../src/run/sim/content/difficulties.ts";
 import { starterOrder, starters, type StarterId } from "../src/run/sim/content/lines/index.ts";
 import { stageDefs } from "../src/run/sim/content/stages/index.ts";
+import { ALL_ROUTES } from "../src/run/sim/content/campaign.ts";
 import { FIELD_EVENTS, SHINY, WEATHER } from "../src/run/sim/content/params/field-events.ts";
 import { SITE } from "../src/run/sim/content/params/sites.ts";
 
@@ -64,8 +65,13 @@ function sourceDigest(): string {
   return hash.digest("hex");
 }
 const sourceBefore = sourceDigest();
+const route =
+  process.env.BALANCE_ROUTE === undefined
+    ? ALL_ROUTES[0]!
+    : ALL_ROUTES.find((route) => route.join(",") === process.env.BALANCE_ROUTE);
+if (!route) throw new Error(`无效的完整路线：${process.env.BALANCE_ROUTE}`);
 const report = roster.map((starter) => {
-  const options = { stage: "forest" as const, starter, difficulty, skill, samples, campaign: true };
+  const options = { route, starter, difficulty, skill, samples };
   const before = runModel({ ...options, fieldEvents: false });
   const after = runModel(options);
   // Historical contract, used only for this comparison: immediate release and one second protection.
@@ -117,14 +123,14 @@ const metadata = {
   sourceAfter,
   sourceChangedDuringRun: sourceBefore !== sourceAfter,
   difficulty,
+  route,
   samples,
   profile: skill.name,
   timing: ultimateTiming(),
   formal: { FIELD_EVENTS, SHINY, WEATHER, SITE },
   assumptions: FIELD_MODEL_ASSUMPTIONS,
   limits: FIELD_MODEL_LIMITS,
-  comparison:
-    "同种子连续六图：仅关闭额外野外机制；主线节拍仍按正式窗口抽取。另用历史0秒准备/1秒保护对照当前终极技。",
+  comparison: `同种子连续四图 ${route.join(" → ")}：仅关闭额外野外机制；主线节拍仍按正式窗口抽取。另用历史0秒准备/1秒保护对照当前终极技。`,
 };
 if (process.argv.includes("--json")) console.log(JSON.stringify({ metadata, report }, null, 2));
 else {

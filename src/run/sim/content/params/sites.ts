@@ -41,6 +41,7 @@ export const SITE = {
     glint: 0.15,
     ghost: 0.6,
     "silph-scope": 0.25,
+    "gengar-deal": 0.7,
   },
   rewards: {
     fishStardust: STARDUST.ordinary.value,

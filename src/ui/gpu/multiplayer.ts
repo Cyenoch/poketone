@@ -14,8 +14,8 @@ import { trainerArt, trainerOrder, trainers, trainerUnlocked } from "../../train
 import { BallBadge } from "./ball";
 import { GameButton } from "./game-button";
 import { InnerScreenFrame } from "./inner-screen";
-import { MapSwatch } from "./map-swatch";
-import { STAGE_ROUTE } from "../../run/sim/content/campaign";
+import { RouteMap } from "./route-map";
+import { ROUTE_TIERS } from "../../run/sim/content/campaign";
 import { UiStage } from "./stage";
 import { stack, fade } from "./layer";
 import { EASE, LIFT, POP, SNAP } from "./motion";
@@ -33,7 +33,7 @@ import type { UiInsets } from "./viewport";
 
 const DANGER = "#a83243";
 /** The route every expedition takes (lobby's route name). */
-const ROUTE = "6 关探险";
+const ROUTE = `${ROUTE_TIERS.length} 关探险`;
 
 export interface MultiplayerCallbacks {
   rejoin?: { code: string; action: () => void };
@@ -130,8 +130,7 @@ export class GpuMultiplayer {
     marginRight: RING_ROOM,
   });
   private readonly routeName: Text;
-  private readonly swatches: MapSwatch[] = [];
-  private readonly routeDots: Container[] = [];
+  private readonly routeMap = new RouteMap();
   private readonly go = new Container({ flexDirection: "row", alignItems: "center", gap: 12 });
   private readonly tray = segmentTray();
   private readonly hostMission: ReturnType<typeof slantTag>;
@@ -391,29 +390,7 @@ export class GpuMultiplayer {
     this.routeName = this.header(ROUTE);
     this.headers.pop();
     this.route.add(this.routeName);
-    for (const [i, id] of STAGE_ROUTE.entries()) {
-      if (i > 0) {
-        const dots = new Container({ flexDirection: "row", gap: 2, flexShrink: 0 });
-        for (let d = 0; d < 3; d++)
-          dots.add(
-            new Container({ width: 2.5, height: 2.5, borderRadius: 2, backgroundColor: ui.ink }),
-          );
-        this.route.add(dots);
-        this.routeDots.push(dots);
-      }
-      const ring = new Container({
-        width: 22,
-        height: 22,
-        borderRadius: 999,
-        borderWidth: 2,
-        borderColor: ui.ink,
-        flexShrink: 0,
-      });
-      const swatch = new MapSwatch(id, 9);
-      ring.add(swatch.content);
-      this.route.add(ring);
-      this.swatches.push(swatch);
-    }
+    this.route.add(this.routeMap.panel);
     for (const [value, def] of Object.entries(difficulties))
       this.segment(Number(value) as Difficulty, def.name);
     this.hostMission = slantTag(difficulties[pick.difficulty].name, {
@@ -930,9 +907,12 @@ export class GpuMultiplayer {
     for (const panel of this.trainerTiles) panel.setProperties({ width: tile, height: tile });
     this.roster.setProperties({ width: 5 * tile + 4 * gap, gap });
     for (const badge of this.badges) badge.panel.setProperties({ width: tile, height: tile });
-    // Compact: the rings alone (the dots would push the route past a 667 dock).
-    this.route.setProperties({ gap: compact ? 4 : 5 });
-    for (const dots of this.routeDots) dots.setProperties({ display: compact ? "none" : "flex" });
+    // Compact: the stacked rings alone (the dots would push the route past a 667 dock).
+    this.routeMap.resize(
+      compact
+        ? { swatch: 20, column: 4, row: 3, links: false }
+        : { swatch: 22, column: 12, row: 4, links: true },
+    );
     this.routeName.setProperties({ fontSize: compact ? 11 : 12, marginRight: compact ? 4 : 6 });
     // The landing: two cards of one height; the code cells set the join column's width.
     this.pages.menu.setProperties({ gap: compact ? 16 : 28 });
@@ -1058,7 +1038,7 @@ export class GpuMultiplayer {
   afterLayout(deltaMs: number) {
     for (const control of this.controls) control.update(deltaMs);
     this.frame.update();
-    for (const swatch of this.swatches) swatch.update();
+    this.routeMap.update();
     if (this.page === "room") this.seats.forEach((seat) => seat.updateMotion(deltaMs));
     const tipped =
       this.hovered >= 0
@@ -1101,7 +1081,7 @@ export class GpuMultiplayer {
     this.dockPlate.dispose();
     for (const { plate } of this.cards) plate.dispose();
     this.partner.dispose();
-    for (const swatch of this.swatches) swatch.dispose();
+    this.routeMap.dispose();
     this.hostMission.dispose();
     this.tray.dispose();
     this.tooltip.dispose();

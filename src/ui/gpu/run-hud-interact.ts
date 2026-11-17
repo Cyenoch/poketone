@@ -12,6 +12,10 @@ import { SlantPlate } from "./slant-plate";
 import { createStationArt } from "./station-art";
 import { ChoiceIconPlate } from "./run-choice-surface";
 import { siteIcons } from "../../run/view/fieldMapMarks";
+import type { ZoneExit } from "../../run/sim/state/route";
+import { exitName, markerIcons, markerName } from "../../run/view/routeLook";
+import { ballGlyph } from "./ball";
+import { gameTag } from "./tag";
 import type { UiStage } from "./stage";
 import { RADIUS_INNER, ui } from "./tokens";
 
@@ -83,6 +87,10 @@ export class RunHudInteract {
   private readonly stage: UiStage;
   private readonly pose = { alpha: 0, y: 6 };
   private kind: InteractPrompt | null = null;
+  /** The exit the leave prompt was dressed for (`to:marker`). */
+  private leaveKey = "";
+  /** The exit's reward, said once here where the player decides. */
+  private readonly markerSlot = new Container({ flexShrink: 0, display: "none" });
   private art: ReturnType<typeof createStationArt> | null = null;
   private shown = false;
   private pressed = false;
@@ -95,6 +103,7 @@ export class RunHudInteract {
       this.face.content,
       stack(this.plate, 1),
       stack(this.label, 1),
+      stack(this.markerSlot, 1),
       stack(this.key, 1),
     );
     this.row.add(this.panel);
@@ -143,11 +152,13 @@ export class RunHudInteract {
     blocked: boolean,
     count: number,
     progress: number | null,
-    exitLabel: string,
+    exit: ZoneExit | null,
   ): void {
     const show = kind !== null && !blocked;
     if (kind && kind !== this.kind) {
       this.kind = kind;
+      this.leaveKey = "";
+      this.setMarker(null);
       const name =
         kind in sites
           ? sites[kind as SiteKind].name
@@ -192,10 +203,7 @@ export class RunHudInteract {
       this.name.setProperties({ text: label });
       this.nameShadow.setProperties({ text: label });
     }
-    if (kind === "leave") {
-      this.name.setProperties({ text: exitLabel });
-      this.nameShadow.setProperties({ text: exitLabel });
-    }
+    if (kind === "leave") this.dressLeave(exit);
     if (show === this.shown) return;
     this.shown = show;
     if (show) this.row.setProperties({ display: "flex" });
@@ -209,6 +217,48 @@ export class RunHudInteract {
       },
       show ? uiEaseOut : easeIn,
     );
+  }
+
+  /** 前往{map} with the marker's art on the plate and its name chipped after; 离开 at the end. */
+  private dressLeave(exit: ZoneExit | null): void {
+    const key = exit ? `${exit.to}:${exit.marker}` : "none";
+    if (key === this.leaveKey) return;
+    this.leaveKey = key;
+    const label = exit?.to ? `前往${exitName(exit)}` : "离开";
+    this.name.setProperties({ text: label });
+    this.nameShadow.setProperties({ text: label });
+    if (this.art) {
+      this.art.root.removeFromParent();
+      this.art.dispose();
+      this.art = null;
+    }
+    const marker = exit?.marker ?? null;
+    if (marker === "chests") {
+      const ball = ballGlyph(26);
+      const root = new Container({
+        width: 36,
+        height: 36,
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: 999,
+        backgroundColor: ui.ink,
+      });
+      root.add(ball.glyph);
+      this.art = { root, dispose: () => ball.dispose() };
+    } else if (marker) this.art = createSiteArt(markerIcons[marker]!, 36);
+    if (this.art) this.plate.add(this.art.root);
+    this.plate.setProperties({ display: this.art ? "flex" : "none" });
+    this.panel.setProperties({ paddingLeft: this.art ? 4 : this.coarse ? 12 : 16 });
+    this.setMarker(marker ? markerName(marker) : null);
+  }
+
+  private setMarker(name: string | null): void {
+    for (const child of this.markerSlot.children.slice()) {
+      child.removeFromParent();
+      (child as Container).dispose?.();
+    }
+    if (name) this.markerSlot.add(gameTag(name, { face: ui.ink, ink: ui.white }));
+    this.markerSlot.setProperties({ display: name ? "flex" : "none" });
   }
 
   get visible(): boolean {

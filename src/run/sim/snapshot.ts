@@ -8,10 +8,13 @@ import { enemies } from "./content/enemies";
 import { fieldEventDefs } from "./content/events";
 import { weatherDefs } from "./content/weather";
 import { sites } from "./content/sites";
+import { initialRoute, ROUTE_TIERS, routeStep } from "./content/campaign";
+import { markerAllowed, routeMarkers, routeModifiers } from "./content/route";
+import { ROUTE_REWARD } from "./content/params/route";
 import { ULT_INVULNERABLE } from "./content/params/ultimates";
 
 /** Snapshot format; bumped when the snapshot's dynamic state shape changes. */
-export const SNAPSHOT_VERSION = 7;
+export const SNAPSHOT_VERSION = 8;
 
 /** Static map and runtime navigation; snapshots carry only the nav's continuation facts. */
 type MapFields = "map" | "nav";
@@ -57,22 +60,6 @@ export function restoreWorld(map: GeneratedMap, snapshot: WorldSnapshot): World 
   const pressure = dynamic.spawn?.pressure;
   if (typeof pressure !== "number" || pressure < 0 || pressure > 1)
     throw new Error(`快照增援压力无效：${pressure}`);
-  const zone = dynamic.zone;
-  const exit = zone?.exit;
-  if (
-    !zone ||
-    !Object.hasOwn(zone, "exit") ||
-    (exit !== null &&
-      (typeof exit !== "object" ||
-        Array.isArray(exit) ||
-        typeof exit.x !== "number" ||
-        typeof exit.z !== "number" ||
-        Object.keys(exit).length !== 2 ||
-        Math.abs(exit.x) > ARENA_HALF ||
-        Math.abs(exit.z) > ARENA_HALF)) ||
-    (zone.phase === "active" ? exit !== null : exit === null)
-  )
-    throw new Error(`快照出口无效（${dynamic.stage}，${zone?.phase}）。`);
   validateFieldState(dynamic);
   return { map, nav: restoreNav(map.terrain, navigation), ...dynamic };
 }
@@ -93,6 +80,49 @@ function validateFieldState(world: Omit<World, MapFields>): void {
     Math.abs(v.z) <= ARENA_HALF;
   const egg = (v: unknown) =>
     record(v) && species(v.species) && nonnegative(v.distance) && point(v);
+  check(Array.isArray(world.route), "route");
+  initialRoute(world.stage, world.route);
+  check(
+    world.marker === null ||
+      (Object.hasOwn(routeMarkers, world.marker) && markerAllowed(world.marker, world.stage)),
+    "marker",
+  );
+  check(
+    world.modifier === null ||
+      (Object.hasOwn(routeModifiers, world.modifier) &&
+        ROUTE_REWARD.modifierChance[routeStep(world)] > 0),
+    "modifier",
+  );
+  const zone = world.zone;
+  const targets: readonly string[] = ROUTE_TIERS[world.route.length] ?? [];
+  if (
+    !zone ||
+    !Array.isArray(zone.exits) ||
+    !["active", "cleared", "transitioning"].includes(zone.phase) ||
+    (zone.phase === "active" ? zone.exits.length !== 0 : zone.exits.length === 0) ||
+    (zone.leaving !== null && (!count(zone.leaving) || zone.leaving >= zone.exits.length)) ||
+    (zone.phase === "transitioning" && (zone.leaving === null || !targets.length)) ||
+    (zone.phase !== "transitioning" && zone.leaving !== null && world.outcome !== "victory") ||
+    (world.outcome === "victory" &&
+      (world.stage !== "tower" || zone.phase !== "cleared" || zone.leaving !== 0)) ||
+    zone.exits.some(
+      (exit) =>
+        !record(exit) ||
+        !point(exit) ||
+        (targets.length
+          ? exit.to === null ||
+            !targets.includes(exit.to) ||
+            exit.marker === null ||
+            !Object.hasOwn(routeMarkers, exit.marker) ||
+            !markerAllowed(exit.marker, exit.to)
+          : exit.to !== null || exit.marker !== null),
+    ) ||
+    (zone.phase !== "active" &&
+      (zone.exits.length > targets.length + 1 ||
+        !targets.every((to) => zone.exits.some((exit) => exit.to === to)) ||
+        new Set(zone.exits.map((exit) => exit.marker)).size !== zone.exits.length))
+  )
+    throw new Error(`快照出口无效（${world.stage}，${zone?.phase}）。`);
   check(
     Array.isArray(world.eventsUsed) &&
       world.eventsUsed.every((id) => Object.hasOwn(fieldEventDefs, id)) &&
@@ -189,8 +219,19 @@ function validateFieldState(world: Omit<World, MapFields>): void {
       `sites.${site.id}.trap`,
     );
     check(site.data.egg === undefined || egg(site.data.egg), `sites.${site.id}.egg`);
+    check(
+      site.data.traded === undefined ||
+        (site.kind === "gengar-deal" &&
+          Array.isArray(site.data.traded) &&
+          site.data.traded.every((id) => world.players.some((player) => player.id === id))),
+      `sites.${site.id}.traded`,
+    );
   }
   for (const player of world.players) {
+    check(
+      typeof player.tradeHp === "number" && player.tradeHp > 0 && player.tradeHp <= 1,
+      `players.${player.id}.tradeHp`,
+    );
     check(record(player.dex), `players.${player.id}.dex`);
     for (const [id, entry] of Object.entries(player.dex))
       check(
@@ -207,11 +248,22 @@ function validateFieldState(world: Omit<World, MapFields>): void {
       `players.${player.id}.ult.protection`,
     );
     check(count(player.ult.cast), `players.${player.id}.ult.cast`);
-    for (const pending of player.pending)
+    for (const pending of player.pending) {
       check(
         pending.minRarity === undefined || (count(pending.minRarity) && pending.minRarity <= 3),
         `players.${player.id}.pending.minRarity`,
       );
+      const offer = pending.offer;
+      check(
+        offer === undefined ||
+          (pending.source === "chest" &&
+            record(offer) &&
+            (offer.kind === "trophy" ||
+              (offer.kind === "deal" &&
+                world.sites.some((s) => s.id === offer.site && s.kind === "gengar-deal")))),
+        `players.${player.id}.pending.offer`,
+      );
+    }
   }
   for (const enemy of world.enemies) {
     check(
@@ -232,12 +284,19 @@ function validateFieldState(world: Omit<World, MapFields>): void {
       `enemies.${enemy.id}.escape`,
     );
   }
-  for (const pickup of world.pickups)
+  for (const pickup of world.pickups) {
+    check(
+      pickup.kind === "trophy"
+        ? world.players.some((p) => p.id === pickup.owner)
+        : pickup.owner === undefined,
+      "pickups.owner",
+    );
     check(
       pickup.minRarity === undefined ||
         (pickup.kind === "chest" && count(pickup.minRarity) && pickup.minRarity <= 3),
       "pickups.minRarity",
     );
+  }
 }
 
 /**

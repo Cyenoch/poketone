@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { routeTo } from "./fixtures/route.mjs";
 import { pack, unpack } from "../src/network/wire.ts";
 import { aim, area, chestOf, projectile } from "../src/run/sim/archetypes/kit.ts";
 import { moveParams, updateAreas, updateProjectiles } from "../src/run/sim/attacks.ts";
@@ -31,7 +32,13 @@ import { createWorld, stepWorld } from "../src/run/sim/world.ts";
 
 // Same flat heightfield and real navigation setup as late-zones.test.mjs.
 function arena(stage = "tower", local = 0) {
-  const world = createWorld({ stage, seed: 3, difficulty: 0, players: [{ starter: "bulbasaur" }] });
+  const world = createWorld({
+    stage,
+    route: routeTo(stage),
+    seed: 3,
+    difficulty: 0,
+    players: [{ starter: "bulbasaur" }],
+  });
   const samples = TERRAIN_HALF * 4 + 1;
   world.map.terrain = {
     origin: -TERRAIN_HALF,
@@ -212,7 +219,7 @@ function lockShot(world, species = "seadra") {
   return { ctx, e, lane, lead, windup: tell.windup };
 }
 
-test("real shot lanes distinguish species and gain lead through the six single-field maps", () => {
+test("real shot lanes distinguish species and gain lead with route progress", () => {
   const progress = [
     ["forest", 0],
     ["forest", 0.5],
@@ -232,7 +239,9 @@ test("real shot lanes distinguish species and gain lead through the six single-f
       const w = arena(stage, local);
       w.players[0].vz = playerStats(w.players[0]).speed;
       const locked = lockShot(w, species);
-      assert(locked.lead > previous, `${species}: lead grows at ${stage}/${local}`);
+      if (stage === "coast" || stage === "volcano")
+        assert.equal(locked.lead, previous, `${species}: same lead on either branch`);
+      else assert(locked.lead > previous, `${species}: lead grows at ${stage}/${local}`);
       assert(
         locked.lead <= ENEMY_AIM.maxDistance,
         "late prediction remains a short reachable lead",

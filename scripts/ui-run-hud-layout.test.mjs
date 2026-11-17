@@ -67,7 +67,7 @@ test("touch interact prompts stay on one line and release keyboard space when in
       for (const touch of [false, true, false]) {
         setGlyphInputMode(touch ? { kind: "touch" } : { kind: "keyboardMouse", pointer: false });
         prompt.setCoarsePointer(touch);
-        prompt.set("choices", false, count, null, "前往第 2 区");
+        prompt.set("choices", false, count, null, null);
         await settle(stage);
         const texts = [];
         prompt.panel.traverse((node) => {

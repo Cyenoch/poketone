@@ -1,4 +1,5 @@
 import { enemies as enemyDefs } from "./content/enemies";
+import { routeStep } from "./content/campaign";
 import type { ElementType } from "./content/elements";
 import { guardianBrains } from "./bosses/index";
 import { furyStep } from "./bosses/fury";
@@ -101,7 +102,7 @@ export function updateEnemies(ctx: Ctx, dt: number): void {
         delete enemy.foresight;
       } else {
         // A raised guardian's chase clock runs faster, so its attacks come sooner (params/guardian.ts).
-        const fury = furyOf(world.stage, world.zone.index);
+        const fury = furyOf(routeStep(world));
         [moveX, moveZ, speed] = guardianBrains[zoneDef(world).guardian.brain](
           world,
           enemy,

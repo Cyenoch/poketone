@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test, { after } from "node:test";
 import { spyOn } from "bun:test";
 import { createWorld } from "../src/run/sim/world.ts";
+import { ALL_ROUTES, routeStep } from "../src/run/sim/content/campaign.ts";
 import { addCircleBlocker, createNav } from "../src/run/sim/nav/index.ts";
 import { TERRAIN_HALF } from "../src/run/sim/terrain.ts";
 import { TICK } from "../src/run/sim/state/world.ts";
@@ -60,8 +61,19 @@ const fixtureZone = spyOn(currentZone, "zoneDef").mockImplementation((world) => 
 });
 after(() => fixtureZone.mockRestore());
 
+function fieldConfig(stage) {
+  const path = ALL_ROUTES.find((route) => route.includes(stage));
+  return {
+    stage,
+    route: path.slice(0, path.indexOf(stage) + 1),
+    seed: 3,
+    difficulty: 0,
+    players: [{ starter: "bulbasaur" }],
+  };
+}
+
 function arena(stage = "tower", species) {
-  const world = createWorld({ stage, seed: 3, difficulty: 0, players: [{ starter: "bulbasaur" }] });
+  const world = createWorld(fieldConfig(stage));
   const samples = TERRAIN_HALF * 4 + 1;
   world.map.terrain = {
     origin: -TERRAIN_HALF,
@@ -184,14 +196,14 @@ test("entry supply and actual admission use the warmed clock and apply co-op sca
     const world = arena(stage.id);
     primeEnemyNav(world);
     const player = world.players[0];
-    const factors = zoneFactorsFor(stage, 0);
+    const factors = zoneFactorsFor(routeStep(world), stage, 0);
     for (const difficulty of [0, 1, 2]) {
       world.difficulty = difficulty;
       for (const seats of [1, 4]) {
         world.players = Array.from({ length: seats }, (_, id) => ({ ...player, id }));
         const team = coopScaling(seats);
         for (const time of [4, 8]) {
-          const clock = zoneClock(stage, 0, time);
+          const clock = zoneClock(routeStep(world), time);
           world.zone.tick = Math.round(time / TICK) - 1;
           world.enemies = [];
           world.spawn = { credit: 0, pressure: 0.5, pool: [], fired: [], anchor: -1 };
@@ -246,7 +258,7 @@ test("guardian catalogue keeps 13 distinct brains and complete rosters; every ma
   for (const stage of Object.values(stageDefs)) {
     assert.equal(stage.zones.length, 1, `${stage.id} has one field`);
     assert.equal(stage.duration, 600, `${stage.id} has a ten-minute normal phase`);
-    const config = { stage: stage.id, seed: 3, difficulty: 0, players: [{ starter: "bulbasaur" }] };
+    const config = fieldConfig(stage.id);
     const w = createWorld(config);
     w.zone.tick = 600 / TICK - 2;
     updateDirector(w, TICK);

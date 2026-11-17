@@ -12,6 +12,7 @@ import { cos, hypot, sin } from "../math";
 import { addCircleBlocker } from "../nav/index";
 import { MapGenError } from "../mapgen/types";
 import { formOf } from "../evolution";
+import { hasDealItem } from "../upgrades";
 import { announce, berries, finish, inReach, rewardItem, siteSpawnPoint } from "./shared";
 import * as honey from "./honey-tree";
 import * as balls from "./item-ball";
@@ -24,6 +25,7 @@ import * as egg from "./egg";
 import * as glint from "./glint";
 import * as ghost from "./ghost";
 import * as scope from "./silph-scope";
+import * as deal from "./gengar-deal";
 
 const rules = {
   "honey-tree": honey,
@@ -37,6 +39,7 @@ const rules = {
   glint,
   ghost,
   "silph-scope": scope,
+  "gengar-deal": deal,
 };
 
 export function placeSites(world: World): Site[] {
@@ -172,7 +175,9 @@ export function siteHere(world: World, player: Player): Site | null {
             site.data.enemy === null)) &&
         sites[site.kind].interact !== "pickup" &&
         (site.kind !== "egg" || !player.egg) &&
-        inReach(site, player),
+        inReach(site, player) &&
+        (site.kind !== "gengar-deal" ||
+          (!site.data.traded?.includes(player.id) && hasDealItem(world, player))),
     ) ?? null
   );
 }

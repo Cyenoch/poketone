@@ -103,6 +103,7 @@ const kindNames: Record<StatSourceKind, string> = {
   lab: "研究所",
   train: "训练",
   ability: "特性",
+  deal: "交易",
 };
 
 const decimal = (value: number) => Number(value.toFixed(1)).toString();

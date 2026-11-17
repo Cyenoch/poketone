@@ -1,31 +1,57 @@
 import { stageDefs, type StageId } from "./stages/index";
-import type { World } from "../state/world";
-import { TICK } from "../state/world";
+import { TICK, type World } from "../state/world";
 
-/** The expedition's six fields, one per map. */
-export const STAGE_ROUTE: readonly StageId[] = [
-  "forest",
-  "desert",
-  "coast",
-  "glacier",
-  "volcano",
-  "tower",
-];
+export const ROUTE_TIERS = [
+  ["forest"],
+  ["desert", "coast"],
+  ["glacier", "volcano"],
+  ["tower"],
+] as const;
+export type RouteStep = 0 | 1 | 2 | 3;
 
-export const CAMPAIGN_FIELDS = STAGE_ROUTE.flatMap((stage) =>
-  stageDefs[stage].zones.map((_, zone) => ({ stage, zone })),
+/** Stable map identity for seed derivation, independent of expedition progress. */
+export const STAGE_INDEX = {
+  forest: 0,
+  desert: 1,
+  coast: 2,
+  glacier: 3,
+  volcano: 4,
+  tower: 5,
+} as const satisfies Record<StageId, number>;
+
+export const ALL_ROUTES = ROUTE_TIERS[1].flatMap((middle) =>
+  ROUTE_TIERS[2].map((late) => ["forest", middle, late, "tower"] as const),
 );
 
-export function nextField(
-  world: Pick<World, "stage" | "zone">,
-): { stage: StageId; zone: number } | null {
-  const stage = STAGE_ROUTE[STAGE_ROUTE.indexOf(world.stage) + 1];
+/** Only a fresh forest start has an implicit history. */
+export function initialRoute(stage: StageId, route?: readonly StageId[]): StageId[] {
+  if (route === undefined && stage === "forest") return [stage];
+  if (
+    !route ||
+    route.at(-1) !== stage ||
+    !route.every((id, i) => ROUTE_TIERS[i]?.some((allowed) => allowed === id))
+  )
+    throw new Error(
+      `关卡 ${stage} 需要以当前地图结尾的合法路线前缀：${route?.join(" → ") ?? "未提供"}。`,
+    );
+  return [...route];
+}
+
+export function routeStep(world: Pick<World, "route">): RouteStep {
+  return (world.route.length - 1) as RouteStep;
+}
+
+export function routeFields(route: readonly StageId[]) {
+  return route.map((stage, step) => ({ stage, zone: 0, step: step as RouteStep }));
+}
+
+export function nextField(world: Pick<World, "zone">): { stage: StageId; zone: number } | null {
+  const { exits, leaving } = world.zone;
+  const stage = leaving === null ? null : exits[leaving]?.to;
   return stage ? { stage, zone: 0 } : null;
 }
 
-/** Continuous route progress, with each map occupying one sixth. */
-export function routeProgress(world: Pick<World, "stage" | "zone">): number {
-  const stage = stageDefs[world.stage];
-  const local = Math.min(1, (world.zone.tick * TICK) / stage.duration);
-  return (STAGE_ROUTE.indexOf(world.stage) + local) / STAGE_ROUTE.length;
+export function routeProgress(world: Pick<World, "stage" | "zone" | "route">): number {
+  const local = Math.min(1, (world.zone.tick * TICK) / stageDefs[world.stage].duration);
+  return (routeStep(world) + local) / ROUTE_TIERS.length;
 }

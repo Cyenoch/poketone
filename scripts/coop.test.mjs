@@ -4,6 +4,7 @@ import {
   createWorld,
   createWorldFromSeeds,
   stepWorld,
+  stepSharedWorld,
   isFrozen,
   cardShown,
 } from "../src/run/sim/world.ts";
@@ -23,13 +24,16 @@ import { coopBudget } from "../src/run/balance/coop.ts";
 import { average } from "../src/run/balance/skill.ts";
 import { expectedMods } from "../src/run/balance/budget.ts";
 import { stageDefs } from "../src/run/sim/content/stages/index.ts";
-import { STAGE_ROUTE } from "../src/run/sim/content/campaign.ts";
+import { ROUTE_TIERS, routeStep } from "../src/run/sim/content/campaign.ts";
+import { clearZone, landmarkOf } from "../src/run/sim/currentZone.ts";
 import { EnemyGrid } from "../src/run/sim/grid.ts";
 import { killEnemy } from "../src/run/sim/combat.ts";
+import { routeTo, selectTestExit } from "./fixtures/route.mjs";
 
 function world(count = 2, difficulty = 0, stage = "forest") {
   return createWorld({
     stage,
+    route: routeTo(stage),
     seed: 5,
     difficulty,
     players: Array.from({ length: count }, () => ({ starter: "charmander" })),
@@ -135,10 +139,38 @@ test("each player can fuse once, and per-player use survives a zone and snapshot
     if (p.id === 0) assert.equal(stationOpen(bill, w.players[1]), true);
   }
   assert.deepEqual(bill.used, [0, 1, 2, 3]);
-  w.zone.phase = "transitioning";
+  selectTestExit(w, "coast");
   enterZone(w, prepareZone(w));
   const restored = restoreWorld(w.map, snapshotWorld(w));
   assert.deepEqual(restored.stations.find((s) => s.kind === "bill").used, [0, 1, 2, 3]);
+});
+
+test("房主只采用命令序列中第一个合法的出口选择", () => {
+  const w = world();
+  const [host, guest] = w.players;
+  clearZone(w, host.x, host.z);
+  const desert = w.zone.exits.find((exit) => exit.to === "desert");
+  const coast = w.zone.exits.find((exit) => exit.to === "coast");
+  assert.ok(desert && coast);
+  const hostInteract = { t: "interact", player: host.id };
+  const landmark = landmarkOf(w);
+  Object.assign(host, { x: landmark.x, z: landmark.z });
+  stepSharedWorld(w, [hostInteract]);
+  assert.equal(w.zone.leaving, null);
+
+  Object.assign(host, { x: desert.x, z: desert.z });
+  Object.assign(guest, { x: coast.x, z: coast.z });
+  stepSharedWorld(w, [{ t: "interact", player: guest.id }, hostInteract]);
+  assert.equal(w.zone.exits[w.zone.leaving], coast);
+  assert.deepEqual(
+    w.events
+      .filter((event) => event.t === "route" && event.kind === "exit")
+      .map((event) => event.player),
+    [guest.id],
+  );
+  enterZone(w, prepareZone(w));
+  assert.equal(w.stage, "coast");
+  assert.deepEqual(w.route, ["forest", "coast"]);
 });
 
 test("co-op scales swarm and guardian HP, spawn budget without scaling damage or speed; downing keeps scaling", () => {
@@ -261,8 +293,9 @@ test("four seats are accepted, a fifth fails before map generation", () => {
 
 test("co-op budgets match actual enemy scaling across difficulties and maps without duplicating XP", () => {
   for (const difficulty of [0, 1, 2]) {
-    for (const stage of STAGE_ROUTE) {
+    for (const stage of ROUTE_TIERS.flat()) {
       const solo = world(1, difficulty, stage);
+      const step = routeStep(solo);
       for (const p of solo.players) {
         p.level = 16;
         p.moves = ["ember", "fire-spin"].map((id) => ({
@@ -272,14 +305,14 @@ test("co-op budgets match actual enemy scaling across difficulties and maps with
         }));
       }
       solo.zone.tick = 300 / TICK;
-      const baseline = coopBudget(stage, difficulty, 300, solo.players, average);
+      const baseline = coopBudget(step, stage, difficulty, 300, solo.players, average);
       let previousHp = baseline.hp;
       let previousTtk = baseline.guardianTtk;
       for (const count of [2, 3, 4]) {
         const w = world(count, difficulty, stage);
         w.zone.tick = solo.zone.tick;
         const roster = Array.from({ length: count }, () => solo.players[0]);
-        const budget = coopBudget(stage, difficulty, 300, roster, average);
+        const budget = coopBudget(step, stage, difficulty, 300, roster, average);
         assert.ok(budget.hp > previousHp);
         assert.ok(budget.guardianTtk < previousTtk, "extra teammate retains a focus-fire benefit");
         assert.ok(
@@ -413,10 +446,10 @@ test("four players share rewards once including downed seats; P4 chooses indepen
     "guardian clear brings back all downed seats",
   );
   assert.equal(downed.hp, playerStats(downed).maxHp * 0.3);
-  w.zone.phase = "transitioning";
+  selectTestExit(w, "coast");
   enterZone(w, prepareZone(w));
   assert.deepEqual(
-    w.players.map((p) => p.pending.map((card) => card.id)),
+    w.players.map((p, index) => p.pending.slice(0, queued[index].length).map((card) => card.id)),
     queued,
   );
 });
@@ -476,14 +509,15 @@ test("four distinct spawn bodies survive the whole route; restored P4 input rema
     },
     () => seed++,
   );
-  for (const stage of STAGE_ROUTE) {
+  const route = ["forest", "coast", "volcano", "tower"];
+  for (const [index, stage] of route.entries()) {
     assert.equal(party.stage, stage);
     assert.equal(new Set(party.players.map((p) => `${p.x},${p.z}`)).size, 4);
     assert(party.players.every((p) => p.z === 0 && p.px === p.x && p.pz === p.z));
-    if (stage !== "tower") {
-      party.zone.phase = "transitioning";
-      enterZone(party, prepareZone(party));
-    }
+    const next = route[index + 1];
+    if (!next) break;
+    selectTestExit(party, next);
+    enterZone(party, prepareZone(party));
   }
   const w = world(4);
   const restored = restoreWorld(w.map, JSON.parse(JSON.stringify(snapshotWorld(w))));

@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { routeTo, selectTestExit } from "./fixtures/route.mjs";
+import { prepareZone, enterZone } from "../src/run/sim/zones.ts";
 import { createWorld, stepWorld } from "../src/run/sim/world.ts";
 import { snapshotWorld, restoreWorld } from "../src/run/sim/snapshot.ts";
 import { scheduleField, fireFieldEvent } from "../src/run/sim/field-events.ts";
@@ -25,10 +27,11 @@ import { heightAt } from "../src/run/sim/terrain.ts";
 import { viewClearance } from "../src/run/sim/viewFootprint.ts";
 import { addCircleBlocker, createNav } from "../src/run/sim/nav/index.ts";
 
-const world = (starters = ["charmander"], seed = 3) =>
+const world = (starters = ["charmander"], stage = "forest") =>
   createWorld({
-    stage: "forest",
-    seed,
+    stage,
+    route: routeTo(stage),
+    seed: 3,
     difficulty: 0,
     players: starters.map((starter) => ({ starter })),
   });
@@ -70,26 +73,38 @@ function escapeArena() {
 }
 
 test("field schedule is deterministic, bounded and never repeats events across maps", () => {
-  const a = world(),
-    b = world();
-  a.eventsUsed = [];
-  b.eventsUsed = [];
-  for (const stage of Object.keys(stageDefs)) {
-    a.stage = b.stage = stage;
-    scheduleField(a);
-    scheduleField(b);
-    assert.deepEqual(a.zone.schedule, b.zone.schedule);
-    const def = stageDefs[stage].zones[0];
-    for (const entry of a.zone.schedule) {
-      const windows =
-        entry.beat.kind === "event"
-          ? def.events.windows
-          : def.beats.filter((row) => row.beat === entry.beat).map((row) => row.window);
-      assert.ok(windows.some(([from, to]) => entry.at >= from && entry.at <= to));
+  for (const path of [
+    ["forest", "desert", "glacier", "tower"],
+    ["forest", "coast", "volcano", "tower"],
+  ]) {
+    const team = ["charmander", "squirtle"];
+    const a = world(team),
+      b = world(team);
+    const seen = new Set();
+    for (const stage of path) {
+      if (stage !== "forest")
+        for (const w of [a, b]) {
+          selectTestExit(w, stage);
+          enterZone(w, prepareZone(w));
+        }
+      assert.deepEqual(a.zone.schedule, b.zone.schedule);
+      const def = stageDefs[stage].zones[0];
+      for (const entry of a.zone.schedule) {
+        const windows =
+          entry.beat.kind === "event"
+            ? def.events.windows
+            : def.beats.filter((row) => row.beat === entry.beat).map((row) => row.window);
+        assert.ok(windows.some(([from, to]) => entry.at >= from && entry.at <= to));
+        if (entry.beat.kind === "event") {
+          assert.ok(!seen.has(entry.beat.id), `${stage} repeated ${entry.beat.id}`);
+          seen.add(entry.beat.id);
+        }
+      }
+      assert.deepEqual(a.eventsUsed, [...seen]);
     }
-    assert.equal(new Set(a.eventsUsed).size, a.eventsUsed.length);
   }
-  a.stage = "forest";
+  const a = world();
+  a.eventsUsed = [...stageDefs.forest.zones[0].events.pool];
   scheduleField(a);
   assert.equal(a.zone.schedule.filter((entry) => entry.beat.kind === "event").length, 0);
   const tower = stageDefs.tower.zones[0].beats[0].window;
@@ -123,8 +138,7 @@ test("schedule indices allow identical beats at the same time to each fire once"
 });
 
 test("weather forecast is harmless and emits one start and one end", () => {
-  const w = world();
-  w.stage = "desert";
+  const w = world(["charmander"], "desert");
   const p = w.players[0],
     hp = p.hp;
   startWeather(w, "sandstorm");
@@ -476,8 +490,7 @@ test("unidentified ghosts ignore hits and DoT; identification yields one legenda
 });
 
 test("site species matching the map guardian remains an encounter", () => {
-  const w = world();
-  w.stage = "desert";
+  const w = world(["charmander"], "desert");
   const siteEnemy = spawnEnemy(w, "aerodactyl", 20, 20, true, 901);
   const boss = spawnEnemy(w, "aerodactyl", 20, 20);
   assert.equal(siteEnemy.boss, false);

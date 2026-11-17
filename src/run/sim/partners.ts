@@ -11,6 +11,7 @@ import { enemies as enemyDefs, type EnemyDef, type EnemyId } from "./content/ene
 import { damageEnemy, findPlayer, type Ctx } from "./combat";
 import { enemyScaling } from "./director";
 import { zoneClock, zonesOf } from "./content/params/zones";
+import { routeStep } from "./content/campaign";
 import { stageDefs } from "./content/stages/index";
 import { zoneTime } from "./currentZone";
 import { ELITE } from "./content/params/pacing";
@@ -50,11 +51,11 @@ export function styleOf(def: EnemyDef): PartnerStyle {
  */
 export function partnerHit(world: World, partner: Partner): number {
   // The current zone's swarm curve (openspec/specs/world-progression/spec.md: partner growth reads the zone clock, never the
-  // run clock), without the stage's enemyHp: an easier map does not weaken partners.
+  // run clock), before enemy-only durability factors.
   const zone = world.zone.index;
   const stage = stageDefs[world.stage];
   const scale =
-    enemyScaling(zoneClock(stage, zone, zoneTime(world)), world.difficulty, null).hp *
+    enemyScaling(zoneClock(routeStep(world), zoneTime(world)), world.difficulty, null).hp *
     zonesOf(stage)[zone]!.hp;
   return enemyDefs[partner.species].dmg * ELITE.dmg * scale;
 }

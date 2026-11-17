@@ -8,7 +8,8 @@ import { statuses, type EnemyStatusId, type StatusDef } from "./content/statuses
 import { next, type Rng } from "./rng";
 import { powInt } from "./math";
 import { itemRule, playerStats } from "./stats";
-import type { Choice, MoveState, Partner, Player, Rarity } from "./state/entities";
+import type { Choice, MoveState, Partner, PendingChoice, Player, Rarity } from "./state/entities";
+import type { World } from "./state/world";
 import {
   BASE_CHOICES,
   BASE_ITEM_LEVEL_CAP,
@@ -150,13 +151,18 @@ const isElement = (boosts: ItemDef["boosts"]) =>
   boosts !== undefined && boosts !== "physical" && boosts !== "special";
 
 /** Field items obey the same build, banish and slot limits as cards. */
-export function itemEligible(player: Player, id: ItemId, partners: readonly Partner[]): boolean {
+export function itemEligible(
+  player: Player,
+  id: ItemId,
+  partners: readonly Partner[],
+  guaranteedTier = false,
+): boolean {
   if (player.banished.includes(offerKey.item(id))) return false;
   const owned = player.items.find((item) => item.id === id);
   if (owned ? owned.level >= itemCap(player, id) : player.items.length >= itemSlots(player))
     return false;
   const gate = ITEM_GATES[items[id].rarity];
-  if (!owned && gate && player.level <= gate[0]) return false;
+  if (!guaranteedTier && !owned && gate && player.level <= gate[0]) return false;
   const { boosts, needs } = items[id];
   return (
     (boosts === undefined || hitTypes(player, partners).has(boosts)) &&
@@ -176,44 +182,19 @@ export function rollItemChoice(
   if (pool.length === 0) return null;
   return {
     kind: "item",
-    item: drawItem(
-      rng,
-      player,
-      playerStats(player).luck,
-      hitTypes(player, partners),
-      partners.some((partner) => partner.owner === player.id),
-      pool,
-    ),
+    item: drawItem(rng, player, playerStats(player).luck, pool),
   };
 }
 
 /** Rolls a tier, then an item in it (boosters for the player's types weighted up); `pool` is never empty. */
-function drawItem(
-  rng: Rng,
-  player: Player,
-  luck: number,
-  types: Set<ElementType | MoveCategory>,
-  partnered: boolean,
-  pool: readonly ItemId[],
-): ItemId {
-  const sources = statusSources(player);
-  const fed = (needs: ItemDef["needs"]) =>
-    needs === undefined || (needs === "partner" ? partnered : sources.has(needs));
-  const offered = pool.filter((id) => {
-    const { boosts, needs } = items[id];
-    return (boosts === undefined || types.has(boosts)) && fed(needs);
-  });
-  const usable = offered.length > 0 ? offered : pool;
-  const present = [0, 1, 2, 3].map((tier) => usable.some((id) => items[id].rarity === tier));
-  // Gated tiers can leave nothing open early on; the lowest present tier is always reachable then.
-  if (!present.some((open, tier) => open && !ITEM_GATES[tier as Rarity]))
-    present[present.findIndex(Boolean)] = true;
+function drawItem(rng: Rng, player: Player, luck: number, pool: readonly ItemId[]): ItemId {
+  const present = [0, 1, 2, 3].map((tier) => pool.some((id) => items[id].rarity === tier));
   const odds = itemTierOdds(luck, player.level, present);
   let r = next(rng);
   let tier = odds.findIndex((p) => (r -= p) < 0);
   if (tier < 0) tier = odds.findLastIndex((p) => p > 0);
-  const inTier = usable.filter((id) => items[id].rarity === tier);
-  const choices = inTier.length > 0 ? inTier : usable;
+  const inTier = pool.filter((id) => items[id].rarity === tier);
+  const choices = inTier.length > 0 ? inTier : pool;
   const weight = (id: ItemId) => (isElement(items[id].boosts) ? BOOSTER_WEIGHT : 1);
   let roll = next(rng) * choices.reduce((sum, id) => sum + weight(id), 0);
   return choices.find((id) => (roll -= weight(id)) < 0) ?? choices[choices.length - 1]!;
@@ -224,6 +205,89 @@ export function levelCap(player: Player, move: MoveId): number {
   return moves[move].fusion
     ? MAX_FUSION_STARS + (player.tmCase ? TM_CASE.stars : 0)
     : MAX_MOVE_LEVEL + (player.tmCase ? TM_CASE.moveLevels : 0);
+}
+
+function canUpgrade(player: Player, state: MoveState): boolean {
+  return (
+    state.level < levelCap(player, state.id) && !player.banished.includes(offerKey.move(state.id))
+  );
+}
+
+type RouteOffer = NonNullable<PendingChoice["offer"]>["kind"];
+
+function routeItem(
+  player: Player,
+  id: ItemId,
+  partners: readonly Partner[],
+  kind: RouteOffer,
+): boolean {
+  return items[id].rarity >= (kind === "deal" ? 3 : 2) && itemEligible(player, id, partners, true);
+}
+
+export function hasDealItem(world: World, player: Player): boolean {
+  return itemIds.some((id) => routeItem(player, id, world.partners, "deal"));
+}
+
+/** Recheck against the live kit: co-op can grant a field item while the card is open. */
+export function rewardChoiceEligible(
+  world: World,
+  player: Player,
+  kind: RouteOffer | undefined,
+  choice: Choice,
+): boolean {
+  if (choice.kind === "item")
+    return kind
+      ? routeItem(player, choice.item, world.partners, kind)
+      : itemEligible(player, choice.item, world.partners);
+  if (kind === "deal") return false;
+  switch (choice.kind) {
+    case "upgrade":
+      return player.moves.some((state) => state.id === choice.move && canUpgrade(player, state));
+    case "move":
+      return (
+        !kind &&
+        player.moves.length < moveSlots(player) &&
+        !player.banished.includes(offerKey.move(choice.move)) &&
+        learnable(player).some(({ move }) => move === choice.move)
+      );
+    case "tm-case":
+      return !kind && !player.tmCase && !player.banished.includes(offerKey.tmCase);
+    case "train":
+      return (
+        !kind ||
+        (!player.moves.some((state) => canUpgrade(player, state)) &&
+          !itemIds.some((id) => routeItem(player, id, world.partners, kind)))
+      );
+  }
+}
+
+/** Only build an upgrade's random stats after its distinct move was actually drawn. */
+export function rollRewardChoices(
+  world: World,
+  player: Player,
+  pending: PendingChoice,
+  kept: readonly Choice[] = [],
+): Choice[] {
+  const kind = pending.offer?.kind;
+  if (!kind)
+    return rollChoices(world.rng, player, pending.source, world.partners, pending.minRarity);
+  const keys = new Set(kept.map(banishKey));
+  const pool: (() => Choice)[] = itemIds
+    .filter((id) => !keys.has(offerKey.item(id)) && routeItem(player, id, world.partners, kind))
+    .map((item) => () => ({ kind: "item", item }));
+  if (kind === "trophy") {
+    const { luck } = playerStats(player);
+    for (const state of player.moves)
+      if (!keys.has(offerKey.move(state.id)) && canUpgrade(player, state))
+        pool.push(() => rollUpgrade(world.rng, state.id, 2, luck));
+    if (!pool.length && !kept.length) return training(world.rng, BASE_CHOICES);
+  }
+  const options = [...kept];
+  while (pool.length && options.length < BASE_CHOICES) {
+    const [make] = pool.splice(Math.floor(next(world.rng) * pool.length), 1);
+    options.push(make!());
+  }
+  return options;
 }
 /** Moves a card may teach now: kit moves past their gate, then the evolution moves unlocked so far. */
 export function learnable(player: Player): { move: MoveId; weight: number }[] {
@@ -316,9 +380,7 @@ export function rollChoices(
   const minimum = Math.max(MIN_UPGRADE_RARITY[source], minRarity ?? 0) as Rarity;
   const open = (key: string) => !player.banished.includes(key);
   const { luck } = playerStats(player);
-  const upgradable = player.moves.filter(
-    (state) => state.level < levelCap(player, state.id) && open(offerKey.move(state.id)),
-  );
+  const upgradable = player.moves.filter((state) => canUpgrade(player, state));
   if (source === "chest") {
     const cards =
       upgradable.length === 0
@@ -347,16 +409,15 @@ export function rollChoices(
     }
   }
   for (const owned of player.items)
-    if (owned.level < itemCap(player, owned.id) && open(offerKey.item(owned.id)))
+    if (itemEligible(player, owned.id, partners))
       candidates.push({
         weight: choiceWeights.ownedItem,
         make: () => ({ kind: "item", item: owned.id }),
       });
   if (player.items.length < itemSlots(player)) {
     const pool = itemIds.filter(
-      (id) => open(offerKey.item(id)) && !player.items.some((item) => item.id === id),
+      (id) => !player.items.some((item) => item.id === id) && itemEligible(player, id, partners),
     );
-    const types = hitTypes(player, partners);
     const drawn: ItemId[] = [];
     for (let i = 0; i < Math.min(ITEM_DRAWS, pool.length); i++)
       candidates.push({
@@ -366,8 +427,6 @@ export function rollChoices(
             rng,
             player,
             luck,
-            types,
-            partners.some((partner) => partner.owner === player.id),
             pool.filter((p) => !drawn.includes(p)),
           );
           drawn.push(id);

@@ -6,11 +6,17 @@ import {
   ShaderChunk,
   ShaderMaterial,
   SrcColorFactor,
+  Vector2,
+  Vector3,
+  Vector4,
   ZeroFactor,
+  type Camera,
   type Material,
   type Object3D,
 } from "three";
 import { inject, patchShader } from "./patchShader";
+import type { World } from "../sim/state/world";
+import { caveLights } from "./routeLook";
 
 /**
  * The run's colour grade. The world draws into its own target (`rendering/world-pass.ts`), where
@@ -96,6 +102,125 @@ void main() {
   gl_FragColor = vec4( mix( vec3( 1.0 ), vec3( 0.2, 0.27, 0.3 ), edge * 0.75 ), 1.0 );
 }
 `;
+
+/** Up to four players carry a light. */
+const LIGHTS = 4;
+
+/**
+ * The dark cave (map modifier): the vignette's own multiply, darkened toward a navy moonlight
+ * except inside each player's light. A light is the sim's ground circle around a player, projected
+ * to the screen as an ellipse (its centre and two conjugate radii in NDC). Drawn just after the
+ * vignette and before exits (0.6) and effects (1+), so the way on, telegraphs and health bars keep
+ * their full strength.
+ */
+const DARK_FRAGMENT = /* glsl */ `
+varying vec2 vUv;
+uniform float darkness;
+uniform int lightCount;
+uniform vec2 lightCentre[${LIGHTS}];
+uniform vec4 lightAxes[${LIGHTS}];
+void main() {
+  vec2 q = vUv * 2.0 - 1.0;
+  float lit = 0.0;
+  for ( int i = 0; i < ${LIGHTS}; i++ ) {
+    if ( i >= lightCount ) break;
+    vec2 a = lightAxes[i].xy, b = lightAxes[i].zw, d = q - lightCentre[i];
+    float det = a.x * b.y - a.y * b.x;
+    if ( abs( det ) < 1e-6 ) continue;
+    vec2 t = vec2( b.y * d.x - b.x * d.y, a.x * d.y - a.y * d.x ) / det;
+    lit = max( lit, 1.0 - smoothstep( 0.62, 1.0, length( t ) ) );
+  }
+  gl_FragColor = vec4( mix( vec3( 1.0 ), vec3( 0.18, 0.21, 0.32 ), darkness * ( 1.0 - lit ) ), 1.0 );
+}
+`;
+
+export interface Darkness {
+  mesh: Mesh;
+  /** Eases toward dark while `world.modifier` is the dark cave; `lights` are world circles. */
+  update(
+    world: World,
+    alpha: number,
+    ground: (x: number, z: number) => number,
+    camera: Camera,
+    dt: number,
+  ): void;
+  dispose(): void;
+}
+
+export function createDarkness(): Darkness {
+  const geometry = new BufferGeometry();
+  geometry.setAttribute("position", new Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
+  geometry.setAttribute("uv", new Float32BufferAttribute([0, 0, 2, 0, 0, 2], 2));
+  const uniforms = {
+    darkness: { value: 0 },
+    lightCount: { value: 0 },
+    lightCentre: { value: Array.from({ length: LIGHTS }, () => new Vector2()) },
+    lightAxes: { value: Array.from({ length: LIGHTS }, () => new Vector4()) },
+  };
+  const material = new ShaderMaterial({
+    uniforms,
+    vertexShader: /* glsl */ `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4( position.xy, 0.0, 1.0 );
+      }`,
+    fragmentShader: DARK_FRAGMENT,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+    blending: CustomBlending,
+    blendSrc: ZeroFactor,
+    blendDst: SrcColorFactor,
+  });
+  const mesh = new Mesh(geometry, material);
+  mesh.frustumCulled = false;
+  mesh.renderOrder = 0.55;
+  mesh.visible = false;
+  const p = new Vector3(),
+    e = new Vector3();
+  const at = (x: number, y: number, z: number, camera: Camera, out: Vector3) =>
+    out.set(x, y, z).project(camera);
+  return {
+    mesh,
+    update(world, alpha, ground, camera, dt) {
+      // In over 0.6s once the map shows, out over 1.2s when Flash lights it; the radius never eases.
+      const level = uniforms.darkness.value;
+      uniforms.darkness.value =
+        world.modifier === "dark-cave"
+          ? Math.min(1, level + dt / 0.6)
+          : Math.max(0, level - dt / 1.2);
+      mesh.visible = uniforms.darkness.value > 0;
+      if (!mesh.visible) return;
+      const litGround = caveLights(world, alpha);
+      const count = Math.min(LIGHTS, litGround.length);
+      uniforms.lightCount.value = count;
+      for (let i = 0; i < count; i++) {
+        const { x, z, r } = litGround[i]!;
+        const y = ground(x, z) + 0.6;
+        at(x, y, z, camera, p);
+        uniforms.lightCentre.value[i]!.set(p.x, p.y);
+        const axes = uniforms.lightAxes.value[i]!;
+        at(x + r, y, z, camera, e);
+        const ax = e.x,
+          ay = e.y;
+        at(x - r, y, z, camera, e);
+        axes.x = (ax - e.x) / 2;
+        axes.y = (ay - e.y) / 2;
+        at(x, y, z + r, camera, e);
+        const bx = e.x,
+          by = e.y;
+        at(x, y, z - r, camera, e);
+        axes.z = (bx - e.x) / 2;
+        axes.w = (by - e.y) / 2;
+      }
+    },
+    dispose() {
+      geometry.dispose();
+      material.dispose();
+    },
+  };
+}
 
 export interface Grade {
   /** Add to the scene; it draws itself over the whole view regardless of the camera. */

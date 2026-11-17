@@ -13,7 +13,9 @@ import { createRng } from "./rng";
 import { collectRemainingPickups, furnishMap, isFrozen, spawnX } from "./world";
 import type { World } from "./state/world";
 import type { Player } from "./state/entities";
-import { nextField, STAGE_ROUTE } from "./content/campaign";
+import { nextField, ROUTE_TIERS, STAGE_INDEX } from "./content/campaign";
+import { routeModifiers } from "./content/route";
+import { prepareRouteField, applyRouteEntry, cancelRouteDeal } from "./route-rewards";
 import type { StageId } from "./content/stages/index";
 import { scheduleField } from "./field-events";
 
@@ -25,10 +27,10 @@ const FIELD_ATTEMPTS = 8;
 
 /** What interacting here does now: summon at the landmark, leave at the exit, or null. */
 export function zoneAction(world: World, player: Player): "summon" | "leave" | null {
-  if (!player.alive) return null;
+  if (!player.alive || world.outcome !== "playing" || world.zone.leaving !== null) return null;
   if (world.zone.phase === "active" && world.bossId === null && atLandmark(world, player))
     return "summon";
-  if (world.zone.phase === "cleared" && atExit(world, player)) return "leave";
+  if (world.zone.phase === "cleared" && atExit(world, player) !== null) return "leave";
   return null;
 }
 
@@ -36,9 +38,12 @@ export function zoneAction(world: World, player: Player): "summon" | "leave" | n
  * Solo finishes its cards before leaving. Co-op carries unspent choices across fields;
  * a station dialog must still close before the team leaves.
  */
-export function canLeave(world: World): boolean {
+export function canLeave(world: World, isSeatPresent?: (id: number) => boolean): boolean {
   return world.players.every(
-    (player) => (world.players.length > 1 || player.pending.length === 0) && !player.dialog,
+    (player) =>
+      player.departed ||
+      isSeatPresent?.(player.id) === false ||
+      ((world.players.length > 1 || player.pending.length === 0) && !player.dialog),
   );
 }
 
@@ -46,17 +51,46 @@ export function canLeave(world: World): boolean {
  * The interact command at the landmark summons the guardian; at the exit it opened by falling, it
  * leaves the zone. True when either took the command.
  */
-export function interactInZone(world: World, player: Player): boolean {
+export function interactInZone(
+  world: World,
+  player: Player,
+  isSeatPresent?: (id: number) => boolean,
+): boolean {
   if (isFrozen(world)) return false;
   const action = zoneAction(world, player);
   if (action === "summon") {
     summonGuardian(world, player);
     return true;
   }
-  if (action !== "leave" || !canLeave(world)) return false;
-  collectRemainingPickups(world);
-  if (!nextField(world)) world.outcome = "victory";
-  else world.zone.phase = "transitioning";
+  if (action !== "leave" || !canLeave(world, isSeatPresent)) return false;
+  const index = atExit(world, player)!;
+  const exit = world.zone.exits[index]!;
+  if (exit.to === null && world.stage !== "tower")
+    throw new Error(`关卡 ${world.stage} 的出口 ${index} 缺少目标。`);
+  if (exit.to === null) {
+    collectRemainingPickups(world);
+    let waiting = false;
+    for (const seat of world.players) {
+      if (seat.departed || isSeatPresent?.(seat.id) === false) continue;
+      if (
+        world.players.length === 1
+          ? seat.pending.length > 0
+          : seat.pending.some((card) => card.offer?.kind === "trophy")
+      ) {
+        waiting = true;
+        if (seat === player) seat.choosing = true;
+      }
+    }
+    if (waiting) return true;
+  }
+  for (const seat of world.players) cancelRouteDeal(world, seat);
+  world.zone.leaving = index;
+  world.events.push({ t: "route", kind: "exit", player: player.id, x: exit.x, z: exit.z });
+  if (exit.to === null) world.outcome = "victory";
+  else {
+    collectRemainingPickups(world);
+    world.zone.phase = "transitioning";
+  }
   return true;
 }
 
@@ -78,39 +112,54 @@ export function sweepClearedField(world: World): void {
 }
 
 /** A map assembled for `world`'s stage and players, not yet installed (nothing of `world` changes). */
-export type Field = Pick<World, "map" | "nav" | "stations" | "sites" | "rng" | "nextId">;
+export type Field = Pick<
+  World,
+  "map" | "nav" | "stations" | "sites" | "pickups" | "modifier" | "rng" | "nextId"
+>;
+export type PreparedZone = Field &
+  Pick<World, "stage" | "route" | "marker"> & { zone: number; leaving: number };
 
 /**
  * Generates and furnishes a map from `seed` on a scratch copy of the world, so the live one keeps
  * its map, stations and ids. A seed the map spec cannot fit draws the next derived seed, a fixed
  * part of the generation rule (never the clock); any other error is rethrown.
  */
-export function assembleField(world: World, seed: number): Field {
+export function withFieldSeed<T>(seed: number, build: (draw: number) => T): T {
   for (let attempt = 0; ; attempt++) {
     const draw = attempt === 0 ? seed : mixSeed(seed, attempt);
     try {
-      const built = generateMap(draw, zoneDef(world).map ?? stageDefs[world.stage].map);
-      const scratch: World = {
-        ...world,
-        ...built,
-        stations: [],
-        sites: [],
-        events: [],
-        seed: draw,
-        rng: createRng(mixSeed(draw, SIM_STREAM)),
-      };
-      furnishMap(scratch, world.players.length);
-      return {
-        ...built,
-        stations: scratch.stations,
-        sites: scratch.sites,
-        rng: scratch.rng,
-        nextId: scratch.nextId,
-      };
+      return build(draw);
     } catch (error) {
       if (!(error instanceof MapGenError) || attempt + 1 >= FIELD_ATTEMPTS) throw error;
     }
   }
+}
+
+export function fieldRng(draw: number) {
+  return createRng(mixSeed(draw, SIM_STREAM));
+}
+
+export function assembleField(world: World, seed: number): Field {
+  const scratch = withFieldSeed(seed, (draw): World => {
+    const built = generateMap(draw, zoneDef(world).map ?? stageDefs[world.stage].map);
+    const next: World = {
+      ...world,
+      ...built,
+      stations: [],
+      sites: [],
+      pickups: [],
+      modifier: null,
+      events: [],
+      seed: draw,
+      rng: fieldRng(draw),
+    };
+    furnishMap(next, world.players.length);
+    return next;
+  });
+  // A marked exit must never change which terrain seed was accepted for its destination.
+  prepareRouteField(scratch);
+  const { map, nav, stations, sites, pickups, modifier, rng, nextId } = scratch;
+  return { map, nav, stations, sites, pickups, modifier, rng, nextId };
 }
 
 /**
@@ -145,18 +194,31 @@ export function installField(world: World, field: Field): void {
 }
 
 /** The next zone's field, from the run seed, stage and zone alone (a retry readies the same one). */
-export function prepareZone(world: World): Field & { stage: StageId; zone: number } {
-  if (world.zone.phase !== "transitioning")
+export function prepareZone(world: World): PreparedZone {
+  const { leaving } = world.zone;
+  if (world.zone.phase !== "transitioning" || leaving === null)
     throw new Error(`区域 ${world.zone.index + 1} 还没有离开，不能准备下一区。`);
   const destination = nextField(world);
-  if (!destination) throw new Error("塔顶已是路线终点，不能准备下一关。");
+  if (!destination) throw new Error("所选出口没有下一关。");
   const { stage, zone } = destination;
-  const next = {
+  const route = [...world.route, stage];
+  const marker = world.zone.exits[leaving]!.marker;
+  const next: World = {
     ...world,
     stage,
-    zone: { index: zone, tick: 0, phase: "active" as const, exit: null, schedule: [] },
+    route,
+    marker,
+    modifier: null,
+    zone: { index: zone, tick: 0, phase: "active", exits: [], leaving: null, schedule: [] },
   };
-  return { ...assembleField(next, zoneSeed(next, zone)), stage, zone };
+  return {
+    ...assembleField(next, zoneSeed(world.seed, stage, zone)),
+    stage,
+    zone,
+    route,
+    marker,
+    leaving,
+  };
 }
 
 /**
@@ -165,22 +227,24 @@ export function prepareZone(world: World): Field & { stage: StageId; zone: numbe
  * items, HP, shield, cooldowns, ultimate charge, partners); what belonged to the old field goes.
  * Ticking resumes from the new zone's first tick.
  */
-export function enterZone(world: World, prepared: Field & { stage: StageId; zone: number }): void {
+export function enterZone(world: World, prepared: PreparedZone): void {
   const destination = nextField(world);
   if (
     world.zone.phase !== "transitioning" ||
+    world.zone.leaving !== prepared.leaving ||
+    world.zone.exits[prepared.leaving]?.marker !== prepared.marker ||
     prepared.zone !== destination?.zone ||
     prepared.stage !== destination.stage
   )
     throw new Error(`准备的是第 ${prepared.zone + 1} 区，世界在第 ${world.zone.index + 1} 区。`);
-  const { zone, stage: stageId, ...field } = prepared;
+  const { zone, stage: stageId, route, marker, leaving: _leaving, ...field } = prepared;
   world.stage = stageId;
+  world.route = route;
+  world.marker = marker;
   world.enemies = [];
   world.projectiles = [];
   world.areas = [];
   world.hazards = [];
-  // Departure has already settled the old field’s remaining drops.
-  world.pickups = [];
   installField(world, field);
   for (const player of world.players) {
     // The old field's afflictions and a cast in flight stay behind; spent charge is not refunded.
@@ -189,7 +253,7 @@ export function enterZone(world: World, prepared: Field & { stage: StageId; zone
     player.ult.protection = 0;
     player.ult.crossed = [];
   }
-  world.zone = { index: zone, tick: 0, phase: "active", exit: null, schedule: [] };
+  world.zone = { index: zone, tick: 0, phase: "active", exits: [], leaving: null, schedule: [] };
   world.spawn = {
     credit: 0,
     pressure: 0.5,
@@ -203,21 +267,21 @@ export function enterZone(world: World, prepared: Field & { stage: StageId; zone
   world.silphScope = false;
   world.bossId = null;
   world.rampage = false;
+  applyRouteEntry(world);
   scheduleField(world);
   const stage = stageDefs[world.stage];
   world.events.push({
     t: "banner",
-    text: `${STAGE_ROUTE.indexOf(world.stage) + 1}/6 ${stage.name}`,
+    text: `${route.length}/${ROUTE_TIERS.length} ${stage.name}${world.modifier ? ` · ${routeModifiers[world.modifier].name}` : ""}`,
     tone: "info",
     kind: "zone",
   });
   primeEnemyNav(world);
 }
 
-/** Zone `zone`'s root seed (zone 0 is the run's own map seed). */
-function zoneSeed(world: World, zone: number): number {
-  const stageSeed =
-    world.stage === "forest" ? world.seed : mixSeed(world.seed, STAGE_ROUTE.indexOf(world.stage));
+/** The forest keeps the run seed; all other maps use their stable identity. */
+export function zoneSeed(seed: number, stage: StageId, zone: number = 0): number {
+  const stageSeed = stage === "forest" ? seed : mixSeed(seed, STAGE_INDEX[stage]);
   return zone === 0 ? stageSeed : mixSeed(mixSeed(stageSeed, ZONE_STREAM), zone);
 }
 

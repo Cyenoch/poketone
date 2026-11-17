@@ -8,9 +8,11 @@ import { stationIcon } from "../../screens/runArt";
 import { stationNames } from "../sim/content/stations";
 import { stationOpen, stationUsable } from "../sim/stations";
 import { landmarkOf } from "../sim/currentZone";
+import type { MarkerId } from "../sim/state/route";
 import type { PlayerId } from "../sim/state/entities";
 import { ARENA_HALF, type World } from "../sim/state/world";
 import { MapInk } from "./mapInk";
+import { exitAccent, exitName, markerIcons, routeSight } from "./routeLook";
 
 /** World → map logical pixels, with the map origin at its top-left. */
 export interface MapTransform {
@@ -44,11 +46,20 @@ export function stationIconUrls(world: World, local: PlayerId): [string, string]
 export function loadMapIcon(url: string, onLoad: () => void): Texture {
   return images().texture(url, "art", onLoad);
 }
+/** Exit marker art for one map owner (chests are drawn as the item ball). */
+export function loadMarkerIcons(onLoad: () => void): Map<MarkerId, Texture> {
+  return new Map(
+    (Object.entries(markerIcons) as [MarkerId, string | null][]).flatMap(([marker, url]) =>
+      url ? [[marker, loadMapIcon(url, onLoad)] as const] : [],
+    ),
+  );
+}
 const HEAT_HALF = ARENA_HALF + 8;
 const INK = "#0d233f",
   YELLOW = "#ffd45b",
   GUARDIAN = "#d9384f",
-  EXIT = "#bff4ff",
+  BADGE = "#1d3d63",
+  BALL = "#e0475a",
   DOWN = "#e0475a";
 /** Seconds per pulse of the guardian and downed-teammate rings. */
 const PULSE_SECONDS = 1.4;
@@ -56,8 +67,20 @@ export const PRESSURE_SECTORS = 24;
 interface MapLabel {
   panel: Container;
   text: Text[];
+  name: string;
   opacity: number;
 }
+/** A label's text as drawn, in map pixels. */
+interface Box {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+const overlaps = (a: Box, b: Box) =>
+  a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+/** Room for the 1.25px ink outline on both sides and the glyphs' rounding. */
+const LABEL_SLACK = 4;
 
 /** Camera-independent markers and binned soft heat, submitted as instance attributes every frame. */
 export class MapLayers {
@@ -67,6 +90,8 @@ export class MapLayers {
   readonly cone = new MapInk();
   readonly markers = new MapInk();
   private readonly icons: MapInk[];
+  /** Exit marker art (routeLook.ts), drawn like station icons. */
+  private readonly markerInks: Map<MarkerId, MapInk>;
   private readonly labels = new Map<number, MapLabel>();
   private opacity = 1;
   private readonly counts: Uint16Array;
@@ -85,12 +110,16 @@ export class MapLayers {
     textures: Texture[],
     baseOrder: number,
     local: PlayerId,
+    markerTextures: ReadonlyMap<MarkerId, Texture>,
   ) {
     this.local = local;
     this.parent = parent;
     this.cell = cell;
     this.baseOrder = baseOrder;
     this.icons = textures.map((texture) => new MapInk(texture));
+    this.markerInks = new Map(
+      [...markerTextures].map(([marker, texture]) => [marker, new MapInk(texture)]),
+    );
     this.side = Math.ceil((HEAT_HALF * 2) / cell);
     this.counts = new Uint16Array(this.side * this.side);
     this.sumX = new Float32Array(this.counts.length);
@@ -99,13 +128,12 @@ export class MapLayers {
     this.heat.content.setProperties({ zIndex: baseOrder + 1 });
     this.cone.content.setProperties({ zIndex: baseOrder + 2 });
     this.markers.content.setProperties({ zIndex: baseOrder + 3 });
-    for (const icon of this.icons) icon.content.setProperties({ zIndex: baseOrder + 4 });
-    parent.add(
-      this.heat.content,
-      this.cone.content,
-      this.markers.content,
-      ...this.icons.map((icon) => icon.content),
-    );
+    for (const icon of this.inks.slice(3)) icon.content.setProperties({ zIndex: baseOrder + 4 });
+    parent.add(...this.inks.map((ink) => ink.content));
+  }
+  /** Every ink this layer draws with: heat, cone, markers, then station and exit-marker icons. */
+  private get inks(): MapInk[] {
+    return [this.heat, this.cone, this.markers, ...this.icons, ...this.markerInks.values()];
   }
   update(
     world: World,
@@ -118,16 +146,15 @@ export class MapLayers {
     strength: number,
     full: boolean,
   ): void {
-    this.heat.begin();
-    this.cone.begin();
-    this.markers.begin();
-    for (const icon of this.icons) icon.begin();
-    for (const ink of [this.heat, this.cone, this.markers, ...this.icons])
+    for (const ink of this.inks) {
+      ink.begin();
       ink.uniforms.inkSize.value.set(size, size);
+      ink.uniforms.inkMask.value = full ? 4 : 3;
+    }
     this.heat.uniforms.inkMask.value = full ? 2 : 1;
     this.cone.uniforms.inkMask.value = 2;
-    this.markers.uniforms.inkMask.value = full ? 4 : 3;
-    for (const icon of this.icons) icon.uniforms.inkMask.value = full ? 4 : 3;
+    // Fog shows no ordinary mark, a dark cave only lit ones; the guardian's way stays.
+    const sight = routeSight(world, alpha);
     const centre = size / 2;
     const inside = (x: number, y: number) => Math.hypot(x - centre, y - centre) <= radius;
     this.pressure.fill(0);
@@ -135,6 +162,7 @@ export class MapLayers {
     for (const enemy of world.enemies) {
       const wx = enemy.px + (enemy.x - enemy.px) * alpha,
         wz = enemy.pz + (enemy.z - enemy.pz) * alpha;
+      if (!enemy.boss && !sight(wx, wz)) continue;
       const x = map.ox + map.xx * wx + map.xz * wz,
         y = map.oy + map.zx * wx + map.zz * wz;
       if (!full) {
@@ -222,23 +250,33 @@ export class MapLayers {
     const ring = (x: number, y: number, size: number, color: string) =>
       this.markers.add(x, y, size, size, 4, color, color, unit * 2.4, 0, 1 - wave * wave);
     for (const pickup of world.pickups) {
-      if (pickup.kind === "xp" || pickup.kind === "stardust") continue;
+      // The modifier cures (Flash, Defog) show only in the world, under their beacon.
+      if (
+        pickup.kind === "xp" ||
+        pickup.kind === "stardust" ||
+        pickup.kind === "flash" ||
+        pickup.kind === "defog" ||
+        !sight(pickup.x, pickup.z)
+      )
+        continue;
       const x = map.ox + map.xx * pickup.x + map.xz * pickup.z,
         y = map.oy + map.zx * pickup.x + map.zz * pickup.z;
       if (!inside(x, y)) continue;
-      if (pickup.kind === "chest")
+      if (pickup.kind === "chest" || pickup.kind === "trophy")
         this.markers.add(x, y, unit * 6.8, unit * 6.8, 2, YELLOW, "#b48129", unit * 1.25);
       else circle(x, y, unit * 3, "#4fb952");
     }
     const seen = new Set<number>();
-    const labelAt = (
-      id: number,
-      name: string,
-      x: number,
-      y: number,
-      opacity: number,
-      font = 7.5,
-    ) => {
+    /** Where a label centred on `x` with its top at `top` is drawn: whole, inside the map. Map names
+     *  are Chinese, one em per character in the UI font. */
+    const labelBox = (name: string, x: number, top: number, font: number): Box => {
+      const width = Math.min(size, name.length * font * unit + LABEL_SLACK),
+        height = unit * (font + 5);
+      const left = Math.max(0, Math.min(size - width, x - width / 2));
+      top = Math.max(0, Math.min(size - height, top));
+      return { left, top, right: left + width, bottom: top + height };
+    };
+    const labelAt = (id: number, name: string, box: Box, opacity: number, font: number) => {
       seen.add(id);
       let label = this.labels.get(id);
       if (!label) {
@@ -246,8 +284,6 @@ export class MapLayers {
           positionType: "absolute",
           positionLeft: 0,
           positionTop: 0,
-          width: 100,
-          height: 20,
           zIndex: this.baseOrder + 5,
         });
         const text: Text[] = [];
@@ -265,8 +301,8 @@ export class MapLayers {
           const node = new Text({
             text: name,
             positionType: "absolute",
-            width: 100,
             textAlign: "center",
+            wordBreak: "keep-all",
             fontWeight: 700,
             zIndex: this.baseOrder + (text.length === 8 ? 6 : 5),
             color: text.length === 8 ? "#fff" : INK,
@@ -276,23 +312,31 @@ export class MapLayers {
           panel.add(node);
           text.push(node);
         }
-        label = { panel, text, opacity: 1 };
+        label = { panel, text, name, opacity: 1 };
         this.labels.set(id, label);
         this.parent.add(panel);
+      } else if (label.name !== name) {
+        label.name = name;
+        for (const node of label.text) node.setProperties({ text: name });
       }
       label.opacity = opacity;
+      const width = box.right - box.left;
       label.panel.setProperties({
         display: "flex",
-        height: unit * (font + 5),
-        transformTranslateX: Math.max(0, Math.min(size - 100, x - 50)),
-        transformTranslateY: y,
+        width,
+        height: box.bottom - box.top,
+        transformTranslateX: box.left,
+        transformTranslateY: box.top,
         opacity: opacity * this.opacity,
       });
-      for (const node of label.text) node.setProperties({ fontSize: unit * font });
+      for (const node of label.text) node.setProperties({ width, fontSize: unit * font });
     };
+    /** Station names, which exit names step around. */
+    const taken: Box[] = [];
     for (const station of world.stations) {
       let x = map.ox + map.xx * station.x + map.xz * station.z,
         y = map.oy + map.zx * station.x + map.zz * station.z;
+      if (!sight(station.x, station.z)) continue;
       const onMap = inside(x, y),
         usable = stationUsable(player, station);
       if (!onMap) {
@@ -314,20 +358,20 @@ export class MapLayers {
         0,
         usable ? 1 : 0.6,
       );
-      if (onMap)
-        labelAt(
-          station.id,
-          stationNames[station.kind],
-          x,
-          y + (y <= centre ? unit * 8.8 : -unit * 20.8),
-          usable ? 1 : 0.6,
-        );
+      if (onMap) {
+        const name = stationNames[station.kind],
+          box = labelBox(name, x, y + (y <= centre ? unit * 8.8 : -unit * 20.8), 7.5);
+        taken.push(box);
+        labelAt(station.id, name, box, usable ? 1 : 0.6, 7.5);
+      }
     }
     let boss: World["enemies"][number] | undefined;
     for (const enemy of world.enemies) {
       if (enemy.id === world.bossId && enemy.hp > 0) boss = enemy;
       if (!enemy.elite || enemy.boss) continue;
       const [x, y] = project(map, enemy, alpha);
+      if (!sight(enemy.px + (enemy.x - enemy.px) * alpha, enemy.pz + (enemy.z - enemy.pz) * alpha))
+        continue;
       if (inside(x, y))
         this.markers.add(x, y, unit * 8.4, unit * 8.4, 1, "#9a4fc7", INK, unit * 1.25);
     }
@@ -351,8 +395,7 @@ export class MapLayers {
       labelAt(
         -1,
         "守卫",
-        x,
-        Math.max(0, Math.min(size - unit * 16, y + (y <= centre ? unit * 16 : -unit * 30))),
+        labelBox("守卫", x, y + (y <= centre ? unit * 16 : -unit * 30), 11),
         1,
         11,
       );
@@ -370,38 +413,73 @@ export class MapLayers {
           angle,
         );
       }
-    } else if (world.zone.phase === "cleared" && world.zone.exit) {
-      // The exit the guardian opened where it fell: a cyan ring, labelled and pinned like the guardian.
-      const exit = world.zone.exit;
-      const { x, y, angle } = pin(
-        map.ox + map.xx * exit.x + map.xz * exit.z,
-        map.oy + map.zx * exit.x + map.zz * exit.z,
-      );
-      const k = angle === null ? 1 : 0.75;
-      ring(x, y, unit * (20 + 18 * wave) * k, EXIT);
-      circle(x, y, unit * 8 * k, EXIT, unit * 2.8);
-      circle(x, y, unit * 3.2 * k, EXIT, unit * 3.2);
-      labelAt(
-        -2,
-        "出口",
-        x,
-        Math.max(0, Math.min(size - unit * 16, y + (y <= centre ? unit * 14 : -unit * 28))),
-        1,
-        11,
-      );
-      if (angle !== null) {
-        const reach = unit * 14 * k;
-        this.markers.add(
-          x + Math.cos(angle) * reach,
-          y + Math.sin(angle) * reach,
-          unit * 9 * k,
-          unit * 9 * k,
-          3,
-          EXIT,
-          INK,
-          unit * 1.2,
-          angle,
+    } else if (world.zone.phase === "cleared") {
+      // Each exit the guardian opened: a ring in its target's accent around a disc with its marker
+      // art, labelled with the map's name; pinned to the rim with a wedge while off the map.
+      // Every exit carries its own name, so two exits to one map read as two ways there.
+      const named: { index: number; x: number; y: number; away: 1 | -1; name: string }[] = [];
+      for (const [index, exit] of world.zone.exits.entries()) {
+        const accent = exitAccent(exit);
+        const { x, y, angle } = pin(
+          map.ox + map.xx * exit.x + map.xz * exit.z,
+          map.oy + map.zx * exit.x + map.zz * exit.z,
         );
+        const k = angle === null ? 1 : 0.75;
+        ring(x, y, unit * (20 + 18 * wave) * k, accent.light);
+        this.markers.add(x, y, unit * 16 * k, unit * 16 * k, 0, BADGE, accent.light, unit * 2 * k);
+        const art = exit.marker ? this.markerInks.get(exit.marker) : undefined;
+        if (art) art.add(x, y, unit * 11.5 * k, unit * 11.5 * k, 9, "#fff", INK, 0);
+        else if (exit.marker === "chests") {
+          circle(x, y, unit * 4.2 * k, BALL);
+          circle(x, y, unit * 1.6 * k, "#fff", unit * 0.8);
+        } else circle(x, y, unit * 3.2 * k, accent.light, unit * 1.2);
+        named.push({
+          index,
+          x,
+          y: y + (y <= centre ? unit * 14 : -unit * 28),
+          away: y <= centre ? 1 : -1,
+          name: exitName(exit),
+        });
+        if (angle !== null) {
+          const reach = unit * 14 * k;
+          this.markers.add(
+            x + Math.cos(angle) * reach,
+            y + Math.sin(angle) * reach,
+            unit * 9 * k,
+            unit * 9 * k,
+            3,
+            accent.light,
+            INK,
+            unit * 1.2,
+            angle,
+          );
+        }
+      }
+      // Names never overlap as drawn (already pushed inside the map): outward from the rings, each
+      // steps past whatever name it would cover, further below for names under their ring, further
+      // above for names over it; one with no room left that way stacks the other way.
+      for (const label of named.sort((a, b) => b.away - a.away || a.away * (a.y - b.y))) {
+        const start = labelBox(label.name, label.x, label.y, 11);
+        const step = (away: 1 | -1): Box | null => {
+          const box = { ...start },
+            height = start.bottom - start.top;
+          for (let hit = taken.find((o) => overlaps(box, o)); hit;) {
+            // The edge it steps to is set exactly, so the name it passed never counts as hit again.
+            if (away > 0) {
+              box.top = hit.bottom;
+              box.bottom = box.top + height;
+            } else {
+              box.bottom = hit.top;
+              box.top = box.bottom - height;
+            }
+            if (box.top < 0 || box.bottom > size) return null;
+            hit = taken.find((o) => overlaps(box, o));
+          }
+          return box;
+        };
+        const box = step(label.away) ?? step(label.away > 0 ? -1 : 1) ?? start;
+        taken.push(box);
+        labelAt(-2 - label.index, label.name, box, 1, 11);
       }
     }
     for (const [id, label] of this.labels)
@@ -436,29 +514,25 @@ export class MapLayers {
       heading(map, player.faceX, player.faceZ),
     );
     circle(px, py, unit * 3.4, slotColor);
-    this.heat.end();
-    this.cone.end();
-    this.markers.end();
-    for (const icon of this.icons) icon.end();
+    for (const ink of this.inks) ink.end();
   }
   afterLayout(): void {
-    for (const ink of [this.heat, this.cone, this.markers, ...this.icons]) ink.afterLayout();
+    for (const ink of this.inks) ink.afterLayout();
   }
   setOpacity(alpha: number): void {
     this.opacity = alpha;
-    for (const ink of [this.heat, this.cone, this.markers, ...this.icons])
-      ink.uniforms.inkOpacity.value = alpha;
+    for (const ink of this.inks) ink.uniforms.inkOpacity.value = alpha;
     for (const label of this.labels.values())
       label.panel.setProperties({ opacity: label.opacity * alpha });
   }
   restore(): void {
-    for (const ink of [this.heat, this.cone, this.markers, ...this.icons]) ink.restore();
+    for (const ink of this.inks) ink.restore();
   }
   releaseUploads(): void {
-    for (const ink of [this.heat, this.cone, this.markers, ...this.icons]) ink.releaseUploads();
+    for (const ink of this.inks) ink.releaseUploads();
   }
   dispose(): void {
-    for (const ink of [this.heat, this.cone, this.markers, ...this.icons]) ink.dispose();
+    for (const ink of this.inks) ink.dispose();
     for (const label of this.labels.values()) {
       for (const text of label.text) text.dispose();
       label.panel.removeFromParent();

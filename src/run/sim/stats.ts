@@ -91,7 +91,7 @@ export function areaGrowth(raw: number): number {
   return 1 + AREA_GROWTH_MAX * (1 - exp(-(raw - 1) / AREA_GROWTH_MAX));
 }
 
-export type StatSourceKind = ModifierSource["kind"];
+export type StatSourceKind = ModifierSource["kind"] | "deal";
 
 /** Display order of the sources (form → level → items → ability → lab → training). */
 export const SOURCE_ORDER: readonly StatSourceKind[] = [
@@ -101,6 +101,7 @@ export const SOURCE_ORDER: readonly StatSourceKind[] = [
   "ability",
   "lab",
   "train",
+  "deal",
 ];
 
 export type StatOp = ModifierOp;
@@ -250,9 +251,9 @@ function evaluate(player: Player): Folded {
   const stats = { hit: {}, triggers: triggersOf(player) } as unknown as PlayerStats;
   const evolving = canEvolve(player);
   // Max HP decides the low-HP condition, so it never depends on it.
-  stats.maxHp = fold(bases.maxHp, byStat.maxHp, (m) =>
-    holds(m, { lowHp: false, canEvolve: evolving }),
-  );
+  stats.maxHp =
+    player.tradeHp *
+    fold(bases.maxHp, byStat.maxHp, (m) => holds(m, { lowHp: false, canEvolve: evolving }));
   const state = { lowHp: player.hp < LOW_HP * stats.maxHp, canEvolve: evolving };
   const counts = (m: Modifier) => holds(m, state);
   for (const stat of statIds)
@@ -292,6 +293,8 @@ export function statBreakdown(player: Player): StatBreakdown {
       })),
       value: stats[stat],
     };
+  if (player.tradeHp !== 1)
+    lines.maxHp.sources.push({ kind: "deal", op: "mul", amount: player.tradeHp, active: true });
   lines.area.effective = areaGrowth(stats.area);
   return lines;
 }

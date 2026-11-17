@@ -34,6 +34,7 @@ import type { IdleKind, UnitSize } from "../../prepare/idle";
 import { glbUnitSize } from "../../game/models/glbSize";
 import { resources, type DecodedImage } from "../../platform/resources";
 import { SITE_POOLS } from "../sim/content/sites";
+import { markerAllowed } from "../sim/content/route";
 import type { SiteKind } from "../sim/state/field";
 import { siteModelHeight, siteModelOf, type SiteModel } from "./fieldSites";
 
@@ -106,9 +107,11 @@ export function stageEnemyIds(stage: StageId): EnemyId[] {
 export const siteModelUrl = (model: SiteModel) => `/models/field-sites/${model}.glb`;
 /** The props a stage's site pool draws (the Silph Scope reuses the item ball). */
 export function stageSiteModels(stage: StageId): SiteModel[] {
+  const kinds: SiteKind[] = [...SITE_POOLS[stage]];
+  if (markerAllowed("gengar-deal", stage)) kinds.push("gengar-deal");
   return [
     ...new Set(
-      SITE_POOLS[stage].flatMap((kind) => {
+      kinds.flatMap((kind) => {
         const model = siteModelOf[kind];
         return model && model !== "snorlax" ? [model] : [];
       }),

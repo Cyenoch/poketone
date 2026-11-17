@@ -8,7 +8,6 @@ export const volcano = {
   ...forest,
   id: "volcano",
   name: "火山岛",
-  enemyHp: 0.6,
   zones: [
     {
       ...fieldContent("volcano"),

@@ -31,7 +31,7 @@ AI Agent 从这里定位所有可调玩法数据。内容表和参数都在本�
 | 研究与局外成长       | `lab.ts`、`params/economy.ts`、`params/progression.ts`              | 研究条目与费用、角色解锁、背包容量、经验级别偏移；run/lab/progress/stats                                                 |
 | 多人                 | `params/coop.ts`                                                    | 固定席位人数倍率、救援距离/时长/恢复；director/rescue/world/模型                                                         |
 
-六关路线与每关时限、成长基线见 `campaign.ts`、`params/campaign.ts`；各图旧区域名单合并为一场渐进内容，正式 `stageDefs` 每图仅一项。预判物种系数、提前量上限和选择性躲避的反应/距离/冷却见 `params/enemy-ai.ts`，决策只读已发生运动和已存在攻击；同一快照继续推进可复现。
+四层路线和地图种子标识见 `campaign.ts`。`params/campaign.ts` 按路线位置登记成长基线，`route.ts` 与 `params/route.ts` 登记出口标记、地图词条及其权重和效果。每张地图在 `stageDefs` 中只有一关。预判物种系数、提前量上限和选择性躲避的反应、距离与冷却见 `params/enemy-ai.ts`。
 
 道具容量由 `params/cards.ts` 的基础与最大栏位定义；研究所 `slot-vit` 的四级上限由两者之差生成，购买价格见 `params/economy.ts`。候选、HUD 与模型读取同一玩家容量，学习器盒独立。
 
@@ -42,8 +42,8 @@ AI Agent 从这里定位所有可调玩法数据。内容表和参数都在本�
 - `HP_CURVE` 是共享基础成长，**也影响同伴输出**。只想改敌人生命时，改 `ENEMY_HEALTH`；不要直接增强共享曲线。
 - `ENEMY_HEALTH` 的早期/后期增幅使用共享入图时钟。`ALPHA_HP` 在同期精英基础上额外相乘，只作用头目；普通精英不叠加头目倍率。
 - `GUARDIAN_HP` 使用守卫独立曲线，不叠加怪群增幅；生命、伤害和速度统一按 `GUARDIAN_REFERENCE_SECONDS` 校准，与实际召唤时间和玩家战力无关。
-- `CAMPAIGN_ENTRY_CLOCK` 与 `ENTRY_RAMP_SECONDS` 定义后图入图时钟及升温，`zoneClock` 统一供生命、伤害、速度、刷新、容量和同伴读取；事件、名单、狂暴触发仍读局部时间，守卫保留固定参考。
-- 地图 `enemyHp`、路线、难度、人数倍率各自应用一次。比较时注明地图、区域、区内时间、席位数和难度。
+- `ROUTE_ENTRY_CLOCK` 与 `ENTRY_RAMP_SECONDS` 定义各层入图时钟及升温，`zoneClock` 供生命、伤害、速度、刷新、容量和同伴读取。事件、名单、狂暴触发使用局部时间，守卫使用固定参考时点。
+- 路线位置、难度与人数倍率各应用一次。同层地图共用成长因子，比较时注明路线、图内时间、席位数和难度。
 - 生命在敌人出生时确定；修改曲线不会给已在场的敌人实时补血。模型采用聚合近似，不能把其平均怪等同于场上每一只。
 - `DIRECTOR_PRESSURE` 只调普通增援，不改生命或容量；压力越高供给越低。它与模型中越高越易清场的 `pressure`（清怪供需比）不是同一指标。改供给会改变经验收入，须复算完整成长。
 

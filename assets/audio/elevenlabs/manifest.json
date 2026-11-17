@@ -2922,6 +2922,110 @@
         "credits": 319.968,
         "date": "2026-11-17"
       }
+    },
+    "exit-pick": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "yye6nANx47X428O7RDyA",
+      "prompt": "A soft warm rounded whoosh sweeping forward like stepping through a doorway, with a gentle low wooden thud at the start, mid-range audible on a small speaker, no sparkle, no bell, no high-pitched tone, no hiss, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-exit-pick-1.mp3",
+          "generationId": "JvsJTPgl4MFxWVx0TmBi",
+          "prompt": "A soft warm rounded whoosh sweeping forward like stepping through a doorway, with a gentle low wooden thud at the start, mid-range audible on a small speaker, no sparkle, no bell, no high-pitched tone, no hiss, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-exit-pick-1.mp3"],
+      "note": "按测量选取并发布；未作真人试听。",
+      "tier": "medium",
+      "frequent": false,
+      "maxMs": 1000,
+      "spend": {
+        "credits": 6.666,
+        "date": "2026-11-17"
+      },
+      "ship": "exit-pick"
+    },
+    "gengar-deal": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "VjTLlr3gwVsQcReQBcnc",
+      "prompt": "A mischievous cartoon hollow wooden knock followed by a rubbery descending wobble, throaty midrange body, no sub-bass, no voice, no laugh, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music.",
+      "takes": [
+        {
+          "file": "sfx-gengar-deal-3.mp3",
+          "generationId": "Lyu0OVdG03jGdIMIhH3F",
+          "prompt": "A mischievous cartoon hollow wooden knock followed by a rubbery descending wobble, throaty midrange body, no sub-bass, no voice, no laugh, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-gengar-deal-4.mp3",
+          "generationId": "Pq1eCQhsDdyuWxGuz1ZO",
+          "prompt": "A mischievous cartoon hollow wooden knock followed by a rubbery descending wobble, throaty midrange body, no sub-bass, no voice, no laugh, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": ["sfx-gengar-deal-3.mp3", "sfx-gengar-deal-4.mp3"],
+      "note": "按测量选取并发布；未作真人试听。",
+      "tier": "medium",
+      "frequent": false,
+      "maxMs": 1800,
+      "spend": {
+        "credits": 18.6648,
+        "date": "2026-11-17"
+      },
+      "ship": "gengar-deal"
+    },
+    "trophy": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1.5,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "zaYK2xgCdn5QKGyZUzLO",
+      "prompt": "A warm rounded mini fanfare of two short mellow brass notes rising, with a soft felt-mallet marimba flourish, triumphant but gentle, no bell, no sparkle, no shrill, no high-pitched tone, dry close-mic, no reverb, no voice",
+      "takes": [
+        {
+          "file": "sfx-trophy-1.mp3",
+          "generationId": "ih0wJzdSpblyUjl3jkAl",
+          "prompt": "A warm rounded mini fanfare of two short mellow brass notes rising, with a soft felt-mallet marimba flourish, triumphant but gentle, no bell, no sparkle, no shrill, no high-pitched tone, dry close-mic, no reverb, no voice"
+        },
+        {
+          "file": "sfx-trophy-2.mp3",
+          "generationId": "05RKTyBK3BXM52VbDzYW",
+          "prompt": "A warm rounded mini fanfare of two short mellow brass notes rising, with a soft felt-mallet marimba flourish, triumphant but gentle, no bell, no sparkle, no shrill, no high-pitched tone, dry close-mic, no reverb, no voice"
+        }
+      ],
+      "pick": ["sfx-trophy-1.mp3", "sfx-trophy-2.mp3"],
+      "note": "按测量选取并发布；未作真人试听。",
+      "tier": "large",
+      "frequent": false,
+      "maxMs": 1500,
+      "spend": {
+        "credits": 9.999,
+        "date": "2026-11-17"
+      },
+      "ship": "trophy"
     }
   }
 }
