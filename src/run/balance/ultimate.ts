@@ -8,6 +8,7 @@ import { timeline, ultDamage, ultRate, ultScale } from "../sim/ultimates/index";
 import { ULT_CHARGE, ULT_INVULNERABLE, ULT_WINDUP } from "../sim/content/params/ultimates";
 import { ultimates } from "../sim/content/ultimates";
 import { AIM_DISTANCE, critFactor, MAX_DENSITY, TERRAIN_SIGHT, type Target } from "./output";
+import { weatherDefs } from "../sim/content/weather";
 
 export interface UltimateTiming {
   windup: number;
@@ -42,6 +43,7 @@ export function ultCast(
     ultDamage(player, player.stage) *
     stats.damage *
     (stats.hit[type] ?? 1) *
+    (target.weather ? (weatherDefs[target.weather].element[type] ?? 1) : 1) *
     critFactor(stats.crit, stats.critDamage);
   const density = Math.min(MAX_DENSITY, target.density);
   const rE = target.radius;

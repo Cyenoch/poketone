@@ -2,7 +2,7 @@
 
 ## 所属版本
 
-大版本「野外与路线」第 11 项，共用约定见 `add-field-events/design.md` 总表。依赖 `extend-progress-v5`；规则段依赖 `add-challenge-rules`，模式段依赖 `add-battle-tower`。
+大版本「野外与路线」第 11 项，共用约定见 [野外与路线规划](../archive/2026-11-18-add-field-events/design.md) 总表。依赖 `extend-progress-v5`；规则段依赖 `add-challenge-rules`，模式段依赖 `add-battle-tower`。
 
 ## 复现前提
 

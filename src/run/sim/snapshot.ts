@@ -4,11 +4,14 @@
 import type { GeneratedMap } from "./mapgen/index";
 import { navContinuation, restoreNav, type NavContinuation } from "./nav/index";
 import { ARENA_HALF, type World } from "./state/world";
-
+import { enemies } from "./content/enemies";
+import { fieldEventDefs } from "./content/events";
+import { weatherDefs } from "./content/weather";
+import { sites } from "./content/sites";
 import { ULT_INVULNERABLE } from "./content/params/ultimates";
 
 /** Snapshot format; bumped when the snapshot's dynamic state shape changes. */
-export const SNAPSHOT_VERSION = 6;
+export const SNAPSHOT_VERSION = 7;
 
 /** Static map and runtime navigation; snapshots carry only the nav's continuation facts. */
 type MapFields = "map" | "nav";
@@ -70,19 +73,171 @@ export function restoreWorld(map: GeneratedMap, snapshot: WorldSnapshot): World 
     (zone.phase === "active" ? exit !== null : exit === null)
   )
     throw new Error(`快照出口无效（${dynamic.stage}，${zone?.phase}）。`);
-  for (const player of dynamic.players) {
-    if (
-      !(
-        typeof player.ult.protection === "number" &&
-        player.ult.protection >= 0 &&
-        player.ult.protection <= ULT_INVULNERABLE
-      )
-    )
-      throw new Error(`快照终极技状态无效：players.${player.id}.ult.protection`);
-    if (!Number.isSafeInteger(player.ult.cast) || player.ult.cast < 0)
-      throw new Error(`快照终极技状态无效：players.${player.id}.ult.cast`);
-  }
+  validateFieldState(dynamic);
   return { map, nav: restoreNav(map.terrain, navigation), ...dynamic };
+}
+
+function validateFieldState(world: Omit<World, MapFields>): void {
+  const check = (ok: unknown, path: string): void => {
+    if (!ok) throw new Error(`快照野外状态无效：${path}`);
+  };
+  const record = (v: unknown): v is Record<string, unknown> =>
+    v !== null && typeof v === "object" && !Array.isArray(v);
+  const nonnegative = (v: unknown): v is number => typeof v === "number" && v >= 0;
+  const count = (v: unknown) => Number.isSafeInteger(v) && Number(v) >= 0;
+  const species = (v: unknown) => typeof v === "string" && Object.hasOwn(enemies, v);
+  const point = (v: Record<string, unknown>) =>
+    typeof v.x === "number" &&
+    typeof v.z === "number" &&
+    Math.abs(v.x) <= ARENA_HALF &&
+    Math.abs(v.z) <= ARENA_HALF;
+  const egg = (v: unknown) =>
+    record(v) && species(v.species) && nonnegative(v.distance) && point(v);
+  check(
+    Array.isArray(world.eventsUsed) &&
+      world.eventsUsed.every((id) => Object.hasOwn(fieldEventDefs, id)) &&
+      new Set(world.eventsUsed).size === world.eventsUsed.length,
+    "eventsUsed",
+  );
+  check(typeof world.silphScope === "boolean", "silphScope");
+  const weather = world.weather;
+  check(
+    weather === null ||
+      (record(weather) &&
+        Object.hasOwn(weatherDefs, weather.id) &&
+        nonnegative(weather.from) &&
+        nonnegative(weather.until) &&
+        weather.until > weather.from),
+    "weather",
+  );
+  check(Array.isArray(world.zone.schedule), "zone.schedule");
+  let previous = -1;
+  for (const [i, entry] of world.zone.schedule.entries()) {
+    check(
+      record(entry) && nonnegative(entry.at) && entry.at >= previous && record(entry.beat),
+      `zone.schedule[${i}]`,
+    );
+    previous = entry.at;
+    const beat = entry.beat;
+    if (beat.kind === "event")
+      check(
+        Object.hasOwn(fieldEventDefs, beat.id) && world.eventsUsed.includes(beat.id),
+        `zone.schedule[${i}].event`,
+      );
+    else {
+      check(
+        ["alpha", "elite-wave", "swarm", "stampede", "eruption", "horde", "outbreak"].includes(
+          beat.kind,
+        ),
+        `zone.schedule[${i}].beat`,
+      );
+      if ("species" in beat)
+        check(
+          Array.isArray(beat.species)
+            ? beat.species.length > 0 && beat.species.every(species)
+            : species(beat.species),
+          `zone.schedule[${i}].species`,
+        );
+    }
+  }
+  check(
+    Array.isArray(world.spawn.fired) &&
+      world.spawn.fired.every((i) => count(i) && i < world.zone.schedule.length) &&
+      new Set(world.spawn.fired).size === world.spawn.fired.length,
+    "spawn.fired",
+  );
+  check(typeof world.spawn.shinySpawned === "boolean", "spawn.shinySpawned");
+  const outbreak = world.spawn.outbreak;
+  check(
+    outbreak === null ||
+      (record(outbreak) && species(outbreak.species) && nonnegative(outbreak.until)),
+    "spawn.outbreak",
+  );
+  check(Array.isArray(world.sites), "sites");
+  const ids = new Set<number>();
+  for (const site of world.sites) {
+    check(
+      record(site) &&
+        Number.isSafeInteger(site.id) &&
+        !ids.has(site.id) &&
+        Object.hasOwn(sites, site.kind) &&
+        point(site) &&
+        nonnegative(site.radius) &&
+        ["dormant", "ready", "busy", "spent"].includes(site.state) &&
+        nonnegative(site.until) &&
+        record(site.data),
+      "sites.entry",
+    );
+    ids.add(site.id);
+    check(
+      site.owner === null || world.players.some((p) => p.id === site.owner),
+      `sites.${site.id}.owner`,
+    );
+    check(
+      nonnegative(site.data.progress) &&
+        count(site.data.uses) &&
+        nonnegative(site.data.lastHurt) &&
+        (site.data.enemy === null || Number.isSafeInteger(site.data.enemy)),
+      `sites.${site.id}.data`,
+    );
+    check(
+      site.data.species === undefined || species(site.data.species),
+      `sites.${site.id}.species`,
+    );
+    check(
+      site.data.trap === undefined || typeof site.data.trap === "boolean",
+      `sites.${site.id}.trap`,
+    );
+    check(site.data.egg === undefined || egg(site.data.egg), `sites.${site.id}.egg`);
+  }
+  for (const player of world.players) {
+    check(record(player.dex), `players.${player.id}.dex`);
+    for (const [id, entry] of Object.entries(player.dex))
+      check(
+        species(id) &&
+          record(entry) &&
+          count(entry.seen) &&
+          count(entry.defeated) &&
+          count(entry.shiny),
+        `players.${player.id}.dex.${id}`,
+      );
+    check(player.egg === null || egg(player.egg), `players.${player.id}.egg`);
+    check(
+      nonnegative(player.ult.protection) && player.ult.protection <= ULT_INVULNERABLE,
+      `players.${player.id}.ult.protection`,
+    );
+    check(count(player.ult.cast), `players.${player.id}.ult.cast`);
+    for (const pending of player.pending)
+      check(
+        pending.minRarity === undefined || (count(pending.minRarity) && pending.minRarity <= 3),
+        `players.${player.id}.pending.minRarity`,
+      );
+  }
+  for (const enemy of world.enemies) {
+    check(
+      typeof enemy.shiny === "boolean" &&
+        (enemy.shinyUntil === null || nonnegative(enemy.shinyUntil)) &&
+        enemy.shiny === (enemy.shinyUntil !== null),
+      `enemies.${enemy.id}.shiny`,
+    );
+    check(enemy.site === null || ids.has(enemy.site), `enemies.${enemy.id}.site`);
+    check(
+      enemy.escape === null ||
+        (enemy.shiny &&
+          record(enemy.escape) &&
+          point(enemy.escape) &&
+          Array.isArray(enemy.escape.path) &&
+          enemy.escape.path.length % 2 === 0 &&
+          enemy.escape.path.every((v) => typeof v === "number" && Math.abs(v) <= ARENA_HALF)),
+      `enemies.${enemy.id}.escape`,
+    );
+  }
+  for (const pickup of world.pickups)
+    check(
+      pickup.minRarity === undefined ||
+        (pickup.kind === "chest" && count(pickup.minRarity) && pickup.minRarity <= 3),
+      "pickups.minRarity",
+    );
 }
 
 /**

@@ -3,7 +3,7 @@
  *
  *   node scripts/audio-master.mjs --report [id ...]   metrics + flags for every raw SFX take
  *   node scripts/audio-master.mjs [id ...]            master the picked takes into master/
- *   node scripts/audio-master.mjs --publish           copy what the game plays to public/audio + bank.json
+ *   bun scripts/audio-master.mjs --publish [id ...]   publish all shipping assets, or only these IDs
  *
  * The report flags are advice for picking takes, not a gate: a long ring that `maxMs` trims off
  * is fine, a near-silent take is not (mastering refuses it), and HARSH (too much energy above
@@ -70,7 +70,7 @@ const BRIGHT_HZ = 3000;
 /** Phone speakers reproduce almost nothing below ~300 Hz (docs/LESSONS.md). */
 const LOW_CENTROID_HZ = 300;
 const NEAR_SILENT_LUFS = -45;
-const MUSIC_LUFS = { loop: -20, jingle: -18 };
+const MUSIC_LUFS = { loop: -20, jingle: -18, ambience: -28 };
 /** alimiter defaults to auto-levelling (undoes our loudness targets) and to delaying the output. */
 const LIMITER_FLAGS = "level=false:latency=true";
 
@@ -479,8 +479,16 @@ function integratedLufs(samples) {
 function masterMusic(asset, take, outName) {
   let x = decode(join(dir, "raw", take), 2);
   let note = "";
-  const filters = [`alimiter=limit=0.84:${LIMITER_FLAGS}`];
-  if (asset.kind === "loop") {
+  const filters = [`alimiter=limit=${asset.kind === "ambience" ? 0.5 : 0.84}:${LIMITER_FLAGS}`];
+  if (asset.kind === "ambience") {
+    const start = Math.round(SR * (asset.startSec ?? 0));
+    const fade = Math.round(SR * 0.25);
+    const end = x.length / 2 - fade;
+    if (!Number.isSafeInteger(start) || start < 0 || end - start < SR)
+      throw new Error(`${take}: ambience needs at least one second before its crossfade`);
+    x = bakeLoop(x, start, end, fade);
+    note = "ambience seam crossfade 250ms (no musical beat)";
+  } else if (asset.kind === "loop") {
     const beat = Math.round((SR * 60) / asset.bpm);
     const start = Math.round(SR * (asset.startSec ?? 0));
     const found = bestLoopEnd(x, start, start + asset.loopBars * 4 * beat, beat);
@@ -565,9 +573,18 @@ function master(ids) {
  * take as a variant; a loop ships its first pick. bank.json carries each take's hit time so the
  * engine can land it on the effect's key frame.
  */
-function publish() {
+function publish(ids) {
   const target = join(dir, "..", "..", "..", "public", "audio");
-  const bank = { sfx: {}, music: {} };
+  const unknown = ids.filter((id) => !manifest.assets[id]);
+  if (unknown.length) throw new Error(`unknown asset id: ${unknown.join(", ")}`);
+  const limited = ids.length > 0;
+  const bankPath = join(target, "bank.json");
+  const bank =
+    limited && existsSync(bankPath)
+      ? JSON.parse(readFileSync(bankPath, "utf8"))
+      : { sfx: {}, music: {} };
+  const obsolete = new Set();
+  const names = new Set();
   const shipped = new Set();
   const copy = (master, to) => {
     const from = join(dir, "master", master);
@@ -579,9 +596,16 @@ function publish() {
   };
   for (const [id, asset] of Object.entries(manifest.assets)) {
     if (!asset.ship) continue;
-    if (asset.pick.length === 0) throw new Error(`${id}: marked ship but nothing is picked`);
-    if (bank[asset.kind === "sfx" ? "sfx" : "music"][asset.ship])
+    const channel = asset.kind === "sfx" ? "sfx" : asset.kind === "ambience" ? "ambience" : "music";
+    const key = `${channel}:${asset.ship}`;
+    if (names.has(key))
       throw new Error(`${id}: ship name "${asset.ship}" is already taken by another asset`);
+    names.add(key);
+    if (limited && !ids.includes(id)) continue;
+    if (asset.pick.length === 0) throw new Error(`${id}: marked ship but nothing is picked`);
+    bank[channel] ??= {};
+    const previous = bank[channel][asset.ship];
+    if (previous) for (const file of previous.files ?? [previous.file]) obsolete.add(file);
     const many = asset.pick.length > 1;
     const masterOf = (i, ext) => (many ? `${id}-${i + 1}.${ext}` : `${id}.${ext}`);
     if (asset.kind === "sfx") {
@@ -600,24 +624,39 @@ function publish() {
         }),
       };
     } else {
-      copy(masterOf(0, "m4a"), `music/${asset.ship}.m4a`);
-      bank.music[asset.ship] = { file: `music/${asset.ship}.m4a`, bpm: asset.bpm };
+      const file = `${channel}/${asset.ship}.m4a`;
+      copy(masterOf(0, "m4a"), file);
+      bank[channel][asset.ship] = {
+        file,
+        ...(asset.kind === "ambience" ? {} : { bpm: asset.bpm }),
+      };
     }
   }
-  writeFileSync(join(target, "bank.json"), `${JSON.stringify(bank, null, 2)}\n`);
+  writeFileSync(bankPath, `${JSON.stringify(bank, null, 2)}\n`);
   // Files of an earlier shipping list would otherwise stay in the build.
-  for (const folder of ["sfx", "music"]) {
-    for (const file of readdirSync(join(target, folder))) {
-      if (!shipped.has(`${folder}/${file}`)) unlinkSync(join(target, folder, file));
+  if (limited) {
+    const retained = new Set(
+      Object.values(bank).flatMap((entries) =>
+        Object.values(entries).flatMap((entry) => entry.files ?? [entry.file]),
+      ),
+    );
+    for (const file of obsolete)
+      if (!retained.has(file) && existsSync(join(target, file))) unlinkSync(join(target, file));
+  } else {
+    for (const folder of ["sfx", "music", "ambience"]) {
+      if (!existsSync(join(target, folder))) continue;
+      for (const file of readdirSync(join(target, folder))) {
+        if (!shipped.has(`${folder}/${file}`)) unlinkSync(join(target, folder, file));
+      }
     }
   }
   console.log(
-    `published ${Object.keys(bank.sfx).length} effects and ${Object.keys(bank.music).length} tracks`,
+    `published ${Object.keys(bank.sfx).length} effects, ${Object.keys(bank.music).length} tracks, ${Object.keys(bank.ambience ?? {}).length} ambience loops${limited ? " (selected IDs only)" : ""}`,
   );
 }
 
 const args = process.argv.slice(2);
 const ids = args.filter((a) => !a.startsWith("--"));
 if (args.includes("--report")) report(ids);
-else if (args.includes("--publish")) publish();
+else if (args.includes("--publish")) publish(ids);
 else master(ids);

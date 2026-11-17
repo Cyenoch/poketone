@@ -49,6 +49,7 @@ export function runWindowSamples(starter: StarterId): NonNullable<RunOverlayStat
       time: 60,
       level: 2,
       kills: 1,
+      dex: {},
       stardust: 1,
       moves: [{ id: move, level: 1, damage: 1 }],
       items: ["leftovers" as const],

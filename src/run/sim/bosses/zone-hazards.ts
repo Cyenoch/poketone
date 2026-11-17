@@ -16,7 +16,7 @@ import { viewClearance } from "../viewFootprint";
 
 /** Element and phase are data so the view draws exactly the damaging shape. */
 function hit(world: World, hazard: Hazard, player: Player): boolean {
-  if (!damagePlayer(world, player, hazard.dmg)) return false;
+  if (!damagePlayer(world, player, hazard.dmg, hazard.element)) return false;
   if (hazard.slow) sustain(player, "slow", hazard.slow, -1);
   if (hazard.poison) sustain(player, "poison", hazard.poison, -1);
   return true;

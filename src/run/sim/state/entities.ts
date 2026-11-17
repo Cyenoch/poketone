@@ -7,6 +7,7 @@ import type { Stage, StarterId } from "../content/lines/index";
 import type { Modifier } from "../content/effects";
 import type { ItemId } from "../content/items";
 import type { EnemyStatusId, PlayerStatusId, StatusId } from "../content/statuses";
+import type { CarriedEgg, RunDex } from "./field";
 
 export type PlayerId = number;
 
@@ -112,6 +113,8 @@ export interface PendingChoice {
   source: "level" | "chest";
   /** Rolled when the card reaches the front of the queue; empty while it waits behind another. */
   options: Choice[];
+  /** Event chests retain their rarity floor across queueing and rerolls. */
+  minRarity?: Rarity;
 }
 
 /** One status on a body (sim/status.ts); present only while `time` > 0. */
@@ -194,6 +197,8 @@ export interface Player {
   /** The station dialog open for this player (freezes the world like a card), or null. */
   dialog: StationDialog | null;
   kills: number;
+  dex: RunDex;
+  egg: CarriedEgg | null;
   /** Trigger state (sim/triggers): timers, stacks and cooldowns by `ActiveTrigger.key`. */
   fx: Record<string, number>;
   /** Trigger procs in the current one-second window (per-second caps), by `ActiveTrigger.key`; `lifesteal` holds the HP lifesteal healed. */
@@ -221,6 +226,13 @@ export interface Enemy {
   /** 头目: the timeline's alpha elite, the likeliest capture (params/partners.ts `CAPTURE_CHANCE`). */
   alpha: boolean;
   boss: boolean;
+  shiny: boolean;
+  /** Absolute world seconds; null for ordinary enemies. */
+  shinyUntil: number | null;
+  /** A fleeing shiny's terrain-respecting route, as x/z waypoint pairs. */
+  escape: { x: number; z: number; path: number[] } | null;
+  /** The field encounter that owns this enemy, if any. */
+  site: number | null;
   knockX: number;
   knockZ: number;
   flash: number;
@@ -381,6 +393,7 @@ export interface Pickup {
   z: number;
   value: number;
   magnet: boolean;
+  minRarity?: Rarity;
 }
 
 /** Map stations on the guaranteed building pads (sim/stations.ts). */

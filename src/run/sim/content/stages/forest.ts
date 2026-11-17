@@ -1,5 +1,6 @@
 import type { StampedeBeat, SwarmBeat } from "../../beats";
-import { laterBeats } from "./beatTemplates";
+import { firstBeats, laterBeats } from "./beatTemplates";
+import { fieldContent } from "./fieldContent";
 import type { StageDef, StageZone } from "./index";
 
 /** The forest's swarm (rung twice) and stampede beats. */
@@ -48,16 +49,7 @@ const roster = [
   [495, "golem"],
 ] as const satisfies StageZone["roster"];
 
-const beats = [
-  [150, { kind: "alpha" }],
-  [235, bugs],
-  [330, { kind: "alpha" }],
-  [330, { kind: "elite-wave" }],
-  [390, rattata],
-  [450, { kind: "elite-wave" }],
-  [480, { kind: "alpha" }],
-  [520, bugs],
-] as const satisfies StageZone["beats"];
+const beats = firstBeats(bugs, rattata);
 
 const guardian = {
   species: "scyther",
@@ -155,6 +147,7 @@ export const forest = {
     pads: [
       { tag: "building", radius: 4, count: 2, maxSlope: 0.05 },
       { tag: "landmark", radius: 4, count: 1, maxSlope: 0.05 },
+      { tag: "site", radius: 2.5, count: 4, maxSlope: 0.08 },
     ],
     puddles: { count: [5, 7], depth: 0.42 },
     props: [
@@ -166,10 +159,22 @@ export const forest = {
     wall: { count: 120, kinds: ["tree", "pine", "pine"] },
   },
   zones: [
-    { roster, beats, guardian, atmosphere: "afternoon" },
+    { ...fieldContent("forest"), roster, beats, guardian, atmosphere: "afternoon" },
     // Each later zone has its own roster, earlier beats and guardian (docs/state-machines/simulation.md).
-    { roster: duskRoster, beats: duskBeats, guardian: pinsir, atmosphere: "dusk" },
-    { roster: nightRoster, beats: nightBeats, guardian: nidoking, atmosphere: "night" },
+    {
+      ...fieldContent("forest"),
+      roster: duskRoster,
+      beats: duskBeats,
+      guardian: pinsir,
+      atmosphere: "dusk",
+    },
+    {
+      ...fieldContent("forest"),
+      roster: nightRoster,
+      beats: nightBeats,
+      guardian: nidoking,
+      atmosphere: "night",
+    },
   ],
   rampage: { banner: "森林暴走：敌人越来越强" },
   stations: ["hypno", "bill"],

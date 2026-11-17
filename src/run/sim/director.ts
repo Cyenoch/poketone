@@ -4,9 +4,12 @@ import { currentStats } from "./stats";
 import { difficulties, SWARM_HP, type Difficulty } from "./content/difficulties";
 import { enemies as enemyDefs, type EnemyId } from "./content/enemies";
 import { fireBeat } from "./beats";
+import { fireFieldEvent } from "./field-events";
+import { encounterSpecies, outbreakActive, recordEncounter } from "./encounters";
+import { FIELD_EVENTS } from "./content/params/field-events";
 import { updateSpawnPressure } from "./director-pressure";
 import { canReach, refreshFlowFields, requestFlowField } from "./nav/index";
-import { chance, pick, range } from "./rng";
+import { chance, range } from "./rng";
 import { stageDefs } from "./content/stages/index";
 import { zoneClock } from "./content/params/zones";
 import { landmarkOf, zoneDef, zoneFactors, zoneTime } from "./currentZone";
@@ -180,15 +183,17 @@ export function spawnEnemy(
   x: number,
   z: number,
   elite = false,
+  site: number | null = null,
 ): Enemy {
   const def = enemyDefs[species];
+  const base = site !== null && def.encounter ? def.encounter : def;
   const s = zoneScaling(world);
   const factors = zoneFactors(world);
-  const boss = species === zoneDef(world).guardian.species;
+  const boss = site === null && species === zoneDef(world).guardian.species;
   const guardian = boss ? enemyScaling(GUARDIAN_REFERENCE_SECONDS, world.difficulty, null) : null;
   const hp = boss
     ? bossHp(species, world.difficulty) * factors.guardianHp * coopScaling(teamSize(world)).bossHp
-    : def.hp * s.hp * (elite ? ELITE.hp : 1);
+    : base.hp * s.hp * (elite ? ELITE.hp : 1);
   const enemy: Enemy = {
     id: world.nextId++,
     species,
@@ -201,17 +206,28 @@ export function spawnEnemy(
     hp,
     maxHp: hp,
     speed:
-      def.speed * (guardian ? guardian.speed * factors.speed : s.speed) * (elite ? ELITE.speed : 1),
+      base.speed *
+      (guardian ? guardian.speed * factors.speed : s.speed) *
+      (elite ? ELITE.speed : 1),
     // The guardian's every hit (contact, dash, Air Slash) reads this one value.
     dmg:
-      def.dmg *
+      base.dmg *
       (guardian ? guardian.dmg * factors.dmg : s.dmg) *
       (elite ? ELITE.dmg : 1) *
       (boss ? difficulties[world.difficulty].guardianDmg * factors.guardianDmg : 1),
     radius: def.radius * (elite ? ELITE_BODY : 1),
     scale: elite ? ELITE_BODY : 1,
-    xp: def.xp * (elite ? ELITE.xp : 1) * factors.xp * difficulties[world.difficulty].xp,
+    xp:
+      base.xp *
+      (elite ? ELITE.xp : 1) *
+      factors.xp *
+      difficulties[world.difficulty].xp *
+      (!boss && outbreakActive(world, species) ? FIELD_EVENTS.outbreak.xp : 1),
     elite,
+    shiny: false,
+    shinyUntil: null,
+    escape: null,
+    site,
     alpha: false,
     boss,
     knockX: 0,
@@ -232,6 +248,7 @@ export function spawnEnemy(
   enemy.px = enemy.x;
   enemy.pz = enemy.z;
   world.enemies.push(enemy);
+  recordEncounter(world, enemy);
   return enemy;
 }
 
@@ -350,7 +367,7 @@ function ringSpot(
   return arenaSpot(world, species, player.x, player.z);
 }
 
-/** Spawns at `aimedSpot`; skipped (null) only when the species can reach a player from nowhere. */
+/** Ordinary arrivals require a reachable spot outside every player's screen. */
 export function spawnReachable(
   world: World,
   species: EnemyId,
@@ -360,10 +377,10 @@ export function spawnReachable(
   elite = false,
 ): Enemy | null {
   const spot = aimedSpot(world, species, player, x, z);
-  return spot ? spawnEnemy(world, species, spot.x, spot.z, elite) : null;
+  return hidden(spot) ? spawnEnemy(world, species, spot.x, spot.z, elite) : null;
 }
 
-/** Spawns at `ringSpot`; skipped (null) only when the species can reach a player from nowhere. */
+/** Ordinary ring arrivals wait if the visible views cover every reachable spot. */
 export function spawnOnRing(
   world: World,
   species: EnemyId,
@@ -373,7 +390,7 @@ export function spawnOnRing(
   elite = false,
 ): Enemy | null {
   const spot = ringSpot(world, species, player, min, max);
-  return spot ? spawnEnemy(world, species, spot.x, spot.z, elite) : null;
+  return hidden(spot) ? spawnEnemy(world, species, spot.x, spot.z, elite) : null;
 }
 
 /** The guardian must appear: a map where it can reach no player from anywhere is a broken map. */
@@ -416,7 +433,7 @@ export function primeEnemyNav(world: World): void {
     for (const species of [
       zone.guardian.species,
       ...zone.roster.map(([, id]) => id),
-      ...zone.beats.flatMap(([, beat]) => ("species" in beat ? [beat.species].flat() : [])),
+      ...zone.beats.flatMap(({ beat }) => ("species" in beat ? [beat.species].flat() : [])),
     ]) {
       const { mobility } = enemyDefs[species];
       if (!mobility.flying) requestFlowField(world.nav, mobility);
@@ -454,11 +471,12 @@ export function updateDirector(world: World, dt: number): void {
   }
   if (!world.players.some((player) => player.alive)) return;
 
-  for (const [at, beat] of zone.beats) {
-    const key = `${beat.kind}@${at}`;
-    if (t < at - early || world.spawn.fired.includes(key)) continue;
-    world.spawn.fired.push(key);
-    fireBeat(world, beat, nextAnchor(world)!);
+  for (const [index, { at, beat }] of world.zone.schedule.entries()) {
+    if (t < at - early || world.spawn.fired.includes(index)) continue;
+    world.spawn.fired.push(index);
+    const player = nextAnchor(world)!;
+    if (beat.kind === "event") fireFieldEvent(world, beat.id, player);
+    else fireBeat(world, beat, player);
   }
   // The final swarm: no zone runs past it without its guardian.
   if (t >= stage.duration && !world.rampage) {
@@ -480,7 +498,7 @@ export function updateDirector(world: World, dt: number): void {
     // White Flute / Repel: a spawn around this player costs less (more) credit, so more (fewer) come.
     const stats = currentStats(target);
     world.spawn.credit -= 1 / stats.spawns;
-    const species = pick(world.rng, world.spawn.pool);
+    const species = encounterSpecies(world);
     const elite = chance(world.rng, diff.eliteChance * stats.elites);
     spawnOnRing(world, species, target, SPAWN_RING.min, SPAWN_RING.max, elite);
     if (world.enemies.length >= cap) break;

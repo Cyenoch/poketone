@@ -2,18 +2,18 @@ import { starters, type StarterId } from "./content/lines/index";
 import { present, teamSize } from "./team";
 import { moves } from "./content/moves";
 import type { Difficulty } from "./content/difficulties";
-import { DICE_FACES, diceKey, items, type ItemId } from "./content/items";
+import { items, type ItemId } from "./content/items";
 import { stageDefs, type StageId } from "./content/stages/index";
 import { updateAreas, updateMoves, updateProjectiles } from "./attacks";
 import { heal, type Ctx } from "./combat";
 import { nearestPlayer, primeEnemyNav, updateDirector } from "./director";
 import { updateEnemies } from "./enemies";
 import { updateHazards } from "./hazards";
-import { evolveInWorld } from "./evolution";
+import { gainXp, pickEffects, queueCard, rollDice } from "./progression";
 import { fuseMoves } from "./fusion";
 import { EnemyGrid } from "./grid";
 import { checkPlayable, generateMap, MapGenError, stageBodies } from "./mapgen/index";
-import { createRng, next, type Rng } from "./rng";
+import { createRng, type Rng } from "./rng";
 import { decay, drainRate } from "./status";
 import { DRAIN_FLOOR } from "./content/params/combat";
 import { currentStats, earnStardust, NO_LAB, playerStats, refreshStats, xpForLevel } from "./stats";
@@ -23,11 +23,17 @@ import { updateShield } from "./hurt";
 import { fire } from "./triggers/index";
 import { forget, interact, placeStations } from "./stations";
 import { STATION_REACH } from "./content/params/stations";
+import { SITE } from "./content/params/sites";
+import { sites as siteDefs } from "./content/sites";
 import { sweepClearedField, interactInZone } from "./zones";
 import { applyChoice, banishKey, newMoveState, offerKey, rollChoices } from "./upgrades";
 import { TICK, type World } from "./state/world";
 import type { Command } from "./state/commands";
-import type { LabBonuses, PendingChoice, Pickup, Player } from "./state/entities";
+import type { LabBonuses, Pickup, Player } from "./state/entities";
+import { scheduleField } from "./field-events";
+import { updateWeather } from "./weather";
+import { updateEncounters } from "./encounters";
+import { interactSite, placeSites, updateSites } from "./sites/index";
 import { hypot } from "./math";
 import { PLAYER_SPAWN_SPACING, REVIVE, START } from "./content/params/player";
 import { PICKUP } from "./content/params/economy";
@@ -114,6 +120,8 @@ export function createPlayer(
     tmCase: false,
     dialog: null,
     kills: 0,
+    dex: {},
+    egg: null,
     fx: {},
     procs: {},
     procWindow: 0,
@@ -170,9 +178,21 @@ export function createWorld(config: RunConfig): World {
     map: built.map,
     nav: built.nav,
     stations: [],
-    spawn: { credit: 0, pressure: 0.5, pool: [], fired: [], anchor: -1 },
+    sites: [],
+    eventsUsed: [],
+    weather: null,
+    silphScope: false,
+    spawn: {
+      credit: 0,
+      pressure: 0.5,
+      pool: [],
+      fired: [],
+      anchor: -1,
+      outbreak: null,
+      shinySpawned: false,
+    },
     bossId: null,
-    zone: { index: 0, tick: 0, phase: "active", exit: null },
+    zone: { index: 0, tick: 0, phase: "active", exit: null, schedule: [] },
     rampage: false,
     events: [],
   };
@@ -184,6 +204,7 @@ export function createWorld(config: RunConfig): World {
     }),
   );
   for (const player of world.players) player.choosing = world.players.length === 1;
+  scheduleField(world);
   primeEnemyNav(world);
   return world;
 }
@@ -199,12 +220,19 @@ export function spawnX(index: number, players: number): number {
  */
 export function furnishMap(world: World, players: number): void {
   world.stations = placeStations(world);
+  world.sites = placeSites(world);
   checkPlayable(
     world.nav,
     {
       spawns: Array.from({ length: players }, (_, index) => ({ x: spawnX(index, players), z: 0 })),
       landmarks: world.map.pads.filter((pad) => pad.tag === "landmark"),
       stations: world.stations.map(({ x, z, radius }) => ({ x, z, radius, reach: STATION_REACH })),
+      sites: world.sites.map(({ kind, x, z, radius }) => ({
+        x,
+        z,
+        radius,
+        reach: siteDefs[kind].interact === "pickup" ? SITE.pickup : SITE.reach,
+      })),
       passages: world.map.passages,
     },
     stageBodies(stageDefs[world.stage]),
@@ -318,7 +346,13 @@ export function applyCommand(world: World, command: Command): void {
 
       // New options are a new card: a pick still in flight for the old one must not land on them.
       pending.id = world.nextId++;
-      pending.options = rollChoices(world.rng, player, pending.source, world.partners);
+      pending.options = rollChoices(
+        world.rng,
+        player,
+        pending.source,
+        world.partners,
+        pending.minRarity,
+      );
       return;
     }
     case "forget":
@@ -364,12 +398,13 @@ export function applyCommand(world: World, command: Command): void {
         return;
       }
       if (startRescue(world, player)) return;
-      if (manualCards(world, player) && interactInZone(world, player)) return;
+      if (interactInZone(world, player)) return;
+      if (interactSite(world, player)) return;
       if (manualCards(world, player) && player.pending.length > 0 && !player.dialog) {
         player.choosing = true;
         return;
       }
-      if (!interactInZone(world, player)) interact(world, player);
+      interact(world, player);
       return;
     case "reroll": {
       const pending = player.pending[0];
@@ -377,7 +412,13 @@ export function applyCommand(world: World, command: Command): void {
       player.rerolls -= 1;
       world.events.push({ t: "card", player: player.id, card: pending.id, action: "reroll" });
       pending.id = world.nextId++;
-      pending.options = rollChoices(world.rng, player, pending.source, world.partners);
+      pending.options = rollChoices(
+        world.rng,
+        player,
+        pending.source,
+        world.partners,
+        pending.minRarity,
+      );
       return;
     }
   }
@@ -392,7 +433,8 @@ function nextCard(world: World, player: Player): void {
   player.pending.shift();
   const front = player.pending[0];
   if (!front && manualCards(world, player)) player.choosing = false;
-  if (front) front.options = rollChoices(world.rng, player, front.source, world.partners);
+  if (front)
+    front.options = rollChoices(world.rng, player, front.source, world.partners, front.minRarity);
 }
 
 function revive(world: World, player: Player): void {
@@ -422,6 +464,8 @@ function step(world: World, commands: readonly Command[], shared: boolean): void
 
   for (const player of world.players) updatePlayer(ctx, player, dt);
   updateDirector(world, dt);
+  updateWeather(ctx, dt);
+  updateEncounters(ctx, dt);
   grid.rebuild(world.enemies);
   updateEnemies(ctx, dt);
   grid.rebuild(world.enemies);
@@ -436,6 +480,7 @@ function step(world: World, commands: readonly Command[], shared: boolean): void
       .slice(1)
       .forEach((player, index) => Object.assign(player, remotePositions[index]));
   updatePickups(world, dt);
+  updateSites(ctx, dt);
   // After pickups: a level-up this tick queues its card first, and the station waits for it.
 
   for (const player of world.players)
@@ -545,7 +590,8 @@ function collectPickup(world: World, pickup: Pickup, player: Player): void {
       for (const recipient of present(world)) earnStardust(recipient, pickup.value);
       break;
     case "chest":
-      for (const recipient of present(world)) queueCard(world, recipient, "chest");
+      for (const recipient of present(world))
+        queueCard(world, recipient, "chest", pickup.minRarity);
       break;
   }
 }
@@ -566,49 +612,4 @@ function mergeCandies(world: World): void {
     candy.value = 0;
   }
   world.pickups = world.pickups.filter((pickup) => pickup.value > 0);
-}
-
-/** Only the front card is rolled: one queued behind it would be rolled against an outdated kit. */
-function queueCard(world: World, player: Player, source: PendingChoice["source"]): void {
-  const front = player.pending.length === 0;
-  player.pending.push({
-    id: world.nextId++,
-    source,
-    options: front ? rollChoices(world.rng, player, source, world.partners) : [],
-  });
-}
-
-/**
- * An item level's immediate effects (`ItemDef.onPick`): whole player levels (Rare Candy; their cards
- * queue behind the one being answered) and a die roll stored for the fold (Loaded Dice).
- */
-function pickEffects(world: World, player: Player, id: ItemId): void {
-  const { onPick } = items[id];
-  if (!onPick) return;
-  if (onPick.roll) {
-    const level = player.items.find((item) => item.id === id)!.level;
-    rollDice(world.rng, player, level);
-  }
-  for (let i = 0; i < (onPick.levels ?? 0); i++) gainXp(world, player, player.xpNext - player.xp);
-}
-
-function rollDice(rng: Rng, player: Player, level: number): void {
-  player.fx[diceKey(level)] = Math.floor(next(rng) * DICE_FACES.length);
-}
-
-function gainXp(world: World, player: Player, amount: number): void {
-  player.xp += amount;
-  while (player.xp >= player.xpNext) {
-    player.xp -= player.xpNext;
-    player.level += 1;
-    player.xpNext = xpForLevel(player.level);
-    // Before the card is rolled, so a new stage's evolution move is already in the pool.
-    evolveInWorld(world, player);
-    if (!player.alive) player.hp = 0;
-    if (world.players.length > 1) player.cardHold = 0;
-    // Level and stage feed the stats: later pickups this tick (berries, candy) read the new ones.
-    refreshStats();
-    queueCard(world, player, "level");
-    world.events.push({ t: "level", player: player.id, level: player.level });
-  }
 }

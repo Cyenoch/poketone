@@ -2,7 +2,7 @@
 
 ## 所属版本
 
-大版本「野外与路线」。共用约定见 `add-field-events/design.md`「共用约定」。依赖 `extend-progress-v5`、`add-field-events`。羁绊 Lv5 授予由 `add-partner-bond`（在本 change 之后）写入同一个 `looks.owned`，本 change 不依赖它。
+大版本「野外与路线」。共用约定见 [野外与路线规划](../archive/2026-11-18-add-field-events/design.md#共用约定)。依赖 `extend-progress-v5`、`add-field-events`。羁绊 Lv5 授予由 `add-partner-bond`（在本 change 之后）写入同一个 `looks.owned`，本 change 不依赖它。
 
 ## 技术方案：着色器调色板替换
 

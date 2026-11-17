@@ -102,13 +102,26 @@ export function inflict(
   source: number,
   duration = 1,
   power = 1,
+  freezeDuration = 1,
 ): EnemyStatusId {
   const d = def(id);
-  const time = d.duration * (enemy.boss ? (d.bossScale ?? 1) : 1) * duration;
+  const time =
+    d.duration *
+    (enemy.boss ? (d.bossScale ?? 1) : 1) *
+    duration *
+    (id === "freeze" ? freezeDuration : 1);
   apply(enemy, id, time, d.dotShare ? amount * d.dotShare * power : 0, source);
   if (d.builds && (find(enemy, id)?.stacks ?? 0) >= d.builds.count) {
     consume(enemy, id);
-    return inflict(enemy, d.builds.into as EnemyStatusId, amount, source, duration, power);
+    return inflict(
+      enemy,
+      d.builds.into as EnemyStatusId,
+      amount,
+      source,
+      duration,
+      power,
+      freezeDuration,
+    );
   }
   return id;
 }

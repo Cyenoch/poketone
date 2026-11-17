@@ -1,0 +1,54 @@
+{
+  "task_id": "f05a8892-bbd2-4cf8-897d-c507e7fabf0e",
+  "type": "multiview_to_model",
+  "status": "success",
+  "input": {
+    "pbr": true,
+    "files": [
+      {
+        "object": {
+          "key": "tcli_5ef54fa302e849cb9727f30c673a5fe9/20261117/ed110619-a652-420e-9dd0-538eee31b1bb/file.png",
+          "bucket": "tripo-data"
+        }
+      },
+      {
+        "object": {
+          "key": "tcli_5ef54fa302e849cb9727f30c673a5fe9/20261117/acedda04-28c9-4509-a828-8d1a659c4ddb/file.png",
+          "bucket": "tripo-data"
+        }
+      },
+      {
+        "object": {
+          "key": "tcli_5ef54fa302e849cb9727f30c673a5fe9/20261117/dc300de5-f333-45a3-a67c-cdae29610902/file.png",
+          "bucket": "tripo-data"
+        }
+      },
+      {
+        "object": {
+          "key": "tcli_5ef54fa302e849cb9727f30c673a5fe9/20261117/64da2fef-229c-4a52-9ef6-f42f6a412d85/file.png",
+          "bucket": "tripo-data"
+        }
+      }
+    ],
+    "delight": false,
+    "texture": true,
+    "export_uv": true,
+    "face_limit": 1000,
+    "model_version": "v3.1-20260211",
+    "smart_low_poly": true,
+    "texture_version": "v3.5-20260815",
+    "geometry_quality": "standard"
+  },
+  "output_fields": [
+    "model_url",
+    "rendered_image_url"
+  ],
+  "credits_consumed": 40,
+  "created_at": "2026-11-17T14:37:08.999851Z",
+  "completed_at": "2026-11-17T14:39:23.203439Z",
+  "files": [
+    "model.glb",
+    "rendered_image.webp",
+    "preview.png"
+  ]
+}

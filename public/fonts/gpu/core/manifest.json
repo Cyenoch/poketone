@@ -8,51 +8,51 @@
     "libwebp": "1.6.0"
   },
   "ui-500": {
-    "json": "ui-500.e4b11588e66ff895.json",
-    "sha256": "e4b11588e66ff89509d3585c76fa9bb5bad5ee8cce2ee344eb7a507735fafad4",
+    "json": "ui-500.adba9beff95cec8c.json",
+    "sha256": "adba9beff95cec8cfe2ebeac0c37359078cf4ef1fe4eb3116b444addfd5e7ed2",
     "weight": 500,
-    "glyphs": 1227,
+    "glyphs": 1267,
     "pages": 2,
     "unavailable": "−",
     "chromePages": 1,
     "source": "public/fonts/noto-sans-sc-game.woff2",
     "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
-    "jsonBytes": 50345,
+    "jsonBytes": 51983,
     "pageBytes": [
       1550084,
-      1139754
+      1240460
     ]
   },
   "ui-700": {
-    "json": "ui-700.34b2bd397199db9c.json",
-    "sha256": "34b2bd397199db9c8de29f82848c044038fb9a771b2dd9aa29c896f2a1803d40",
+    "json": "ui-700.0493fc65143ebf7d.json",
+    "sha256": "0493fc65143ebf7dd2f8d3802a4d1d554eaa80132335b88b5e73e98e3148f0cd",
     "weight": 700,
-    "glyphs": 1227,
+    "glyphs": 1267,
     "pages": 2,
     "unavailable": "−",
     "chromePages": 1,
     "source": "public/fonts/noto-sans-sc-game.woff2",
     "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
-    "jsonBytes": 50401,
+    "jsonBytes": 52043,
     "pageBytes": [
       1556952,
-      1146758
+      1248078
     ]
   },
   "ui-800": {
-    "json": "ui-800.9f141c99ff2293d8.json",
-    "sha256": "9f141c99ff2293d8c9138c1d7e53383d271c8392a37d0ce475d3e4a0c360dfcc",
+    "json": "ui-800.66f53b8bddf0dafc.json",
+    "sha256": "66f53b8bddf0dafc8869037cc17da3651c2f93a2c529c00baa598705537eb311",
     "weight": 800,
-    "glyphs": 1227,
+    "glyphs": 1267,
     "pages": 2,
     "unavailable": "−",
     "chromePages": 1,
     "source": "public/fonts/noto-sans-sc-game.woff2",
     "sourceSha256": "1a3434e5793a4093ac2cf3e40c60c394ac3fa0f300802a33171538b86b15909e",
-    "jsonBytes": 50443,
+    "jsonBytes": 52086,
     "pageBytes": [
       1556796,
-      1143700
+      1246054
     ]
   },
   "display": {

@@ -40,8 +40,8 @@ export function settlePlayerSurface(world: World, player: Player, dt: number): v
   const surface = sampleSurface(world.map.terrain.surface, player.x, player.z);
   pullPlayerSurface(world, player, dt);
   if (world.tick % HURT_TICKS !== 0) return;
-  if (surface.kind === "lava") damagePlayer(world, player, LAVA_DMG);
-  else if (surface.kind === "embers") damagePlayer(world, player, EMBERS.dmg);
+  if (surface.kind === "lava") damagePlayer(world, player, LAVA_DMG, "fire");
+  else if (surface.kind === "embers") damagePlayer(world, player, EMBERS.dmg, "fire");
 }
 
 /** The owner runs terrain displacement alongside its own movement. */

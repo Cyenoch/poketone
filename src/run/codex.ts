@@ -67,6 +67,7 @@ import { labItems } from "./lab";
 import { type LabId } from "./sim/content/lab";
 import { archetypeNames, reactionNames } from "./labels";
 import { labTerms } from "./glossary";
+import type { Progress } from "./progress";
 
 export type CodexSectionId = "pokemon" | "moves" | "items" | "stations" | "enemies" | "statuses";
 
@@ -85,7 +86,8 @@ export type CodexArt =
 /** A 3D model the screen can show and rotate; it owns the file paths and facing. */
 export type CodexModel =
   | { kind: "form"; id: FormId }
-  | { kind: "enemy"; id: EnemyId }
+  /** `shiny`: in the species' shiny palette (`view/shiny.ts`). */
+  | { kind: "enemy"; id: EnemyId; shiny?: boolean }
   | { kind: "station"; id: StationKind };
 
 /** A link to another entry (`key`), or plain text when `key` is absent; `note` sits beside it. */
@@ -768,6 +770,25 @@ function enemyEntry(id: EnemyId): CodexEntry {
       ...(inflicts.length ? [{ kind: "refs" as const, title: "造成状态", refs: inflicts }] : []),
     ],
   };
+}
+
+/** The player's own record of a species (`progress.dex`); one never met reads 0. */
+export function dexBlock(dex: Progress["dex"], id: EnemyId): CodexBlock {
+  const record = dex[id];
+  return {
+    kind: "stats",
+    title: "记录",
+    rows: [
+      { label: "见过", value: String(record?.seen ?? 0) },
+      { label: "击败", value: String(record?.defeated ?? 0) },
+      { label: "异色", value: String(record?.shiny ?? 0) },
+    ],
+  };
+}
+
+/** An enemy page shows its shiny model only once the player has defeated a shiny of it. */
+export function hasShinyRecord(dex: Progress["dex"], id: EnemyId): boolean {
+  return (dex[id]?.shiny ?? 0) > 0;
 }
 
 // ── 状态 / 反应 ──────────────────────────────────────────────────────────────

@@ -7,7 +7,7 @@
 // openspec/specs/combat-builds/spec.md「研究所」「同伴」, model: docs/BALANCE.md「支援队伍」.
 
 import { currentStats, itemRule } from "./stats";
-import { enemies as enemyDefs, type EnemyDef } from "./content/enemies";
+import { enemies as enemyDefs, type EnemyDef, type EnemyId } from "./content/enemies";
 import { damageEnemy, findPlayer, type Ctx } from "./combat";
 import { enemyScaling } from "./director";
 import { zoneClock, zonesOf } from "./content/params/zones";
@@ -73,34 +73,54 @@ export function capture(world: World, elite: Enemy, killer: Player): void {
   const odds = elite.alpha ? CAPTURE_CHANCE.alpha : CAPTURE_CHANCE.elite;
   // Master Ball: every capture that has a slot succeeds (the roll is still drawn, same rng stream).
   if (!chance(world.rng, itemRule(killer, "capture") > 0 ? 1 : odds)) return;
+  grantPartner(world, killer, elite.species, elite);
+}
+
+/** Eggs grant a real partner directly, without consuming the capture chance roll. */
+export function grantPartner(
+  world: World,
+  owner: Player,
+  species: EnemyId,
+  at: Pick<Partner, "x" | "z" | "faceX" | "faceZ"> = owner,
+  source: "capture" | "egg" = "capture",
+): boolean {
+  if (partnersOf(world, owner).length >= partnerSlots(owner)) return false;
   const partner: Partner = {
     id: world.nextId++,
-    owner: killer.id,
-    species: elite.species,
-    x: elite.x,
-    z: elite.z,
-    px: elite.x,
-    pz: elite.z,
-    faceX: elite.faceX,
-    faceZ: elite.faceZ,
-    cooldown: PARTNER_ATTACK[styleOf(enemyDefs[elite.species])].every,
+    owner: owner.id,
+    species,
+    x: at.x,
+    z: at.z,
+    px: at.x,
+    pz: at.z,
+    faceX: at.faceX,
+    faceZ: at.faceZ,
+    cooldown: PARTNER_ATTACK[styleOf(enemyDefs[species])].every,
     guard: 0,
     target: null,
     returning: false,
   };
   world.partners.push(partner);
-  const name = enemyDefs[elite.species].name;
+  const name = enemyDefs[species].name;
   world.events.push(
     {
       t: "capture",
-      player: killer.id,
+      source,
+      player: owner.id,
       partner: partner.id,
-      species: elite.species,
-      x: elite.x,
-      z: elite.z,
+      species,
+      x: at.x,
+      z: at.z,
     },
-    { t: "banner", text: `捕获 ${name}！`, tone: "boss", kind: "capture", player: killer.id },
+    {
+      t: "banner",
+      text: `${source === "egg" ? "孵化出了" : "捕获"} ${name}！`,
+      tone: "boss",
+      kind: "capture",
+      player: owner.id,
+    },
   );
+  return true;
 }
 
 /** 护主 after a swarm touch landed on `owner` (see `GUARD`); nothing happens while no partner can. */

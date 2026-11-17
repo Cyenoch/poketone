@@ -48,7 +48,7 @@ Owner 简写：除 [createRun.ts](../../src/run/createRun.ts) 指 [src/run/creat
 
 ### W03 待选队列与卡片身份
 
-- **所有者/定位**：[world.ts:547,571,260,370](../../src/run/sim/world.ts#L547)
+- **所有者/定位**：[progression.ts](../../src/run/sim/progression.ts) 的 `queueCard/gainXp/rollFront`；[world.ts](../../src/run/sim/world.ts) 的命令与拾取入口
 - **编码与逻辑状态**：`pending[]`、front.options、card.id、choosing/cardHold；empty / queued-unrolled / rolled-front / visible / deferred / answered
 - **守卫与转换**：XP 每跨一级或 chest 入队；只首卡 roll；pick/skip 消费首卡；reroll/banish 换新 id；多人 choices/interact 手动打开
 - **终态/取消/恢复**：死亡保留 pending 但隐藏；revive 后可打开；Z 多人带队列、关闭 choosing；R 保留 id/options
@@ -144,6 +144,15 @@ Owner 简写：除 [createRun.ts](../../src/run/createRun.ts) 指 [src/run/creat
 - **测试/风险**：[coop.test.mjs:92,330](../../scripts/coop.test.mjs#L92)、[zones.test.mjs:394,444](../../scripts/zones.test.mjs#L394)、[lab.test.mjs:191,209](../../scripts/lab.test.mjs#L191)。风险：最后出口结清会新排卡，此时可直接 victory；这是清场奖励与选卡的接缝
 
 ## 2. 玩家生命、动作、成长与站点
+
+### 野外事件、天气与交互点的所有者
+
+- [field-events.ts](../../src/run/sim/field-events.ts) 在入图时排定 `zone.schedule`，`director.ts` 依据表内下标消费 `spawn.fired`；`eventsUsed` 跨图保留。恢复读取已有排程，不重新抽取。
+- [weather.ts](../../src/run/sim/weather.ts) 推进 `weather.from/until` 的预告、开始与结束；`combat.ts/stats.ts/hurt.ts` 读取当前有效天气。换图清天气，暂停停止模拟时间。
+- [sites/index.ts](../../src/run/sim/sites/index.ts) 管 `dormant/ready/busy/spent` 与共享交互分发，具体种类各自拥有引导、出生和结算。钓鱼/化石的 `reveal` 对应收线/出土，`complete` 对应奖励结算；声音与粒子不能把两个阶段混为一个。
+- [sites/egg.ts](../../src/run/sim/sites/egg.ts) 将携带蛋保存在玩家上，跨图保留累计步数、重设采样坐标；倒地或离队掉回地面。孵化直接授予伙伴，满栏只给该玩家一张宝箱卡。
+- [encounters.ts](../../src/run/sim/encounters.ts) 管异色名额、逃离路径与本局图鉴计数；`progress.ts` 的结果提交将 `dex` 与其他收益一起入账。`snapshot.ts` 覆盖这些状态，导航缓存仍重建。
+- 对应行为回归在 `field-events.test.mjs`、`field-sites.test.mjs`、`snapshot.test.mjs` 与 `ui-run-session.test.mjs`；正式画面和设备验收另行记录。
 
 <a id="p01"></a>
 

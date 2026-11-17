@@ -1,4 +1,5 @@
 import { ENEMY_HAZARD } from "../content/params/enemy-skills";
+import { escaping } from "../encounters";
 // Shared parts of the swarm's skills (sim/skills/*) and the guardian's attacks: hazards, the tell,
 // aim heights and the ground-patch test. Never imports the skill registry, so every skill module can
 // load first.
@@ -10,10 +11,50 @@ import { heightAt } from "../terrain";
 import type { World } from "../state/world";
 import type { Enemy, Hazard, Player } from "../state/entities";
 import type { TellSeverity } from "../state/events";
+import type { ElementType } from "../content/elements";
 import { hypot } from "../math";
 
 export type HazardInit = Pick<Hazard, "kind" | "x" | "y" | "z" | "life" | "radius"> &
   Partial<Omit<Hazard, "id">>;
+
+/** Fixed move elements; generic guardian shapes supply their own element in HazardInit. */
+const hazardElements: Partial<Record<Hazard["kind"], ElementType>> = {
+  acid: "poison",
+  "acid-pool": "poison",
+  spore: "grass",
+  bubble: "water",
+  ember: "fire",
+  flamethrower: "fire",
+  icicle: "ice",
+  "ice-beam": "ice",
+  "poison-sting": "poison",
+  "poison-fan": "poison",
+  "thunder-shock": "electric",
+  "water-gun": "water",
+  "pin-missile": "bug",
+  "spike-cannon": "normal",
+  "pay-day": "normal",
+  psybeam: "psychic",
+  vine: "grass",
+  bone: "ground",
+  rockfall: "rock",
+  discharge: "electric",
+  "discharge-wide": "electric",
+  "discharge-quick": "electric",
+  "dragon-rage": "dragon",
+  "dragon-pulse": "dragon",
+  "self-destruct": "normal",
+  "flame-trail": "fire",
+  "burning-trail": "fire",
+  "burning-pool": "fire",
+  "rock-shard": "rock",
+  fissure: "ground",
+  crabhammer: "water",
+  "thunder-bolt": "electric",
+  "hydro-pump": "water",
+  twister: "dragon",
+  slash: "flying",
+};
 
 export function addHazard(world: World, init: HazardInit): Hazard {
   const hazard: Hazard = {
@@ -30,6 +71,7 @@ export function addHazard(world: World, init: HazardInit): Hazard {
     length: 0,
     rise: 0,
     caster: -1,
+    ...(hazardElements[init.kind] ? { element: hazardElements[init.kind] } : {}),
     ...init,
   };
   world.hazards.push(hazard);
@@ -71,7 +113,9 @@ export function sightOn(world: World, enemy: Enemy, target: Player, fromY: numbe
 /** The living, awake caster of a wind-up hazard, or undefined once it died or fell asleep. */
 export function activeCaster(world: World, hazard: Hazard): Enemy | undefined {
   const caster = world.enemies.find((enemy) => enemy.id === hazard.caster);
-  return !caster || caster.hp <= 0 || interrupted(caster) ? undefined : caster;
+  return !caster || caster.hp <= 0 || escaping(world, caster) || interrupted(caster)
+    ? undefined
+    : caster;
 }
 
 /** A wind-up dies with its caster, or when the caster is put to sleep, before it can land. */

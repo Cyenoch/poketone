@@ -1,4 +1,7 @@
 import { abilities, type AbilityId } from "./content/abilities";
+import { weatherDefs } from "./content/weather";
+import type { WeatherId } from "./state/field";
+import type { MoveId } from "./content/moves";
 import {
   atLevel,
   isHitCondition,
@@ -23,6 +26,15 @@ import { TRAIN } from "./content/params/cards";
 import { AREA_GROWTH_MAX, ARMOR_HALF, BASE, LEVEL } from "./content/params/player";
 
 export type StatKey = StatId;
+
+/** The caller chooses live weather or explicit null for a weather-free model. */
+export function weatherMoveStats(
+  move: MoveId,
+  weather: WeatherId | null,
+): { cooldown: number; count: number } {
+  const tweak = weather === null ? undefined : weatherDefs[weather].moves?.[move];
+  return { cooldown: tweak?.cooldown ?? 1, count: tweak?.count ?? 0 };
+}
 
 export interface PlayerStats extends Record<StatId, number> {
   /**
@@ -145,7 +157,7 @@ function modifiersOf(player: Player): Modifier[] {
     if (count === 0) continue;
     for (const def of items[id].effect.modifiers)
       push({ ...def, value: atLevel(def.op, def.value, count) }, { kind: "item", item: id, count });
-    // Loaded Dice: each level's rolled face (world.ts `pickEffects`).
+    // Loaded Dice: each level's rolled face (progression.ts `pickEffects`).
     if (items[id].onPick?.roll)
       for (let level = 1; level <= count; level++) {
         const face = DICE_FACES[player.fx[diceKey(level)] ?? -1];

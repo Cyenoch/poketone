@@ -2,7 +2,7 @@
 
 ## Why
 
-这是大版本「野外与路线」第 3 期，总表见 `add-field-events/design.md`。现在的构筑容易收敛，原因有三：
+这是大版本「野外与路线」第 3 期，总表见 [野外与路线规划](../archive/2026-11-18-add-field-events/design.md)。现在的构筑容易收敛，原因有三：
 
 - 进化只看等级，`evolution.ts` 的 `stageFor` 到点就换形，玩家不用做任何决定。
 - 每条线只有一个特性（`LineDef.ability`），而且光合作用、激流之壳、幽影、龙鳞这几个名字不是正作特性。

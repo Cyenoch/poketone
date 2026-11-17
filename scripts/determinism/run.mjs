@@ -262,6 +262,8 @@ function snapshot() {
   };
   edit('import { createHash } from "node:crypto";\n', "");
   edit('import { readFileSync, writeFileSync } from "node:fs";\n', "");
+  edit('import { availableParallelism } from "node:os";\n', "");
+  edit('import { Worker, isMainThread, parentPort, workerData } from "node:worker_threads";\n', "");
   edit(
     'const FILE = new URL("./golden.json", import.meta.url);',
     'import { createHash as sha256 } from "./determinism/sha256.mjs";\nconst createHash = () => sha256();',

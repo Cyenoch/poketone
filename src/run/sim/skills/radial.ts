@@ -100,7 +100,8 @@ function hitInside(world: World, ring: Hazard, slow: number): void {
         player.z,
       )
     )
-      if (damagePlayer(world, player, ring.dmg) && slow) sustain(player, "slow", slow, -1);
+      if (damagePlayer(world, player, ring.dmg, ring.element) && slow)
+        sustain(player, "slow", slow, -1);
 }
 
 export const hazards = {

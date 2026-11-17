@@ -50,10 +50,16 @@ export async function toggleFullscreen(): Promise<void> {
 }
 
 async function lockLandscape(): Promise<void> {
+  if (!screen.orientation?.lock) {
+    console.info("设备不支持横屏锁定");
+    return;
+  }
   try {
     await screen.orientation.lock("landscape");
   } catch (error) {
-    console.warn("全屏已开启，但横屏锁定失败", error);
+    if (error instanceof DOMException && error.name === "NotSupportedError")
+      console.info("设备不支持横屏锁定", error);
+    else console.warn("全屏已开启，但横屏锁定失败", error);
   }
 }
 

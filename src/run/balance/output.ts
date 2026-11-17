@@ -49,6 +49,8 @@ import { statuses, type EnemyStatusId, type StatusDef } from "../sim/content/sta
 import type { PlayerStats } from "../sim/stats";
 import { TICK } from "../sim/state/world";
 import type { MoveState } from "../sim/state/entities";
+import type { WeatherId } from "../sim/state/field";
+import { weatherDefs } from "../sim/content/weather";
 
 /** Enemies are spread over a disc this wide around the player (targeting reaches 15). */
 export const FIELD_RADIUS = 12;
@@ -77,6 +79,8 @@ export function controlSeconds(id: EnemyStatusId): number {
 
 /** What the moves are hitting: the swarm around the player and the guardian. */
 export interface Target {
+  /** Explicit live weather; offline reference budgets have no weather. */
+  weather?: WeatherId | null;
   /** Enemies per unit² near the player. */
   density: number;
   /** Engaged enemies (inside the field); below 1 a move often has nothing to aim at. */
@@ -774,7 +778,8 @@ const ELITE_SHARE = 0.05;
  */
 function damageFactors(def: MoveDef, stats: PlayerStats, target: Target): [number, number] {
   const { hit } = stats;
-  const base = stats.damage * (hit[def.type] ?? 1) * (hit[def.category] ?? 1);
+  const weather = target.weather ? (weatherDefs[target.weather].element[def.type] ?? 1) : 1;
+  const base = stats.damage * (hit[def.type] ?? 1) * (hit[def.category] ?? 1) * weather;
   const elite = hit.elite ?? 1;
   const strong = hit.superEffective ?? 1;
   const weakShare = (vs: number) => Math.max(0, Math.min(1, (vs - 1) / 0.4));
@@ -798,7 +803,7 @@ export function moveOutput(
   bonk = 1,
 ): MoveOutput {
   const def = moves[state.id];
-  const p = moveParams(state, stats);
+  const p = moveParams(state, stats, target.weather ?? null);
   const short = archetypes[def.archetype].shortReach;
   const reachable = TERRAIN_SIGHT * (short ? MELEE_STEP * target.melee : 1);
   // The guardian is always there to aim at; the swarm only when someone is in range.

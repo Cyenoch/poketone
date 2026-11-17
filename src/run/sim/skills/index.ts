@@ -12,6 +12,7 @@ import { melt, bodySlam, tripleBurrow } from "./landing";
 // Load order: modules import kit / telegraph, never this file at runtime.
 
 import type { EnemyStatusId } from "../content/statuses";
+import type { ElementType } from "../content/elements";
 import type { World } from "../state/world";
 import type { Enemy, Player } from "../state/entities";
 import type { PartnerStyle } from "../state/events";
@@ -73,6 +74,8 @@ import type { HazardRule } from "./kit";
 export type SkillMove = [number, number, number];
 
 export interface SkillDef {
+  /** Only the committed dash uses this element; ordinary contact remains Normal. */
+  dashElement?: ElementType;
   /** The skill only starts with the target this close (and in sight). */
   range: number;
   /** How a captured partner of the species fights, and the status its hits inflict. */

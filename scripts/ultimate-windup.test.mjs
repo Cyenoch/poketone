@@ -15,7 +15,7 @@ import {
 } from "../src/run/sim/ultimates/index.ts";
 import { ULT_INVULNERABLE, ULT_WINDUP } from "../src/run/sim/content/params/ultimates.ts";
 import { starters } from "../src/run/sim/content/lines/index.ts";
-import { damagePlayer } from "../src/run/sim/hurt.ts";
+import { damagePlayer, weatherDamagePlayer } from "../src/run/sim/hurt.ts";
 import { apply, find, slowed, sustain } from "../src/run/sim/status.ts";
 import { addHazard } from "../src/run/sim/skills/kit.ts";
 import { updateHazards } from "../src/run/sim/hazards.ts";
@@ -34,7 +34,9 @@ function fixture(ids = ["bulbasaur"]) {
     difficulty: 0,
     players: ids.map((starter) => ({ starter })),
   });
+  world.zone.schedule = [];
   world.spawn.credit = -1e6;
+  world.sites = [];
   for (const player of world.players) {
     player.moves = [];
     player.invulnerable = 0;
@@ -122,14 +124,17 @@ test("protection expires on tick 150 with no extra i-frame or floating-point tic
   ticks(w, 149);
   assert.ok(p.ult.protection > 0);
   assert.equal(damagePlayer(w, p, 10), false);
+  weatherDamagePlayer(w, p, 10);
   assert.equal(p.hp, hp);
   stepWorld(w, []);
   assert.equal(p.ult.protection, 0);
   assert.equal(p.invulnerable, 0);
+  weatherDamagePlayer(w, p, 1);
+  close(p.hp, hp - 1);
   assert.equal(damagePlayer(w, p, 1), true);
 });
 
-test("existing slow clears and new controls fail while poison cannot damage", () => {
+test("existing slow clears and new controls fail while poison and weather cannot damage", () => {
   const w = fixture(),
     p = w.players[0];
   apply(p, "slow", 8, 0, -1);
@@ -142,6 +147,7 @@ test("existing slow clears and new controls fail while poison cannot damage", ()
   assert.equal(find(p, "slow"), undefined);
   assert.equal(slowed(p, 10, 0, 0), 10);
   const hp = p.hp;
+  w.weather = { id: "hail", from: 0, until: 75 };
   ticks(w, 149);
   assert.equal(p.hp, hp);
   stepWorld(w, []);
@@ -240,7 +246,9 @@ test("entering the next field cancels preparation and protection without refund"
   assert.equal(p.ult.elapsed, -1);
   assert.equal(p.ult.protection, 0);
   assert.equal(p.ult.charge, 0);
+  w.zone.schedule = [];
   w.spawn.credit = -1e6;
+  w.sites = [];
   ticks(w, 90);
   assert.equal(count(w, "ult-release"), 0);
   assert.equal(count(w, "ult-pulse"), 0);

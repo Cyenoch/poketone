@@ -56,7 +56,7 @@ export function updateHazards(world: World, dt: number): void {
         hazard.y > feet + formOf(player).height + hazard.radius
       )
         continue;
-      if (damagePlayer(world, player, hazard.dmg)) {
+      if (damagePlayer(world, player, hazard.dmg, hazard.element)) {
         if (rule.poison) apply(player, "poison", rule.poison, 0, -1);
         if (rule.slow) apply(player, "slow", rule.slow, 0, -1);
         hazard.life = 0;

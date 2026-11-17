@@ -81,8 +81,94 @@ function tick(ctx) {
   updateHazards(world, TICK);
 }
 
-const params = (world, id) => moveParams(newMoveState(id), playerStats(world.players[0]));
+const params = (world, id) => moveParams(newMoveState(id), playerStats(world.players[0]), null);
 const dodging = (world, e) => (e.dodge?.until ?? 0) > world.time;
+
+test("close pursuit settles without flipping, still hurts, and resumes when the player leaves", () => {
+  for (const species of ["aerodactyl", "zubat", "caterpie", "krabby"]) {
+    const w = arena("desert");
+    const p = w.players[0];
+    const e = spawnEnemy(w, species, 0.008021751122534, -0.06161814664152, true, 48);
+    e.attackTimer = 60;
+    e.speed = 2.408401333333333;
+    const ctx = context(w);
+    const start = [e.x, e.z, e.faceX, e.faceZ];
+    for (let i = 0; i < 60; i++) {
+      tick(ctx);
+      assert.deepEqual([e.x, e.z, e.faceX, e.faceZ], start, `${species}: settled tick ${i}`);
+    }
+    assert(p.hp < 1e6, `${species}: stopping inside contact does not prevent damage`);
+    applyMovementCommand(p, { t: "move", player: p.id, x: 1, z: 0 }, false);
+    for (let i = 0; i < 60; i++) {
+      movePlayer(w, p, playerStats(p).speed, TICK);
+      tick(ctx);
+    }
+    assert(e.x > start[0] + 0.5, `${species}: pursuit resumes after the player walks away`);
+    applyMovementCommand(p, { t: "move", player: p.id, x: 0, z: 0 }, false);
+    for (let i = 0; i < 180; i++) tick(ctx);
+    const arrived = [e.x, e.z, e.faceX, e.faceZ];
+    for (let i = 0; i < 60; i++) {
+      tick(ctx);
+      assert.deepEqual([e.x, e.z, e.faceX, e.faceZ], arrived, `${species}: stable arrival`);
+    }
+    p.invulnerable = 0;
+    const hp = p.hp;
+    tick(ctx);
+    assert(p.hp < hp, `${species}: arrival remains inside actual contact range`);
+    const mark = thunder(w, e);
+    mark.delay = 0;
+    const enemyHp = e.hp;
+    updateAreas(ctx, TICK);
+    assert(e.hp < enemyHp, `${species}: a settled enemy still takes player damage`);
+  }
+});
+
+test("nearby pursuit does not clamp stampedes, skill lunges, knockback or body separation", () => {
+  const w = arena("desert");
+  const p = w.players[0];
+  const e = enemy(w, "spearow", -0.02);
+  const ctx = context(w);
+  e.charge = true;
+  e.dashX = 1;
+  tick(ctx);
+  assert(e.x > p.x, "stampede keeps its full stride through the target");
+  e.charge = false;
+  e.x = -0.02;
+  e.attackTimer = 0;
+  tick(ctx);
+  assert.equal(e.phase, "windup", "a touching enemy can still begin its real skill");
+  for (let i = 0; i < 60 && e.phase !== "dash"; i++) tick(ctx);
+  assert.equal(e.phase, "dash");
+  e.x = -0.02;
+  for (let i = 0; i < 10 && e.x <= p.x; i++) tick(ctx);
+  assert(e.x > p.x, "the locked skill dash crosses the target instead of stopping on contact");
+
+  const pushed = arena("desert");
+  const body = enemy(pushed, "caterpie", 0.02);
+  body.knockX = 3;
+  tick(context(pushed));
+  assert(body.x > 0.05, "contact does not consume knockback");
+  body.knockX = 0;
+  body.x = 0.02;
+  enemy(pushed, "caterpie", -0.02);
+  tick(context(pushed));
+  assert(body.x > 0.1, "overlapping enemies still separate while touching the player");
+});
+
+test("a touching enemy still reacts to a real area warning and completes its sidestep", () => {
+  const w = arena();
+  const e = enemy(w, "meowth", 0.02);
+  const ctx = context(w);
+  thunder(w, e);
+  let start;
+  for (let i = 0; i < 30 && !start; i++) {
+    tick(ctx);
+    if (dodging(w, e)) start = [e.px, e.pz];
+  }
+  assert(start, "contact does not prevent the warning response");
+  for (let i = 0; i < 15 && dodging(w, e); i++) tick(ctx);
+  assert(Math.hypot(e.x - start[0], e.z - start[1]) > 0.2, "the sidestep travels normally");
+});
 
 function incoming(world, e) {
   const p = world.players[0];

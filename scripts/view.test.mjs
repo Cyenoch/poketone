@@ -253,7 +253,7 @@ function offEveryScreen(world, enemies, what) {
 }
 
 const stage = stageDefs.forest;
-const swarm = stage.zones[0].beats.find(([, beat]) => beat.kind === "swarm")[1];
+const swarm = stage.zones[0].beats.find(({ beat }) => beat.kind === "swarm").beat;
 
 for (const [label, players, place] of [
   ["solo", [{ starter: "squirtle" }], () => {}],
@@ -278,7 +278,7 @@ for (const [label, players, place] of [
         return world.enemies.slice(before);
       };
       // Ring spawns, with every beat already rung so only the credit loop runs.
-      world.spawn.fired.push(...stage.zones[0].beats.map(([at, beat]) => `${beat.kind}@${at}`));
+      world.spawn.fired.push(...world.zone.schedule.map((_, index) => index));
       // The director ticks the zone clock first: this call runs at 60 s.
       world.zone.tick = 60 * 30 - 1;
       world.spawn.credit = 6;

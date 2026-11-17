@@ -13,12 +13,14 @@ import { TICK, type World } from "../state/world";
 import type { Enemy, Hazard, Player } from "../state/entities";
 import { activeCaster, addHazard, type HazardRule } from "./kit";
 import { telegraph, type Lunge, type TelegraphSpec } from "./telegraph";
+import type { ElementType } from "../content/elements";
 
 type LungeNumbers = (typeof LUNGE)[keyof typeof LUNGE];
 
 function lunge(
   numbers: LungeNumbers,
   extra: Pick<TelegraphSpec, "walk"> & Pick<Lunge, "stopsAtCover" | "repeat"> & { trail?: true },
+  element: ElementType = "normal",
 ) {
   const { range, windup, speed, time, recover } = numbers;
   return telegraph({
@@ -26,6 +28,7 @@ function lunge(
     windup,
     tell: "normal",
     partner: { style: "tackle" },
+    dashElement: element,
     walk: extra.walk,
     lunge: { speed, time, recover, stopsAtCover: extra.stopsAtCover, repeat: extra.repeat },
     // The boss's lane telegraph, at this species' width and reach.
@@ -33,6 +36,7 @@ function lunge(
       if (extra.trail) layTrail(world, enemy, windup + time);
       addHazard(world, {
         kind: "dash-warn",
+        element,
         x: enemy.x,
         y: 0,
         z: enemy.z,
@@ -49,24 +53,36 @@ function lunge(
   });
 }
 
-export const bellySlide = lunge(LUNGE["belly-slide"], { walk: true });
-export const firePunch = lunge(LUNGE["fire-punch"], {
-  walk: true,
-  repeat: { count: FIRE_PUNCHES, gap: FIRE_PUNCH_GAP },
-});
-export const dive = lunge(LUNGE.dive, { stopsAtCover: true });
-export const roll = lunge(LUNGE.roll, { walk: true });
-export const flameCharge = lunge(LUNGE["flame-charge"], { walk: true });
+export const bellySlide = lunge(LUNGE["belly-slide"], { walk: true }, "ice");
+export const firePunch = lunge(
+  LUNGE["fire-punch"],
+  {
+    walk: true,
+    repeat: { count: FIRE_PUNCHES, gap: FIRE_PUNCH_GAP },
+  },
+  "fire",
+);
+export const dive = lunge(LUNGE.dive, { stopsAtCover: true }, "flying");
+export const roll = lunge(LUNGE.roll, { walk: true }, "rock");
+export const flameCharge = lunge(LUNGE["flame-charge"], { walk: true }, "fire");
 export const hornAttack = lunge(LUNGE["horn-attack"], { walk: true });
-export const doublePeck = lunge(LUNGE["double-peck"], { walk: true, repeat: PECK["double-peck"] });
-export const triplePeck = lunge(LUNGE["triple-peck"], { walk: true, repeat: PECK["triple-peck"] });
+export const doublePeck = lunge(
+  LUNGE["double-peck"],
+  { walk: true, repeat: PECK["double-peck"] },
+  "flying",
+);
+export const triplePeck = lunge(
+  LUNGE["triple-peck"],
+  { walk: true, repeat: PECK["triple-peck"] },
+  "flying",
+);
 export const takeDown = lunge(LUNGE["take-down"], { walk: true });
 export const hornRush = lunge(LUNGE["horn-rush"], { walk: true });
 export const razorDash = lunge(LUNGE["razor-dash"], { walk: true });
-export const flameTrail = lunge(LUNGE["flame-trail"], { walk: true, trail: true });
-export const aquaJet = lunge(LUNGE["aqua-jet"], { walk: true });
+export const flameTrail = lunge(LUNGE["flame-trail"], { walk: true, trail: true }, "fire");
+export const aquaJet = lunge(LUNGE["aqua-jet"], { walk: true }, "water");
 // A swimmer has no walkable line onto the beach; the mover stops its charge at the waterline.
-export const megahorn = lunge(LUNGE.megahorn, {});
+export const megahorn = lunge(LUNGE.megahorn, {}, "bug");
 
 /** The trail starts under the caster and grows behind it while it charges (`flame-trail` rule). */
 function layTrail(world: World, enemy: Enemy, seconds: number): void {
@@ -141,7 +157,7 @@ export const hazards = {
     update(world, trail) {
       if (world.tick % HURT_TICKS !== 0) return;
       for (const player of world.players)
-        if (onTrail(world, trail, player)) damagePlayer(world, player, trail.dmg);
+        if (onTrail(world, trail, player)) damagePlayer(world, player, trail.dmg, trail.element);
     },
   },
 } satisfies Record<string, HazardRule>;

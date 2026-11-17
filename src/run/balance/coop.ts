@@ -9,6 +9,10 @@ import type { Difficulty } from "../sim/content/difficulties";
 import { stageDefs, type StageId } from "../sim/content/stages/index";
 import { bossHp, liveCap, spawnRate } from "../sim/director";
 import type { Player } from "../sim/state/entities";
+import type { WeatherId } from "../sim/state/field";
+import { enemies } from "../sim/content/enemies";
+import { weatherChip } from "./field-events";
+import { WEATHER } from "../sim/content/params/field-events";
 
 /** Saturated crowd with everyone grouped, or evenly split; all roster members contribute output. */
 export function coopBudget(
@@ -18,13 +22,14 @@ export function coopBudget(
   players: readonly Player[],
   skill: SkillProfile,
   zone = 0,
+  weather: WeatherId | null = null,
 ) {
   if (players.length < 1 || players.length > COOP_SCALING.length)
     throw new Error("联机分析需要 1–4 名玩家。");
   const team = coopScaling(players.length);
   const factors = zoneFactorsFor(stageDefs[stage], zone);
   const clock = zoneClock(stageDefs[stage], zone, time);
-  const base = fieldAt(stage, time, difficulty, false, zone);
+  const base = fieldAt(stage, time, difficulty, false, zone, { weather, outbreak: null });
   const field = { ...base, hp: base.hp * team.hp };
   const cap = liveCap(clock, difficulty) * factors.cap * team.cap;
   const spawns = spawnRate(clock, difficulty, false) * factors.spawns * team.spawns;
@@ -34,11 +39,18 @@ export function coopBudget(
     buildOutput(player, targetFor(field, cap / players.length, skill)),
   );
   const guardianHp = bossHp(field.guardian, difficulty) * factors.guardianHp * team.bossHp;
+  const guardianWeatherDps = guardianHp * weatherChip(weather, enemies[field.guardian].types, true);
   const sum = (values: readonly number[]) => values.reduce((total, value) => total + value, 0);
   // Burn on a shared guardian keeps the strongest application, rather than stacking by caster.
   const guardianDps = (outputs: typeof grouped) =>
     sum(outputs.map((out) => out.single * skill.bossFocus)) +
     Math.max(...outputs.map((out) => out.bossBurn));
+  const output = guardianDps(grouped);
+  const duringWeather = guardianHp / (output + guardianWeatherDps);
+  const guardianTtk =
+    !weather || duringWeather <= WEATHER.seconds
+      ? duringWeather
+      : WEATHER.seconds + (guardianHp - (output + guardianWeatherDps) * WEATHER.seconds) / output;
   return {
     hp: field.hp,
     eliteHp: field.hp * ELITE.hp,
@@ -50,6 +62,7 @@ export function coopBudget(
     incoming,
     groupedPressure: sum(grouped.map((out) => out.useful)) / incoming,
     splitPressure: sum(split.map((out) => out.useful)) / incoming,
-    guardianTtk: guardianHp / guardianDps(grouped),
+    guardianWeatherDps,
+    guardianTtk,
   };
 }

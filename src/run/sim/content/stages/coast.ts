@@ -1,5 +1,6 @@
 import type { StampedeBeat } from "../../beats";
 import { firstBeats, laterBeats } from "./beatTemplates";
+import { fieldContent } from "./fieldContent";
 import { forest } from "./forest";
 import type { StageDef, StageZone } from "./index";
 
@@ -177,9 +178,27 @@ export const coast = {
     wall: { count: 60, kinds: ["rock"] },
   },
   zones: [
-    { roster: tropicRoster, beats: tropicBeats, guardian: kingler, atmosphere: "tropic" },
-    { roster: stormRoster, beats: stormBeats, guardian: gyarados, atmosphere: "storm" },
-    { roster: thunderRoster, beats: thunderBeats, guardian: starmie, atmosphere: "thunder" },
+    {
+      ...fieldContent("coast"),
+      roster: tropicRoster,
+      beats: tropicBeats,
+      guardian: kingler,
+      atmosphere: "tropic",
+    },
+    {
+      ...fieldContent("coast"),
+      roster: stormRoster,
+      beats: stormBeats,
+      guardian: gyarados,
+      atmosphere: "storm",
+    },
+    {
+      ...fieldContent("coast"),
+      roster: thunderRoster,
+      beats: thunderBeats,
+      guardian: starmie,
+      atmosphere: "thunder",
+    },
   ],
   rampage: { banner: "海岸暴走：敌人越来越强" },
   stations: ["hypno", "bill"],

@@ -379,7 +379,17 @@ export function recordRun(progress: Progress, result: RunResult): Progress {
     kills: progress.kills + result.kills,
     research: progress.research + Math.floor(researchedKills(progress, result.kills)),
     stardust: progress.stardust + result.stardust,
+    dex: { ...progress.dex },
   };
+  for (const [id, earned] of Object.entries(result.dex)) {
+    const species = id as EnemyId;
+    const before = progress.dex[species];
+    next.dex[species] = {
+      seen: (before?.seen ?? 0) + earned.seen,
+      defeated: (before?.defeated ?? 0) + earned.defeated,
+      shiny: (before?.shiny ?? 0) + earned.shiny,
+    };
+  }
   if (result.outcome === "victory") next.clears[result.difficulty] += 1;
   const record: BestRecord = {
     difficulty: result.difficulty,

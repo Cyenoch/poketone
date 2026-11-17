@@ -1028,9 +1028,49 @@
       "date": "2026-11-06",
       "workflow": "skill-model multiview body (official artwork, nano banana 2.1 sheet with a centred tail, split views); tail hand-built by add_tail in prepare-game-models.py",
       "note": "idle kept; run replaced by run-bipeds.py"
+    },
+    {
+      "asset": "enemies/heracross",
+      "step": "generation",
+      "taskId": "a9d25b55-c587-4c00-a33a-5bd312f8aa3d",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-17",
+      "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
+      "note": "Source and image references preserved alongside the asset."
+    },
+    {
+      "asset": "enemies/munchlax",
+      "step": "generation",
+      "taskId": "f05a8892-bbd2-4cf8-897d-c507e7fabf0e",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-17",
+      "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
+      "note": "Source and image references preserved alongside the asset."
+    },
+    {
+      "asset": "enemies/magikarp",
+      "step": "generation",
+      "taskId": "5803c739-7539-4e5b-9c6d-8ee84dfa3c90",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-17",
+      "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
+      "note": "Source and image references preserved alongside the asset."
+    },
+    {
+      "asset": "field-sites/gengar-altar",
+      "step": "generation",
+      "taskId": "02fda21a-b58c-4b6c-9deb-79510e879914",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-17",
+      "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
+      "note": "Source and image references preserved alongside the asset."
     }
   ],
-  "creditsTotal": 3520,
+  "creditsTotal": 3680,
   "shipping": [
     {
       "file": "public/models/enemies/caterpie.glb",
@@ -1281,5 +1321,5 @@
   ],
   "rebuild": "pnpm assets:game (Blender 5.2, assets/prepare-game-models.py): base colour only, textures downsized, swarm enemies decimated to ~900 tris. Tree and bush sources come from blender --background --factory-startup --python assets/props/build-props.py (closed icosphere clumps, vertex colours) because their Tripo exports were open shard shells; Squirtle, Pikachu, Wartortle and Raichu (and Charmander, via pnpm assets:charmander) take their run from blender --background --factory-startup --python assets/characters/run-bipeds.py (two-bone leg IK on the Tripo biped rig, heel peel, longer stride with a flight phase) because Tripo's in-place runs were too short-strided for the forms' speeds under the cadence cap; the Bulbasaur line (Bulbasaur, Ivysaur, Venusaur) comes from blender --background --factory-startup --python assets/characters/rig-quadrupeds.py (hand-built armature, region weights, scripted diagonal trot) because the Tripo quadruped rigs misread the bodies; Wartortle's and Blastoise's violet bellies (from Tripo's own reference images, so a re-texture would repeat them) are repainted cream by hue band (recolour); every Tripo biped but Charmander (re-posed by its own prepare-model.mjs) has its shoulder and upper-arm keys turned half-way back to the T-pose (open_arms), because Tripo's retargeted idle and run lower the arms like a slim human's and bury the hands in these round bellies; run-bipeds.py moves tail vertices Tripo skinned to an arm or foot onto the pelvis (rehome); the multiview forms (2026-11-06) get symmetrise(run_shift) before open_arms: it mirrors the better-fitting side's rest bones, skin weights and clip keys onto the other side, because Tripo's preset idle leans to one side and its rigger fits the two arms differently",
   "rights": "Pokémon character IP belongs to its rights holders. Generated output and noncommercial use do not imply permission, endorsement, or an open-source license.",
-  "updatedAt": "2026-11-06"
+  "updatedAt": "2026-11-18"
 }

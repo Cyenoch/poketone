@@ -39,7 +39,7 @@ export interface Lunge {
   repeat?: { count: number; gap: number };
 }
 
-export interface TelegraphSpec extends Pick<SkillDef, "range" | "partner"> {
+export interface TelegraphSpec extends Pick<SkillDef, "range" | "partner" | "dashElement"> {
   /** Projectile flight adds to the wind-up prediction window. */
   projectileSpeed?: number;
   /** Seconds the enemy holds still before the attack leaves (the dash starts). */
@@ -61,6 +61,7 @@ export function telegraph(spec: TelegraphSpec): SkillDef {
     range: spec.range,
     partner: spec.partner,
     windup: spec.windup,
+    ...(spec.dashElement ? { dashElement: spec.dashElement } : {}),
     step(world, enemy, target, speed, dt, every) {
       if (interrupted(enemy)) {
         // Sleep cancels a wind-up or lunge; the rhythm starts over on waking.

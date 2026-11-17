@@ -1,0 +1,52 @@
+import { ALPHA_HP } from "./pacing";
+import { STARDUST } from "./economy";
+
+/** Field encounters share the world's fixed-step clock and seeded reward stream. */
+export const SITE = {
+  count: 4,
+  reach: 1.2,
+  pickup: 0.8,
+  dormantChance: 0.25,
+  warning: 0.8,
+  spawnGap: 0.5,
+  spawnBearings: 32,
+  spawnRings: 4,
+  spawnRingStep: 1,
+  honeyDelay: 8,
+  balls: {
+    count: [6, 8],
+    traps: [1, 2],
+    radius: 0.2,
+    ring: 1.8,
+    trigger: 2,
+    warning: 0.8,
+    blastRadius: 3.8,
+    damage: 1.6,
+  },
+  snorlaxHp: 4,
+  fishing: { channel: 2, uses: 3, fish: 0.6, item: 0.3, elite: 0.1 },
+  fossilChannel: 4,
+  raid: { seconds: 60, hp: ALPHA_HP, scale: 1.6, maxRadius: 0.65 },
+  eggDistance: 120,
+  glintSeconds: 2,
+  radius: {
+    "honey-tree": 0.75,
+    "item-ball": 0.2,
+    snorlax: 1.1,
+    fishing: 0.35,
+    fossil: 0.6,
+    "raid-den": 1,
+    spring: 0.8,
+    egg: 0.3,
+    glint: 0.15,
+    ghost: 0.6,
+    "silph-scope": 0.25,
+  },
+  rewards: {
+    fishStardust: STARDUST.ordinary.value,
+    ballStardust: STARDUST.ordinary.value,
+    ballItemShare: 1 / 3,
+    ballBerryShare: 1 / 3,
+    fullBagBerries: 5,
+  },
+} as const;

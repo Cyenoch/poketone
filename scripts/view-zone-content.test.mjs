@@ -12,6 +12,7 @@ import {
   loadRunAssets,
   runSharedNeeds,
   stageEnemyIds,
+  siteSpecies,
 } from "../src/run/view/assets.ts";
 import { createTerrainUniforms } from "../src/run/view/terrain.ts";
 import { Vfx } from "../src/run/view/vfx.ts";
@@ -29,7 +30,8 @@ test("stage preparation includes every roster, beat, guardian and only that map'
       def.zones.flatMap((zone) => [
         ...zone.roster.map(([, id]) => id),
         zone.guardian.species,
-        ...zone.beats.flatMap(([, beat]) => ("species" in beat ? [beat.species].flat() : [])),
+        ...zone.beats.flatMap(({ beat }) => ("species" in beat ? [beat.species].flat() : [])),
+        ...zone.sites.flatMap((kind) => siteSpecies[kind] ?? []),
       ]),
     );
     assert.deepEqual(new Set(stageEnemyIds(stage)), expected);

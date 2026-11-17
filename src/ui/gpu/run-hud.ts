@@ -1,5 +1,5 @@
-import { ULT_INVULNERABLE } from "../../run/sim/content/params/ultimates";
 import { MAX_ITEM_SLOTS } from "../../run/sim/content/params/cards";
+import { ULT_INVULNERABLE } from "../../run/sim/content/params/ultimates";
 import { STAGE_ROUTE } from "../../run/sim/content/campaign";
 import { stageDefs } from "../../run/sim/content/stages/index";
 import { FullscreenIcon } from "./fullscreen-icon";
@@ -47,6 +47,7 @@ import { playerColors } from "../player-colors";
 import { slantTag } from "./tag";
 import { formDefs } from "../../run/sim/content/lines/index";
 import { GpuTrainerCutin, type CueGlyphs } from "./trainer-cutin";
+import { WeatherChip } from "../../run/view/weatherChip";
 
 export interface RunHudNotice {
   id: number;
@@ -478,6 +479,8 @@ export class GpuRunHud {
   private turn: -1 | 0 | 1 = 0;
   private coarse = false;
   private compact = false;
+  /** The weather's glyph and time bar, first in the purse row. */
+  private readonly weatherChip = new WeatherChip();
   private mapHeight = -1;
   private readonly dash: RunHudSurface;
   private readonly ultimate: RunHudSurface;
@@ -615,7 +618,14 @@ export class GpuRunHud {
     const statsIcon = createRunCommandIcon("chart");
     statsIcon.setProperties({ color: ui.white });
     stats.add(stack(statsIcon, 1), this.keycap("C", "stats"));
-    purse.add(this.pursePlate, stats, this.addControl("pause", 48, 1).panel, fullscreen);
+    this.surfaces.push(this.weatherChip.bar);
+    purse.add(
+      this.weatherChip.root,
+      this.pursePlate,
+      stats,
+      this.addControl("pause", 48, 1).panel,
+      fullscreen,
+    );
     this.right.add(purse, this.mapSlot);
     this.noticeText.root.setProperties({ flexGrow: 1, flexShrink: 1, minWidth: 0 });
     for (const icon of Object.values(this.noticeIcons)) {
@@ -1313,11 +1323,12 @@ export class GpuRunHud {
     }
     const ult = this.controls.find((c) => c.action === "ultimate")!;
     fade(ult.panel, snap.casting && protection === 0 ? 0.6 : 1);
+    this.weatherChip.set(snap.weather, this.compact);
     this.interact.set(
       snap.prompt,
       state.blocked || this.choiceOpen,
       snap.pendingCount,
-      snap.rescueProgress,
+      snap.rescueProgress ?? snap.siteProgress,
       snap.stage === "tower"
         ? "完成探险"
         : `前往${stageDefs[STAGE_ROUTE[STAGE_ROUTE.indexOf(snap.stage) + 1]!].name}`,
@@ -1685,6 +1696,7 @@ export class GpuRunHud {
       this.hp.uniforms.hudTime.value = this.elapsed;
       this.stage.invalidate();
     }
+    if (this.weatherChip.tick(this.elapsed)) this.stage.invalidate();
     if (this.halo.content.properties.peek().display !== "none") {
       this.halo.uniforms.hudTime.value =
         (this.state.snapshot?.ultWindup ?? 0) > 0
@@ -1987,6 +1999,7 @@ export class GpuRunHud {
     this.devReadout?.dispose();
     this.cancel();
     this.interact.dispose();
+    this.weatherChip.dispose();
     this.stage.motion.cancel(this.shieldState);
     for (const control of this.controls) {
       this.stage.motion.cancel(control.pose);

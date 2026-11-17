@@ -22,6 +22,9 @@ AI Agent 从这里定位所有可调玩法数据。内容表和参数都在本�
 | 同伴                 | `params/partners.ts`                                                | 捕获、栏位、护主、跟随与攻击；partners/模型/VFX                                                                          |
 | 终极技               | `ultimates.ts`、`params/ultimates.ts`                               | 各档脉冲时间线、充能、伤害与无敌；ultimates/模型/VFX/图鉴                                                                |
 | 地图与刷怪编排       | `stages/*.ts`、`stages/beatTemplates.ts`                            | 区域敌池、时间线、地图布局/地表生成输入、守卫；mapgen/director/模型                                                      |
+| 野外事件与异色       | `events.ts`、`params/field-events.ts`、`stages/fieldContent.ts`     | 时间窗、事件池、大量出现、异色概率与逃离；field-events/encounters/模型                                                   |
+| 天气                 | `weather.ts`、`params/field-events.ts`                              | 预告、持续时间、属性修正、招式调整、持续伤害与免疫；weather/combat/stats/模型                                            |
+| 地图交互点           | `sites.ts`、`params/sites.ts`                                       | 地图种类池、交互方式、引导时长、距离与奖励；sites/mapgen/模型                                                            |
 | 地表与机动类别       | `mobility.ts`、`params/environment.ts`                              | 爬坡/降落/水域资格、涉水深度、熔岩/流沙/冰面；nav/surface/movement/VFX                                                   |
 | 站点                 | `stations.ts`、`params/stations.ts`                                 | 服务费用/成长、碰撞体与操作距离；stations/mapgen/图鉴                                                                    |
 | 掉落与拾取           | `params/economy.ts`                                                 | 星星沙子、树果、经验份数/散布、吸附速度与收集距离；combat/world/模型                                                     |
@@ -31,6 +34,8 @@ AI Agent 从这里定位所有可调玩法数据。内容表和参数都在本�
 六关路线与每关时限、成长基线见 `campaign.ts`、`params/campaign.ts`；各图旧区域名单合并为一场渐进内容，正式 `stageDefs` 每图仅一项。预判物种系数、提前量上限和选择性躲避的反应/距离/冷却见 `params/enemy-ai.ts`，决策只读已发生运动和已存在攻击；同一快照继续推进可复现。
 
 道具容量由 `params/cards.ts` 的基础与最大栏位定义；研究所 `slot-vit` 的四级上限由两者之差生成，购买价格见 `params/economy.ts`。候选、HUD 与模型读取同一玩家容量，学习器盒独立。
+
+节拍与事件的时间窗在入图时一次排定，排程保存在世界中；恢复不重新抽取，同局事件使用记录跨图保留。事件专用敌人沿 `enemies.ts` 注册，复用模型时仍使用其事件角色的数值；交互点的引导、出生、结算分别由 `sim/sites/` 执行，不在内容表里推进状态。
 
 ## 生命调优的边界
 

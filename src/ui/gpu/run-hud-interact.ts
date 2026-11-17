@@ -1,19 +1,23 @@
 import { InputGlyph } from "./input-glyph";
-import { Container, Text } from "@pmndrs/uikit";
+import { Container, Image, Text } from "@pmndrs/uikit";
 import type { InteractPrompt } from "../../run/createRun";
 import type { StationKind } from "../../run/sim/state/entities";
 import { stationNames } from "../../run/sim/content/stations";
+import { sites } from "../../run/sim/content/sites";
+import type { SiteKind } from "../../run/sim/state/field";
 import { cubicBezier, uiEaseOut } from "./focus-mark";
 import { fade, stack } from "./layer";
 import { LIFT } from "./motion";
 import { SlantPlate } from "./slant-plate";
 import { createStationArt } from "./station-art";
+import { ChoiceIconPlate } from "./run-choice-surface";
+import { siteIcons } from "../../run/view/fieldMapMarks";
 import type { UiStage } from "./stage";
 import { RADIUS_INNER, ui } from "./tokens";
 
 const easeIn = (t: number) => cubicBezier(t, 0.42, 0, 1, 1);
 
-type LandmarkPrompt = Exclude<InteractPrompt, StationKind>;
+type LandmarkPrompt = Exclude<InteractPrompt, StationKind | SiteKind>;
 const landmarkNames: Record<LandmarkPrompt, string> = {
   summon: "召唤守卫",
   leave: "前往下一区域",
@@ -104,7 +108,13 @@ export class RunHudInteract {
     this.key.setProperties({ display: coarse ? "none" : "flex" });
     this.panel.setProperties({
       gap: coarse ? 8 : 12,
-      paddingLeft: this.kind && !(this.kind in landmarkNames) ? 4 : coarse ? 12 : 16,
+      paddingLeft:
+        this.kind &&
+        (this.kind in stationNames || (this.kind in sites && siteIcons[this.kind as SiteKind]))
+          ? 4
+          : coarse
+            ? 12
+            : 16,
       paddingRight: coarse ? 12 : 16,
     });
   }
@@ -139,9 +149,11 @@ export class RunHudInteract {
     if (kind && kind !== this.kind) {
       this.kind = kind;
       const name =
-        kind in landmarkNames
-          ? landmarkNames[kind as LandmarkPrompt]
-          : stationNames[kind as StationKind];
+        kind in sites
+          ? sites[kind as SiteKind].name
+          : kind in landmarkNames
+            ? landmarkNames[kind as LandmarkPrompt]
+            : stationNames[kind as StationKind];
       this.name.setProperties({ text: name });
       this.nameShadow.setProperties({ text: name });
       if (this.art) {
@@ -149,14 +161,26 @@ export class RunHudInteract {
         this.art.dispose();
         this.art = null;
       }
-      // The landmark has no icon: its prompt is its name alone.
-      const station = !(kind in landmarkNames);
-      this.plate.setProperties({ display: station ? "flex" : "none" });
-      this.panel.setProperties({ paddingLeft: station ? 4 : this.coarse ? 12 : 16 });
+      // The landmark has no icon: its prompt is its name alone. A field site shows its map badge art.
+      const station = kind in stationNames;
+      const siteArt = kind in sites ? siteIcons[kind as SiteKind] : undefined;
+      const iconed = station || siteArt !== undefined;
+      this.plate.setProperties({ display: iconed ? "flex" : "none" });
+      this.panel.setProperties({ paddingLeft: iconed ? 4 : this.coarse ? 12 : 16 });
       if (station) {
         this.art = createStationArt(kind as StationKind, 36);
         this.plate.add(this.art.root);
+      } else if (siteArt) {
+        this.art = createSiteArt(siteArt, 36);
+        this.plate.add(this.art.root);
       }
+    }
+    // A channel (fishing, digging) counts up on its own prompt.
+    if (kind && kind in sites) {
+      const name = sites[kind as SiteKind].name;
+      const label = progress === null ? name : `${name} · ${Math.floor(progress * 100)}%`;
+      this.name.setProperties({ text: label });
+      this.nameShadow.setProperties({ text: label });
     }
     if (kind === "choices" || kind === "rescue") {
       const label =
@@ -225,4 +249,22 @@ export class RunHudInteract {
     this.stage.motion.cancel(this.pose);
     this.face.dispose();
   }
+}
+
+/** A site's icon on the shared round icon plate, as `createStationArt` draws a station's. */
+function createSiteArt(src: string, size: number): { root: Container; dispose(): void } {
+  const root = new Container({
+    width: size,
+    height: size,
+    flexShrink: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  });
+  const plate = new ChoiceIconPlate("move", null);
+  const inset = Math.round(size * 0.72);
+  root.add(
+    plate.content,
+    stack(new Image({ src, width: inset, height: inset, keepAspectRatio: false }), 1),
+  );
+  return { root, dispose: () => plate.dispose() };
 }

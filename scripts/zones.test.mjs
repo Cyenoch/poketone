@@ -41,7 +41,7 @@ test("ordinary reinforcements respond to nearby pressure without changing bodies
     });
     world.time = start;
     world.zone.tick = start / TICK;
-    world.spawn.fired = stageDefs.forest.zones[0].beats.map(([at, beat]) => `${beat.kind}@${at}`);
+    world.spawn.fired = world.zone.schedule.map((_, index) => index);
     for (let i = 0; i < 24; i++) spawnEnemy(world, "pidgey", near ? 0 : 35, near ? 1 : 35);
     if (guardian) {
       const boss = spawnEnemy(world, "scyther", 0, 10);
@@ -86,7 +86,7 @@ test("co-op pressure protects a downed teammate and resumes deterministically af
   });
   world.time = 200;
   world.zone.tick = world.time / TICK;
-  world.spawn.fired = stageDefs.forest.zones[0].beats.map(([at, beat]) => `${beat.kind}@${at}`);
+  world.spawn.fired = world.zone.schedule.map((_, index) => index);
   world.players[1].alive = false;
   world.players[1].hp = 0;
   for (let tick = 0; tick < 90; tick++) updateDirector(world, TICK);
@@ -216,6 +216,7 @@ test("later maps ramp new enemies and carried partners together while preserving
     const moves = structuredClone(player.moves);
     enterZone(world, prepareZone(world));
     assert.equal(world.stage, stageId);
+    world.spawn.shinySpawned = true; // Compare ordinary bodies; shiny durability has its own coverage.
     assert.equal(player.level, level);
     assert.deepEqual(player.moves, moves);
     const stage = stageDefs[stageId];
@@ -448,9 +449,12 @@ test("the next map keeps every player's growth and resets the field, clock and g
   enterZone(world, prepareZone(world));
 
   assert.equal(world.stage, "desert");
-  assert.deepEqual(world.zone, { index: 0, tick: 0, phase: "active", exit: null });
+  const { schedule, ...zone } = world.zone;
+  assert.deepEqual(zone, { index: 0, tick: 0, phase: "active", exit: null });
+  assert.ok(schedule.length > 0, "the new map arrives with its authored encounters scheduled");
   assert.equal(world.time, time, "the run clock carries on");
-  assert.equal(world.nextId, nextId, "ids keep counting from where they were");
+  assert.ok(world.nextId > nextId, "new sites continue the live ID sequence");
+  assert.ok(world.sites.every((site) => site.id >= nextId && site.id < world.nextId));
   assert.notDeepEqual(Array.from(world.map.terrain.heights.slice(0, 64)), terrain, "a new map");
   assert.equal(growth(world), carried);
   const [partner] = world.partners;
@@ -467,7 +471,15 @@ test("the next map keeps every player's growth and resets the field, clock and g
   );
   assert.equal(world.bossId, null);
   assert.equal(world.rampage, false);
-  assert.deepEqual(world.spawn, { credit: 0, pressure: 0.5, pool: [], fired: [], anchor: -1 });
+  assert.deepEqual(world.spawn, {
+    credit: 0,
+    pressure: 0.5,
+    pool: [],
+    fired: [],
+    anchor: -1,
+    outbreak: null,
+    shinySpawned: false,
+  });
   for (const player of world.players) assert.equal(player.z, 0, "players stand at the spawn");
   // The new zone plays from its own first tick.
   for (let tick = 0; tick < 90; tick++) stepWorld(world, []);
@@ -621,13 +633,16 @@ test("entering the tower carries growth, installs its walls and ends only at its
       assert.equal(world.nav, oldNav);
       enterZone(world, prepared);
       assert.equal(world.stage, "tower");
-      assert.deepEqual(world.zone, { index: 0, tick: 0, phase: "active", exit: null });
+      const { schedule, ...zone } = world.zone;
+      assert.deepEqual(zone, { index: 0, tick: 0, phase: "active", exit: null });
+      assert.ok(schedule.length > 0);
       assert.equal(
         world.map.terrain.walls.template,
         stageDefs.tower.zones[0].map.templates[0].id,
         "the tower installs its authored template",
       );
-      assert.deepEqual([world.seed, world.tick, world.time, world.nextId], identity);
+      assert.deepEqual([world.seed, world.tick, world.time], identity.slice(0, 3));
+      assert.equal(world.nextId, prepared.nextId, "commit adopts the prepared site's ID sequence");
       assert.notEqual(world.rng.state, rng, "a new map starts its own fight stream");
       assert.deepEqual(carriedPlayers(world), carried);
       assert.deepEqual(world.partners.map(partnerState), partners);

@@ -35,7 +35,8 @@ export const guardianHazards = {
         return;
       }
       for (const player of world.players)
-        if (player.alive && beamHits(world, line, player)) damagePlayer(world, player, line.dmg);
+        if (player.alive && beamHits(world, line, player))
+          damagePlayer(world, player, line.dmg, line.element);
     },
   },
   stomp: radialRule(STOMP.active),
@@ -49,7 +50,8 @@ export const guardianHazards = {
         return;
       }
       for (const player of world.players)
-        if (player.alive && beamHits(world, beam, player)) damagePlayer(world, player, beam.dmg);
+        if (player.alive && beamHits(world, beam, player))
+          damagePlayer(world, player, beam.dmg, beam.element);
     },
   },
   twister: {
@@ -69,7 +71,7 @@ export const guardianHazards = {
       for (const player of world.players)
         if (
           inPatch(world, twister, player, twister.y) &&
-          damagePlayer(world, player, twister.dmg)
+          damagePlayer(world, player, twister.dmg, twister.element)
         ) {
           twister.dmg = 0;
           twister.vx = twister.vz = 0;

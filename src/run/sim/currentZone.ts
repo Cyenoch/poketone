@@ -11,6 +11,8 @@ import { mobilityClasses } from "./content/mobility";
 import { EXIT_RADIUS, EXIT_SEARCH } from "./content/params/campaign";
 import { stageBodies } from "./mapgen/playable";
 import { STATION_REACH } from "./content/params/stations";
+import { SITE } from "./content/params/sites";
+import { sites as siteDefs } from "./content/sites";
 import { bodyFits, routeReach } from "./nav/reach";
 import { cellAt, DIR_LENGTH, DIR_X, DIR_Z } from "./nav/grid";
 
@@ -80,9 +82,20 @@ function exitSpot(world: World, x: number, z: number): { x: number; z: number } 
     const cell = cellAt(nav.grid, cx, cz);
     if (out[cell] !== 1 || back[cell] !== 1 || !bodyFits(nav, ground, cx, cz, body)) return false;
     // Clear of every station's reach, so the exit and a station never answer the same interact.
-    return world.stations.every(
-      (station) =>
-        hypot(station.x - cx, station.z - cz) > station.radius + body + STATION_REACH + EXIT_RADIUS,
+    return (
+      world.stations.every(
+        (station) =>
+          hypot(station.x - cx, station.z - cz) >
+          station.radius + body + STATION_REACH + EXIT_RADIUS,
+      ) &&
+      world.sites.every(
+        (site) =>
+          hypot(site.x - cx, site.z - cz) >
+          site.radius +
+            body +
+            (siteDefs[site.kind].interact === "pickup" ? SITE.pickup : SITE.reach) +
+            EXIT_RADIUS,
+      )
     );
   };
   for (let ring = 0; ring <= EXIT_SEARCH.rings; ring++)

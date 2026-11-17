@@ -26,6 +26,8 @@ import { killEnemy } from "../src/run/sim/combat.ts";
 import { stageDefs } from "../src/run/sim/content/stages/index.ts";
 import { damagePlayer } from "../src/run/sim/hurt.ts";
 import { spawnEnemy } from "../src/run/sim/director.ts";
+import { scheduleField } from "../src/run/sim/field-events.ts";
+import { generateMap } from "../src/run/sim/mapgen/index.ts";
 import { createRng } from "../src/run/sim/rng.ts";
 import { playerStats } from "../src/run/sim/stats.ts";
 import { STARDUST } from "../src/run/sim/content/params/economy.ts";
@@ -36,7 +38,7 @@ import {
   moveSlots,
   rollChoices,
 } from "../src/run/sim/upgrades.ts";
-import { createPlayer, createWorld, stepWorld } from "../src/run/sim/world.ts";
+import { createPlayer, createWorld, furnishMap, stepWorld } from "../src/run/sim/world.ts";
 import { REVIVE } from "../src/run/sim/content/params/player.ts";
 
 /** Map-backed stand-in for the browser's localStorage (Node has none without a file). */
@@ -79,8 +81,8 @@ test("lab bonuses change the stats they name, and area still saturates through a
   assert.equal(createPlayer(0, "charmander", 0, lab).hp, a.maxHp);
 
   const move = createPlayer(0, "charmander", 0).moves[0];
-  const plain = moveParams(move, base).area;
-  const grown = moveParams(move, a).area;
+  const plain = moveParams(move, base, null).area;
+  const grown = moveParams(move, a, null).area;
   assert.ok(grown > plain && grown < plain * 1.15, `area ${plain} → ${grown}`);
 });
 
@@ -213,6 +215,7 @@ function killAt(w, state, species, elite = false) {
 
 test("an ordinary kill's stardust is decided by the seeded roll: one pickup worth 5, or none", () => {
   const w = world();
+  w.spawn.shinySpawned = true;
   const seen = { drop: 0, none: 0 };
   for (let state = 0; state < 200; state++) {
     const drops = killAt(w, state, "caterpie");
@@ -325,6 +328,7 @@ const result = (kills, stardust, items = []) => ({
   time: 300,
   level: 10,
   kills,
+  dex: {},
   stardust,
   moves: [],
   items,
@@ -478,7 +482,20 @@ test("a carried Loaded Dice rolls this run's first level, fills HP, and keeps th
     })),
   });
   const picked = createWorld(config);
+  // Backpacks roll after furnishing but before field scheduling; compare card picks at that phase.
+  const furnished = {
+    ...picked,
+    ...generateMap(config.seed, stageDefs[config.stage].map),
+    rng: createRng(config.seed),
+    nextId: 1,
+    players: [],
+    events: [],
+  };
+  furnishMap(furnished, config.players.length);
+  picked.rng = furnished.rng;
   pickDice(picked);
+  picked.eventsUsed = [];
+  scheduleField(picked);
   for (const [index, player] of carried.players.entries()) {
     assert.deepEqual(player.items, [{ id: "loaded-dice", level: 1 }]);
     assert.deepEqual(player.fx, picked.players[index].fx, "same run RNG and player order");

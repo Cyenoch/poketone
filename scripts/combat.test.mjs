@@ -1018,10 +1018,10 @@ test("area upgrades keep growing a move but a late build stays under 1.7× its b
   const sizes = [];
   for (let rolls = 0; rolls <= 12; rolls++) {
     state.mods.area = rolls * 0.13;
-    sizes.push(moveParams(state, playerStats(player)).area);
+    sizes.push(moveParams(state, playerStats(player), null).area);
   }
   player.items = [{ id: "wide-lens", level: 5 }];
-  const maxed = moveParams(state, playerStats(player)).area;
+  const maxed = moveParams(state, playerStats(player), null).area;
   for (let i = 1; i < sizes.length; i++) assert.ok(sizes[i] > sizes[i - 1], `roll ${i} adds area`);
   assert.ok(maxed < sizes[0] * 1.7, `late area ${maxed.toFixed(2)} vs base ${sizes[0]}`);
 });

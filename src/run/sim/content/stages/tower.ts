@@ -1,4 +1,5 @@
 import { towerBeats } from "./beatTemplates";
+import { fieldContent } from "./fieldContent";
 import type { FloorBlock, FloorTemplate, MapSpec } from "../../mapgen/spec";
 import { forest } from "./forest";
 import type { StageDef, StageZone } from "./index";
@@ -145,8 +146,9 @@ const map = {
   wall: { count: 0, kinds: ["rock"] },
 } as const satisfies MapSpec;
 
-const floor = (template: FloorTemplate, content: StageZone) => ({
+const floor = (template: FloorTemplate, content: Omit<StageZone, "events" | "sites">) => ({
   ...content,
+  ...fieldContent("tower"),
   map: { ...map, templates: [template] },
 });
 

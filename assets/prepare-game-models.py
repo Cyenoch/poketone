@@ -180,6 +180,17 @@ MODELS = {
     # Stations on the map's building pads (Hypno forgets moves, Bill's machine fuses them).
     "hypno": ("props/hypno/generation/**/model.glb", "props/hypno.glb", 1200, 512),
     "bill-machine": ("props/bill-machine/generation/**/model.glb", "props/bill-machine.glb", 1200, 512),
+    "heracross": ("enemies/heracross/blender/model.glb", "enemies/heracross.glb", 900, 512),
+    "munchlax": ("enemies/munchlax/blender/model.glb", "enemies/munchlax.glb", 900, 512),
+    "magikarp": ("enemies/magikarp/blender/model.glb", "enemies/magikarp.glb", 900, 512),
+    "gengar-altar": ("field-sites/gengar-altar/generation/tripo-out/model.glb", "field-sites/gengar-altar.glb", None, 512),
+    "honey-tree": ("field-sites/honey-tree/blender/model.glb", "field-sites/honey-tree.glb", None, 256),
+    "item-ball": ("field-sites/item-ball/blender/model.glb", "field-sites/item-ball.glb", None, 256),
+    "fishing": ("field-sites/fishing/blender/model.glb", "field-sites/fishing.glb", None, 256),
+    "fossil": ("field-sites/fossil/blender/model.glb", "field-sites/fossil.glb", None, 256),
+    "raid-den": ("field-sites/raid-den/blender/model.glb", "field-sites/raid-den.glb", None, 256),
+    "spring": ("field-sites/spring/blender/model.glb", "field-sites/spring.glb", None, 256),
+    "egg": ("field-sites/egg/blender/model.glb", "field-sites/egg.glb", None, 256),
 }
 
 
@@ -196,7 +207,7 @@ SEAM_REPAIRS = {
     "poliwag", "poliwhirl", "poliwrath", "ponyta", "primeape", "psyduck",
     "rapidash", "rattata", "rhydon", "rhyhorn", "sandshrew", "seadra",
     "seaking", "seel", "snorlax", "tangela", "tauros", "tentacool",
-    "venonat", "vileplume", "weezing",
+    "venonat", "vileplume", "weezing", "heracross", "munchlax", "magikarp",
 }
 
 

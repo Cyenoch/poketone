@@ -46,6 +46,17 @@ export const SFX_NAMES = [
   "ult",
   "revive",
   "capture",
+  "weather-sun",
+  "weather-rain",
+  "weather-sand",
+  "weather-hail",
+  "site-flute",
+  "site-fishing",
+  "site-dig",
+  "site-den",
+  "shiny",
+  "egg-hatch",
+  "tell-voltorb",
   "cast-fire",
   "cast-water",
   "cast-grass",
@@ -82,8 +93,10 @@ export type RunTrack = (typeof RUN_TRACKS)[number];
 export type MusicTrack = "menu" | "boss" | RunTrack;
 /** What the screens ask for: `run` is the run's rotation. */
 export type MusicWish = "menu" | "run" | "boss";
+export const AMBIENCE_NAMES = ["sun", "rain", "sandstorm", "hail"] as const;
+export type AmbienceName = (typeof AMBIENCE_NAMES)[number];
 /** What `acquire` loads by name: an effect (all its takes) or a music track. */
-export type AudioName = SfxName | `music:${MusicTrack}`;
+export type AudioName = SfxName | `music:${MusicTrack}` | `ambience:${AmbienceName}`;
 
 interface Rule {
   /** Minimum seconds between two plays of this sound. */
@@ -140,6 +153,18 @@ const RULES: Record<SfxName, Rule> = {
   ult: { cooldown: 0.5, always: true, duck: -5 },
   revive: { cooldown: 1, always: true },
   capture: { cooldown: 0.3, always: true },
+  "weather-sun": { cooldown: 1, always: true, duck: -3 },
+  "weather-rain": { cooldown: 1, always: true, duck: -3 },
+  "weather-sand": { cooldown: 1, always: true, duck: -3 },
+  "weather-hail": { cooldown: 1, always: true, duck: -3 },
+  "site-flute": { cooldown: 0.8, always: true, duck: -3 },
+  "site-fishing": { cooldown: 0.3 },
+  "site-dig": { cooldown: 0.3 },
+  "site-den": { cooldown: 0.8, always: true, duck: -4 },
+  shiny: { cooldown: 1, always: true, duck: -4 },
+  "egg-hatch": { cooldown: 0.3, always: true, duck: -3 },
+  // One sample already contains both pulses. Never fall back to an extra generic tell.
+  "tell-voltorb": { cooldown: 0.45, always: true, duck: -3 },
   "cast-fire": { cooldown: 0.25, jitter: true },
   "cast-water": { cooldown: 0.25, jitter: true },
   "cast-grass": { cooldown: 0.25, jitter: true },
@@ -163,7 +188,7 @@ const RULES: Record<SfxName, Rule> = {
 
 const MAX_VOICES = 14;
 /** Starting mix, set by ear in the browser: music sits under the effects, UI between. */
-const BUS_GAIN = { music: 0.5, sfx: 0.9, ui: 0.8 };
+const BUS_GAIN = { music: 0.5, sfx: 0.9, ui: 0.8, ambience: 0.5 };
 const PITCH_JITTER = 0.06;
 /** Repeated sounds also vary in level by up to this many dB either way (pitch alone still repeats). */
 const LEVEL_JITTER_DB = 1.5;
@@ -171,10 +196,12 @@ const LEVEL_JITTER_DB = 1.5;
 const BED_DUCK_SHARE = 0.5;
 const MUSIC_FADE = 0.9;
 const PAUSED_MUSIC = 0.3;
+const AMBIENCE_FADE = 0.4;
 
 interface BankJson {
   sfx: Record<string, { files: string[]; hitMs: number[] }>;
   music: Record<string, { file: string; bpm: number }>;
+  ambience?: Record<string, { file: string }>;
 }
 
 interface Sample {
@@ -192,12 +219,20 @@ interface Playing {
   bpm: number;
 }
 
+interface AmbientPlaying {
+  source: AudioBufferSourceNode;
+  fadeIn: GainNode;
+  out: GainNode;
+}
+
 export interface SfxOptions {
   pitch?: number;
   /** Level offset in dB on top of the mix (a candy chain starts quiet and swells). */
   gainDb?: number;
   keyMs?: number;
   fallback?: SfxName;
+  /** Remaining effect window; a late cue is trimmed and cannot outlive its visual warning. */
+  maxMs?: number;
 }
 
 export interface Audio {
@@ -220,6 +255,10 @@ export interface Audio {
    * for this call (a crit in a fire build falls back to the fire hit).
    */
   sfx(name: SfxName, options?: SfxOptions): void;
+  ambience: {
+    /** State-driven weather bed, independent of music; null fades out and releases its hold. */
+    play(name: AmbienceName | null): void;
+  };
   music: {
     /**
      * The wanted music; null fades it out. Switches inside a run (boss, the next run track) wait
@@ -278,13 +317,16 @@ export function createAudio(): Audio {
         duck: GainNode;
         bedDuck: GainNode;
         pause: GainNode;
+        ambience: GainNode;
       }
     | undefined;
   let enabled = true;
+  let disposed = false;
   let bank: BankJson | undefined;
   /** Decoded effects and tracks: present exactly while someone holds them (`acquire`). */
   const samples = new Map<SfxName, Sample>();
   const tracks = new Map<MusicTrack, AudioBuffer>();
+  const ambientBuffers = new Map<AmbienceName, AudioBuffer>();
   const entries = new Map<AudioName, Shared<void>>();
   const abandon = new Map<AudioName, () => void>();
   /** Held names whose load failed: silent, already reported. */
@@ -303,6 +345,12 @@ export function createAudio(): Audio {
   let applying: Handle<void> | null = null;
   let playing: Playing | null = null;
   let paused = false;
+  let ambientWish: AmbienceName | null = null;
+  let ambientPlayer: { name: AmbienceName; hold: Handle<void> } | null = null;
+  let ambientApplying: Handle<void> | null = null;
+  let ambientPlaying: AmbientPlaying | null = null;
+  // Includes retiring sources until onended, so mute/dispose also stop every fade-out.
+  const ambientSources = new Set<AmbientPlaying>();
   /** The music dip in force (linear gain) and when it releases; overlapping cues share one dip. */
   let duckDepth = 1;
   let duckUntil = 0;
@@ -321,7 +369,7 @@ export function createAudio(): Audio {
   }
 
   function start(): void {
-    if (ctx) return;
+    if (ctx || disposed) return;
     const context = runtime().createAudioContext();
     const master = context.createGain();
     // A gentle bus compressor keeps stacked hits from clipping.
@@ -338,6 +386,7 @@ export function createAudio(): Audio {
     const bed = bus(BUS_GAIN.sfx);
     const ui = bus(BUS_GAIN.ui);
     const music = bus(BUS_GAIN.music);
+    const ambience = bus(BUS_GAIN.ambience);
     // Ducking and pausing get their own nodes so neither fights the other or the mix level.
     const duck = bus(1);
     const bedDuck = bus(1);
@@ -345,15 +394,18 @@ export function createAudio(): Audio {
     music.connect(duck).connect(pause).connect(master);
     sfx.connect(master);
     bed.connect(bedDuck).connect(master);
+    ambience.connect(bedDuck);
     ui.connect(master);
-    buses = { sfx, bed, ui, music, duck, bedDuck, pause };
+    buses = { sfx, bed, ui, music, duck, bedDuck, pause, ambience };
     ctx = context;
     if (!enabled) void context.suspend();
     void applyMusic();
+    void applyAmbience();
   }
 
   // Browsers only let a context run after a user gesture.
   runtime().activateAudio(() => {
+    if (disposed) return true;
     start();
     if (enabled && ctx?.state === "suspended") void ctx.resume();
     return ctx?.state === "running";
@@ -366,6 +418,7 @@ export function createAudio(): Audio {
       if (!response.ok) throw new Error(`音频清单载入失败：/audio/bank.json（${response.status}）`);
       // A name missing from the manifest fails only that sound (filesOf), never the whole bank.
       const json = (await response.json()) as BankJson;
+      if (disposed) return json;
       bank = json;
       void applyMusic();
       return json;
@@ -394,17 +447,20 @@ export function createAudio(): Audio {
           abandon.get(name)?.();
           abandon.delete(name);
           if (name.startsWith("music:")) tracks.delete(name.slice(6) as MusicTrack);
+          else if (name.startsWith("ambience:"))
+            ambientBuffers.delete(name.slice(9) as AmbienceName);
           else samples.delete(name as SfxName);
         },
       });
       operation = created;
       entries.set(name, created);
       abandon.set(name, () => decodes.forEach((decode) => decode.release()));
-      const live = () => entries.get(name) === created;
+      const live = () => !disposed && entries.get(name) === created;
       void manifestOf()
         .then(async (json) => {
           if (!live()) return;
           const track = name.startsWith("music:") ? (name.slice(6) as MusicTrack) : null;
+          const ambience = name.startsWith("ambience:") ? (name.slice(9) as AmbienceName) : null;
           const files = filesOf(json, name);
           const started = files.map((file) => decodeFile(decoder, `/audio/${file}`, current));
           decodes.push(...started);
@@ -412,6 +468,7 @@ export function createAudio(): Audio {
           if (!live()) return;
           abandon.delete(name);
           if (track) tracks.set(track, buffers[0]!);
+          else if (ambience) ambientBuffers.set(ambience, buffers[0]!);
           else samples.set(name as SfxName, { buffers, hitMs: json.sfx[name as SfxName]!.hitMs });
           created.resolve();
         })
@@ -430,6 +487,11 @@ export function createAudio(): Audio {
 
   /** The files a name stands for, from the manifest. */
   function filesOf(json: BankJson, name: AudioName): string[] {
+    if (name.startsWith("ambience:")) {
+      const ambience = json.ambience?.[name.slice(9)];
+      if (!ambience) throw new Error(`环境音「${name.slice(9)}」不在 bank.json 里。`);
+      return [ambience.file];
+    }
     if (name.startsWith("music:")) {
       const track = json.music[name.slice(6)];
       if (!track) throw new Error(`音乐「${name.slice(6)}」不在 bank.json 里。`);
@@ -441,6 +503,7 @@ export function createAudio(): Audio {
   }
 
   function prefetch(names: readonly AudioName[], lane: Lane = "background"): Handle<void> {
+    if (disposed) throw new Error("音频引擎已销毁。");
     // Shared with a later decode of the same file (one request per URL while anyone holds it).
     const downloads: Handle<Blob>[] = [];
     let released = false;
@@ -491,10 +554,75 @@ export function createAudio(): Audio {
   }
 
   function acquire(names: readonly AudioName[], lane: Lane = "background"): Handle<void> {
+    if (disposed) throw new Error("音频引擎已销毁。");
     return allOf(
       `audio:${names.join(",")}`,
       names.map((name) => hold(name, lane)),
     );
+  }
+
+  function releaseAmbientSource(pass: AmbientPlaying): void {
+    pass.source.onended = null;
+    pass.source.disconnect();
+    pass.fadeIn.disconnect();
+    pass.out.disconnect();
+    ambientSources.delete(pass);
+  }
+
+  function stopAmbience(immediate: boolean): void {
+    if (immediate) {
+      for (const pass of ambientSources) {
+        pass.source.stop();
+        releaseAmbientSource(pass);
+      }
+    } else if (ambientPlaying && ctx) {
+      ambientPlaying.out.gain.setValueCurveAtTime(FADE_OUT, ctx.currentTime, AMBIENCE_FADE);
+      ambientPlaying.source.stop(ctx.currentTime + AMBIENCE_FADE);
+    }
+    ambientPlaying = null;
+  }
+
+  function followAmbience(): void {
+    const name = enabled && !paused && !disposed ? ambientWish : null;
+    if (name === (ambientPlayer?.name ?? null)) return;
+    const previous = ambientPlayer;
+    ambientPlayer = name ? { name, hold: acquire([`ambience:${name}`]) } : null;
+    previous?.hold.release();
+    // A changed/ended weather cannot keep playing while its replacement downloads.
+    stopAmbience(!enabled || disposed);
+    void applyAmbience();
+  }
+
+  async function applyAmbience(): Promise<void> {
+    if (disposed || !enabled || paused || !ctx || !buses || !ambientPlayer || ambientPlaying)
+      return;
+    const { name, hold } = ambientPlayer;
+    if (ambientApplying === hold) return;
+    ambientApplying = hold;
+    try {
+      await hold.result;
+    } catch {
+      // Releasing a superseded hold is the only rejection; load failures already report once.
+      return;
+    } finally {
+      if (ambientApplying === hold) ambientApplying = null;
+    }
+    if (disposed || !enabled || paused || ambientPlayer?.hold !== hold) return;
+    const buffer = ambientBuffers.get(name);
+    if (!buffer) return;
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+    const fadeIn = ctx.createGain();
+    fadeIn.gain.value = 0;
+    fadeIn.gain.setValueCurveAtTime(FADE_IN, ctx.currentTime, AMBIENCE_FADE);
+    const out = ctx.createGain();
+    source.connect(fadeIn).connect(out).connect(buses.ambience);
+    const pass = { source, fadeIn, out };
+    source.onended = () => releaseAmbientSource(pass);
+    ambientSources.add(pass);
+    ambientPlaying = pass;
+    source.start(ctx.currentTime);
   }
 
   function fadeOut(old: Playing, at: number, seconds: number): void {
@@ -536,7 +664,7 @@ export function createAudio(): Audio {
 
   async function applyMusic(): Promise<void> {
     const target = player?.track ?? null;
-    if (!ctx || !buses || !bank || target === (playing?.track ?? null)) return;
+    if (disposed || !ctx || !buses || !bank || target === (playing?.track ?? null)) return;
     // Only this hold is already applying; replaying the same track creates a new request.
     if (player !== null && applying === player.hold) return;
     const context = ctx;
@@ -557,7 +685,7 @@ export function createAudio(): Audio {
       if (applying === hold) applying = null;
     }
     // A same-track replay also replaces the hold while this request waits.
-    if (player?.hold !== hold || target === (playing?.track ?? null)) return;
+    if (disposed || player?.hold !== hold || target === (playing?.track ?? null)) return;
     // A track that failed to load was reported by its hold; the wish stays, silent.
     const buffer = tracks.get(target);
     if (!buffer) return;
@@ -598,6 +726,7 @@ export function createAudio(): Audio {
         effects: samples.size,
         tracks: [...tracks.keys()],
         music: playing?.track ?? null,
+        ambience: ambientPlaying ? ambientPlayer?.name : null,
         wanted,
         runTrack: RUN_TRACKS[runAt],
         recent: [...log],
@@ -619,7 +748,7 @@ export function createAudio(): Audio {
       unheld.add(name);
       console.warn(`音效未载入：${name}（没有持有者，见 UI_SOUNDS / RUN_SOUNDS）`);
     }
-    if (!enabled || !ctx || !buses || !sample) return;
+    if (disposed || !enabled || !ctx || !buses || !sample) return;
     const context = ctx;
     // iOS reports "interrupted" after a call or an app switch; any sound inside a gesture revives it.
     if (context.state !== "running") void context.resume();
@@ -629,19 +758,26 @@ export function createAudio(): Audio {
       // A sound dropped by its cooldown can still leave its fallback (a crit becomes a plain hit).
       const fallback = options?.fallback ?? rule.fallback;
       if (fallback)
-        sfx(fallback, { pitch: options?.pitch, gainDb: options?.gainDb, keyMs: options?.keyMs });
+        sfx(fallback, {
+          pitch: options?.pitch,
+          gainDb: options?.gainDb,
+          keyMs: options?.keyMs,
+          maxMs: options?.maxMs,
+        });
       return;
     }
     // Low-tier sounds yield when the mix is busy; important ones always play.
     if (voices >= MAX_VOICES && !rule.always) return;
-    lastPlayed.set(name, now);
     // Rotate through the takes without repeating the last one.
     const count = sample.buffers.length;
     const previous = lastTake.get(name) ?? -1;
     let take = Math.floor(Math.random() * count);
     if (count > 1 && take === previous) take = (take + 1) % count;
-    lastTake.set(name, take);
     const { delay, offset } = soundStart(sample.hitMs[take]!, options?.keyMs ?? 0);
+    const window = options?.maxMs === undefined ? Infinity : options.maxMs / 1000;
+    if (offset >= sample.buffers[take]!.duration || delay >= window) return;
+    lastPlayed.set(name, now);
+    lastTake.set(name, take);
     const source = context.createBufferSource();
     source.buffer = sample.buffers[take]!;
     const jitter = rule.jitter ? 1 + (Math.random() * 2 - 1) * PITCH_JITTER : 1;
@@ -655,6 +791,7 @@ export function createAudio(): Audio {
       source.connect(level).connect(out);
     } else source.connect(out);
     source.start(now + delay, offset);
+    if (Number.isFinite(window)) source.stop(now + window);
     voices++;
     source.onended = () => {
       voices--;
@@ -663,7 +800,10 @@ export function createAudio(): Audio {
     if (rule.duck !== undefined) {
       const gain = buses.duck.gain;
       const begin = now + delay;
-      const until = begin + (source.buffer.duration - offset) / source.playbackRate.value;
+      const until = Math.min(
+        now + window,
+        begin + (source.buffer.duration - offset) / source.playbackRate.value,
+      );
       // Cues that overlap keep the deeper dip and the later release.
       const active = duckUntil > begin;
       duckDepth = active ? Math.min(duckDepth, lin(rule.duck)) : lin(rule.duck);
@@ -687,15 +827,25 @@ export function createAudio(): Audio {
     acquire,
     prefetch,
     setEnabled(value) {
+      if (disposed) return;
       enabled = value;
+      followAmbience();
+      if (!value) stopAmbience(true);
       if (!ctx) return;
       void (value ? ctx.resume() : ctx.suspend());
     },
     sfx,
+    ambience: {
+      play(name) {
+        if (disposed || name === ambientWish) return;
+        ambientWish = name;
+        followAmbience();
+      },
+    },
     music: {
       play(wish) {
         // Callers repeat the wish every snapshot; a failed track is reported once, not refetched.
-        if (wish === wanted) return;
+        if (disposed || wish === wanted) return;
         // Leaving the run (its end, or the menu) moves the rotation past the track it played.
         if (wish !== "run" && wish !== "boss" && runStarted) advanceRun();
         wanted = wish;
@@ -703,16 +853,31 @@ export function createAudio(): Audio {
       },
       runTrack: () => RUN_TRACKS[runAt]!,
       setPaused(value) {
+        if (disposed) return;
         paused = value;
+        followAmbience();
         if (!ctx || !buses) return;
         buses.pause.gain.setTargetAtTime(value ? PAUSED_MUSIC : 1, ctx.currentTime, 0.1);
       },
     },
     async dispose() {
+      if (disposed) return;
+      disposed = true;
+      ambientWish = null;
+      followAmbience();
+      stopAmbience(true);
       if (turn !== undefined) clearTimeout(turn);
       wanted = null;
       player?.hold.release();
       player = null;
+      for (const cancel of abandon.values()) cancel();
+      abandon.clear();
+      for (const entry of entries.values())
+        entry.reject(new DOMException("音频引擎已销毁。", "AbortError"));
+      entries.clear();
+      samples.clear();
+      tracks.clear();
+      ambientBuffers.clear();
       if (ctx) await ctx.close();
     },
     onError(listener) {

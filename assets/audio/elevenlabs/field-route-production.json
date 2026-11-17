@@ -1,0 +1,3763 @@
+{
+  "flow": "Ak3RbtQLnUYWennQTQkg",
+  "model": "eleven_text_to_sound_v2",
+  "sourceThread": "thread:delegated-task:command%3Amcp%3A7eedaf2b-1ef9-4672-8be7-6649f1cdcb08%3Adelegate-task%3A15e3d4d6-3ccd-46ed-b2ef-394149266c3a",
+  "humanAudition": false,
+  "published": false,
+  "scope": "add-field-events:1.4 only. Per-asset records retain all generated take IDs, prices, rejections and rawRetained flags. Status/QC describes original production, not a new runtime or device acceptance. Shared batch estimates and verification are not allocated to field; the original mixed source remains for subsequent changes.",
+  "assets": {
+    "weather-sun": {
+      "task": "add-field-events:1.4",
+      "nodeId": "skDu2B3XBWEtgDMJenhU",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-weather-sun-1.mp3",
+          "sessionId": "B7GpLgYKq5zIG1T7dbkC",
+          "generationId": "pP8DxX8yYUFuYD4dqBeC",
+          "credits": 6.666,
+          "bytes": 50187,
+          "sha256": "610c77445ca121b213ce427fe2f87596f0ee09ad09ebab6de4cedfb72b20280c",
+          "rawQc": {
+            "lenMs": 2000,
+            "peakDb": -3.8723650588640703,
+            "onsetMs": 0,
+            "attackMs": 836.8934240362812,
+            "decayMs": 952.1541950113378,
+            "centroidHz": 348.7051204388475,
+            "above4kPercent": 0.00019266988596156585,
+            "tonalPercent": 96.0608156066065,
+            "flags": []
+          },
+          "selected": false,
+          "rawRetained": false,
+          "prompt": "A warm soft swelling rush of air like sunlight breaking through, rising for about one second then settling into a gentle low hum, rounded and full-bodied, mid-range audible on a small speaker, no sparkle, no bell, no high-pitched tone, no hiss, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-weather-sun-2.mp3",
+          "sessionId": "iuScBSE7opbr21GmxTry",
+          "generationId": "3ggJs9TIOm3U6ff106ik",
+          "credits": 6.666,
+          "bytes": 50187,
+          "sha256": "c716e73e3d25b93981e755e85fe5592f3de1dae5592b18ada8218886ca0bfd1a",
+          "rawQc": {
+            "lenMs": 2000.0,
+            "peakDb": -25.7,
+            "onsetMs": 20.0,
+            "attackMs": 992.0,
+            "decayMs": 341.0,
+            "centroidHz": 147.0,
+            "above4kPercent": 0.0,
+            "tonalPercent": 60.0,
+            "flags": ["LOW"]
+          },
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-weather-sun-3.mp3",
+          "sessionId": "2lRz5Uq3BfS6vNDoFxfL",
+          "generationId": "2c5ArunhBnMdhAAq8ffY",
+          "credits": 2.3331,
+          "bytes": 29289,
+          "sha256": "6f0fc2257d5ca5ccc54ec65628fae4fd9cbd86576cba43bc3a4f9809492dcc91",
+          "prompt": "A cartoon warm air puff, one rounded leathery whump with a hollow woody midrange body and a brief breath release, no sustained hum, no bass rumble, no hiss, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 680.2494331065759,
+            "peakDb": -14.531514313799374,
+            "onsetMs": 0,
+            "attackMs": 0,
+            "decayMs": 596.3492063492064,
+            "centroidHz": 903.4369601293959,
+            "above4kPercent": 0.006785228463706813,
+            "tonalPercent": 67.7606168516605,
+            "flags": []
+          }
+        },
+        {
+          "file": "sfx-weather-sun-4.mp3",
+          "sessionId": "TzCHGHu58pcsDx0apAhV",
+          "generationId": "DKLMilGSWnk8ruWKDeG3",
+          "credits": 2.3331,
+          "bytes": 29289,
+          "sha256": "1d9009cbbdd75c543d796708b2ef08ae62e24ce6aadaa9b20ecf4d684d2ca458",
+          "prompt": "A cartoon warm air puff, one rounded leathery whump with a hollow woody midrange body and a brief breath release, no sustained hum, no bass rumble, no hiss, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 680.2494331065759,
+            "peakDb": -12.963043681881015,
+            "onsetMs": 0,
+            "attackMs": 65.14739229024943,
+            "decayMs": 481.08843537414964,
+            "centroidHz": 771.6432021116358,
+            "above4kPercent": 0.02817179031881854,
+            "tonalPercent": 54.683106880962015,
+            "flags": []
+          }
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "intendedShip": "weather-sun",
+      "masters": [
+        {
+          "file": "weather-sun-1.flac",
+          "raw": "sfx-weather-sun-3.mp3",
+          "rmsDb": -22.009949070986643,
+          "peakDb": -14.967366271927913,
+          "centroidHz": 868.7626546103447,
+          "above4kPercent": 0.00595921937978611,
+          "tonalPercent": 68.82984441971537,
+          "flags": [],
+          "lenMs": 636,
+          "hitMs": 0,
+          "peakMs": 185,
+          "sha256": "4e3bf40c394da757b7b335fc0b4e05343a1def5517e4fd4461f4c700ef0fc3aa",
+          "bytes": 33020
+        },
+        {
+          "file": "weather-sun-2.flac",
+          "raw": "sfx-weather-sun-4.mp3",
+          "rmsDb": -22.029653263655725,
+          "peakDb": -12.418246999279429,
+          "centroidHz": 781.7602616353456,
+          "above4kPercent": 0.018025960675443348,
+          "tonalPercent": 56.9591595079348,
+          "flags": [],
+          "lenMs": 636,
+          "hitMs": 0,
+          "peakMs": 65,
+          "sha256": "91e78ec4b8752ce10156f7a26e2ad105b5a9419456dcf7751cd25e21de13cd7b",
+          "bytes": 31211
+        }
+      ],
+      "visualTimingSuggestion": {
+        "keyMs": 0,
+        "verified": false,
+        "note": "Proposed only. Use this lead-in only if actual VFX has preparation up to this key; otherwise use keyMs=0 with source offset. Bound playback by actual effect end.",
+        "formula": "startAt = event + keyMs - hitMs; never start before event; a negative delay uses source offset."
+      },
+      "qcAdvisories": []
+    },
+    "weather-rain": {
+      "task": "add-field-events:1.4",
+      "nodeId": "JsllronnDOEzgOj0Mv6i",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-weather-rain-1.mp3",
+          "sessionId": "9rBtVaSj2yIGRlzN392w",
+          "generationId": "7azrbOvz4SQ1YSPSVvXQ",
+          "credits": 6.666,
+          "bytes": 50187,
+          "sha256": "9faeda09554c8bad572af7267ab33cc8110a224354611a5d092bbeedf41688c6",
+          "rawQc": {
+            "lenMs": 2000,
+            "peakDb": -21.391620121829295,
+            "onsetMs": 0,
+            "attackMs": 405.9183673469388,
+            "decayMs": 721.6326530612245,
+            "centroidHz": 8362.487471828907,
+            "above4kPercent": 79.86778421929137,
+            "tonalPercent": 0.20351975485867718,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "prompt": "Rain starting: a few soft fat raindrop taps on leaves quickly building into a gentle soft rain patter that eases out, muted, warm and rounded, mid-range audible on a small speaker, no thunder, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-weather-rain-2.mp3",
+          "sessionId": "LSvK7dDmlqOQmsCSnJ1e",
+          "generationId": "0cMV5Wy34PE1Ngy2HWiR",
+          "credits": 6.666,
+          "bytes": 50187,
+          "sha256": "5cdcee940846b7d97f066c1859f7674534fd2336dafeccbb4f5cdd9a642afd7b",
+          "rawQc": {
+            "lenMs": 2000,
+            "peakDb": -22.432769813591626,
+            "onsetMs": 0,
+            "attackMs": 110.24943310657596,
+            "decayMs": 1703.8548752834467,
+            "centroidHz": 6370.040743527293,
+            "above4kPercent": 65.71470787111532,
+            "tonalPercent": 0.5181147740386204,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "prompt": "Rain starting: a few soft fat raindrop taps on leaves quickly building into a gentle soft rain patter that eases out, muted, warm and rounded, mid-range audible on a small speaker, no thunder, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-weather-rain-3.mp3",
+          "sessionId": "ZUqFYB77T4xsnU4ZKQYj",
+          "generationId": "QtjLm9b2Ht4Nh8fHDMtQ",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "080c6eb55fbf67be0b99389e9cb3a6e52e6233974054395f1d4605acf5f9c875",
+          "prompt": "A cartoon cluster of fat raindrops plopping into a wooden bowl, hollow rounded midrange knocks with a wet gurgle, no spray hiss, no needle clicks, no bass rumble, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 1000,
+            "peakDb": -12.205496266786636,
+            "onsetMs": 0,
+            "attackMs": 5.011337868480726,
+            "decayMs": 250.5668934240363,
+            "centroidHz": 621.7399267477116,
+            "above4kPercent": 0.05389413328984213,
+            "tonalPercent": 27.766270869775443,
+            "flags": []
+          }
+        },
+        {
+          "file": "sfx-weather-rain-4.mp3",
+          "sessionId": "fBMjhONofOnQQ9GWDwbs",
+          "generationId": "VB3pTBOW0VJYCwx9yNp7",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "0899a03009bee9b7c701dca628a2da9b34dc0a1fc1f73fc628bfe8f0ba6a7c68",
+          "prompt": "A cartoon cluster of fat raindrops plopping into a wooden bowl, hollow rounded midrange knocks with a wet gurgle, no spray hiss, no needle clicks, no bass rumble, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 1000,
+            "peakDb": -0.5353464396346383,
+            "onsetMs": 0,
+            "attackMs": 20.045351473922903,
+            "decayMs": 20.045351473922903,
+            "centroidHz": 1689.1799944358872,
+            "above4kPercent": 0.23812150397441337,
+            "tonalPercent": 59.06411209957356,
+            "flags": []
+          }
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "blockingFlags": ["BRIGHT", "HARSH"],
+      "masters": [
+        {
+          "file": "weather-rain-1.flac",
+          "raw": "sfx-weather-rain-3.mp3",
+          "rmsDb": -22.070561297489476,
+          "peakDb": -2.9992390013763655,
+          "centroidHz": 627.2057282932825,
+          "above4kPercent": 0.0029792197734389166,
+          "tonalPercent": 27.64269076382226,
+          "flags": [],
+          "lenMs": 436,
+          "hitMs": 5,
+          "peakMs": 5,
+          "sha256": "353dd9cfa05687f0c09c5fc5c13a47abe05995c95cb978ce461633b718b71c2d",
+          "bytes": 21776
+        },
+        {
+          "file": "weather-rain-2.flac",
+          "raw": "sfx-weather-rain-4.mp3",
+          "rmsDb": -22.701569683907348,
+          "peakDb": -2.9992390013763655,
+          "centroidHz": 1700.6667919847175,
+          "above4kPercent": 0.07630052127604316,
+          "tonalPercent": 59.80412107285813,
+          "flags": [],
+          "lenMs": 336,
+          "hitMs": 15,
+          "peakMs": 20,
+          "sha256": "d918db2c0b2865628d51fe3bd4dbd72620a96e009af9417a20db59b7bd5866c3",
+          "bytes": 19916
+        }
+      ],
+      "visualTimingSuggestion": {
+        "keyMs": 0,
+        "verified": false,
+        "note": "Proposed only. Use this lead-in only if actual VFX has preparation up to this key; otherwise use keyMs=0 with source offset. Bound playback by actual effect end.",
+        "formula": "startAt = event + keyMs - hitMs; never start before event; a negative delay uses source offset."
+      },
+      "qcAdvisories": []
+    },
+    "weather-sand": {
+      "task": "add-field-events:1.4",
+      "nodeId": "JXGQzcZf8AvymHQbjKQM",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-weather-sand-1.mp3",
+          "sessionId": "HhlAiTExAKiPsdqh8h0l",
+          "generationId": "3tN7Lmm1IwleJwkhd2KE",
+          "credits": 6.666,
+          "bytes": 50187,
+          "sha256": "67bc4501c91abc1773e6308c44d49080ccbae9ff36cf8f5f45f94b5267754cbf",
+          "rawQc": {
+            "lenMs": 2000,
+            "peakDb": -4.978520092787341,
+            "onsetMs": 5.011337868480726,
+            "attackMs": 581.3151927437642,
+            "decayMs": 967.18820861678,
+            "centroidHz": 163.00710839341852,
+            "above4kPercent": 2.8822380273106264e-5,
+            "tonalPercent": 29.873660693066455,
+            "flags": ["LOW"]
+          },
+          "prompt": "A low-mid gust of wind blowing dry sand, a soft rounded gritty rush swelling for about one second then easing off, muted and warm, mid-range audible on a small speaker, no whistle, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-weather-sand-2.mp3",
+          "sessionId": "jIogHmmAo3F1ltVQWQmI",
+          "generationId": "lPS871sQpiYgiNIjYdA2",
+          "credits": 6.666,
+          "bytes": 50187,
+          "sha256": "b2c4a92c19d429a312fe8f5fb0d9039f05e0554606a69e39d09664289ca8314d",
+          "rawQc": {
+            "lenMs": 2000,
+            "peakDb": -3.154103262921919,
+            "onsetMs": 20.045351473922903,
+            "attackMs": 631.4285714285714,
+            "decayMs": 987.2335600907029,
+            "centroidHz": 184.45314169664076,
+            "above4kPercent": 3.4094052623622706e-5,
+            "tonalPercent": 27.796995162525768,
+            "flags": ["LOW"]
+          },
+          "prompt": "A low-mid gust of wind blowing dry sand, a soft rounded gritty rush swelling for about one second then easing off, muted and warm, mid-range audible on a small speaker, no whistle, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-weather-sand-3.mp3",
+          "sessionId": "HVlwrQfXZxUY55OL0Vfv",
+          "generationId": "BU1MAftsuAqjUACjK0Vd",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "3f260760066746ced5b5aae178ee7f6b5b6f0de0e864c8187a540c3ac8375f13",
+          "prompt": "A cartoon sand gust, a broad papery shuffle and hollow rubbery clonk, chunky midrange body, short rounded swell, no sub-bass, no hiss, no whistle, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 1000,
+            "peakDb": -4.846237633521841,
+            "onsetMs": 0,
+            "attackMs": 130.29478458049886,
+            "decayMs": 726.6439909297052,
+            "centroidHz": 6795.565837212976,
+            "above4kPercent": 61.78566039081429,
+            "tonalPercent": 5.032809158813455,
+            "flags": ["BRIGHT", "HARSH"]
+          }
+        },
+        {
+          "file": "sfx-weather-sand-4.mp3",
+          "sessionId": "8Qcel9u1jsGLK2A8QZiQ",
+          "generationId": "qlNMAGSs1DxRzPv68AVw",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "9a600dcb0b483c6f7d68110e131cc3d4273e833f80bb6e486a6d2e2ed029156f",
+          "prompt": "A cartoon sand gust, a broad papery shuffle and hollow rubbery clonk, chunky midrange body, short rounded swell, no sub-bass, no hiss, no whistle, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 1000,
+            "peakDb": -4.00189863070549,
+            "onsetMs": 0,
+            "attackMs": 190.43083900226756,
+            "decayMs": 656.4852607709751,
+            "centroidHz": 8005.7117724003,
+            "above4kPercent": 81.48985743853626,
+            "tonalPercent": 13.331757144402772,
+            "flags": ["BRIGHT", "HARSH"]
+          }
+        },
+        {
+          "file": "sfx-weather-sand-5.mp3",
+          "sessionId": "tRL6jf9AhyPUBpkZopr4",
+          "generationId": "RBNJnrLPpu0h77oqNlqr",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "6cf227c623f8a49b604ce98b2937da68de9b6c2f4af23d4f93a4e7866c055bdd",
+          "prompt": "One heavy canvas flap billowing with a rounded leathery whump, a warm hollow midrange body swelling briefly and settling, cartoon wind effect, no bass rumble, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-2",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 1000,
+            "peakDb": -0.4275947458327215,
+            "onsetMs": 10.022675736961451,
+            "attackMs": 180.40816326530611,
+            "decayMs": 125.28344671201815,
+            "centroidHz": 1160.609785742236,
+            "above4kPercent": 0.03893946094969892,
+            "tonalPercent": 21.422781702600172,
+            "flags": []
+          }
+        },
+        {
+          "file": "sfx-weather-sand-6.mp3",
+          "sessionId": "ejJA8We1cn2WNbtCuWOW",
+          "generationId": "fS9wIPttlCYc3WHntKMS",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "42a2f0a6230b0b2187e896f26d3083eaa4a5fb3347c1cc0e8f76e5ed7fdc379f",
+          "prompt": "One heavy canvas flap billowing with a rounded leathery whump, a warm hollow midrange body swelling briefly and settling, cartoon wind effect, no bass rumble, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-2",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 1000,
+            "peakDb": -3.978003749302386,
+            "onsetMs": 0,
+            "attackMs": 55.12471655328798,
+            "decayMs": 110.24943310657596,
+            "centroidHz": 818.0616138637428,
+            "above4kPercent": 0.03362680032479079,
+            "tonalPercent": 35.2441580776328,
+            "flags": []
+          }
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "blockingFlags": ["LOW"],
+      "masters": [
+        {
+          "file": "weather-sand-1.flac",
+          "raw": "sfx-weather-sand-5.mp3",
+          "rmsDb": -22.000466801514055,
+          "peakDb": -4.396777160716842,
+          "centroidHz": 1165.3533753780487,
+          "above4kPercent": 0.03884365499448634,
+          "tonalPercent": 21.40256052184273,
+          "flags": [],
+          "lenMs": 481,
+          "hitMs": 145,
+          "peakMs": 180,
+          "sha256": "22413f611568d3cb59859fcca31a0f50136ec138c71905851305f45692d39c7e",
+          "bytes": 28202
+        },
+        {
+          "file": "weather-sand-2.flac",
+          "raw": "sfx-weather-sand-6.mp3",
+          "rmsDb": -22.014432285121146,
+          "peakDb": -7.661883464115224,
+          "centroidHz": 822.5931933228184,
+          "above4kPercent": 0.03112072140094533,
+          "tonalPercent": 33.68342858658354,
+          "flags": [],
+          "lenMs": 376,
+          "hitMs": 25,
+          "peakMs": 55,
+          "sha256": "d08b1c758f88bea2b9140a58bd0e9a27bd2538e003f464f0c0749f46b5487cb6",
+          "bytes": 23992
+        }
+      ],
+      "visualTimingSuggestion": {
+        "keyMs": 0,
+        "verified": false,
+        "note": "Proposed only. Use this lead-in only if actual VFX has preparation up to this key; otherwise use keyMs=0 with source offset. Bound playback by actual effect end.",
+        "formula": "startAt = event + keyMs - hitMs; never start before event; a negative delay uses source offset."
+      },
+      "qcAdvisories": []
+    },
+    "weather-hail": {
+      "task": "add-field-events:1.4",
+      "nodeId": "2zGXsQpstHePnMojJbhO",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-weather-hail-1.mp3",
+          "sessionId": "jHvzbykHqT98KaTFnUjP",
+          "generationId": "wnhIsnrIrmaminUYmmMc",
+          "credits": 6.666,
+          "bytes": 50187,
+          "sha256": "39170320aa004563d1d1360319680488bc349d0f6162435ac9f3c13ed6cbf2c9",
+          "rawQc": {
+            "lenMs": 2000,
+            "peakDb": -16.23209156979826,
+            "onsetMs": 0,
+            "attackMs": 811.8367346938776,
+            "decayMs": 511.15646258503403,
+            "centroidHz": 6994.84004592309,
+            "above4kPercent": 48.3084642297112,
+            "tonalPercent": 13.962881923023701,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "prompt": "A cold soft wind gust with a handful of small hail pellets pattering on wood, dull soft taps, muted and rounded, mid-range audible on a small speaker, no ice chime, no glass, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-weather-hail-2.mp3",
+          "sessionId": "KbKqLLwS7Q52MAc8S5Ky",
+          "generationId": "vJ3u0Qu9sEFrjYkHRhXn",
+          "credits": 6.666,
+          "bytes": 50187,
+          "sha256": "b8ce4d9c8883a4754f448d203f27942ed5300f7029b8d5bab009ebf34e76ea4d",
+          "rawQc": {
+            "lenMs": 2000,
+            "peakDb": -22.436566769609062,
+            "onsetMs": 0,
+            "attackMs": 751.7006802721088,
+            "decayMs": 215.4875283446712,
+            "centroidHz": 8976.111231436016,
+            "above4kPercent": 53.81756652057251,
+            "tonalPercent": 11.060915479990685,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "prompt": "A cold soft wind gust with a handful of small hail pellets pattering on wood, dull soft taps, muted and rounded, mid-range audible on a small speaker, no ice chime, no glass, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-weather-hail-3.mp3",
+          "sessionId": "KUYW1pbmCDVUEcthLvNS",
+          "generationId": "cgliO83j4Fu8SIQDulda",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "00ea8c752bcec5601145aba809b3b83aabb3674728c83efbf2699baf96f9c1cd",
+          "prompt": "A cartoon handful of hail bouncing on a hollow wooden box, rounded rubbery tok-tok knocks getting slower, chunky midrange body, no glass, no clinking, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 1000,
+            "peakDb": -9.499862482624572,
+            "onsetMs": 0,
+            "attackMs": 395.89569160997735,
+            "decayMs": 100.22675736961452,
+            "centroidHz": 776.297897025988,
+            "above4kPercent": 0.1776745417880063,
+            "tonalPercent": 31.504077776861365,
+            "flags": []
+          }
+        },
+        {
+          "file": "sfx-weather-hail-4.mp3",
+          "sessionId": "AyDPvxfU80aNx83PwoYS",
+          "generationId": "suvjgC3VCNof0wio9INh",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "363ddf42912b3bdd4762d2abe4b1ca63e1902124288760c977dfcd01b77e43aa",
+          "prompt": "A cartoon handful of hail bouncing on a hollow wooden box, rounded rubbery tok-tok knocks getting slower, chunky midrange body, no glass, no clinking, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 1000,
+            "peakDb": -14.947939165325636,
+            "onsetMs": 0,
+            "attackMs": 65.14739229024943,
+            "decayMs": 60.136054421768705,
+            "centroidHz": 1632.9196380416565,
+            "above4kPercent": 0.6047724323194714,
+            "tonalPercent": 27.097160766254902,
+            "flags": []
+          }
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "blockingFlags": ["BRIGHT", "HARSH"],
+      "masters": [
+        {
+          "file": "weather-hail-1.flac",
+          "raw": "sfx-weather-hail-3.mp3",
+          "rmsDb": -22.000163207581195,
+          "peakDb": -5.105662162507252,
+          "centroidHz": 780.8342009091848,
+          "above4kPercent": 0.17769184791984832,
+          "tonalPercent": 31.55157239503847,
+          "flags": [],
+          "lenMs": 822,
+          "hitMs": 90,
+          "peakMs": 396,
+          "sha256": "60d54f63275bb2537261ea972bbabf12de3646d2de8d74948ef1abb5336b251b",
+          "bytes": 39277
+        },
+        {
+          "file": "weather-hail-2.flac",
+          "raw": "sfx-weather-hail-4.mp3",
+          "rmsDb": -22.156626969274615,
+          "peakDb": -2.9992390013763655,
+          "centroidHz": 1640.7395082005864,
+          "above4kPercent": 0.5856690708274155,
+          "tonalPercent": 26.510473421613078,
+          "flags": [],
+          "lenMs": 787,
+          "hitMs": 65,
+          "peakMs": 65,
+          "sha256": "4e39a5938d04f19016a27ac6a117c0e88e2ea919b33d9d74ed9037553484b501",
+          "bytes": 41995
+        }
+      ],
+      "visualTimingSuggestion": {
+        "keyMs": 0,
+        "verified": false,
+        "note": "Proposed only. Use this lead-in only if actual VFX has preparation up to this key; otherwise use keyMs=0 with source offset. Bound playback by actual effect end.",
+        "formula": "startAt = event + keyMs - hitMs; never start before event; a negative delay uses source offset."
+      },
+      "qcAdvisories": []
+    },
+    "site-flute": {
+      "task": "add-field-events:1.4",
+      "nodeId": "61k3BwTbF3vpvmcJ8wjh",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-site-flute-1.mp3",
+          "sessionId": "azUNLeULNYWLLtqSfM9r",
+          "generationId": "5FkcsYjuUgLDJOxUwLJI",
+          "credits": 6.666,
+          "bytes": 50187,
+          "sha256": "2acc012ab2d597d19809ab7845874c009667fcf2e23118659506a243dc475dec",
+          "rawQc": {
+            "lenMs": 2000,
+            "peakDb": -7.065982137036022,
+            "onsetMs": 0,
+            "attackMs": 1062.4036281179137,
+            "decayMs": 410.9297052154195,
+            "centroidHz": 956.0535636774629,
+            "above4kPercent": 0.0027673241844377145,
+            "tonalPercent": 80.09294347278976,
+            "flags": []
+          },
+          "selected": true,
+          "rawRetained": true,
+          "prompt": "Three soft notes on a warm wooden flute, a gentle rising then settling phrase that ends on a held note and fades, round and breathy, mid-range, original melody, no shrill, no whistle, dry close-mic, no reverb, no music backing, no voice",
+          "params": {
+            "duration_seconds": 2,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-site-flute-2.mp3",
+          "sessionId": "5zO9oeX8OAWYRN70KCtR",
+          "generationId": "apsbI8XgSQahPOlVrOiF",
+          "credits": 6.666,
+          "bytes": 50187,
+          "sha256": "795cc1efa97d6c102ce1d025b10f44f0d1debeb5759900c6e7daba9c56e4d62b",
+          "rawQc": {
+            "lenMs": 2000,
+            "peakDb": -10.52268824783146,
+            "onsetMs": 0,
+            "attackMs": 496.1224489795918,
+            "decayMs": 70.15873015873017,
+            "centroidHz": 1290.9049603771268,
+            "above4kPercent": 0.010673367308478936,
+            "tonalPercent": 47.594748314895746,
+            "flags": []
+          },
+          "selected": true,
+          "rawRetained": true,
+          "prompt": "Three soft notes on a warm wooden flute, a gentle rising then settling phrase that ends on a held note and fades, round and breathy, mid-range, original melody, no shrill, no whistle, dry close-mic, no reverb, no music backing, no voice",
+          "params": {
+            "duration_seconds": 2,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "intendedShip": "site-flute",
+      "masters": [
+        {
+          "file": "site-flute-1.flac",
+          "raw": "sfx-site-flute-1.mp3",
+          "rmsDb": -22.000408651369764,
+          "peakDb": -6.865700428375227,
+          "centroidHz": 962.4350196655724,
+          "above4kPercent": 0.0026148982276553534,
+          "tonalPercent": 80.1527002529301,
+          "flags": [],
+          "lenMs": 1719,
+          "hitMs": 872,
+          "peakMs": 1062,
+          "sha256": "bfc916c118ec64cfb5a5742be9410f1e00c57df377381d7beb4ca97ee201283d",
+          "bytes": 70831
+        },
+        {
+          "file": "site-flute-2.flac",
+          "raw": "sfx-site-flute-2.mp3",
+          "rmsDb": -22.002414790179866,
+          "peakDb": -10.50222160344233,
+          "centroidHz": 1302.1551470804782,
+          "above4kPercent": 0.01052628605601251,
+          "tonalPercent": 47.69936991852809,
+          "flags": [],
+          "lenMs": 1944,
+          "hitMs": 100,
+          "peakMs": 496,
+          "sha256": "e9a26a58eefbfcb6d2b8c5ff3cd897afe12b0724951489d8efee65be0f3c0538",
+          "bytes": 88648
+        }
+      ],
+      "visualTimingSuggestion": {
+        "keyMs": 0,
+        "verified": false,
+        "note": "Proposed only. Use this lead-in only if actual VFX has preparation up to this key; otherwise use keyMs=0 with source offset. Bound playback by actual effect end.",
+        "formula": "startAt = event + keyMs - hitMs; never start before event; a negative delay uses source offset."
+      },
+      "qcAdvisories": []
+    },
+    "site-fishing": {
+      "task": "add-field-events:1.4",
+      "nodeId": "n9RYHFnPZ2T3VcXcOMp9",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-site-fishing-1.mp3",
+          "sessionId": "o3LFJ61IFCs3kJW4yvg4",
+          "generationId": "wMnWjCwnGELenNLQbyfF",
+          "credits": 4.3329,
+          "bytes": 38484,
+          "sha256": "4fdd763ed2c9489dcdae73d5cc8a9e06d1cdfd853b1d7d7e42b80020b07ed617",
+          "rawQc": {
+            "lenMs": 1280,
+            "peakDb": -6.158285698982505,
+            "onsetMs": 0,
+            "attackMs": 155.3514739229025,
+            "decayMs": 50.11337868480726,
+            "centroidHz": 9152.005099394077,
+            "above4kPercent": 96.83109021186203,
+            "tonalPercent": 43.68503497077303,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "prompt": "A fishing reel quickly winding in with a few soft ratchet clicks, ending with a small wet splash and a light fish flap, muted and rounded, mid-range audible on a small speaker, no bell, no metal ring, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-site-fishing-2.mp3",
+          "sessionId": "xJeYKXmTxuFZoT7wcXXx",
+          "generationId": "XcHcGyYg1IzXK0OTrovK",
+          "credits": 4.3329,
+          "bytes": 38484,
+          "sha256": "2625e6b74bd8785bc2fb7dfc294a6d2b023d29d9c3e21b786a9d475f9ddfec8a",
+          "rawQc": {
+            "lenMs": 1280,
+            "peakDb": -5.259643816981078,
+            "onsetMs": 0,
+            "attackMs": 115.26077097505669,
+            "decayMs": 180.40816326530611,
+            "centroidHz": 9013.528926310122,
+            "above4kPercent": 90.38754562284024,
+            "tonalPercent": 32.11615450441217,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "prompt": "A fishing reel quickly winding in with a few soft ratchet clicks, ending with a small wet splash and a light fish flap, muted and rounded, mid-range audible on a small speaker, no bell, no metal ring, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-site-fishing-3.mp3",
+          "sessionId": "e160yhYdW05cmXinXDdm",
+          "generationId": "XtIN5TD4HnxzMh9fpWsN",
+          "credits": 2.3331,
+          "bytes": 29289,
+          "sha256": "7edfa453b2f0acc68d0b95c858391adadde18dc526b3deb463fa051a82412f06",
+          "prompt": "A cartoon fishing catch, one rubbery wet gulp ending in a hollow wooden plonk, chunky rounded midrange body, no ratchet clicks, no hiss, no bass boom, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 680.2494331065759,
+            "peakDb": -0.4202711710560282,
+            "onsetMs": 20.045351473922903,
+            "attackMs": 340.77097505668934,
+            "decayMs": 115.26077097505669,
+            "centroidHz": 1956.83001753087,
+            "above4kPercent": 0.3556748543031626,
+            "tonalPercent": 12.013794906009188,
+            "flags": []
+          }
+        },
+        {
+          "file": "sfx-site-fishing-4.mp3",
+          "sessionId": "IvR3WQfIMRkSC0YGjF3X",
+          "generationId": "LTzRcdNVWtJHE7jewrG5",
+          "credits": 2.3331,
+          "bytes": 29289,
+          "sha256": "22366970c21cff62cf82310c12b40ecd63c86d7ff1e056675b0354c23805c6a3",
+          "prompt": "A cartoon fishing catch, one rubbery wet gulp ending in a hollow wooden plonk, chunky rounded midrange body, no ratchet clicks, no hiss, no bass boom, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 680.2494331065759,
+            "peakDb": -7.953167142836533,
+            "onsetMs": 0,
+            "attackMs": 55.12471655328798,
+            "decayMs": 70.15873015873017,
+            "centroidHz": 1715.197139066141,
+            "above4kPercent": 0.20469516849406072,
+            "tonalPercent": 21.00141199507334,
+            "flags": []
+          }
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "blockingFlags": ["BRIGHT", "HARSH"],
+      "masters": [
+        {
+          "file": "site-fishing-1.flac",
+          "raw": "sfx-site-fishing-3.mp3",
+          "rmsDb": -22.34614203968048,
+          "peakDb": -2.9992390013763655,
+          "centroidHz": 1917.5555321121863,
+          "above4kPercent": 0.3669532373148649,
+          "tonalPercent": 11.609249634231496,
+          "flags": [],
+          "lenMs": 476,
+          "hitMs": 336,
+          "peakMs": 341,
+          "sha256": "e2d6d592517f5bf3971bf558304cb43d60f1f80674b3a47f258a51cf9d912c57",
+          "bytes": 26485
+        },
+        {
+          "file": "site-fishing-2.flac",
+          "raw": "sfx-site-fishing-4.mp3",
+          "rmsDb": -22.220530473943974,
+          "peakDb": -2.9992390013763655,
+          "centroidHz": 1730.9140906610621,
+          "above4kPercent": 0.16263452647724536,
+          "tonalPercent": 21.199619436555004,
+          "flags": [],
+          "lenMs": 391,
+          "hitMs": 5,
+          "peakMs": 55,
+          "sha256": "606ae3da85c68b08bf79323a9d66f08669f35dcd7041d2ac97ca1d110433d123",
+          "bytes": 23697
+        }
+      ],
+      "visualTimingSuggestion": {
+        "keyMs": 0,
+        "verified": false,
+        "note": "Proposed only. Use this lead-in only if actual VFX has preparation up to this key; otherwise use keyMs=0 with source offset. Bound playback by actual effect end.",
+        "formula": "startAt = event + keyMs - hitMs; never start before event; a negative delay uses source offset."
+      },
+      "qcAdvisories": []
+    },
+    "site-dig": {
+      "task": "add-field-events:1.4",
+      "nodeId": "lQh1pDlWTpYyG1AJTeRL",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-site-dig-1.mp3",
+          "sessionId": "1COtdMonrNA56xwZ8t1X",
+          "generationId": "T3SerTLB8JTKHlEtcKiw",
+          "credits": 2.6664,
+          "bytes": 30961,
+          "sha256": "ff0367d580177d24295670d382700cbce5fa5da10db314b2bbe3777d136312c2",
+          "rawQc": {
+            "lenMs": 800,
+            "peakDb": -6.2452015819653255,
+            "onsetMs": 0,
+            "attackMs": 250.5668934240363,
+            "decayMs": 80.18140589569161,
+            "centroidHz": 5707.502254765303,
+            "above4kPercent": 23.180607321181714,
+            "tonalPercent": 21.95061819986157,
+            "flags": ["SLOW-ATTACK", "BRIGHT", "HARSH"]
+          },
+          "prompt": "A short digging sound: a shovel scraping into dry sand then a soft dull earthy thump, rounded, mid-range audible on a small speaker, no clink, no metal ring, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-site-dig-2.mp3",
+          "sessionId": "0aj4iwqWk9XTg4D0r538",
+          "generationId": "vXMgPgoOzqmadBr5lntz",
+          "credits": 2.6664,
+          "bytes": 30961,
+          "sha256": "9cae7fec97c2dc5d1d7a17bc3c567c5ba6c00d988e8e018c668ce1f5a2072026",
+          "rawQc": {
+            "lenMs": 800,
+            "peakDb": -7.045972190878091,
+            "onsetMs": 0,
+            "attackMs": 95.21541950113378,
+            "decayMs": 350.7936507936508,
+            "centroidHz": 6732.069834607623,
+            "above4kPercent": 47.772082565886684,
+            "tonalPercent": 6.7962599784137145,
+            "flags": ["SLOW-ATTACK", "LONG-DECAY", "BRIGHT", "HARSH"]
+          },
+          "prompt": "A short digging sound: a shovel scraping into dry sand then a soft dull earthy thump, rounded, mid-range audible on a small speaker, no clink, no metal ring, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-site-dig-3.mp3",
+          "sessionId": "hWzaE0ZKk4BSGN82Vmcb",
+          "generationId": "xwCHMKEbGwlIGnllnTrO",
+          "credits": 2.6664,
+          "bytes": 30961,
+          "sha256": "5027c6ad8ca6d16b374da0b6bc484a34056a7c0feb07ca2389b0c009079e23da",
+          "rawQc": {
+            "lenMs": 800,
+            "peakDb": -16.06643546114827,
+            "onsetMs": 0,
+            "attackMs": 110.24943310657596,
+            "decayMs": 320.72562358276645,
+            "centroidHz": 5823.646487405208,
+            "above4kPercent": 35.933194353433315,
+            "tonalPercent": 10.899697162688355,
+            "flags": ["SLOW-ATTACK", "LONG-DECAY", "BRIGHT", "HARSH"]
+          },
+          "prompt": "A short digging sound: a shovel scraping into dry sand then a soft dull earthy thump, rounded, mid-range audible on a small speaker, no clink, no metal ring, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-site-dig-4.mp3",
+          "sessionId": "QqgITjvNFA05dl50qNEg",
+          "generationId": "czSBDZEi6awFEJ5T3P7M",
+          "credits": 2.6664,
+          "bytes": 30961,
+          "sha256": "655fe850d6604fad18d47309c672d07a77a2bec6044f93cddf91313a468d0590",
+          "rawQc": {
+            "lenMs": 800,
+            "peakDb": -10.459891663568344,
+            "onsetMs": 0,
+            "attackMs": 400.90702947845807,
+            "decayMs": 185.41950113378684,
+            "centroidHz": 5737.175175816634,
+            "above4kPercent": 35.540708542537246,
+            "tonalPercent": 10.33416905436474,
+            "flags": ["SLOW-ATTACK", "LONG-DECAY", "BRIGHT", "HARSH"]
+          },
+          "prompt": "A short digging sound: a shovel scraping into dry sand then a soft dull earthy thump, rounded, mid-range audible on a small speaker, no clink, no metal ring, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-site-dig-5.mp3",
+          "sessionId": "AidMnXqkSDzIQluW1sfc",
+          "generationId": "va2b6zwgikk2aBifpf8q",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "54f59082da698590ee82db8d9649620f7398fc40234238ba0d6d8338b42fe076",
+          "prompt": "One cartoon digging clonk, a hollow wooden scoop knocking damp earth, chunky rubbery midrange body with a tiny papery crunch, immediate attack, short damped tail, no bass boom, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -6.844229328991453,
+            "onsetMs": 0,
+            "attackMs": 20.045351473922903,
+            "decayMs": 305.6916099773243,
+            "centroidHz": 7058.719941855771,
+            "above4kPercent": 69.42040439352292,
+            "tonalPercent": 14.934765781104883,
+            "flags": ["LONG-DECAY", "BRIGHT", "HARSH"]
+          }
+        },
+        {
+          "file": "sfx-site-dig-6.mp3",
+          "sessionId": "NUSqKMkX7AB3oRmD2Uzr",
+          "generationId": "RF57GkNISS8rnMKQ2Ent",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "dca23f0c7321e5ce80dda34c60a9df8fdd95a155a49e54c6d8ba324e6c493135",
+          "prompt": "One cartoon digging clonk, a hollow wooden scoop knocking damp earth, chunky rubbery midrange body with a tiny papery crunch, immediate attack, short damped tail, no bass boom, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -1.730953272673722,
+            "onsetMs": 0,
+            "attackMs": 105.23809523809524,
+            "decayMs": 100.22675736961452,
+            "centroidHz": 6017.981582066377,
+            "above4kPercent": 26.850863984954376,
+            "tonalPercent": 17.58028629558078,
+            "flags": ["SLOW-ATTACK", "BRIGHT", "HARSH"]
+          }
+        },
+        {
+          "file": "sfx-site-dig-7.mp3",
+          "sessionId": "6ljyzw0djY7mXgeVWDoa",
+          "generationId": "chK37lfTgIXt4ei65SvU",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "54f75b870d9c1cfe1ad32f12df6585bd837114b597fe7483214a876be22a5748",
+          "prompt": "One cartoon digging clonk, a hollow wooden scoop knocking damp earth, chunky rubbery midrange body with a tiny papery crunch, immediate attack, short damped tail, no bass boom, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -14.85325548696615,
+            "onsetMs": 0,
+            "attackMs": 10.022675736961451,
+            "decayMs": 170.38548752834467,
+            "centroidHz": 6111.508223484933,
+            "above4kPercent": 8.743714496759383,
+            "tonalPercent": 15.713698229649161,
+            "flags": ["LONG-DECAY", "BRIGHT"]
+          }
+        },
+        {
+          "file": "sfx-site-dig-8.mp3",
+          "sessionId": "rlMq9DAdSMiu61IYo8uH",
+          "generationId": "70vdV9bTiwEgQf6hpCMx",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "8e27fcb2e64814fdd7272a950e1cea4adee0adfd969e13cef370263c7472654f",
+          "prompt": "One cartoon digging clonk, a hollow wooden scoop knocking damp earth, chunky rubbery midrange body with a tiny papery crunch, immediate attack, short damped tail, no bass boom, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -4.251822131374788,
+            "onsetMs": 0,
+            "attackMs": 70.15873015873017,
+            "decayMs": 190.43083900226756,
+            "centroidHz": 6181.96479075443,
+            "above4kPercent": 60.010212919899274,
+            "tonalPercent": 12.984684636016144,
+            "flags": ["SLOW-ATTACK", "LONG-DECAY", "BRIGHT", "HARSH"]
+          }
+        },
+        {
+          "file": "sfx-site-dig-9.mp3",
+          "sessionId": "uFjE7asdTVgoP2ugMtBd",
+          "generationId": "bFEVXKu0aEKOp00WGthu",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "c71a455187ff7a4dd36fdf7a524b6e75f2af36551d971261372d4d648362957c",
+          "prompt": "Rounded hollow coconut knock, a single thick tok with a full midrange wooden body and a quick muted tail. Cartoon percussion, immediate attack, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-2",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -4.275166281781033,
+            "onsetMs": 0,
+            "attackMs": 10.022675736961451,
+            "decayMs": 45.10204081632653,
+            "centroidHz": 1652.9968929359002,
+            "above4kPercent": 0.18545619034574556,
+            "tonalPercent": 50.2761348690111,
+            "flags": []
+          }
+        },
+        {
+          "file": "sfx-site-dig-10.mp3",
+          "sessionId": "EsVFBZxzAAImoGY2jltQ",
+          "generationId": "vhgQwphBwZy7ENaO8LMf",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "d27902d85f577c861c12e49fc9d264e748e0f905ad85685ea6d30d2f57c21dfa",
+          "prompt": "Rounded hollow coconut knock, a single thick tok with a full midrange wooden body and a quick muted tail. Cartoon percussion, immediate attack, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-2",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -32.62873058830647,
+            "onsetMs": 0,
+            "attackMs": 0,
+            "decayMs": 315.7142857142857,
+            "centroidHz": 353.4285640079931,
+            "above4kPercent": 0.0017907732319243004,
+            "tonalPercent": 99.17596577917823,
+            "flags": ["LONG-DECAY", "TONAL"]
+          }
+        },
+        {
+          "file": "sfx-site-dig-11.mp3",
+          "sessionId": "6k1Q18BFZgwd1XPCspl2",
+          "generationId": "Y7cgxaKwAUstze8f97Dm",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "6f86c6cf3131750cb5b8a22f18d01b2514302d10be84f1c6ea13c9f3e3040dff",
+          "prompt": "Rounded hollow coconut knock, a single thick tok with a full midrange wooden body and a quick muted tail. Cartoon percussion, immediate attack, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-2",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -29.91240267491029,
+            "onsetMs": 0,
+            "attackMs": 5.011337868480726,
+            "decayMs": 300.68027210884355,
+            "centroidHz": 311.76462926802265,
+            "above4kPercent": 0.024211592549491307,
+            "tonalPercent": 99.55588531452476,
+            "flags": ["LONG-DECAY", "TONAL"]
+          }
+        },
+        {
+          "file": "sfx-site-dig-12.mp3",
+          "sessionId": "ViaOhktHGsQwuheRDeXh",
+          "generationId": "2n5kbLHLqgK2TOhOONUs",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "7dfa4c087befca1f5fd660876523313390737b17d79d5d9975f1156595869d2b",
+          "prompt": "Rounded hollow coconut knock, a single thick tok with a full midrange wooden body and a quick muted tail. Cartoon percussion, immediate attack, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-2",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -25.42916257379964,
+            "onsetMs": 0,
+            "attackMs": 0,
+            "decayMs": 290.6575963718821,
+            "centroidHz": 1604.7899685239533,
+            "above4kPercent": 0.10800314205587801,
+            "tonalPercent": 58.47346040299517,
+            "flags": ["LONG-DECAY"]
+          }
+        },
+        {
+          "file": "sfx-site-dig-13.mp3",
+          "sessionId": "IMqiPBQyoIoD0j6oAFu4",
+          "generationId": "RcYOT47VGlBYsKnip2jE",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "9e937181d2269194a39e95f192723a1d3cc7044ebb486564211c9934f87ffc7f",
+          "prompt": "A rounded cartoon hollow wood knock, one firm chunky tok with a thick rubbery body, immediate attack and short damped tail, midrange, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-3",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -3.4750279783221316,
+            "onsetMs": 25.05668934240363,
+            "attackMs": 25.05668934240363,
+            "decayMs": 35.07936507936508,
+            "centroidHz": 865.7557136185304,
+            "above4kPercent": 0.006253227228060254,
+            "tonalPercent": 15.68588070894096,
+            "flags": []
+          }
+        },
+        {
+          "file": "sfx-site-dig-14.mp3",
+          "sessionId": "13LzPQsedLzNowpTQpuq",
+          "generationId": "sYzcr5ACPKn5ofgxVPK9",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "d464d44011a4b3269ed06b7ee56801b89b387bbc12132be29e3ba6fbd4a9dc5c",
+          "prompt": "A rounded cartoon hollow wood knock, one firm chunky tok with a thick rubbery body, immediate attack and short damped tail, midrange, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-3",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -0.3477168423692397,
+            "onsetMs": 25.05668934240363,
+            "attackMs": 20.045351473922903,
+            "decayMs": 60.136054421768705,
+            "centroidHz": 1063.6404684496633,
+            "above4kPercent": 0.03322592729747226,
+            "tonalPercent": 12.170408974738884,
+            "flags": []
+          }
+        },
+        {
+          "file": "sfx-site-dig-15.mp3",
+          "sessionId": "vbBO9yWzLbAjaSbSRzXX",
+          "generationId": "WAfVYVFRVCFAq0m3gQR8",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "65f89ecdb1b0978d718da37f33f179873aafba6b414707c08805e97f0f1492b4",
+          "prompt": "A rounded cartoon hollow wood knock, one firm chunky tok with a thick rubbery body, immediate attack and short damped tail, midrange, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-3",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -0.40887842010870024,
+            "onsetMs": 0,
+            "attackMs": 50.11337868480726,
+            "decayMs": 60.136054421768705,
+            "centroidHz": 1151.3854824111522,
+            "above4kPercent": 0.05475887393167811,
+            "tonalPercent": 34.596428259826574,
+            "flags": ["SLOW-ATTACK"]
+          }
+        },
+        {
+          "file": "sfx-site-dig-16.mp3",
+          "sessionId": "xN4HBy7keUTVBl54N73O",
+          "generationId": "NOZMoVk0gk7XHhDkLlNM",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "4b6930fa0896ff88bc7e641df60dcb0edd61962e90d5c3cb6fc3db51028bbe43",
+          "prompt": "A rounded cartoon hollow wood knock, one firm chunky tok with a thick rubbery body, immediate attack and short damped tail, midrange, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-3",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -0.3690357089325824,
+            "onsetMs": 85.19274376417233,
+            "attackMs": 20.045351473922903,
+            "decayMs": 65.14739229024943,
+            "centroidHz": 984.4695705870721,
+            "above4kPercent": 0.06681327345101784,
+            "tonalPercent": 19.354229474954067,
+            "flags": []
+          }
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "blockingFlags": ["BRIGHT", "HARSH", "LONG-DECAY", "SLOW-ATTACK"],
+      "masters": [
+        {
+          "file": "site-dig-1.flac",
+          "raw": "sfx-site-dig-9.mp3",
+          "rmsDb": -26.56032113848991,
+          "peakDb": -6.00312273546408,
+          "centroidHz": 1659.5934585398688,
+          "above4kPercent": 0.18216054068410636,
+          "tonalPercent": 50.65408198784237,
+          "flags": [],
+          "lenMs": 220,
+          "hitMs": 10,
+          "peakMs": 10,
+          "sha256": "4225e304686b8267f9cc48f13704514fc3e58373693aa9489efdbf5cb39a7b23",
+          "bytes": 15412
+        },
+        {
+          "file": "site-dig-2.flac",
+          "raw": "sfx-site-dig-13.mp3",
+          "rmsDb": -26.88922386642842,
+          "peakDb": -6.00312273546408,
+          "centroidHz": 862.9010463955821,
+          "above4kPercent": 0.006847490756788185,
+          "tonalPercent": 14.079117028958684,
+          "flags": [],
+          "lenMs": 120,
+          "hitMs": 25,
+          "peakMs": 25,
+          "sha256": "02f011c170dbf8d4b593fb804579ac5434fb4cdfb3db6ab62160caf978399d0d",
+          "bytes": 12308
+        },
+        {
+          "file": "site-dig-3.flac",
+          "raw": "sfx-site-dig-14.mp3",
+          "rmsDb": -26.000874134380144,
+          "peakDb": -6.562533311693414,
+          "centroidHz": 1072.664878849798,
+          "above4kPercent": 0.033242453843086564,
+          "tonalPercent": 12.036683248792416,
+          "flags": [],
+          "lenMs": 125,
+          "hitMs": 20,
+          "peakMs": 20,
+          "sha256": "aa831245d67e6a15741b30f02a0481a9ec960204837858c1535c4995e0fc5c7c",
+          "bytes": 12088
+        },
+        {
+          "file": "site-dig-4.flac",
+          "raw": "sfx-site-dig-16.mp3",
+          "rmsDb": -26.000905625180295,
+          "peakDb": -6.234745887040223,
+          "centroidHz": 994.7782980712387,
+          "above4kPercent": 0.06682625905704967,
+          "tonalPercent": 18.24810275348375,
+          "flags": [],
+          "lenMs": 165,
+          "hitMs": 20,
+          "peakMs": 20,
+          "sha256": "067bb78d4f796a63fd39fbaae874429207d8c5c22c8e1efb878a2f238949c400",
+          "bytes": 12865
+        }
+      ],
+      "visualTimingSuggestion": {
+        "keyMs": 0,
+        "verified": false,
+        "note": "Proposed only. Use this lead-in only if actual VFX has preparation up to this key; otherwise use keyMs=0 with source offset. Bound playback by actual effect end.",
+        "formula": "startAt = event + keyMs - hitMs; never start before event; a negative delay uses source offset."
+      },
+      "qcAdvisories": []
+    },
+    "site-den": {
+      "task": "add-field-events:1.4",
+      "nodeId": "3KL8jRMW7Y2xMUpfx144",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-site-den-1.mp3",
+          "sessionId": "b5d5Pqx2Ct4KuskPrzjM",
+          "generationId": "Mj76glGWOqnbatPywB7X",
+          "credits": 5.9994,
+          "bytes": 46426,
+          "sha256": "5060b255eb2558fc2dad6f6111fdc39226267a7697071334833371e9a2e78678",
+          "rawQc": {
+            "lenMs": 1760,
+            "peakDb": -0.3398195899046704,
+            "onsetMs": 0,
+            "attackMs": 1052.3809523809523,
+            "decayMs": 491.1111111111111,
+            "centroidHz": 1594.1614956261335,
+            "above4kPercent": 0.5208489022063281,
+            "tonalPercent": 34.6464831062966,
+            "flags": []
+          },
+          "selected": true,
+          "rawRetained": true,
+          "prompt": "A heavy stone lid sliding aside with a rounded wooden-stone scrape, then a deep soft whoomp of rising air, rounded and powerful but not harsh, mid-range audible on a small speaker, no siren, no explosion boom, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+          "params": {
+            "duration_seconds": 1.8,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-site-den-2.mp3",
+          "sessionId": "uqEEEJ71M1BU5xlS75JM",
+          "generationId": "7LayZk0jrwopX6HJQgvO",
+          "credits": 5.9994,
+          "bytes": 46426,
+          "sha256": "550d52d28aedd26a70fdfbf231d517c7f8fbe1f68a6945a1a3ad1d2815cc4cbc",
+          "rawQc": {
+            "lenMs": 1760,
+            "peakDb": -0.8945210059464742,
+            "onsetMs": 0,
+            "attackMs": 240.54421768707482,
+            "decayMs": 1267.8684807256236,
+            "centroidHz": 2388.7170602951446,
+            "above4kPercent": 4.369645599679997,
+            "tonalPercent": 10.243225949508131,
+            "flags": []
+          },
+          "selected": true,
+          "rawRetained": true,
+          "prompt": "A heavy stone lid sliding aside with a rounded wooden-stone scrape, then a deep soft whoomp of rising air, rounded and powerful but not harsh, mid-range audible on a small speaker, no siren, no explosion boom, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+          "params": {
+            "duration_seconds": 1.8,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "intendedShip": "site-den",
+      "masters": [
+        {
+          "file": "site-den-1.flac",
+          "raw": "sfx-site-den-1.mp3",
+          "rmsDb": -18.05088887045531,
+          "peakDb": -1.0025315996254927,
+          "centroidHz": 1597.349641388535,
+          "above4kPercent": 0.5237437191857331,
+          "tonalPercent": 35.04810096943033,
+          "flags": [],
+          "lenMs": 1609,
+          "hitMs": 526,
+          "peakMs": 1052,
+          "sha256": "c6140cd8dcc646cdc8a0d240f998e8ff3b2f60751d0f38b715d50600512ac572",
+          "bytes": 94859
+        },
+        {
+          "file": "site-den-2.flac",
+          "raw": "sfx-site-den-2.mp3",
+          "rmsDb": -18.00022828378533,
+          "peakDb": -1.3543678664748626,
+          "centroidHz": 2390.565400495488,
+          "above4kPercent": 4.370130926335922,
+          "tonalPercent": 10.200194986563199,
+          "flags": [],
+          "lenMs": 1554,
+          "hitMs": 236,
+          "peakMs": 241,
+          "sha256": "cce9f4be4054a38ac1b84782c73e2a0d65b8a3792404fd2a1f463fcbe02d963e",
+          "bytes": 97997
+        }
+      ],
+      "visualTimingSuggestion": {
+        "keyMs": 0,
+        "verified": false,
+        "note": "Proposed only. Use this lead-in only if actual VFX has preparation up to this key; otherwise use keyMs=0 with source offset. Bound playback by actual effect end.",
+        "formula": "startAt = event + keyMs - hitMs; never start before event; a negative delay uses source offset."
+      },
+      "qcAdvisories": []
+    },
+    "shiny": {
+      "task": "add-field-events:1.4",
+      "nodeId": "KQkIAzfzdmaomZB2aMI7",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-shiny-1.mp3",
+          "sessionId": "6Ra5764qI5B2uDxTzPkd",
+          "generationId": "7shDiunoEoPMGIr2lhwm",
+          "credits": 4.3329,
+          "bytes": 38484,
+          "sha256": "7c330f829cdd0d446c72a3bb841701533b1cefc64cfa130b215c23d71b354bcd",
+          "rawQc": {
+            "lenMs": 1280,
+            "peakDb": -10.51761180947533,
+            "onsetMs": 0,
+            "attackMs": 10.022675736961451,
+            "decayMs": 586.3265306122449,
+            "centroidHz": 515.1357559513326,
+            "above4kPercent": 0.006003637094744716,
+            "tonalPercent": 71.24851997288896,
+            "flags": []
+          },
+          "selected": true,
+          "rawRetained": true,
+          "prompt": "A soft rounded rising run of a few felt-mallet marimba notes ending in one warm gentle glassy tone that fades, friendly and magical but muted, mid-range, no sparkle, no shimmer, no harsh high tones, no hiss, dry close-mic, no reverb, no voice",
+          "params": {
+            "duration_seconds": 1.3,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-shiny-2.mp3",
+          "sessionId": "B0BvKU2mNmiYfLqfSa8c",
+          "generationId": "LMZfLuEWOqU1Cf4wZ9s0",
+          "credits": 4.3329,
+          "bytes": 38484,
+          "sha256": "d164b02918fc3ab61c77c1c854e8d4343f45415a92561d67c6782361ac1ee614",
+          "rawQc": {
+            "lenMs": 1280,
+            "peakDb": -14.171522508949089,
+            "onsetMs": 0,
+            "attackMs": 5.011337868480726,
+            "decayMs": 541.2244897959183,
+            "centroidHz": 625.5836155541188,
+            "above4kPercent": 0.0004165777004329895,
+            "tonalPercent": 71.99319657490364,
+            "flags": []
+          },
+          "selected": true,
+          "rawRetained": true,
+          "prompt": "A soft rounded rising run of a few felt-mallet marimba notes ending in one warm gentle glassy tone that fades, friendly and magical but muted, mid-range, no sparkle, no shimmer, no harsh high tones, no hiss, dry close-mic, no reverb, no voice",
+          "params": {
+            "duration_seconds": 1.3,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "intendedShip": "shiny",
+      "masters": [
+        {
+          "file": "shiny-1.flac",
+          "raw": "sfx-shiny-1.mp3",
+          "rmsDb": -22.074535264609267,
+          "peakDb": -5.073752347001968,
+          "centroidHz": 522.7775527370364,
+          "above4kPercent": 0.0006465573306679133,
+          "tonalPercent": 70.99698344246703,
+          "flags": [],
+          "lenMs": 887,
+          "hitMs": 0,
+          "peakMs": 10,
+          "sha256": "06bfc0aa7c00b07ff2bcf7d4e81d0be1382eeccc29d0daf6e0bd93a424a0905a",
+          "bytes": 34515
+        },
+        {
+          "file": "shiny-2.flac",
+          "raw": "sfx-shiny-2.mp3",
+          "rmsDb": -22.11703192051432,
+          "peakDb": -6.035456661548391,
+          "centroidHz": 634.2408493738486,
+          "above4kPercent": 0.00010043724872219316,
+          "tonalPercent": 71.56741290367837,
+          "flags": [],
+          "lenMs": 787,
+          "hitMs": 0,
+          "peakMs": 5,
+          "sha256": "36d8130c803032cd88155ac0818e10bcdcbf897473781cf976c8ff920b52bbec",
+          "bytes": 32965
+        }
+      ],
+      "visualTimingSuggestion": {
+        "keyMs": 0,
+        "verified": false,
+        "note": "Proposed only. Use this lead-in only if actual VFX has preparation up to this key; otherwise use keyMs=0 with source offset. Bound playback by actual effect end.",
+        "formula": "startAt = event + keyMs - hitMs; never start before event; a negative delay uses source offset."
+      },
+      "qcAdvisories": []
+    },
+    "egg-hatch": {
+      "task": "add-field-events:1.4",
+      "nodeId": "2iALtnxwwmoRTAXOEitK",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-egg-hatch-1.mp3",
+          "sessionId": "Q50BTuL2D6lt3KIiR2qg",
+          "generationId": "YssVouqt8YrYuFQXmhWJ",
+          "credits": 4.3329,
+          "bytes": 38484,
+          "sha256": "fe117572f756294398be965d9dd56017080db0ace6a9bddfcf9c96ba69d3e2e7",
+          "rawQc": {
+            "lenMs": 1280,
+            "peakDb": -11.348743956300114,
+            "onsetMs": 0,
+            "attackMs": 746.6893424036281,
+            "decayMs": 15.034013605442176,
+            "centroidHz": 8220.292130773798,
+            "above4kPercent": 90.56108691328286,
+            "tonalPercent": 23.049967651147764,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "prompt": "A small egg shell cracking with a few soft dull crackles, then a gentle soft pop and a light happy rising two-note wooden xylophone chirp, rounded and warm, mid-range, no bell, no sparkle, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-egg-hatch-2.mp3",
+          "sessionId": "1bljmimfqxwZKwqPp7v5",
+          "generationId": "3WwR5m5EUUbahecIbtLI",
+          "credits": 4.3329,
+          "bytes": 38484,
+          "sha256": "5a545db6ca08c201a84c7cfe08088d7db4f81901d2a2f8848f1bbeb0a45d27df",
+          "rawQc": {
+            "lenMs": 1280,
+            "peakDb": -1.6638422663977757,
+            "onsetMs": 65.14739229024943,
+            "attackMs": 135.30612244897958,
+            "decayMs": 30.068027210884352,
+            "centroidHz": 5840.746668409381,
+            "above4kPercent": 56.376098461639,
+            "tonalPercent": 39.12121614789497,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "prompt": "A small egg shell cracking with a few soft dull crackles, then a gentle soft pop and a light happy rising two-note wooden xylophone chirp, rounded and warm, mid-range, no bell, no sparkle, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-egg-hatch-3.mp3",
+          "sessionId": "gnKxNFNdOQKSPYxPgeOU",
+          "generationId": "HIjKmmshArIcM8pu5gtM",
+          "credits": 2.3331,
+          "bytes": 29289,
+          "sha256": "4566b67b72d323bb6ec6df416d04a13d0d1eb2922f61c832b38ee5bc832d8387",
+          "prompt": "A cartoon eggshell opening with a rounded papery crunch and a hollow rubbery pop, bouncy midrange body, short damped tail, no glass crack, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 680.2494331065759,
+            "peakDb": -0.926151639617609,
+            "onsetMs": 0,
+            "attackMs": 5.011337868480726,
+            "decayMs": 295.66893424036283,
+            "centroidHz": 6397.432630302849,
+            "above4kPercent": 27.79305281209372,
+            "tonalPercent": 19.30281635494814,
+            "flags": ["BRIGHT"]
+          }
+        },
+        {
+          "file": "sfx-egg-hatch-4.mp3",
+          "sessionId": "KEe3hFJ2JoRAQgNL4faV",
+          "generationId": "1gjeBiz6K6nQWoc7oIhw",
+          "credits": 2.3331,
+          "bytes": 29289,
+          "sha256": "bf4416175c18a460eda218fafa2a8cf6adc18c7041f9396c99d66d96617d3b97",
+          "prompt": "A cartoon eggshell opening with a rounded papery crunch and a hollow rubbery pop, bouncy midrange body, short damped tail, no glass crack, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 680.2494331065759,
+            "peakDb": -8.20354839594969,
+            "onsetMs": 0,
+            "attackMs": 290.6575963718821,
+            "decayMs": 65.14739229024943,
+            "centroidHz": 4744.471977345045,
+            "above4kPercent": 46.206879411012146,
+            "tonalPercent": 17.14924160028317,
+            "flags": ["BRIGHT", "HARSH"]
+          }
+        },
+        {
+          "file": "sfx-egg-hatch-5.mp3",
+          "sessionId": "7KcVDSO8xICu2SFXf524",
+          "generationId": "GzIW6riTTh3pu912Z5y0",
+          "credits": 2.3331,
+          "bytes": 29289,
+          "sha256": "d54369ed911b53eb03699682a904d5791b9b7dd03808e07d48a397409f0ea8e4",
+          "prompt": "A rubber cork popping from a hollow wooden vessel, a thick rounded plonk followed by two smaller bouncy pops, cartoon hatching effect, midrange body, no crackle, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-2",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 680.2494331065759,
+            "peakDb": -42.07317472828055,
+            "onsetMs": 0,
+            "attackMs": 0,
+            "decayMs": 210.47619047619048,
+            "centroidHz": 1276.0459045063562,
+            "above4kPercent": 0.10187371546973589,
+            "tonalPercent": 69.73791605868676,
+            "flags": ["SILENT"]
+          }
+        },
+        {
+          "file": "sfx-egg-hatch-6.mp3",
+          "sessionId": "L1bJgn1mAAiAX4vIPQyD",
+          "generationId": "WW1c4cQuPxc6pGZjBcli",
+          "credits": 2.3331,
+          "bytes": 29289,
+          "sha256": "3a3747e0ff4136feef0d3d6ae181c282d681e27f5aed40156378421b709182af",
+          "prompt": "A rubber cork popping from a hollow wooden vessel, a thick rounded plonk followed by two smaller bouncy pops, cartoon hatching effect, midrange body, no crackle, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-2",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 680.2494331065759,
+            "peakDb": -38.81348692385413,
+            "onsetMs": 0,
+            "attackMs": 195.4421768707483,
+            "decayMs": 15.034013605442176,
+            "centroidHz": 9037.966521783705,
+            "above4kPercent": 40.321621915703496,
+            "tonalPercent": 52.63608182306969,
+            "flags": ["SILENT", "BRIGHT", "HARSH"]
+          }
+        },
+        {
+          "file": "sfx-egg-hatch-7.mp3",
+          "sessionId": "ijcptV7FmF5ZvuP1liKo",
+          "generationId": "PnYSc1RpKOuuRq3QqXyx",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "9f98350e4d151433673304544f8709600ee30cba138b002f6cc7d52bfa33c186",
+          "prompt": "A bouncy cartoon pop followed by two rounded hollow wooden knocks, thick rubbery midrange body, a cheerful little emergence, no hiss, no bass boom, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-3",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 1000,
+            "peakDb": -0.46126839148576454,
+            "onsetMs": 15.034013605442176,
+            "attackMs": 170.38548752834467,
+            "decayMs": 80.18140589569161,
+            "centroidHz": 455.5127598928741,
+            "above4kPercent": 0.0033504755743416054,
+            "tonalPercent": 23.131267177643235,
+            "flags": []
+          }
+        },
+        {
+          "file": "sfx-egg-hatch-8.mp3",
+          "sessionId": "LdsVCSQkmEmZKNk1eGXp",
+          "generationId": "S2k2DG78aQyafm3DujHl",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "f640a251c7da886e5221a90758fb4144c437f1406979708266c71463dd718abe",
+          "prompt": "A bouncy cartoon pop followed by two rounded hollow wooden knocks, thick rubbery midrange body, a cheerful little emergence, no hiss, no bass boom, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-3",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 1000,
+            "peakDb": -0.38279442491261584,
+            "onsetMs": 45.10204081632653,
+            "attackMs": 245.55555555555554,
+            "decayMs": 50.11337868480726,
+            "centroidHz": 537.8476424577499,
+            "above4kPercent": 0.007368838628772604,
+            "tonalPercent": 27.65015151988179,
+            "flags": []
+          }
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "blockingFlags": ["BRIGHT", "HARSH"],
+      "masters": [
+        {
+          "file": "egg-hatch-1.flac",
+          "raw": "sfx-egg-hatch-7.mp3",
+          "rmsDb": -22.00041908410375,
+          "peakDb": -4.505634301598953,
+          "centroidHz": 462.3942938721199,
+          "above4kPercent": 0.003334769404728119,
+          "tonalPercent": 24.9229421670691,
+          "flags": [],
+          "lenMs": 476,
+          "hitMs": 15,
+          "peakMs": 170,
+          "sha256": "081c5eb2fac9eba3bb8c1a042f3a3f6bbcf4afc2becfd9a0f9901401e8c459cd",
+          "bytes": 25933
+        },
+        {
+          "file": "egg-hatch-2.flac",
+          "raw": "sfx-egg-hatch-8.mp3",
+          "rmsDb": -22.002293769402552,
+          "peakDb": -3.010103154935409,
+          "centroidHz": 549.076582891247,
+          "above4kPercent": 0.007370477854588876,
+          "tonalPercent": 27.67253466927364,
+          "flags": [],
+          "lenMs": 807,
+          "hitMs": 10,
+          "peakMs": 246,
+          "sha256": "4c5ae2c9ed2b86017ea62c130f3be29716310c33e422bdab6c798b893bd0f81c",
+          "bytes": 29349
+        }
+      ],
+      "visualTimingSuggestion": {
+        "keyMs": 0,
+        "verified": false,
+        "note": "Proposed only. Use this lead-in only if actual VFX has preparation up to this key; otherwise use keyMs=0 with source offset. Bound playback by actual effect end.",
+        "formula": "startAt = event + keyMs - hitMs; never start before event; a negative delay uses source offset."
+      },
+      "qcAdvisories": []
+    },
+    "tell-voltorb": {
+      "task": "add-field-events:1.4",
+      "nodeId": "36DyoYcW4QmMI4tPx866",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-tell-voltorb-1.mp3",
+          "sessionId": "fq62B1DaUd2R1M8ONh3y",
+          "generationId": "BuNvM3UDyLC0djfjG2FR",
+          "credits": 2.6664,
+          "bytes": 30961,
+          "sha256": "74eb8933fba6405789d49360364de5e82cefafefcb7220348c387a7dae226419",
+          "rawQc": {
+            "lenMs": 800,
+            "peakDb": -6.604572549000881,
+            "onsetMs": 0,
+            "attackMs": 330.7482993197279,
+            "decayMs": 55.12471655328798,
+            "centroidHz": 4304.952955804057,
+            "above4kPercent": 20.38646136852369,
+            "tonalPercent": 19.8218746711833,
+            "flags": ["SLOW-ATTACK", "BRIGHT", "HARSH"]
+          },
+          "prompt": "A rapid accelerating series of dull wooden ticks like a short ticking fuse over about 0.7 seconds, ending with a soft dull rounded thump, muted, mid-range audible on a small speaker, no beep, no ring, no bell, no pitched tone, no alarm, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-tell-voltorb-2.mp3",
+          "sessionId": "10dxxLp6ao3ywlpxSOCz",
+          "generationId": "ukKbNhdLWCwOmkjFpdR8",
+          "credits": 2.6664,
+          "bytes": 30961,
+          "sha256": "af29c9c6058d78e3accb9d24ffe5a70ce4374e018dff85bd216759bd4c2883a5",
+          "rawQc": {
+            "lenMs": 800,
+            "peakDb": -5.9097530955925714,
+            "onsetMs": 145.32879818594105,
+            "attackMs": 20.045351473922903,
+            "decayMs": 50.11337868480726,
+            "centroidHz": 7313.405035370104,
+            "above4kPercent": 65.49699088124973,
+            "tonalPercent": 29.733686889888165,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "prompt": "A rapid accelerating series of dull wooden ticks like a short ticking fuse over about 0.7 seconds, ending with a soft dull rounded thump, muted, mid-range audible on a small speaker, no beep, no ring, no bell, no pitched tone, no alarm, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-tell-voltorb-3.mp3",
+          "sessionId": "iVQjPX8AdHz2YzvtjvrJ",
+          "generationId": "cgSdOE1hv5E4GhL7FdvF",
+          "credits": 2.6664,
+          "bytes": 30961,
+          "sha256": "023b7ef8b167979b2f0333c33ef33984dafd7b4f5d2265a1dce5e308d3797b74",
+          "rawQc": {
+            "lenMs": 800,
+            "peakDb": -0.804662853650856,
+            "onsetMs": 55.12471655328798,
+            "attackMs": 355.8049886621315,
+            "decayMs": 30.068027210884352,
+            "centroidHz": 7637.374893873881,
+            "above4kPercent": 86.02263778548257,
+            "tonalPercent": 42.77613928863752,
+            "flags": ["SLOW-ATTACK", "BRIGHT", "HARSH"]
+          },
+          "prompt": "A rapid accelerating series of dull wooden ticks like a short ticking fuse over about 0.7 seconds, ending with a soft dull rounded thump, muted, mid-range audible on a small speaker, no beep, no ring, no bell, no pitched tone, no alarm, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-tell-voltorb-4.mp3",
+          "sessionId": "FMZkilBjL4sJr5hpKIOU",
+          "generationId": "ZJzHfEpMVfuJ1w3o0sla",
+          "credits": 2.6664,
+          "bytes": 30961,
+          "sha256": "4a14628fe0f21524625d933afc78ae644b477040503f1fae6aa085550392e3ec",
+          "rawQc": {
+            "lenMs": 800,
+            "peakDb": -1.5716833421782639,
+            "onsetMs": 85.19274376417233,
+            "attackMs": 20.045351473922903,
+            "decayMs": 20.045351473922903,
+            "centroidHz": 7390.534624030112,
+            "above4kPercent": 88.34496649456648,
+            "tonalPercent": 17.581835669949832,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "prompt": "A rapid accelerating series of dull wooden ticks like a short ticking fuse over about 0.7 seconds, ending with a soft dull rounded thump, muted, mid-range audible on a small speaker, no beep, no ring, no bell, no pitched tone, no alarm, dry close-mic, no reverb, no music, no voice",
+          "selected": false,
+          "rawRetained": false
+        },
+        {
+          "file": "sfx-tell-voltorb-5.mp3",
+          "sessionId": "hcYt4zZdpLpuMUyjadA7",
+          "generationId": "WKcJCj4ut8Dr9ebfoJra",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "73ed4a49cb6e82c701d75c4de769e08249e7370f31ce541e6bf056b006a8335f",
+          "prompt": "Two urgent hollow bamboo knocks, first knock immediately then a second after 120 milliseconds, rounded woody midrange punch, tightly damped, no click, no bass boom, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -3.0868024940445453,
+            "onsetMs": 0,
+            "attackMs": 40.090702947845806,
+            "decayMs": 60.136054421768705,
+            "centroidHz": 721.1862344195854,
+            "above4kPercent": 0.006627097843507284,
+            "tonalPercent": 27.077132248153045,
+            "flags": ["SLOW-ATTACK"]
+          }
+        },
+        {
+          "file": "sfx-tell-voltorb-6.mp3",
+          "sessionId": "PouftPsmjFbXYGzeF5Eb",
+          "generationId": "jLOVE8pEm3SeqtZI4VWW",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "915398b486b5016d053ffa7d46c774cd92e2702c46e473b5425e0d6473335115",
+          "prompt": "Two urgent hollow bamboo knocks, first knock immediately then a second after 120 milliseconds, rounded woody midrange punch, tightly damped, no click, no bass boom, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -48.70908325132234,
+            "onsetMs": 0,
+            "attackMs": 20.045351473922903,
+            "decayMs": 415.94104308390024,
+            "centroidHz": 1328.3149076139675,
+            "above4kPercent": 0.14071090472069558,
+            "tonalPercent": 80.4847702337227,
+            "flags": ["SILENT", "LONG-DECAY", "TONAL"]
+          }
+        },
+        {
+          "file": "sfx-tell-voltorb-7.mp3",
+          "sessionId": "NY9Q1mf07wqRuuSZvAZE",
+          "generationId": "lqlTkUcNxS42rBK3olvy",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "6eae6c8eced8d5cc7b6e5096eacff64750cea35d221f26a0720e30798ff9cd10",
+          "prompt": "Two urgent hollow bamboo knocks, first knock immediately then a second after 120 milliseconds, rounded woody midrange punch, tightly damped, no click, no bass boom, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -4.147295102100424,
+            "onsetMs": 0,
+            "attackMs": 100.22675736961452,
+            "decayMs": 90.20408163265306,
+            "centroidHz": 778.9981072098354,
+            "above4kPercent": 0.006010803273856135,
+            "tonalPercent": 15.112587478250036,
+            "flags": ["SLOW-ATTACK"]
+          }
+        },
+        {
+          "file": "sfx-tell-voltorb-8.mp3",
+          "sessionId": "vwsD4hChFw6zRdTOrI7P",
+          "generationId": "AkScsAuNFLxG35MkdY8I",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "ddd984202cfc596b0bf363e6f0bf6df4f21cf3f74a40b34588e9a5517aea88e6",
+          "prompt": "Two urgent hollow bamboo knocks, first knock immediately then a second after 120 milliseconds, rounded woody midrange punch, tightly damped, no click, no bass boom, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-1",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -43.218729636246,
+            "onsetMs": 0,
+            "attackMs": 15.034013605442176,
+            "decayMs": 335.7596371882086,
+            "centroidHz": 778.3013483458321,
+            "above4kPercent": 0.04569330056904504,
+            "tonalPercent": 20.185147111997086,
+            "flags": ["SILENT", "LONG-DECAY"]
+          }
+        },
+        {
+          "file": "sfx-tell-voltorb-9.mp3",
+          "sessionId": "ZWOPeOJ3lJdOXYcmLs3s",
+          "generationId": "2jkX38RoqmERXd05yTEo",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "8fde60c664107f32ad7199e7d900b6f77a70f88b0c56356638530fc5988e5325",
+          "prompt": "Two quick urgent taps on a hollow wooden barrel, dull and punchy, the first loud tap at the very start and the second quieter tap 120 milliseconds later. Midrange, tightly damped, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-2",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -4.683089001229977,
+            "onsetMs": 0,
+            "attackMs": 25.05668934240363,
+            "decayMs": 150.34013605442178,
+            "centroidHz": 1603.669505656036,
+            "above4kPercent": 1.53831871276132,
+            "tonalPercent": 14.550420937977194,
+            "flags": []
+          }
+        },
+        {
+          "file": "sfx-tell-voltorb-10.mp3",
+          "sessionId": "RUQlSy85AxDg1al2gxLS",
+          "generationId": "zzMrs1VdlcudNS7HDwzH",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "cb5178a3f8406d0571472776c8e049f2b53ff1a4e5be6822698b3734a46fbd3d",
+          "prompt": "Two quick urgent taps on a hollow wooden barrel, dull and punchy, the first loud tap at the very start and the second quieter tap 120 milliseconds later. Midrange, tightly damped, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-2",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -0.44627300609499754,
+            "onsetMs": 40.090702947845806,
+            "attackMs": 20.045351473922903,
+            "decayMs": 45.10204081632653,
+            "centroidHz": 2250.970033916535,
+            "above4kPercent": 6.677120977806489,
+            "tonalPercent": 47.94984277710952,
+            "flags": []
+          }
+        },
+        {
+          "file": "sfx-tell-voltorb-11.mp3",
+          "sessionId": "4Lc2lUqGA0FuNYM0Vpz3",
+          "generationId": "f4btX7F97Lt3nS3fjwtY",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "54c172728a6b6a30d0e65021c0555ea1ef5b45712a9ee76afb9bb9eebd35d525",
+          "prompt": "Two quick urgent taps on a hollow wooden barrel, dull and punchy, the first loud tap at the very start and the second quieter tap 120 milliseconds later. Midrange, tightly damped, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-2",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -23.797834636565316,
+            "onsetMs": 0,
+            "attackMs": 15.034013605442176,
+            "decayMs": 90.20408163265306,
+            "centroidHz": 1269.7361392428954,
+            "above4kPercent": 0.25045451738575414,
+            "tonalPercent": 40.95489108804632,
+            "flags": []
+          }
+        },
+        {
+          "file": "sfx-tell-voltorb-12.mp3",
+          "sessionId": "PYN56JApMkPtYYLGLeyQ",
+          "generationId": "asdrbuRCDeRPB5kN63dR",
+          "credits": 1.6665,
+          "bytes": 25946,
+          "sha256": "4b4977869f3fde4597a994fac01c6f97edcfa5aab111d1ec26449500b4e9abd9",
+          "prompt": "Two quick urgent taps on a hollow wooden barrel, dull and punchy, the first loud tap at the very start and the second quieter tap 120 milliseconds later. Midrange, tightly damped, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-2",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 480,
+            "peakDb": -7.693080641301257,
+            "onsetMs": 0,
+            "attackMs": 60.136054421768705,
+            "decayMs": 65.14739229024943,
+            "centroidHz": 1933.3087136490844,
+            "above4kPercent": 0.6302579261186503,
+            "tonalPercent": 20.194960088678656,
+            "flags": ["SLOW-ATTACK"]
+          }
+        },
+        {
+          "file": "sfx-tell-voltorb-13.mp3",
+          "sessionId": "PVIHOwdO6cF7D2NtzfJo",
+          "generationId": "oAiBF1ZQH40UeQQO4R7h",
+          "credits": 2.6664,
+          "bytes": 30961,
+          "sha256": "f44f1d8aa8193654982696a7b49e36fe11dc20a059db2694fd8e64c14236c6f0",
+          "prompt": "Exactly two firm knocks on a hollow wooden door: tok, tok. A short pause between the knocks, then silence. Both rounded, dull, punchy and midrange, first knock stronger. Urgent cartoon warning, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.8,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-4",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 800,
+            "peakDb": -0.3644463905771621,
+            "onsetMs": 0,
+            "attackMs": 340.77097505668934,
+            "decayMs": 110.24943310657596,
+            "centroidHz": 775.0452256271062,
+            "above4kPercent": 0.014433124820020104,
+            "tonalPercent": 7.000247087598935,
+            "flags": ["SLOW-ATTACK"]
+          }
+        },
+        {
+          "file": "sfx-tell-voltorb-14.mp3",
+          "sessionId": "FTMJ0tgBaAuBn0LY5qsX",
+          "generationId": "9wbk4jKblne1H3DCYuHQ",
+          "credits": 2.6664,
+          "bytes": 30961,
+          "sha256": "c756f0dba9cf1ddba51dd52aac2ab14c47ddd2947c6807f6f6858a502a9ed36d",
+          "prompt": "Exactly two firm knocks on a hollow wooden door: tok, tok. A short pause between the knocks, then silence. Both rounded, dull, punchy and midrange, first knock stronger. Urgent cartoon warning, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.8,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-4",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 800,
+            "peakDb": -1.6495227380241675,
+            "onsetMs": 0,
+            "attackMs": 95.21541950113378,
+            "decayMs": 95.21541950113378,
+            "centroidHz": 516.06087037657,
+            "above4kPercent": 0.0009922730854469027,
+            "tonalPercent": 10.531663455534144,
+            "flags": ["SLOW-ATTACK"]
+          }
+        },
+        {
+          "file": "sfx-tell-voltorb-15.mp3",
+          "sessionId": "wP7MYzLc9u5o7SzznBtR",
+          "generationId": "hszaN59zTCn7Kf2ZFWho",
+          "credits": 2.6664,
+          "bytes": 30961,
+          "sha256": "a3782fb08378662d0b240a9c114f5d4d09343438f483a997db1acdb386aa1f94",
+          "prompt": "Exactly two firm knocks on a hollow wooden door: tok, tok. A short pause between the knocks, then silence. Both rounded, dull, punchy and midrange, first knock stronger. Urgent cartoon warning, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.8,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-4",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 800,
+            "peakDb": -0.4036497104159273,
+            "onsetMs": 5.011337868480726,
+            "attackMs": 285.6462585034014,
+            "decayMs": 65.14739229024943,
+            "centroidHz": 820.8181997481488,
+            "above4kPercent": 0.00778328111856198,
+            "tonalPercent": 6.90624414766878,
+            "flags": ["SLOW-ATTACK"]
+          }
+        },
+        {
+          "file": "sfx-tell-voltorb-16.mp3",
+          "sessionId": "Wp6RLpgmGscFoKqAB0xN",
+          "generationId": "B1C0yTqevenRCWbjNPcF",
+          "credits": 2.6664,
+          "bytes": 30961,
+          "sha256": "de46a85434097c0e00becd17ba4b6bdb4456d91944d268ddddcea30c39e34f7d",
+          "prompt": "Exactly two firm knocks on a hollow wooden door: tok, tok. A short pause between the knocks, then silence. Both rounded, dull, punchy and midrange, first knock stronger. Urgent cartoon warning, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.8,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-4",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 800,
+            "peakDb": -0.6990214357807955,
+            "onsetMs": 0,
+            "attackMs": 140.31746031746033,
+            "decayMs": 110.24943310657596,
+            "centroidHz": 770.7227061348557,
+            "above4kPercent": 0.0033883271351748904,
+            "tonalPercent": 14.167859264601038,
+            "flags": ["SLOW-ATTACK"]
+          }
+        },
+        {
+          "file": "sfx-tell-voltorb-17.mp3",
+          "sessionId": "OgfwauI6nBf66jHn567x",
+          "generationId": "oFxnxUGrdKLU7hsUziil",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "60af6f33291667c6c370a0773a81fd4527fd9d9e28920a2f79037b237a834b16",
+          "prompt": "Double knock on a wooden door. Two separate rounded hollow tocks, first immediately, short gap, second tock, then silence. Dull woody midrange, nonmusical urgent cartoon warning. No ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-5",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 1000,
+            "peakDb": -0.36675910826336783,
+            "onsetMs": 5.011337868480726,
+            "attackMs": 295.66893424036283,
+            "decayMs": 105.23809523809524,
+            "centroidHz": 1143.75389866719,
+            "above4kPercent": 0.03613127854146867,
+            "tonalPercent": 12.347058163109947,
+            "flags": ["SLOW-ATTACK"]
+          }
+        },
+        {
+          "file": "sfx-tell-voltorb-18.mp3",
+          "sessionId": "WiCIHrOpQWf9OqsYIhnt",
+          "generationId": "cyuG7o0MPQEb4XVl7vLS",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "c390d69f9edc2e65cae4ad6da91e26a42925a60ab98068aa2f55c049187bf76d",
+          "prompt": "Double knock on a wooden door. Two separate rounded hollow tocks, first immediately, short gap, second tock, then silence. Dull woody midrange, nonmusical urgent cartoon warning. No ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-5",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 1000,
+            "peakDb": -0.31887190896491646,
+            "onsetMs": 65.14739229024943,
+            "attackMs": 30.068027210884352,
+            "decayMs": 90.20408163265306,
+            "centroidHz": 949.6187231360873,
+            "above4kPercent": 0.04675901985314634,
+            "tonalPercent": 9.592744570353899,
+            "flags": []
+          }
+        },
+        {
+          "file": "sfx-tell-voltorb-19.mp3",
+          "sessionId": "MU108LFIYz1jpORKGUYJ",
+          "generationId": "8yFcDrB6H7j5R87xDaOo",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "07f77bbea859a0c59228870c94effa3bc00e7412bb8a5a218086ee1dfbf81a70",
+          "prompt": "Double knock on a wooden door. Two separate rounded hollow tocks, first immediately, short gap, second tock, then silence. Dull woody midrange, nonmusical urgent cartoon warning. No ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-5",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 1000,
+            "peakDb": -0.31831336497621754,
+            "onsetMs": 65.14739229024943,
+            "attackMs": 25.05668934240363,
+            "decayMs": 80.18140589569161,
+            "centroidHz": 634.8334064525807,
+            "above4kPercent": 0.0027108944127467592,
+            "tonalPercent": 19.941619765242606,
+            "flags": []
+          }
+        },
+        {
+          "file": "sfx-tell-voltorb-20.mp3",
+          "sessionId": "8avAmnHmYjbedcEnYU54",
+          "generationId": "tctn0MNZkVGjFrPt1ZuL",
+          "credits": 3.333,
+          "bytes": 34305,
+          "sha256": "a79fa05e1b73da315f9bf5d0bc8014fc4e5bbbc3c13adaf7b2fb5e4dc33e4640",
+          "prompt": "Double knock on a wooden door. Two separate rounded hollow tocks, first immediately, short gap, second tock, then silence. Dull woody midrange, nonmusical urgent cartoon warning. No ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          },
+          "round": "rework-5",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 1000,
+            "peakDb": -0.4570224358814035,
+            "onsetMs": 0,
+            "attackMs": 40.090702947845806,
+            "decayMs": 70.15873015873017,
+            "centroidHz": 774.9991130480385,
+            "above4kPercent": 0.023979512786046247,
+            "tonalPercent": 22.603997897905874,
+            "flags": ["SLOW-ATTACK"]
+          }
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "blockingFlags": ["BRIGHT", "HARSH", "SLOW-ATTACK"],
+      "masters": [
+        {
+          "file": "tell-voltorb-1.flac",
+          "raw": "sfx-tell-voltorb-15.mp3",
+          "rmsDb": -22.03481650267232,
+          "peakDb": -3.5802043028587875,
+          "centroidHz": 831.4969511304162,
+          "above4kPercent": 0.007861996942512625,
+          "tonalPercent": 6.264309575372764,
+          "flags": ["SLOW-ATTACK"],
+          "lenMs": 350,
+          "hitMs": 25,
+          "peakMs": 286,
+          "sha256": "32277b06dccb1c429538af1a0d1e6fd2c7c522bc65c898cb57dae69d7a5307a2",
+          "bytes": 18520
+        },
+        {
+          "file": "tell-voltorb-2.flac",
+          "raw": "sfx-tell-voltorb-19.mp3",
+          "rmsDb": -22.000744181868185,
+          "peakDb": -3.8221147204135457,
+          "centroidHz": 641.313690758752,
+          "above4kPercent": 0.001796516549432632,
+          "tonalPercent": 21.06283132032826,
+          "flags": [],
+          "lenMs": 350,
+          "hitMs": 20,
+          "peakMs": 25,
+          "sha256": "b877d47e17626c493021f50ab1fae0edfd3e52d874508668c135fd79739d7576",
+          "bytes": 17838
+        },
+        {
+          "file": "tell-voltorb-3.flac",
+          "raw": "sfx-tell-voltorb-20.mp3",
+          "rmsDb": -22.954352407470246,
+          "peakDb": -2.9992390013763655,
+          "centroidHz": 765.5982072320963,
+          "above4kPercent": 0.024806396246560378,
+          "tonalPercent": 23.030727627328123,
+          "flags": ["SLOW-ATTACK"],
+          "lenMs": 251,
+          "hitMs": 40,
+          "peakMs": 40,
+          "sha256": "3ef9433871f30079f6cc98aed09ece27ce12f8244df2319959675ec662e55dbc",
+          "bytes": 16197
+        }
+      ],
+      "visualTimingSuggestion": {
+        "keyMs": 0,
+        "verified": false,
+        "note": "Proposed only. Use this lead-in only if actual VFX has preparation up to this key; otherwise use keyMs=0 with source offset. Bound playback by actual effect end.",
+        "formula": "startAt = event + keyMs - hitMs; never start before event; a negative delay uses source offset."
+      },
+      "qcAdvisories": ["SLOW-ATTACK"],
+      "qcAdvisoryReason": "Global-peak attack flags the second knock in take15, and the 5ms hop quantization reports 40.09ms in take20. Master hitMs are 25/20/40; a separate 10ms RMS-envelope check confirms two separated impulses, first starts at 20/20/30ms. The 350ms maxMs cap removes a third raw knock from take19. This is measured rhythm evidence, not listening.",
+      "pulseEnvelopeCheck": [
+        {
+          "file": "tell-voltorb-1.flac",
+          "method": "10ms RMS envelope; >=18% of peak, gaps >40ms split pulses",
+          "bursts": [
+            {
+              "startMs": 20,
+              "endMs": 60,
+              "relativePeakDb": -2.99
+            },
+            {
+              "startMs": 280,
+              "endMs": 320,
+              "relativePeakDb": 0.0
+            }
+          ]
+        },
+        {
+          "file": "tell-voltorb-2.flac",
+          "method": "10ms RMS envelope; >=18% of peak, gaps >40ms split pulses",
+          "bursts": [
+            {
+              "startMs": 20,
+              "endMs": 70,
+              "relativePeakDb": -0.63
+            },
+            {
+              "startMs": 200,
+              "endMs": 240,
+              "relativePeakDb": 0.0
+            }
+          ]
+        },
+        {
+          "file": "tell-voltorb-3.flac",
+          "method": "10ms RMS envelope; >=18% of peak, gaps >40ms split pulses",
+          "bursts": [
+            {
+              "startMs": 30,
+              "endMs": 80,
+              "relativePeakDb": 0.0
+            },
+            {
+              "startMs": 140,
+              "endMs": 160,
+              "relativePeakDb": -9.19
+            }
+          ]
+        }
+      ]
+    },
+    "loop-weather-sun": {
+      "task": "add-field-events:1.4",
+      "nodeId": "LJS6NDRyPLbOhoou8hL5",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-loop-weather-sun-1.mp3",
+          "sessionId": "Aa4tNz0nw0iBvTVCuWXk",
+          "generationId": "YjdEN2XqynDQ73lqkvXw",
+          "credits": 53.328,
+          "bytes": 274213,
+          "sha256": "1e12a8dfee047a91ec2d88ba24c912468db63d0f8908cb4993f1450a18481c6c",
+          "rawLoudness": {
+            "input_i": -69.53,
+            "input_tp": -51.28,
+            "input_lra": 0.0,
+            "input_thresh": -79.53
+          },
+          "rawRetained": false,
+          "prompt": "A calm warm steady breeze, a soft low airy hum of a hot sunny day, very quiet, even and constant, no birds, no insects, no melody, no sudden sounds, no hiss, dry, no music, no voice",
+          "rawQc": {
+            "lenMs": 16000,
+            "peakDb": -52.49055639073842,
+            "onsetMs": 0,
+            "attackMs": 15074.104308390022,
+            "decayMs": 380.8616780045351,
+            "centroidHz": 1914.5081547708055,
+            "above4kPercent": 0.10960670524639317,
+            "tonalPercent": 9.675806312677526,
+            "flags": ["SILENT"]
+          },
+          "selected": false
+        },
+        {
+          "file": "sfx-loop-weather-sun-2.mp3",
+          "sessionId": "6giggsexrcrI5mLVkA9u",
+          "generationId": "3wb8IstyJFcRXjXIGmD4",
+          "credits": 53.328,
+          "bytes": 274213,
+          "sha256": "7b69487794ebae2ff2eef829f7edefbc7dc0cdf05ab5c4d9dd27d3493e50496a",
+          "rawLoudness": {
+            "input_i": -66.9,
+            "input_tp": -46.77,
+            "input_lra": 1.2,
+            "input_thresh": -76.9
+          },
+          "rawRetained": false,
+          "prompt": "A calm warm steady breeze, a soft low airy hum of a hot sunny day, very quiet, even and constant, no birds, no insects, no melody, no sudden sounds, no hiss, dry, no music, no voice",
+          "rawQc": {
+            "lenMs": 16000,
+            "peakDb": -47.27784360608338,
+            "onsetMs": 0,
+            "attackMs": 696.5759637188208,
+            "decayMs": 45.10204081632653,
+            "centroidHz": 1564.6198718881544,
+            "above4kPercent": 0.03575989698791341,
+            "tonalPercent": 20.038304514007706,
+            "flags": ["SILENT"]
+          },
+          "selected": false
+        },
+        {
+          "file": "sfx-loop-weather-sun-3.mp3",
+          "sessionId": "bUfqKjViysOiWOCtAtsi",
+          "generationId": "TWtEbd2hA7XOUZUquMob",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "c55eb7bb38f4d3648f8aad8cea9d8f9a77694add19ced4998791165f9c6e16f3",
+          "prompt": "Continuous warm wind rustling broad heavy leaves, full-bodied even midrange rustle clearly present throughout, close and dry, smooth steady texture, no gust impacts, no bass hum, no hiss, no birds, no insects, no bell, no high-pitched sound, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-1",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 8000,
+            "peakDb": -9.811624977430556,
+            "onsetMs": 0,
+            "attackMs": 6665.079365079365,
+            "decayMs": 1333.015873015873,
+            "centroidHz": 7824.478663531467,
+            "above4kPercent": 79.3322574660134,
+            "tonalPercent": 9.602676093735289,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "rawLoudness": {
+            "input_i": -27.57,
+            "input_tp": -8.95,
+            "input_lra": 0.7,
+            "input_thresh": -37.57
+          }
+        },
+        {
+          "file": "sfx-loop-weather-sun-4.mp3",
+          "sessionId": "8m5yEE0f5TNxKSPXhfhF",
+          "generationId": "8B4q5QS3mZPuc2UVnUKV",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "844a8fda36d9b70efeb144f67ca75f64aecd3dbad2377fdaa208021d26ba7e50",
+          "prompt": "Continuous warm wind rustling broad heavy leaves, full-bodied even midrange rustle clearly present throughout, close and dry, smooth steady texture, no gust impacts, no bass hum, no hiss, no birds, no insects, no bell, no high-pitched sound, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-1",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 8000,
+            "peakDb": -16.784824078179803,
+            "onsetMs": 0,
+            "attackMs": 851.9274376417234,
+            "decayMs": 7146.167800453515,
+            "centroidHz": 7716.295307962675,
+            "above4kPercent": 82.740175379926,
+            "tonalPercent": 8.817651054811511,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "rawLoudness": {
+            "input_i": -27.2,
+            "input_tp": -13.53,
+            "input_lra": 2.7,
+            "input_thresh": -37.2
+          }
+        },
+        {
+          "file": "sfx-loop-weather-sun-5.mp3",
+          "sessionId": "IAtKv95xp0a2QKVI17CE",
+          "generationId": "MhCt5SMQhKbn5VJddpDR",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "6c4feccb3f182811fa598ba8686a784a18810302d4a16ea3eb46fa279ab66267",
+          "prompt": "Continuous smooth swishing of a heavy canvas sail in a warm breeze, rounded leathery fluttering with full midrange body, evenly present throughout, steady moderate volume, no impacts, no sub bass, no whistle, no bell, no high-pitched sound, dry close-mic, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-3",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 8000,
+            "peakDb": -10.379231282844792,
+            "onsetMs": 0,
+            "attackMs": 1909.3197278911564,
+            "decayMs": 6088.775510204082,
+            "centroidHz": 2191.7068930845876,
+            "above4kPercent": 0.8023671464590836,
+            "tonalPercent": 8.708923128182635,
+            "flags": []
+          }
+        },
+        {
+          "file": "sfx-loop-weather-sun-6.mp3",
+          "sessionId": "zKZfSfqmcBbFG0bnwC94",
+          "generationId": "GbWx8k80bKi909FE0xsW",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "3d99bf896add4fdd51ef7966487dd0870f2ccf321f23724706f337abfb615584",
+          "prompt": "Continuous smooth swishing of a heavy canvas sail in a warm breeze, rounded leathery fluttering with full midrange body, evenly present throughout, steady moderate volume, no impacts, no sub bass, no whistle, no bell, no high-pitched sound, dry close-mic, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-3",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 8000,
+            "peakDb": -4.951801595975832,
+            "onsetMs": 0,
+            "attackMs": 6860.521541950114,
+            "decayMs": 1137.5736961451248,
+            "centroidHz": 1685.27412525525,
+            "above4kPercent": 0.6355778784600563,
+            "tonalPercent": 7.357134405287928,
+            "flags": []
+          },
+          "rawLoudness": {
+            "integratedLufs": -21.16,
+            "truePeakDbtp": -4.9,
+            "loudnessRangeLu": 0.5
+          }
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "sourceQcWarning": "Both raw takes are near-silent: true peaks -51.28/-46.77 dBTP, integrated -69.53/-66.90 LUFS. Do not normalize and call them accepted; raw-source review/replacement is needed in addition to the ambient interface.",
+      "masters": [
+        {
+          "file": "loop-weather-sun.m4a",
+          "raw": "sfx-loop-weather-sun-6.mp3",
+          "rmsDb": -30.472571442938264,
+          "peakDb": -11.882933064270844,
+          "centroidHz": 1541.676413629912,
+          "above4kPercent": 0.5714200103332713,
+          "tonalPercent": 7.4593872596636075,
+          "flags": [],
+          "lenMs": 7750,
+          "hitMs": 205,
+          "peakMs": 6861,
+          "lufs": -28.1,
+          "sha256": "6bb9f13e090f70518a96a81376f395bde3b8b89ca0c369005c49964c5acfa4f4",
+          "bytes": 126618,
+          "encodedLoudness": {
+            "integratedLufs": -27.93,
+            "truePeakDbtp": -11.87,
+            "loudnessRangeLu": 0.7,
+            "seamSampleJumpDbfs": -51.456,
+            "seam50msRmsDifferenceDb": 4.311
+          }
+        }
+      ]
+    },
+    "loop-weather-rain": {
+      "task": "add-field-events:1.4",
+      "nodeId": "WCjYGwQiZFKC8iZrjmWS",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-loop-weather-rain-1.mp3",
+          "sessionId": "vP9dqpIRW7rZF8Obix56",
+          "generationId": "zXnPWG9biAc4EZ8GGVcV",
+          "credits": 53.328,
+          "bytes": 274213,
+          "sha256": "06f35ba4af4592d32dc93b29319f82473129a34301292ca899b9d66fc99a4f16",
+          "rawLoudness": {
+            "input_i": -54.43,
+            "input_tp": -24.53,
+            "input_lra": 1.1,
+            "input_thresh": -64.43
+          },
+          "rawRetained": false,
+          "prompt": "Gentle steady soft rain falling on leaves and soil, even, muted and warm, constant, no thunder, no sudden sounds, no hiss, no music, no voice",
+          "rawQc": {
+            "lenMs": 16000,
+            "peakDb": -26.206804811399394,
+            "onsetMs": 0,
+            "attackMs": 12854.081632653062,
+            "decayMs": 3142.108843537415,
+            "centroidHz": 8177.007792128182,
+            "above4kPercent": 52.19294742335815,
+            "tonalPercent": 2.192643183141176,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "selected": false
+        },
+        {
+          "file": "sfx-loop-weather-rain-2.mp3",
+          "sessionId": "KOYozNX4oLYwQitTxP7z",
+          "generationId": "M4O0yTWQSQwNPYPu14ft",
+          "credits": 53.328,
+          "bytes": 274213,
+          "sha256": "06ae9f818e748542d6d9261bc871b205de8807d420b769042fc895d7531ea5b2",
+          "rawLoudness": {
+            "input_i": -51.34,
+            "input_tp": -26.41,
+            "input_lra": 0.7,
+            "input_thresh": -61.34
+          },
+          "rawRetained": false,
+          "prompt": "Gentle steady soft rain falling on leaves and soil, even, muted and warm, constant, no thunder, no sudden sounds, no hiss, no music, no voice",
+          "rawQc": {
+            "lenMs": 16000,
+            "peakDb": -26.464513599528136,
+            "onsetMs": 0,
+            "attackMs": 8870.068027210884,
+            "decayMs": 7126.122448979592,
+            "centroidHz": 8146.857855285492,
+            "above4kPercent": 80.88516124013911,
+            "tonalPercent": 0.800246132366177,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "selected": false
+        },
+        {
+          "file": "sfx-loop-weather-rain-3.mp3",
+          "sessionId": "w31xZKOELcWCQ0xjCuU3",
+          "generationId": "NDSsLFRII6PJerIM5ICh",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "a71c031efafb4373f56f4184b4397caff7678233d80e59604ebb7e9a0ff463c0",
+          "prompt": "Continuous rain pattering on hollow wood and puddles, rounded fat drop plops forming a dense even midrange texture clearly present throughout, no individual loud impacts, no hiss, no thunder, no bell, no high-pitched sound, dry close-mic, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-1",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 8000,
+            "peakDb": -8.623753020697508,
+            "onsetMs": 0,
+            "attackMs": 922.0861678004535,
+            "decayMs": 110.24943310657596,
+            "centroidHz": 7073.736251779431,
+            "above4kPercent": 87.21028117903579,
+            "tonalPercent": 16.83037366181221,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "rawLoudness": {
+            "input_i": -35.79,
+            "input_tp": -8.11,
+            "input_lra": 1.3,
+            "input_thresh": -45.79
+          }
+        },
+        {
+          "file": "sfx-loop-weather-rain-4.mp3",
+          "sessionId": "r7jVoML14jsMfdNW03aN",
+          "generationId": "3It9xvvc7E6rfBuOQ73v",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "6fdfdf9dacf11c3365ead29b75dec281835732cccb4e6509c10cbe7b73aaa951",
+          "prompt": "Continuous rain pattering on hollow wood and puddles, rounded fat drop plops forming a dense even midrange texture clearly present throughout, no individual loud impacts, no hiss, no thunder, no bell, no high-pitched sound, dry close-mic, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-1",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 8000,
+            "peakDb": -17.422058205601576,
+            "onsetMs": 0,
+            "attackMs": 2866.485260770975,
+            "decayMs": 155.3514739229025,
+            "centroidHz": 5573.618739006846,
+            "above4kPercent": 27.417105590700036,
+            "tonalPercent": 10.405931039530584,
+            "flags": ["BRIGHT"]
+          },
+          "rawLoudness": {
+            "input_i": -39.97,
+            "input_tp": -17.01,
+            "input_lra": 1.0,
+            "input_thresh": -49.97
+          }
+        },
+        {
+          "file": "sfx-loop-weather-rain-5.mp3",
+          "sessionId": "a4h399CQP4kIgihnhxIv",
+          "generationId": "eCzHy8JEe24MiP5WrAih",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "74471110e790c6450f7d1fe5bdcade575352046c1ee9162db9693541c6005dec",
+          "prompt": "Continuous watery gurgling and fat plopping sounds in a hollow wooden trough, dense rounded midrange texture like rainfall collecting in a puddle, even moderate volume throughout with no loud accents, no spray hiss, no bell, no high-pitched sound, dry close-mic, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-3",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 8000,
+            "peakDb": -12.046262526233718,
+            "onsetMs": 0,
+            "attackMs": 6409.501133786848,
+            "decayMs": 30.068027210884352,
+            "centroidHz": 7330.86893519939,
+            "above4kPercent": 27.279168058110436,
+            "tonalPercent": 13.471370159493764,
+            "flags": ["BRIGHT"]
+          }
+        },
+        {
+          "file": "sfx-loop-weather-rain-6.mp3",
+          "sessionId": "cyXmy40i4V9NUhHc5aD1",
+          "generationId": "ZnLuhbwP34zpD3mK4BES",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "7713270736e4882fdaf0f9d3708b6917b6551edd554853a25ffe7176a2f0be99",
+          "prompt": "Continuous watery gurgling and fat plopping sounds in a hollow wooden trough, dense rounded midrange texture like rainfall collecting in a puddle, even moderate volume throughout with no loud accents, no spray hiss, no bell, no high-pitched sound, dry close-mic, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-3",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 8000,
+            "peakDb": -14.233443004215845,
+            "onsetMs": 0,
+            "attackMs": 7607.210884353742,
+            "decayMs": 25.05668934240363,
+            "centroidHz": 8442.649632903578,
+            "above4kPercent": 46.82146546422953,
+            "tonalPercent": 9.379054765278088,
+            "flags": ["BRIGHT", "HARSH"]
+          }
+        },
+        {
+          "file": "sfx-loop-weather-rain-7.mp3",
+          "sessionId": "MMYa0OetaKWYHiaXfJ7A",
+          "generationId": "RDNpPOJrnlWfzObvz9GX",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "e7e510ddb8f79296980217849a7f6e4cbb431f0637e5571b0225fc6ff0e410f7",
+          "prompt": "A continuous scattered patter of muted hollow wooden knocks and thick liquid plops, irregular tiny rounded tok sounds overlapping into an even texture, warm midrange body, moderate volume, cartoon water ambience, no sharp clicks, no spray hiss, no bell, no high-pitched sound, dry close-mic, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-4",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "lenMs": 8000,
+            "peakDb": -0.26823577035693347,
+            "onsetMs": 5.011337868480726,
+            "attackMs": 6740.249433106576,
+            "decayMs": 35.07936507936508,
+            "centroidHz": 1945.3915128769602,
+            "above4kPercent": 0.5025661258441508,
+            "tonalPercent": 35.576805236998425,
+            "flags": []
+          },
+          "rawLoudness": {
+            "integratedLufs": -20.79,
+            "truePeakDbtp": -0.2,
+            "loudnessRangeLu": 3.1
+          }
+        },
+        {
+          "file": "sfx-loop-weather-rain-8.mp3",
+          "sessionId": "ZTEO5jmTbUZ0jbYEmgB2",
+          "generationId": "a3pkOggPixH32LIPxAUp",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "923c8f739c17131c1ef9ea80f2e6f67976fb7501b876906d5fdc719cd145a8ca",
+          "prompt": "A continuous scattered patter of muted hollow wooden knocks and thick liquid plops, irregular tiny rounded tok sounds overlapping into an even texture, warm midrange body, moderate volume, cartoon water ambience, no sharp clicks, no spray hiss, no bell, no high-pitched sound, dry close-mic, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-4",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "lenMs": 8000,
+            "peakDb": -4.382568287223739,
+            "onsetMs": 0,
+            "attackMs": 385.87301587301585,
+            "decayMs": 30.068027210884352,
+            "centroidHz": 1101.9229443760569,
+            "above4kPercent": 0.4202845164115107,
+            "tonalPercent": 8.63584075562729,
+            "flags": []
+          }
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "sourceQcWarning": "Integrated -54.43/-51.34 LUFS despite peaks -24.53/-26.41 dBTP; inspect sustained content and crest factor before selecting an ambient loop.",
+      "masters": [
+        {
+          "file": "loop-weather-rain.m4a",
+          "raw": "sfx-loop-weather-rain-7.mp3",
+          "rmsDb": -35.7719745892808,
+          "peakDb": -6.607003181990639,
+          "centroidHz": 1970.0540855558204,
+          "above4kPercent": 0.45341050313040165,
+          "tonalPercent": 34.23097079154041,
+          "flags": [],
+          "lenMs": 7750,
+          "hitMs": 952,
+          "peakMs": 6745,
+          "lufs": -28.2,
+          "sha256": "6271a3c135ec55ecaabfa11e4e66e5ef925e03f3a13ada7804da383343797964",
+          "bytes": 129576,
+          "encodedLoudness": {
+            "integratedLufs": -27.5,
+            "truePeakDbtp": -6.58,
+            "loudnessRangeLu": 3.2,
+            "seamSampleJumpDbfs": -96.455,
+            "seam50msRmsDifferenceDb": 11.369
+          }
+        }
+      ]
+    },
+    "loop-weather-sand": {
+      "task": "add-field-events:1.4",
+      "nodeId": "FuCMGtWh4KUAQBa3dIho",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-loop-weather-sand-1.mp3",
+          "sessionId": "yx9xgDCdBHk1c2TgZ7ac",
+          "generationId": "0B9f7MXrtP5Xz2UPxLnl",
+          "credits": 53.328,
+          "bytes": 274213,
+          "sha256": "9720772791417dd819e11ecff5ace7502062a4f22e3a215fd352a9113436ec5b",
+          "rawLoudness": {
+            "integratedLufs": -40.91,
+            "truePeakDbtp": -18.42,
+            "loudnessRangeLu": 2.9
+          },
+          "rawRetained": true,
+          "prompt": "Steady low wind blowing fine dry sand across the ground, a soft even rustling rush, muted and warm, constant, no whistle, no sudden gusts, no thunder, no hiss, no music, no voice",
+          "params": {
+            "duration_seconds": 16,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "rawQc": {
+            "lenMs": 16000,
+            "peakDb": -18.463537346734537,
+            "onsetMs": 0,
+            "attackMs": 14753.378684807256,
+            "decayMs": 40.090702947845806,
+            "centroidHz": 501.55761504603504,
+            "above4kPercent": 0.015638005513558498,
+            "tonalPercent": 24.69789627851915,
+            "flags": []
+          },
+          "selected": true
+        },
+        {
+          "file": "sfx-loop-weather-sand-2.mp3",
+          "sessionId": "cLH7P4OLAgeX1eBqlY5K",
+          "generationId": "y062YQdQztYGaRPMobC4",
+          "credits": 53.328,
+          "bytes": 274213,
+          "sha256": "14e8ca5991bd06b1003a6986a35e8e50dfe5fc5b0418ea4175a6eaa947e684ae",
+          "rawLoudness": {
+            "input_i": -69.09,
+            "input_tp": -54.9,
+            "input_lra": 0.3,
+            "input_thresh": -79.09
+          },
+          "rawRetained": false,
+          "prompt": "Steady low wind blowing fine dry sand across the ground, a soft even rustling rush, muted and warm, constant, no whistle, no sudden gusts, no thunder, no hiss, no music, no voice",
+          "params": {
+            "duration_seconds": 16,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "rawQc": {
+            "lenMs": 16000,
+            "peakDb": -55.052439351323905,
+            "onsetMs": 0,
+            "attackMs": 3467.845804988662,
+            "decayMs": 1032.3356009070294,
+            "centroidHz": 2722.0712852450383,
+            "above4kPercent": 0.512840530120989,
+            "tonalPercent": 7.069780389989057,
+            "flags": ["SILENT"]
+          },
+          "selected": false
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "sourceQcWarning": "Take 2 is near-silent (-54.90 dBTP, -69.09 LUFS); take 1 remains a raw candidate (-18.42 dBTP, -40.91 LUFS), not a validated loop.",
+      "masters": [
+        {
+          "file": "loop-weather-sand.m4a",
+          "raw": "sfx-loop-weather-sand-1.mp3",
+          "rmsDb": -19.088553291969514,
+          "peakDb": -6.0171639718052115,
+          "centroidHz": 500.11010384430796,
+          "above4kPercent": 0.013955515874749531,
+          "tonalPercent": 24.554751269630717,
+          "flags": [],
+          "lenMs": 15750,
+          "hitMs": 732,
+          "peakMs": 14753,
+          "lufs": -28,
+          "sha256": "337e00501dcecffc18c7039375e303d4d2716a39b7eacb9d01929b194ac2a437",
+          "bytes": 256090,
+          "encodedLoudness": {
+            "integratedLufs": -28.22,
+            "truePeakDbtp": -6.02,
+            "loudnessRangeLu": 3.0,
+            "seamSampleJumpDbfs": -40.584,
+            "seam50msRmsDifferenceDb": -2.063
+          }
+        }
+      ]
+    },
+    "loop-weather-hail": {
+      "task": "add-field-events:1.4",
+      "nodeId": "kHNs8dSTaess5cOHLzKU",
+      "generatedDate": "2026-11-17",
+      "takes": [
+        {
+          "file": "sfx-loop-weather-hail-1.mp3",
+          "sessionId": "Vd071jpCv0AkIYrTZQ2i",
+          "generationId": "RPsqBxpuOjmZ8MQizs4A",
+          "credits": 53.328,
+          "bytes": 274213,
+          "sha256": "ca4c18db819aa26f4a0e95070da49d94ef1d442f9bc2d6ac9c0deb1373edacbf",
+          "rawLoudness": {
+            "integratedLufs": -35.0,
+            "truePeakDbtp": -12.03,
+            "loudnessRangeLu": 1.5
+          },
+          "rawRetained": true,
+          "prompt": "Steady cold wind with a constant light soft hail patter on snow and wood, quiet, even and muted, no ice chime, no glass, no sudden sounds, no hiss, no music, no voice",
+          "params": {
+            "duration_seconds": 16,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "rawQc": {
+            "lenMs": 16000,
+            "peakDb": -14.702509678977567,
+            "onsetMs": 0,
+            "attackMs": 14953.832199546485,
+            "decayMs": 1042.3582766439908,
+            "centroidHz": 7977.144411089637,
+            "above4kPercent": 93.13856039826884,
+            "tonalPercent": 14.74075455388614,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "selected": false
+        },
+        {
+          "file": "sfx-loop-weather-hail-2.mp3",
+          "sessionId": "WyCsTbMdUfIo2J9ZCOTS",
+          "generationId": "9GX0OnMt5MQNED1fA43w",
+          "credits": 53.328,
+          "bytes": 274213,
+          "sha256": "08cd7f3ca9c5a130498098b9442b0cce227ac7ddcf662a89467392f85cee16a1",
+          "rawLoudness": {
+            "integratedLufs": -32.87,
+            "truePeakDbtp": -20.46,
+            "loudnessRangeLu": 1.3
+          },
+          "rawRetained": true,
+          "prompt": "Steady cold wind with a constant light soft hail patter on snow and wood, quiet, even and muted, no ice chime, no glass, no sudden sounds, no hiss, no music, no voice",
+          "params": {
+            "duration_seconds": 16,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "rawQc": {
+            "lenMs": 16000,
+            "peakDb": -25.336376585561588,
+            "onsetMs": 0,
+            "attackMs": 13786.190476190477,
+            "decayMs": 2210,
+            "centroidHz": 9755.4872984915,
+            "above4kPercent": 95.34670384728862,
+            "tonalPercent": 9.990979337311364,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "selected": false
+        },
+        {
+          "file": "sfx-loop-weather-hail-3.mp3",
+          "sessionId": "J04ERqFhChsV7wI3J6Kj",
+          "generationId": "d4fPzaSHbGxGOeHWImMe",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "bab035c9e30e2ff4b0f8cfe02a0a5eb6d3301d5aaffbf428fa910d392b73eee0",
+          "prompt": "A continuous scattered patter of small rounded ice pellets tapping hollow wood: muted chunky tok sounds with clear midrange body, irregular overlapping light knocks over an even leathery wind bed. Clean cartoon hail ambience, moderate volume throughout, no loud impacts, no metallic clink, no glass, no bell, no high-pitched sound, no spray hiss, no sub-bass rumble, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-6",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "file": "sfx-loop-weather-hail-3.mp3",
+            "peakDb": -1.5287752541736952,
+            "centroidHz": 8860.193430750485,
+            "above4kPercent": 97.81131489888855,
+            "tonalPercent": 15.57598043075683,
+            "lufs": -21.5,
+            "lenMs": 8000,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "rejectionReason": "BRIGHT/HARSH: >93% of energy above 4kHz; not mastered or selected."
+        },
+        {
+          "file": "sfx-loop-weather-hail-4.mp3",
+          "sessionId": "TRU0ULFueJmAx203Rbmp",
+          "generationId": "ErLUyHveITxyACRcYQPW",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "5ee15d01a5d06f9e04400cd1b421b4093b0852d4020efa420ff035b6de26b6cf",
+          "prompt": "A continuous scattered patter of small rounded ice pellets tapping hollow wood: muted chunky tok sounds with clear midrange body, irregular overlapping light knocks over an even leathery wind bed. Clean cartoon hail ambience, moderate volume throughout, no loud impacts, no metallic clink, no glass, no bell, no high-pitched sound, no spray hiss, no sub-bass rumble, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-6",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "file": "sfx-loop-weather-hail-4.mp3",
+            "peakDb": -2.3126231943895683,
+            "centroidHz": 8576.749106537363,
+            "above4kPercent": 93.01954328745741,
+            "tonalPercent": 5.025217338220962,
+            "lufs": -29,
+            "lenMs": 8000,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "rejectionReason": "BRIGHT/HARSH: >93% of energy above 4kHz; not mastered or selected."
+        },
+        {
+          "file": "sfx-loop-weather-hail-5.mp3",
+          "sessionId": "2DQ5dSRpO3iP78nXaG66",
+          "generationId": "Mr0lBbb2BnWExKB3RUvQ",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "f37a870ccee495c90558bbf1c9cb70ef0984d8ae9b1bf5ec1c167e2dee530fcf",
+          "prompt": "A continuous scattered patter of muted hollow wooden knocks, tiny rounded tok sounds bouncing irregularly over a smooth canvas-like wind bed. Full warm midrange body, light and clean, even moderate volume throughout, cartoon ambience. No loud impacts, no sharp clicks, no metallic sound, no ring, no bell, no high-pitched sound, no spray hiss, no sub-bass rumble, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-7",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "file": "sfx-loop-weather-hail-5.mp3",
+            "peakDb": -15.610959094143313,
+            "centroidHz": 1545.6843705112124,
+            "above4kPercent": 0.06481192684738127,
+            "tonalPercent": 29.946808283188293,
+            "lufs": -43.6,
+            "lenMs": 8000,
+            "flags": []
+          },
+          "rejectionReason": "Weak source at -43.6 LUFS with isolated peaks; did not normalize this borderline source into a success."
+        },
+        {
+          "file": "sfx-loop-weather-hail-6.mp3",
+          "sessionId": "CeAKduI9jMI1UrgvSh6I",
+          "generationId": "g5zYPl1zOJOVRRZVz9dn",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "8a5294a3eb00b22fb2e3a6d5ed57f9d2f7eea6d47c0c3ab92f87ac58920c785c",
+          "prompt": "A continuous scattered patter of muted hollow wooden knocks, tiny rounded tok sounds bouncing irregularly over a smooth canvas-like wind bed. Full warm midrange body, light and clean, even moderate volume throughout, cartoon ambience. No loud impacts, no sharp clicks, no metallic sound, no ring, no bell, no high-pitched sound, no spray hiss, no sub-bass rumble, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-7",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "file": "sfx-loop-weather-hail-6.mp3",
+            "peakDb": -10.75232325698396,
+            "centroidHz": 940.6189555459858,
+            "above4kPercent": 0.09979296967271305,
+            "tonalPercent": 12.245364041696643,
+            "lufs": -37,
+            "lenMs": 8000,
+            "flags": []
+          },
+          "rejectionReason": "AAC peak above -6dBFS ceiling and integrated loudness -29.3 LUFS, held back by isolated peaks."
+        },
+        {
+          "file": "sfx-loop-weather-hail-7.mp3",
+          "sessionId": "nvfqyVrp8pAlNIdDasSp",
+          "generationId": "aiwxjdnptXI2RbfmNEFj",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "ca64aea6437135ce90c32fde17285e120dd4ac6ddc01ba9ddf4f960981389a09",
+          "prompt": "Continuous dense wooden patter, many rounded hollow tocks overlapping into a smooth full midrange texture, supported by steady leathery airflow. A sustained even bed of tumbling little objects, no isolated loud knocks, no gaps, moderate consistent volume. Clean cartoon ambience, no metallic sound, no ring, no bell, no high-pitched sound, no sharp clicks, no hiss, no sub-bass rumble, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-8",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "file": "sfx-loop-weather-hail-7.mp3",
+            "peakDb": -2.751521061319867,
+            "centroidHz": 10410.957983587272,
+            "above4kPercent": 99.53709264446444,
+            "tonalPercent": 39.036210498980225,
+            "lufs": -12.3,
+            "lenMs": 8000,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "rejectionReason": "BRIGHT/HARSH: dense-patter wording yielded >94% energy above 4kHz."
+        },
+        {
+          "file": "sfx-loop-weather-hail-8.mp3",
+          "sessionId": "iZM7YRWuYzOvl9Vjj3FK",
+          "generationId": "pgzxUdHyTp653REZc1Q7",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "f2f2049e8ac2ecc84f1145bb17a071e78d6b023a03a221ea28213125d2d448eb",
+          "prompt": "Continuous dense wooden patter, many rounded hollow tocks overlapping into a smooth full midrange texture, supported by steady leathery airflow. A sustained even bed of tumbling little objects, no isolated loud knocks, no gaps, moderate consistent volume. Clean cartoon ambience, no metallic sound, no ring, no bell, no high-pitched sound, no sharp clicks, no hiss, no sub-bass rumble, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-8",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "file": "sfx-loop-weather-hail-8.mp3",
+            "peakDb": -1.8432900006302078,
+            "centroidHz": 9538.413318323079,
+            "above4kPercent": 94.27458419084259,
+            "tonalPercent": 20.16299825324234,
+            "lufs": -18.2,
+            "lenMs": 8000,
+            "flags": ["BRIGHT", "HARSH"]
+          },
+          "rejectionReason": "BRIGHT/HARSH: dense-patter wording yielded >94% energy above 4kHz."
+        },
+        {
+          "file": "sfx-loop-weather-hail-9.mp3",
+          "sessionId": "q6NPX1BPKb7HvTU8KpMJ",
+          "generationId": "cAp2bMtwdbskriUsMpOY",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "b413813621e60fe474880d034101f7257db3a96ad4344a043d52f6d5e74e0dc7",
+          "prompt": "A continuous scattered patter of muted hollow wooden knocks and thick rubbery plops, irregular tiny rounded tok sounds overlapping into an even texture, warm midrange body, moderate volume, cartoon ambience of small round objects bouncing on wood. No loud accents, no sharp clicks, no spray hiss, no ring, no bell, no high-pitched sound, dry close-mic, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-9",
+          "selected": true,
+          "rawRetained": true,
+          "rawQc": {
+            "file": "sfx-loop-weather-hail-9.mp3",
+            "peakDb": -3.937006865688026,
+            "centroidHz": 682.4121721964528,
+            "above4kPercent": 0.0012405518994053775,
+            "tonalPercent": 19.389722133656782,
+            "lufs": -27.2,
+            "lenMs": 8000,
+            "flags": []
+          }
+        },
+        {
+          "file": "sfx-loop-weather-hail-10.mp3",
+          "sessionId": "ggXDcIyyXOwphiRWqgoe",
+          "generationId": "mjbMcIzyRnJ8cp31YWkb",
+          "credits": 26.664,
+          "bytes": 146318,
+          "sha256": "7a979ac04cc6ea697104eee381be8b809d3039bc6f481cb827424c81bb47cafc",
+          "prompt": "A continuous scattered patter of muted hollow wooden knocks and thick rubbery plops, irregular tiny rounded tok sounds overlapping into an even texture, warm midrange body, moderate volume, cartoon ambience of small round objects bouncing on wood. No loud accents, no sharp clicks, no spray hiss, no ring, no bell, no high-pitched sound, dry close-mic, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          },
+          "round": "rework-9",
+          "selected": false,
+          "rawRetained": false,
+          "rawQc": {
+            "file": "sfx-loop-weather-hail-10.mp3",
+            "peakDb": -5.426724159541276,
+            "centroidHz": 871.8779650006874,
+            "above4kPercent": 0.017411870986378974,
+            "tonalPercent": 15.547517427683037,
+            "lufs": -33,
+            "lenMs": 8000,
+            "flags": []
+          },
+          "rejectionReason": "Not selected: stronger raw level and measured encoded headroom in take9."
+        }
+      ],
+      "status": "measured-qc-candidate-awaiting-runtime",
+      "rejectedMasters": [
+        {
+          "file": "loop-weather-hail.m4a",
+          "raw": "sfx-loop-weather-hail-2.mp3",
+          "rmsDb": -34.41249634657397,
+          "peakDb": -16.233055361364066,
+          "centroidHz": 9755.181755648677,
+          "above4kPercent": 94.88291148303686,
+          "tonalPercent": 15.262420376085684,
+          "flags": ["BRIGHT", "HARSH"],
+          "lenMs": 15750,
+          "hitMs": 20,
+          "peakMs": 13786,
+          "lufs": -28.1
+        },
+        {
+          "file": "loop-weather-hail.m4a",
+          "peakDb": -5.79945007433979,
+          "centroidHz": 1167.768661984963,
+          "above4kPercent": 0.09002816817193929,
+          "tonalPercent": 12.169564924618799,
+          "lufs": -29.3,
+          "lenMs": 7750,
+          "flags": [],
+          "raw": "sfx-loop-weather-hail-6.mp3",
+          "sha256": "40a3ac76af41cc499fbcc30141914e88a25432f749de8ffa70225e88ecb2e981",
+          "bytes": 129638,
+          "truePeakDbtp": -5.79,
+          "rejectionReason": "AAC peak above -6dBFS ceiling and integrated loudness -29.3 LUFS, held back by isolated peaks."
+        }
+      ],
+      "masters": [
+        {
+          "file": "loop-weather-hail.m4a",
+          "peakDb": -6.076004994468962,
+          "centroidHz": 689.1167396072233,
+          "above4kPercent": 0.0012148732548330219,
+          "tonalPercent": 19.36441924637395,
+          "lufs": -28.1,
+          "lenMs": 7750,
+          "flags": [],
+          "raw": "sfx-loop-weather-hail-9.mp3",
+          "sha256": "4dca3f1b06d76dfcc0c8ba0bca559d02ec059112756f4724f2244624572de4cd",
+          "bytes": 131076,
+          "encodedLoudness": {
+            "integratedLufs": -28.3,
+            "truePeakDbtp": -6.07,
+            "loudnessRangeLu": 1.4,
+            "seamSampleJumpDbfs": -70.023,
+            "seam50msRmsDifferenceDb": -8.935
+          }
+        }
+      ],
+      "qcBlockers": [],
+      "qcAdvisories": [],
+      "visualTimingSuggestion": {
+        "keyMs": null,
+        "verified": false,
+        "note": "Continuous ambience bed, not a one-shot visual impact; no hitMs/key-frame alignment claimed. Actual weather start/fade scheduling belongs to runtime wiring."
+      },
+      "hailRework": {
+        "authorizedReason": "User explicitly expanded rework scope to excessive high-frequency spectrum.",
+        "estimatedCreditsPerRound": [176, 176, 176, 176],
+        "newGenerations": 8,
+        "newCredits": 213.312,
+        "selectedRaw": "sfx-loop-weather-hail-9.mp3",
+        "rawIntegratedLufs": -27.2,
+        "masterGainDb": -0.9,
+        "reportLimitation": "audio:master --report only reports kind:sfx; ambience spectral/loudness QC uses the same current project measurement functions in /private/tmp/poketone-hail-qc.mjs plus ffmpeg loudnorm on encoded AAC.",
+        "humanAudition": false,
+        "deviceAcceptance": false,
+        "published": false,
+        "costScope": "Hail rework only; mixed-batch cumulative totals remain in the original source, outside field expenditure."
+      }
+    }
+  },
+  "generationSummary": {
+    "nodesReused": 15,
+    "originalCompletedTakes": 34,
+    "originalCredits": 552.6114,
+    "reworkCompletedTakes": 64,
+    "reworkCredits": 589.2744,
+    "completedTakes": 98,
+    "failedGenerations": 0,
+    "credits": 1141.8858,
+    "costSource": "creative_get_flow_run_status generation.price.credits, not rounded run credit_costs. Estimates recorded per round; every round <1000 credits.",
+    "generationCallsPerNode": {
+      "weather-sun": 2,
+      "weather-rain": 2,
+      "weather-sand": 3,
+      "weather-hail": 2,
+      "site-flute": 1,
+      "site-fishing": 2,
+      "site-dig": 4,
+      "site-den": 1,
+      "shiny": 1,
+      "egg-hatch": 4,
+      "tell-voltorb": 5,
+      "loop-weather-sun": 3,
+      "loop-weather-rain": 4,
+      "loop-weather-sand": 1,
+      "loop-weather-hail": 5
+    },
+    "unselectedTakes": 69,
+    "retainedRawFiles": 31,
+    "rawRetentionNote": "Previously deleted unselected raw files are represented by their complete generation metadata and rawRetained:false. This split neither deletes nor regenerates audio."
+  },
+  "frequencyPolicy": "Repeated casts, digging and tell pools requested 4 takes, rare interactions/achievements/assists and each weather loop requested 2. frequent=true applies conservative QC to repeated-cue candidates; it is not a measured per-second runtime rate.",
+  "reworkRounds": [
+    {
+      "id": "rework-1",
+      "scope": [
+        "weather-sun",
+        "weather-rain",
+        "weather-sand",
+        "weather-hail",
+        "site-fishing",
+        "site-dig",
+        "egg-hatch",
+        "tell-voltorb",
+        "loop-weather-sun",
+        "loop-weather-rain"
+      ],
+      "actualCredits": 153.9846,
+      "downloadedGenerations": 24,
+      "generationIds": [
+        "2c5ArunhBnMdhAAq8ffY",
+        "DKLMilGSWnk8ruWKDeG3",
+        "QtjLm9b2Ht4Nh8fHDMtQ",
+        "VB3pTBOW0VJYCwx9yNp7",
+        "BU1MAftsuAqjUACjK0Vd",
+        "qlNMAGSs1DxRzPv68AVw",
+        "cgliO83j4Fu8SIQDulda",
+        "suvjgC3VCNof0wio9INh",
+        "XtIN5TD4HnxzMh9fpWsN",
+        "LTzRcdNVWtJHE7jewrG5",
+        "va2b6zwgikk2aBifpf8q",
+        "RF57GkNISS8rnMKQ2Ent",
+        "chK37lfTgIXt4ei65SvU",
+        "70vdV9bTiwEgQf6hpCMx",
+        "HIjKmmshArIcM8pu5gtM",
+        "1gjeBiz6K6nQWoc7oIhw",
+        "WKcJCj4ut8Dr9ebfoJra",
+        "jLOVE8pEm3SeqtZI4VWW",
+        "lqlTkUcNxS42rBK3olvy",
+        "AkScsAuNFLxG35MkdY8I",
+        "TWtEbd2hA7XOUZUquMob",
+        "8B4q5QS3mZPuc2UVnUKV",
+        "NDSsLFRII6PJerIM5ICh",
+        "3It9xvvc7E6rfBuOQ73v"
+      ],
+      "status": "completed-downloaded-decoded-measured"
+    },
+    {
+      "id": "rework-2",
+      "scope": ["weather-sand", "site-dig", "egg-hatch", "tell-voltorb"],
+      "actualCredits": 24.6642,
+      "downloadedGenerations": 12,
+      "generationIds": [
+        "RBNJnrLPpu0h77oqNlqr",
+        "fS9wIPttlCYc3WHntKMS",
+        "bFEVXKu0aEKOp00WGthu",
+        "vhgQwphBwZy7ENaO8LMf",
+        "Y7cgxaKwAUstze8f97Dm",
+        "2n5kbLHLqgK2TOhOONUs",
+        "GzIW6riTTh3pu912Z5y0",
+        "WW1c4cQuPxc6pGZjBcli",
+        "2jkX38RoqmERXd05yTEo",
+        "zzMrs1VdlcudNS7HDwzH",
+        "f4btX7F97Lt3nS3fjwtY",
+        "asdrbuRCDeRPB5kN63dR"
+      ],
+      "status": "completed-downloaded-decoded-measured"
+    },
+    {
+      "id": "rework-3",
+      "scope": ["site-dig", "egg-hatch", "loop-weather-sun", "loop-weather-rain"],
+      "actualCredits": 119.988,
+      "downloadedGenerations": 10,
+      "generationIds": [
+        "RcYOT47VGlBYsKnip2jE",
+        "sYzcr5ACPKn5ofgxVPK9",
+        "WAfVYVFRVCFAq0m3gQR8",
+        "NOZMoVk0gk7XHhDkLlNM",
+        "PnYSc1RpKOuuRq3QqXyx",
+        "S2k2DG78aQyafm3DujHl",
+        "MhCt5SMQhKbn5VJddpDR",
+        "GbWx8k80bKi909FE0xsW",
+        "eCzHy8JEe24MiP5WrAih",
+        "ZnLuhbwP34zpD3mK4BES"
+      ],
+      "status": "completed-downloaded-decoded-measured"
+    },
+    {
+      "id": "rework-4",
+      "scope": ["tell-voltorb", "loop-weather-rain"],
+      "actualCredits": 63.9936,
+      "downloadedGenerations": 6,
+      "generationIds": [
+        "oAiBF1ZQH40UeQQO4R7h",
+        "9wbk4jKblne1H3DCYuHQ",
+        "hszaN59zTCn7Kf2ZFWho",
+        "B1C0yTqevenRCWbjNPcF",
+        "RDNpPOJrnlWfzObvz9GX",
+        "a3pkOggPixH32LIPxAUp"
+      ],
+      "status": "completed-downloaded-decoded-measured"
+    },
+    {
+      "id": "rework-5",
+      "scope": ["tell-voltorb"],
+      "actualCredits": 13.332,
+      "downloadedGenerations": 4,
+      "generationIds": [
+        "oFxnxUGrdKLU7hsUziil",
+        "cyuG7o0MPQEb4XVl7vLS",
+        "8yFcDrB6H7j5R87xDaOo",
+        "tctn0MNZkVGjFrPt1ZuL"
+      ],
+      "status": "completed-downloaded-decoded-measured"
+    },
+    {
+      "id": "rework-6",
+      "scope": ["loop-weather-hail"],
+      "actualCredits": 53.328,
+      "downloadedGenerations": 2,
+      "generationIds": ["d4fPzaSHbGxGOeHWImMe", "ErLUyHveITxyACRcYQPW"],
+      "status": "completed-downloaded-decoded-rejected-spectral-qc",
+      "estimateCredits": 176
+    },
+    {
+      "id": "rework-7",
+      "scope": ["loop-weather-hail"],
+      "actualCredits": 53.328,
+      "downloadedGenerations": 2,
+      "generationIds": ["Mr0lBbb2BnWExKB3RUvQ", "g5zYPl1zOJOVRRZVz9dn"],
+      "status": "completed-downloaded-decoded-rejected-encoded-qc",
+      "estimateCredits": 176
+    },
+    {
+      "id": "rework-8",
+      "scope": ["loop-weather-hail"],
+      "actualCredits": 53.328,
+      "downloadedGenerations": 2,
+      "generationIds": ["aiwxjdnptXI2RbfmNEFj", "pgzxUdHyTp653REZc1Q7"],
+      "status": "completed-downloaded-decoded-rejected-spectral-qc",
+      "estimateCredits": 176
+    },
+    {
+      "id": "rework-9",
+      "scope": ["loop-weather-hail"],
+      "actualCredits": 53.328,
+      "downloadedGenerations": 2,
+      "generationIds": ["cAp2bMtwdbskriUsMpOY", "mjbMcIzyRnJ8cp31YWkb"],
+      "status": "completed-downloaded-decoded-encoded-qc-selected",
+      "estimateCredits": 176
+    }
+  ],
+  "deliveryFiles": [
+    "assets/audio/elevenlabs/field-route-nodes.json",
+    "assets/audio/elevenlabs/field-route-production.json",
+    "assets/audio/elevenlabs/manifest.json",
+    "assets/audio/elevenlabs/master/egg-hatch-1.flac",
+    "assets/audio/elevenlabs/master/egg-hatch-2.flac",
+    "assets/audio/elevenlabs/master/loop-weather-hail.m4a",
+    "assets/audio/elevenlabs/master/loop-weather-rain.m4a",
+    "assets/audio/elevenlabs/master/loop-weather-sand.m4a",
+    "assets/audio/elevenlabs/master/loop-weather-sun.m4a",
+    "assets/audio/elevenlabs/master/shiny-1.flac",
+    "assets/audio/elevenlabs/master/shiny-2.flac",
+    "assets/audio/elevenlabs/master/site-den-1.flac",
+    "assets/audio/elevenlabs/master/site-den-2.flac",
+    "assets/audio/elevenlabs/master/site-dig-1.flac",
+    "assets/audio/elevenlabs/master/site-dig-2.flac",
+    "assets/audio/elevenlabs/master/site-dig-3.flac",
+    "assets/audio/elevenlabs/master/site-dig-4.flac",
+    "assets/audio/elevenlabs/master/site-fishing-1.flac",
+    "assets/audio/elevenlabs/master/site-fishing-2.flac",
+    "assets/audio/elevenlabs/master/site-flute-1.flac",
+    "assets/audio/elevenlabs/master/site-flute-2.flac",
+    "assets/audio/elevenlabs/master/tell-voltorb-1.flac",
+    "assets/audio/elevenlabs/master/tell-voltorb-2.flac",
+    "assets/audio/elevenlabs/master/tell-voltorb-3.flac",
+    "assets/audio/elevenlabs/master/timing.json",
+    "assets/audio/elevenlabs/master/weather-hail-1.flac",
+    "assets/audio/elevenlabs/master/weather-hail-2.flac",
+    "assets/audio/elevenlabs/master/weather-rain-1.flac",
+    "assets/audio/elevenlabs/master/weather-rain-2.flac",
+    "assets/audio/elevenlabs/master/weather-sand-1.flac",
+    "assets/audio/elevenlabs/master/weather-sand-2.flac",
+    "assets/audio/elevenlabs/master/weather-sun-1.flac",
+    "assets/audio/elevenlabs/master/weather-sun-2.flac",
+    "assets/audio/elevenlabs/raw/sfx-egg-hatch-7.mp3",
+    "assets/audio/elevenlabs/raw/sfx-egg-hatch-8.mp3",
+    "assets/audio/elevenlabs/raw/sfx-loop-weather-hail-1.mp3",
+    "assets/audio/elevenlabs/raw/sfx-loop-weather-hail-2.mp3",
+    "assets/audio/elevenlabs/raw/sfx-loop-weather-hail-9.mp3",
+    "assets/audio/elevenlabs/raw/sfx-loop-weather-rain-7.mp3",
+    "assets/audio/elevenlabs/raw/sfx-loop-weather-sand-1.mp3",
+    "assets/audio/elevenlabs/raw/sfx-loop-weather-sun-6.mp3",
+    "assets/audio/elevenlabs/raw/sfx-shiny-1.mp3",
+    "assets/audio/elevenlabs/raw/sfx-shiny-2.mp3",
+    "assets/audio/elevenlabs/raw/sfx-site-den-1.mp3",
+    "assets/audio/elevenlabs/raw/sfx-site-den-2.mp3",
+    "assets/audio/elevenlabs/raw/sfx-site-dig-13.mp3",
+    "assets/audio/elevenlabs/raw/sfx-site-dig-14.mp3",
+    "assets/audio/elevenlabs/raw/sfx-site-dig-16.mp3",
+    "assets/audio/elevenlabs/raw/sfx-site-dig-9.mp3",
+    "assets/audio/elevenlabs/raw/sfx-site-fishing-3.mp3",
+    "assets/audio/elevenlabs/raw/sfx-site-fishing-4.mp3",
+    "assets/audio/elevenlabs/raw/sfx-site-flute-1.mp3",
+    "assets/audio/elevenlabs/raw/sfx-site-flute-2.mp3",
+    "assets/audio/elevenlabs/raw/sfx-tell-voltorb-15.mp3",
+    "assets/audio/elevenlabs/raw/sfx-tell-voltorb-19.mp3",
+    "assets/audio/elevenlabs/raw/sfx-tell-voltorb-20.mp3",
+    "assets/audio/elevenlabs/raw/sfx-weather-hail-3.mp3",
+    "assets/audio/elevenlabs/raw/sfx-weather-hail-4.mp3",
+    "assets/audio/elevenlabs/raw/sfx-weather-rain-3.mp3",
+    "assets/audio/elevenlabs/raw/sfx-weather-rain-4.mp3",
+    "assets/audio/elevenlabs/raw/sfx-weather-sand-5.mp3",
+    "assets/audio/elevenlabs/raw/sfx-weather-sand-6.mp3",
+    "assets/audio/elevenlabs/raw/sfx-weather-sun-3.mp3",
+    "assets/audio/elevenlabs/raw/sfx-weather-sun-4.mp3",
+    "public/audio/ambience/hail.m4a",
+    "public/audio/ambience/rain.m4a",
+    "public/audio/ambience/sandstorm.m4a",
+    "public/audio/ambience/sun.m4a",
+    "public/audio/bank.json",
+    "public/audio/sfx/egg-hatch-1.flac",
+    "public/audio/sfx/egg-hatch-2.flac",
+    "public/audio/sfx/shiny-1.flac",
+    "public/audio/sfx/shiny-2.flac",
+    "public/audio/sfx/site-den-1.flac",
+    "public/audio/sfx/site-den-2.flac",
+    "public/audio/sfx/site-dig-1.flac",
+    "public/audio/sfx/site-dig-2.flac",
+    "public/audio/sfx/site-dig-3.flac",
+    "public/audio/sfx/site-dig-4.flac",
+    "public/audio/sfx/site-fishing-1.flac",
+    "public/audio/sfx/site-fishing-2.flac",
+    "public/audio/sfx/site-flute-1.flac",
+    "public/audio/sfx/site-flute-2.flac",
+    "public/audio/sfx/tell-voltorb-1.flac",
+    "public/audio/sfx/tell-voltorb-2.flac",
+    "public/audio/sfx/tell-voltorb-3.flac",
+    "public/audio/sfx/weather-hail-1.flac",
+    "public/audio/sfx/weather-hail-2.flac",
+    "public/audio/sfx/weather-rain-1.flac",
+    "public/audio/sfx/weather-rain-2.flac",
+    "public/audio/sfx/weather-sand-1.flac",
+    "public/audio/sfx/weather-sand-2.flac",
+    "public/audio/sfx/weather-sun-1.flac",
+    "public/audio/sfx/weather-sun-2.flac"
+  ]
+}

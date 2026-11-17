@@ -11,9 +11,13 @@ const reactionPositions = [
 
 // Keep the real createRun and simulation. Only drawing/assets are substituted in a child process.
 const fixture = process.argv.find((arg) =>
-  ["--activation-fixture", "--reaction-fixture", "--hurt-fixture", "--notice-fixture"].includes(
-    arg,
-  ),
+  [
+    "--activation-fixture",
+    "--reaction-fixture",
+    "--hurt-fixture",
+    "--notice-fixture",
+    "--field-fixture",
+  ].includes(arg),
 );
 if (!fixture) {
   test("real run activation follows persistence and cannot outlive cancellation", () => {
@@ -39,6 +43,13 @@ if (!fixture) {
   });
   test("real reward and danger events reach the local notice, sound and world consumers by ownership", () => {
     const child = spawnSync(process.execPath, [import.meta.filename, "--notice-fixture"], {
+      encoding: "utf8",
+      timeout: 15000,
+    });
+    assert.equal(child.status, 0, child.stdout + child.stderr);
+  });
+  test("field feedback follows the visible run and stops ambience across pause, covers and disposal", () => {
+    const child = spawnSync(process.execPath, [import.meta.filename, "--field-fixture"], {
       encoding: "utf8",
       timeout: 15000,
     });
@@ -106,6 +117,7 @@ if (!fixture) {
   const noop = () => {};
   let assetGate, actualWorld;
   const sounds = [];
+  const ambience = [];
   let viewEvents = [];
   let project = () => [0, 0];
   const audio = {
@@ -113,6 +125,7 @@ if (!fixture) {
     sfx: (name) => sounds.push(name),
     acquire: () => ({ result: Promise.resolve(), release: noop }),
     music: { play: noop, setPaused: noop, runTrack: () => "fixture" },
+    ambience: { play: (name) => ambience.push(name) },
   };
   await mock.module(at("src/audio/engine.ts"), () => ({ getAudio: () => audio, RUN_SOUNDS: [] }));
   await mock.module(at("src/run/view/assets.ts"), () => ({
@@ -164,6 +177,7 @@ if (!fixture) {
     restore: noop,
     update: noop,
     afterLayout: noop,
+    setFullMap: noop,
   });
   await mock.module(at("src/run/view/minimap.ts"), () => ({ createMinimap: widget }));
   await mock.module(at("src/run/view/compassBar.ts"), () => ({ createCompassBar: widget }));
@@ -179,16 +193,18 @@ if (!fixture) {
       ? ["hurt-feedback"]
       : fixture === "--notice-fixture"
         ? ["notice-feedback", "notice-age-feedback"]
-        : [
-            "success",
-            "refused",
-            "dispose-preparing",
-            "dispose-in-ready",
-            "dispose-opening",
-            "dispose-active",
-            "rejoin",
-            "zone-destination",
-          ]) {
+        : fixture === "--field-fixture"
+          ? ["field-feedback"]
+          : [
+              "success",
+              "refused",
+              "dispose-preparing",
+              "dispose-in-ready",
+              "dispose-opening",
+              "dispose-active",
+              "rejoin",
+              "zone-destination",
+            ]) {
     assetGate = scenario === "dispose-preparing" ? Promise.withResolvers() : null;
     const events = [],
       errors = [];
@@ -286,7 +302,12 @@ if (!fixture) {
       app,
       hud,
       {
-        stage: scenario === "reaction-feedback" ? "volcano" : "forest",
+        stage:
+          scenario === "reaction-feedback"
+            ? "volcano"
+            : scenario === "field-feedback"
+              ? "coast"
+              : "forest",
         starter: scenario === "reaction-feedback" ? "squirtle" : "charmander",
         trainer: "chengxi",
         difficulty: 0,
@@ -376,6 +397,10 @@ if (!fixture) {
           await noticeFeedback(client, actualWorld, banners, snapshots);
         } else if (scenario === "notice-age-feedback") {
           noticeAgeFeedback(client, networkPair, banners, bannerAges);
+        } else if (scenario === "field-feedback") {
+          await fieldFeedback(controller, client, actualWorld, banners, (value) => {
+            blocked = value;
+          });
         } else {
           client.advance(100);
           assert.ok(actualWorld.tick > 0);
@@ -539,9 +564,7 @@ if (!fixture) {
     assert.deepEqual(sounds, ["boss"]);
     const guardian = world.enemies.find((enemy) => enemy.id === world.bossId);
     world.zone.tick = stageDefs[world.stage].duration * 30;
-    world.spawn.fired = stageDefs[world.stage].zones[0].beats.map(
-      ([at, beat]) => `${beat.kind}@${at}`,
-    );
+    world.spawn.fired = world.zone.schedule.map((_, index) => index);
     updateDirector(world, 0);
     assert.ok(world.events.some((event) => event.t === "banner" && event.kind === "rampage"));
     deliver();
@@ -570,6 +593,85 @@ if (!fixture) {
     const clear = deliver().find((event) => event.t === "banner" && event.kind === "clear");
     assert.deepEqual(banners, [{ text: clear.text, tone: "reward" }]);
     assert.deepEqual(sounds, ["elite-kill"], "clear does not stack a second boss cue");
+  }
+
+  async function fieldFeedback(controller, client, world, banners, setBlocked) {
+    const { startWeather, updateWeather } = await import(at("src/run/sim/weather.ts"));
+    const { EnemyGrid } = await import(at("src/run/sim/grid.ts"));
+    const { update: hatch } = await import(at("src/run/sim/sites/egg.ts"));
+    const player = world.players[0];
+    world.events.length = 0;
+    world.zone.schedule = [];
+    world.spawn.credit = -1e6;
+    player.moves = [];
+    player.pending = [];
+    sounds.length = ambience.length = banners.length = 0;
+    startWeather(world, "rain");
+    client.advance(0);
+    assert.deepEqual(sounds, ["weather-rain"], "the weather cue replaces generic danger");
+    assert.equal(banners.length, 1, "the forecast has one notice");
+    assert.deepEqual(ambience, [], "no weather loop before its start");
+    world.time = world.weather.from;
+    updateWeather({ world, grid: new EnemyGrid() }, 1 / 30);
+    client.advance(0);
+    assert.deepEqual(sounds, ["weather-rain"], "start does not repeat the forecast cue");
+    assert.deepEqual(ambience, ["rain"]);
+    controller.setPaused(true);
+    assert.equal(ambience.at(-1), null, "pausing stops ambience immediately");
+    client.advance(0);
+    controller.setPaused(false);
+    client.advance(0);
+    assert.equal(ambience.at(-1), "rain", "resume derives ambience from the live weather");
+    setBlocked(true);
+    world.events.push({ t: "shiny", enemy: 999, species: "magikarp", x: player.x, z: player.z });
+    sounds.length = banners.length = 0;
+    client.advance(0);
+    assert.equal(ambience.at(-1), null);
+    setBlocked(false);
+    client.advance(0);
+    assert.deepEqual(sounds, [], "covered birth feedback is consumed, never replayed");
+    assert.deepEqual(banners, []);
+    assert.equal(ambience.at(-1), "rain");
+
+    const trap = {
+      id: world.nextId++,
+      kind: "item-ball",
+      state: "busy",
+      until: world.time + 0.8,
+      x: player.x,
+      z: player.z,
+      data: { trap: true, uses: 0 },
+    };
+    world.sites.push(trap);
+    const { spawnEnemy } = await import(at("src/run/sim/director.ts"));
+    const enemy = spawnEnemy(world, "rattata", player.x + 1, player.z);
+    world.events.push(
+      { t: "site", site: trap.id, kind: trap.kind, phase: "start", x: trap.x, z: trap.z },
+      { t: "tell", enemy: enemy.id, severity: "danger", duration: 1 },
+    );
+    sounds.length = 0;
+    client.advance(0);
+    assert.deepEqual(sounds, ["tell-voltorb"], "the actual trap warning takes the tell slot");
+    player.egg = { species: "magikarp", distance: 120, x: player.x, z: player.z };
+    hatch(world);
+    sounds.length = banners.length = 0;
+    client.advance(0);
+    assert.deepEqual(sounds, ["egg-hatch"], "hatching does not stack a capture cue");
+    assert.deepEqual(banners, [{ text: "孵化 鲤鱼王！", tone: "reward" }]);
+    const { grantPartner } = await import(at("src/run/sim/partners.ts"));
+    assert.equal(grantPartner(world, player, "rattata"), true);
+    player.egg = { species: "magikarp", distance: 120, x: player.x, z: player.z };
+    hatch(world);
+    sounds.length = banners.length = 0;
+    client.advance(0);
+    assert.deepEqual(
+      banners,
+      [{ text: "捕获 小拉达！", tone: "reward" }],
+      "a simultaneous full-slot hatch cannot rename the captured partner",
+    );
+    assert.equal(player.pending.at(-1).source, "chest");
+    controller.dispose();
+    assert.equal(ambience.at(-1), null, "leaving releases the loop before menu audio resumes");
   }
 
   async function hurtFeedback(hud, client, world) {
@@ -634,6 +736,7 @@ if (!fixture) {
     const grid = new EnemyGrid();
     const player = world.players[0];
     world.paused = true;
+    world.spawn.shinySpawned = true; // This fixture isolates reaction feedback on ordinary targets.
     world.events.length = 0;
     for (const [reaction, x, z] of reactionPositions) {
       const def = reactions[reaction];

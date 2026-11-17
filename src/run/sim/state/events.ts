@@ -7,8 +7,21 @@ import type { EnemyStatusId } from "../content/statuses";
 import type { Pickup, PlayerId } from "./entities";
 import type { ItemId } from "../content/items";
 import type { BuffCue } from "../content/triggers";
+import type { SiteKind, WeatherId } from "./field";
 
 export type RunEvent =
+  | { t: "weather"; id: WeatherId; phase: "forecast" | "start" | "end" }
+  | {
+      t: "site";
+      site: number;
+      kind: SiteKind;
+      phase: "wake" | "start" | "reveal" | "complete" | "cancel";
+      x: number;
+      z: number;
+      player?: PlayerId;
+    }
+  | { t: "shiny"; enemy: number; species: EnemyId; x: number; z: number }
+  | { t: "shiny-caught"; species: EnemyId; by: PlayerId }
   /** Co-op presence: a teammate lost or regained their connection, or left the run. */
   | { t: "peer"; player: PlayerId; state: "offline" | "online" | "left" }
   | { t: "contact"; x: number; z: number; by: PlayerId; type: ElementType; move: MoveId | null }
@@ -39,7 +52,16 @@ export type RunEvent =
       t: "banner";
       text: string;
       tone: "danger";
-      kind: "alpha" | "elite-wave" | "swarm" | "stampede" | "eruption" | "rampage";
+      kind:
+        | "alpha"
+        | "elite-wave"
+        | "swarm"
+        | "stampede"
+        | "eruption"
+        | "rampage"
+        | "weather"
+        | "horde"
+        | "outbreak";
     }
   | { t: "banner"; text: string; tone: "boss"; kind: "guardian" | "clear" }
   | { t: "banner"; text: string; tone: "boss"; kind: "fusion" | "capture"; player: PlayerId }
@@ -89,7 +111,15 @@ export type RunEvent =
   /** `player` came back: the lab's revive, or an item's save (`item`: Revive, Max Revive, Rainbow Wing). */
   | { t: "revive"; player: PlayerId; item?: ItemId; team?: true }
   /** An elite joined `player` as partner `partner` where it fell. */
-  | { t: "capture"; player: PlayerId; partner: number; species: EnemyId; x: number; z: number }
+  | {
+      t: "capture";
+      source: "capture" | "egg";
+      player: PlayerId;
+      partner: number;
+      species: EnemyId;
+      x: number;
+      z: number;
+    }
   /** A partner attacked: from its spot to the target's (a cloud is centred on the partner). */
   | {
       t: "partner-attack";

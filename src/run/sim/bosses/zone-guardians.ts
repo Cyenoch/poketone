@@ -92,6 +92,7 @@ function shadow(
     slam || gengar ? N.shadow.wideRadius : N.shadow.radius,
     boss.dmg * Z.landing,
     boss.action!.windup + boss.action!.active,
+    attack === "lava-dive" ? "fire" : attack === "sludge-slam" ? "poison" : "ghost",
   );
   return true;
 }

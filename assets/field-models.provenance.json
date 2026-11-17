@@ -1,0 +1,359 @@
+{
+  "date": "2026-11-17",
+  "generator": "Tripo CLI 0.8.1 / Blender 5.3.0",
+  "rights": "Pokémon characters and official artwork belong to Nintendo / Game Freak / Creatures / The Pokémon Company. Noncommercial fan project; no asset sublicence implied. Scripted field prop geometry follows repository code licence.",
+  "creditsConsumed": 160,
+  "imageCost": "Connector returned no monetary quote. Four inherited field multiview sheets retained; no additional image generation in this field split. Mega image calls belong to add-mega-evolution.",
+  "models": {
+    "heracross": {
+      "source": "assets/enemies/heracross/generation/tripo-out/model.glb",
+      "sourceSha256": "1a6669cf95a95ce9157c1d44741fd41a53a2c069122a93c4690051c293fa21e2",
+      "artwork": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/214.png",
+      "sheetModel": "openrouter/google/gemini-nano-banana-2.1",
+      "references": "assets/enemies/heracross/generation/references",
+      "generation": {
+        "taskId": "a9d25b55-c587-4c00-a33a-5bd312f8aa3d",
+        "model": "tripo-v3.1",
+        "smart_low_poly": true,
+        "face_limit": 1000,
+        "credits": 40
+      },
+      "build": ["enemies/heracross/blender/model.glb", "enemies/heracross.glb", 900, 512],
+      "status": "prepared-static",
+      "forward": "+X",
+      "facingYaw": -1.5707963267948966,
+      "weldDecimationSeams": true,
+      "preparation": "assets/field-sites/repair-species.py; weld only open UV seams immediately before decimation",
+      "output": "public/models/enemies/heracross.glb",
+      "outputSha256": "84f2c0ba815786ea36acd37f511a2a3c88daad4e1deee2343004f13c50595215",
+      "bytes": 95432,
+      "triangles": 900,
+      "dimensions": {
+        "x": 0.48505550622940063,
+        "y": 0.9991466999053955,
+        "z": 1.003308892250061
+      },
+      "preparedSourceSha256": "4829d46859d26ba459691ed97e22ff28fec2d53e207c567511f17d6adc94f7c1"
+    },
+    "munchlax": {
+      "source": "assets/enemies/munchlax/generation/tripo-out/model.glb",
+      "sourceSha256": "057a3f788f02713a554b913f8e19e43d791a2efb20b02c1349ac39525e89e645",
+      "artwork": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/446.png",
+      "sheetModel": "openrouter/google/gemini-nano-banana-2.1",
+      "references": "assets/enemies/munchlax/generation/references",
+      "generation": {
+        "taskId": "f05a8892-bbd2-4cf8-897d-c507e7fabf0e",
+        "model": "tripo-v3.1",
+        "smart_low_poly": true,
+        "face_limit": 1000,
+        "credits": 40
+      },
+      "build": ["enemies/munchlax/blender/model.glb", "enemies/munchlax.glb", 900, 512],
+      "status": "prepared-static",
+      "forward": "+X",
+      "facingYaw": -1.5707963267948966,
+      "weldDecimationSeams": true,
+      "preparation": "assets/field-sites/repair-species.py; weld only open UV seams immediately before decimation",
+      "output": "public/models/enemies/munchlax.glb",
+      "outputSha256": "0f9dca80ee7bebdebb1c691a192afa4ce2a11632039fd6e1781d7185fe0207d4",
+      "bytes": 88036,
+      "triangles": 900,
+      "dimensions": {
+        "x": 0.7016297578811646,
+        "y": 1.0001587867736816,
+        "z": 0.7485187649726868
+      },
+      "preparedSourceSha256": "bc1a0cf6e48da79e001c1e7bc82c2dd5e8b2359e6f23f07d36e8dd50661b87cf"
+    },
+    "magikarp": {
+      "source": "assets/enemies/magikarp/generation/tripo-out/model.glb",
+      "sourceSha256": "55bc871a6cb607aed77159d6353d2f3cf58e63b37f6aeb1693b847ae96fa9f31",
+      "artwork": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/129.png",
+      "sheetModel": "openrouter/google/gemini-nano-banana-2.1",
+      "references": "assets/enemies/magikarp/generation/references",
+      "generation": {
+        "taskId": "5803c739-7539-4e5b-9c6d-8ee84dfa3c90",
+        "model": "tripo-v3.1",
+        "smart_low_poly": true,
+        "face_limit": 1000,
+        "credits": 40
+      },
+      "build": ["enemies/magikarp/blender/model.glb", "enemies/magikarp.glb", 900, 512],
+      "status": "prepared-static",
+      "forward": "+X",
+      "facingYaw": -1.5707963267948966,
+      "weldDecimationSeams": true,
+      "preparation": "assets/field-sites/repair-species.py; weld only open UV seams immediately before decimation",
+      "output": "public/models/enemies/magikarp.glb",
+      "outputSha256": "d756120f1fc8bec117fdc85e6fc9069074a843cc42a6cb496d2c00250692c545",
+      "bytes": 114900,
+      "triangles": 899,
+      "dimensions": {
+        "x": 0.927620530128479,
+        "y": 0.9999630451202393,
+        "z": 0.8943248987197876
+      },
+      "preparedSourceSha256": "8ed5043c64fa1d873eac74e71c15c4d4fe84f80ac6ea66d95c7d9b4b2fde658c"
+    },
+    "gengar-altar": {
+      "source": "assets/field-sites/gengar-altar/generation/tripo-out/model.glb",
+      "sourceSha256": "d3e86f285c7dcdda2cb3d020a78967ec558d94c041e0e30352ccd55d0d238463",
+      "artwork": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png",
+      "sheetModel": "openrouter/google/gemini-nano-banana-2.1",
+      "references": "assets/field-sites/gengar-altar/generation/references",
+      "generation": {
+        "taskId": "02fda21a-b58c-4b6c-9deb-79510e879914",
+        "model": "tripo-v3.1",
+        "smart_low_poly": true,
+        "face_limit": 1000,
+        "credits": 40
+      },
+      "build": [
+        "field-sites/gengar-altar/generation/tripo-out/model.glb",
+        "field-sites/gengar-altar.glb",
+        null,
+        512
+      ],
+      "status": "prepared-static",
+      "forward": "+X",
+      "facingYaw": -1.5707963267948966,
+      "output": "public/models/field-sites/gengar-altar.glb",
+      "outputSha256": "cde1e3784dc6c6a80f83c90686d938f1159c1278e9e0b063272a3d0a10ab0639",
+      "bytes": 105660,
+      "triangles": 1447,
+      "dimensions": {
+        "x": 0.9843443632125854,
+        "y": 0.9882583022117615,
+        "z": 0.9667319059371948
+      },
+      "preparedSourceSha256": "d3e86f285c7dcdda2cb3d020a78967ec558d94c041e0e30352ccd55d0d238463"
+    },
+    "honey-tree": {
+      "source": "assets/field-sites/honey-tree/blender/model.glb",
+      "generator": "assets/field-sites/build-sites.py",
+      "sourceDescription": "Original scripted low-poly geometry and vertex colours",
+      "credits": 0,
+      "build": [
+        "field-sites/honey-tree/blender/model.glb",
+        "field-sites/honey-tree.glb",
+        null,
+        256
+      ],
+      "status": "prepared-static",
+      "units": "metres",
+      "pivot": "grounded trunk/stump anchor; asymmetric canopy/rod retained",
+      "facingYaw": 0,
+      "output": "public/models/field-sites/honey-tree.glb",
+      "outputSha256": "217629f508e181c452059e6a9aca1f7c62255f852b46e457ff4fccc2be09274f",
+      "bytes": 73088,
+      "triangles": 688,
+      "dimensions": {
+        "x": 2.298332691192627,
+        "y": 2.805053949356079,
+        "z": 2.1999998092651367
+      },
+      "preparedSourceSha256": "ecd62c29b8b57027cccb99a09300d778f95b4ad2041cd70230d5d8ab6d2d79f8"
+    },
+    "item-ball": {
+      "source": "assets/field-sites/item-ball/blender/model.glb",
+      "generator": "assets/field-sites/build-sites.py",
+      "sourceDescription": "Original scripted low-poly geometry and vertex colours",
+      "credits": 0,
+      "build": ["field-sites/item-ball/blender/model.glb", "field-sites/item-ball.glb", null, 256],
+      "status": "prepared-static",
+      "units": "metres",
+      "pivot": "grounded prop anchor",
+      "facingYaw": 0,
+      "output": "public/models/field-sites/item-ball.glb",
+      "outputSha256": "7dc376e3fbd5abfd11f28800a61946dd1d5aa345ab91007c84e4a25cf36d31ac",
+      "bytes": 71212,
+      "triangles": 736,
+      "dimensions": {
+        "x": 0.5581190586090088,
+        "y": 0.5199999809265137,
+        "z": 0.5239999890327454
+      },
+      "preparedSourceSha256": "314291dea4b3f50871cfa28f765f6c7bff9a6881e954cf1224de5d35f16bde7c"
+    },
+    "fishing": {
+      "source": "assets/field-sites/fishing/blender/model.glb",
+      "generator": "assets/field-sites/build-sites.py",
+      "sourceDescription": "Original scripted low-poly geometry and vertex colours",
+      "credits": 0,
+      "build": ["field-sites/fishing/blender/model.glb", "field-sites/fishing.glb", null, 256],
+      "status": "prepared-static",
+      "units": "metres",
+      "pivot": "grounded trunk/stump anchor; asymmetric canopy/rod retained",
+      "facingYaw": 0,
+      "output": "public/models/field-sites/fishing.glb",
+      "outputSha256": "f5b2e32190afc70eaf9a04514d407fce54f31fcd65b86dfa57cf9682e10ed33c",
+      "bytes": 43128,
+      "triangles": 520,
+      "dimensions": {
+        "x": 1.046018362045288,
+        "y": 1.937476634979248,
+        "z": 0.6199999451637268
+      },
+      "preparedSourceSha256": "c34f2d97caa5eadc06794a59fe9bf6c498c3cf95ce7b34c702e6b51f11eac412"
+    },
+    "fossil": {
+      "source": "assets/field-sites/fossil/blender/model.glb",
+      "generator": "assets/field-sites/build-sites.py",
+      "sourceDescription": "Original scripted low-poly geometry and vertex colours",
+      "credits": 0,
+      "build": ["field-sites/fossil/blender/model.glb", "field-sites/fossil.glb", null, 256],
+      "status": "prepared-static",
+      "units": "metres",
+      "pivot": "grounded prop anchor",
+      "facingYaw": 0,
+      "output": "public/models/field-sites/fossil.glb",
+      "outputSha256": "2108d46450d46cddd1592388860b7409e2c984b18802e227809d6b355ccfe5ac",
+      "bytes": 54592,
+      "triangles": 716,
+      "dimensions": {
+        "x": 1.871134638786316,
+        "y": 0.622981071472168,
+        "z": 1.4004580974578857
+      },
+      "preparedSourceSha256": "40db9d45a5c191379a4de8b10151b2578db8ed848109ff6b302f42a09bdf989f"
+    },
+    "raid-den": {
+      "source": "assets/field-sites/raid-den/blender/model.glb",
+      "generator": "assets/field-sites/build-sites.py",
+      "sourceDescription": "Original scripted low-poly geometry and vertex colours",
+      "credits": 0,
+      "build": ["field-sites/raid-den/blender/model.glb", "field-sites/raid-den.glb", null, 256],
+      "status": "prepared-static",
+      "units": "metres",
+      "pivot": "grounded prop anchor",
+      "facingYaw": 0,
+      "output": "public/models/field-sites/raid-den.glb",
+      "outputSha256": "104f72bb4c690b794781188a00b9af0495bfe33d67f08b5906daa3086cb722cf",
+      "bytes": 42844,
+      "triangles": 484,
+      "dimensions": {
+        "x": 3.4000000953674316,
+        "y": 1.1687999963760376,
+        "z": 3.4000000953674316
+      },
+      "preparedSourceSha256": "9b7af93d7e09ce9791b8cca83a48607b25c79b45e2a4638e7d2b3c59f6ff251b"
+    },
+    "spring": {
+      "source": "assets/field-sites/spring/blender/model.glb",
+      "generator": "assets/field-sites/build-sites.py",
+      "sourceDescription": "Original scripted low-poly geometry and vertex colours",
+      "credits": 0,
+      "build": ["field-sites/spring/blender/model.glb", "field-sites/spring.glb", null, 256],
+      "status": "prepared-static",
+      "units": "metres",
+      "pivot": "grounded prop anchor",
+      "facingYaw": 0,
+      "output": "public/models/field-sites/spring.glb",
+      "outputSha256": "abb22105aec688f6b168ddba043dd35bc08ce7b228656340c1a75c29ecf781a2",
+      "bytes": 52172,
+      "triangles": 588,
+      "dimensions": {
+        "x": 2.752432107925415,
+        "y": 0.8600000143051147,
+        "z": 2.5999999046325684
+      },
+      "preparedSourceSha256": "b6d1342f9f2c8182103a7bb95e86d4c8a2cb474d0a6fcb68efff91347452d94c"
+    },
+    "egg": {
+      "source": "assets/field-sites/egg/blender/model.glb",
+      "generator": "assets/field-sites/build-sites.py",
+      "sourceDescription": "Original scripted low-poly geometry and vertex colours",
+      "credits": 0,
+      "build": ["field-sites/egg/blender/model.glb", "field-sites/egg.glb", null, 256],
+      "status": "prepared-static",
+      "units": "metres",
+      "pivot": "grounded prop anchor",
+      "facingYaw": 0,
+      "output": "public/models/field-sites/egg.glb",
+      "outputSha256": "3ab2df1cc1ad6180635024a6cac134cea292bb932a4609436903c8c926390bfd",
+      "bytes": 37592,
+      "triangles": 320,
+      "dimensions": {
+        "x": 0.5205913782119751,
+        "y": 0.6800000071525574,
+        "z": 0.5205270648002625
+      },
+      "preparedSourceSha256": "0f1993d3ee2e5a3ad7d2be0fa1316ff6b42109d12bc874542f2850f6b3f186bc"
+    }
+  },
+  "reused": {
+    "pinsir": {
+      "output": "public/models/enemies/pinsir.glb",
+      "sha256": "69b1c6e3b5330776d7fda452e16c4c0ffbd13726eae0dda27e2c7b074ccbd62f",
+      "credits": 0,
+      "reason": "Existing published species reused unchanged; provenance remains in public/models/game-models.provenance.json"
+    },
+    "snorlax": {
+      "output": "public/models/enemies/snorlax.glb",
+      "sha256": "7904019da56b6d1c8d343b4d8541f8ebaee9a239ab9dec55eaf40b5aa56ee12e",
+      "credits": 0,
+      "reason": "Existing published species reused unchanged; provenance remains in public/models/game-models.provenance.json"
+    },
+    "gyarados": {
+      "output": "public/models/enemies/gyarados.glb",
+      "sha256": "a7bfd7583705232e3c148b9e633c748670bf4c2e33f76aa8905c16c1d364fb34",
+      "credits": 0,
+      "reason": "Existing published species reused unchanged; provenance remains in public/models/game-models.provenance.json"
+    },
+    "aerodactyl": {
+      "output": "public/models/enemies/aerodactyl.glb",
+      "sha256": "87c0527f98a652b9abdc000976b2a99a6586193d9f91e5e5ff8585d3fa414dfb",
+      "credits": 0,
+      "reason": "Existing published species reused unchanged; provenance remains in public/models/game-models.provenance.json"
+    },
+    "marowak": {
+      "output": "public/models/enemies/marowak.glb",
+      "sha256": "a5edb9da26b48addb7d9355cca000b539e22986a7b510bcaa3fb7e1c58658ecd",
+      "credits": 0,
+      "reason": "Existing published species reused unchanged; provenance remains in public/models/game-models.provenance.json"
+    }
+  },
+  "tasksIncrement": [
+    {
+      "asset": "enemies/heracross",
+      "step": "generation",
+      "taskId": "a9d25b55-c587-4c00-a33a-5bd312f8aa3d",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-17",
+      "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
+      "note": "Source and image references preserved alongside the asset."
+    },
+    {
+      "asset": "enemies/munchlax",
+      "step": "generation",
+      "taskId": "f05a8892-bbd2-4cf8-897d-c507e7fabf0e",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-17",
+      "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
+      "note": "Source and image references preserved alongside the asset."
+    },
+    {
+      "asset": "enemies/magikarp",
+      "step": "generation",
+      "taskId": "5803c739-7539-4e5b-9c6d-8ee84dfa3c90",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-17",
+      "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
+      "note": "Source and image references preserved alongside the asset."
+    },
+    {
+      "asset": "field-sites/gengar-altar",
+      "step": "generation",
+      "taskId": "02fda21a-b58c-4b6c-9deb-79510e879914",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-17",
+      "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
+      "note": "Source and image references preserved alongside the asset."
+    }
+  ],
+  "integration": "Field-only add-field-events records. Append tasksIncrement once to public/models/game-models.provenance.json and increase creditsTotal by creditsConsumed; register models[name].build in MODELS and weldDecimationSeams in SEAM_REPAIRS. The 250-credit Mega generation/rejected/rig/animation records and shared authorization remain in the unsplit source for add-mega-evolution."
+}

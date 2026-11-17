@@ -149,6 +149,44 @@ export function itemTierOdds(luck: number, level: number, present: readonly bool
 const isElement = (boosts: ItemDef["boosts"]) =>
   boosts !== undefined && boosts !== "physical" && boosts !== "special";
 
+/** Field items obey the same build, banish and slot limits as cards. */
+export function itemEligible(player: Player, id: ItemId, partners: readonly Partner[]): boolean {
+  if (player.banished.includes(offerKey.item(id))) return false;
+  const owned = player.items.find((item) => item.id === id);
+  if (owned ? owned.level >= itemCap(player, id) : player.items.length >= itemSlots(player))
+    return false;
+  const gate = ITEM_GATES[items[id].rarity];
+  if (!owned && gate && player.level <= gate[0]) return false;
+  const { boosts, needs } = items[id];
+  return (
+    (boosts === undefined || hitTypes(player, partners).has(boosts)) &&
+    (needs === undefined ||
+      (needs === "partner"
+        ? partners.some((partner) => partner.owner === player.id)
+        : statusSources(player).has(needs)))
+  );
+}
+
+export function rollItemChoice(
+  rng: Rng,
+  player: Player,
+  partners: readonly Partner[],
+): Extract<Choice, { kind: "item" }> | null {
+  const pool = itemIds.filter((id) => itemEligible(player, id, partners));
+  if (pool.length === 0) return null;
+  return {
+    kind: "item",
+    item: drawItem(
+      rng,
+      player,
+      playerStats(player).luck,
+      hitTypes(player, partners),
+      partners.some((partner) => partner.owner === player.id),
+      pool,
+    ),
+  };
+}
+
 /** Rolls a tier, then an item in it (boosters for the player's types weighted up); `pool` is never empty. */
 function drawItem(
   rng: Rng,
@@ -273,8 +311,9 @@ export function rollChoices(
   player: Player,
   source: "level" | "chest",
   partners: readonly Partner[] = [],
+  minRarity?: Rarity,
 ): Choice[] {
-  const minimum = MIN_UPGRADE_RARITY[source];
+  const minimum = Math.max(MIN_UPGRADE_RARITY[source], minRarity ?? 0) as Rarity;
   const open = (key: string) => !player.banished.includes(key);
   const { luck } = playerStats(player);
   const upgradable = player.moves.filter(

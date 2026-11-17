@@ -106,10 +106,7 @@
     "trianglesBefore": 2013,
     "trianglesAfter": 2013,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 299448
   },
   "squirtle": {
@@ -119,10 +116,7 @@
     "trianglesBefore": 1948,
     "trianglesAfter": 1724,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 697172
   },
   "pikachu": {
@@ -132,10 +126,7 @@
     "trianglesBefore": 1682,
     "trianglesAfter": 1682,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 656648
   },
   "spearow": {
@@ -205,10 +196,7 @@
     "trianglesBefore": 2163,
     "trianglesAfter": 2163,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 773772
   },
   "blastoise": {
@@ -218,10 +206,7 @@
     "trianglesBefore": 2251,
     "trianglesAfter": 2251,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 794048
   },
   "raichu": {
@@ -231,10 +216,7 @@
     "trianglesBefore": 1602,
     "trianglesAfter": 1996,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 696544
   },
   "charmeleon": {
@@ -244,10 +226,7 @@
     "trianglesBefore": 2164,
     "trianglesAfter": 2164,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 712308
   },
   "ivysaur": {
@@ -257,10 +236,7 @@
     "trianglesBefore": 2016,
     "trianglesAfter": 2016,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 307696
   },
   "venusaur": {
@@ -270,10 +246,7 @@
     "trianglesBefore": 2179,
     "trianglesAfter": 2179,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 341284
   },
   "charizard": {
@@ -283,10 +256,7 @@
     "trianglesBefore": 2361,
     "trianglesAfter": 2361,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 756740
   },
   "hypno": {
@@ -516,10 +486,7 @@
     "trianglesBefore": 1846,
     "trianglesAfter": 1846,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 685196
   },
   "nidorina": {
@@ -2009,10 +1976,7 @@
     "trianglesBefore": 2536,
     "trianglesAfter": 2536,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 273264
   },
   "player-haunter": {
@@ -2022,10 +1986,7 @@
     "trianglesBefore": 2192,
     "trianglesAfter": 2192,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 242908
   },
   "player-gengar": {
@@ -2035,10 +1996,7 @@
     "trianglesBefore": 2550,
     "trianglesAfter": 2550,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 318660
   },
   "player-dratini": {
@@ -2048,10 +2006,7 @@
     "trianglesBefore": 1809,
     "trianglesAfter": 1809,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 241868
   },
   "player-dragonair": {
@@ -2061,10 +2016,7 @@
     "trianglesBefore": 2120,
     "trianglesAfter": 2120,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 257980
   },
   "player-dragonite": {
@@ -2074,10 +2026,7 @@
     "trianglesBefore": 2425,
     "trianglesAfter": 2425,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 335576
   },
   "player-machop": {
@@ -2087,10 +2036,7 @@
     "trianglesBefore": 2546,
     "trianglesAfter": 2546,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 284944
   },
   "player-machoke": {
@@ -2100,10 +2046,7 @@
     "trianglesBefore": 3252,
     "trianglesAfter": 3252,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 373744
   },
   "player-machamp": {
@@ -2113,10 +2056,7 @@
     "trianglesBefore": 3178,
     "trianglesAfter": 3178,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 373164
   },
   "player-abra": {
@@ -2126,10 +2066,7 @@
     "trianglesBefore": 2268,
     "trianglesAfter": 2268,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 342488
   },
   "player-kadabra": {
@@ -2139,10 +2076,7 @@
     "trianglesBefore": 2489,
     "trianglesAfter": 2489,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 390324
   },
   "player-alakazam": {
@@ -2152,10 +2086,7 @@
     "trianglesBefore": 2239,
     "trianglesAfter": 2239,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 368640
   },
   "player-geodude": {
@@ -2165,10 +2096,7 @@
     "trianglesBefore": 2462,
     "trianglesAfter": 2462,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 264048
   },
   "player-graveler": {
@@ -2178,10 +2106,7 @@
     "trianglesBefore": 1956,
     "trianglesAfter": 1956,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 302644
   },
   "player-golem": {
@@ -2191,10 +2116,117 @@
     "trianglesBefore": 2190,
     "trianglesAfter": 2190,
     "texture": 1024,
-    "clips": [
-      "idle",
-      "run"
-    ],
+    "clips": ["idle", "run"],
     "bytes": 373044
+  },
+  "heracross": {
+    "name": "heracross",
+    "source": "enemies/heracross/blender/model.glb",
+    "output": "public/models/enemies/heracross.glb",
+    "trianglesBefore": 2450,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 95432
+  },
+  "munchlax": {
+    "name": "munchlax",
+    "source": "enemies/munchlax/blender/model.glb",
+    "output": "public/models/enemies/munchlax.glb",
+    "trianglesBefore": 1626,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 88036
+  },
+  "magikarp": {
+    "name": "magikarp",
+    "source": "enemies/magikarp/blender/model.glb",
+    "output": "public/models/enemies/magikarp.glb",
+    "trianglesBefore": 1757,
+    "trianglesAfter": 899,
+    "texture": 512,
+    "clips": [],
+    "bytes": 114900
+  },
+  "gengar-altar": {
+    "name": "gengar-altar",
+    "source": "field-sites/gengar-altar/generation/tripo-out/model.glb",
+    "output": "public/models/field-sites/gengar-altar.glb",
+    "trianglesBefore": 1447,
+    "trianglesAfter": 1447,
+    "texture": 512,
+    "clips": [],
+    "bytes": 105660
+  },
+  "honey-tree": {
+    "name": "honey-tree",
+    "source": "field-sites/honey-tree/blender/model.glb",
+    "output": "public/models/field-sites/honey-tree.glb",
+    "trianglesBefore": 688,
+    "trianglesAfter": 688,
+    "texture": 256,
+    "clips": [],
+    "bytes": 73088
+  },
+  "item-ball": {
+    "name": "item-ball",
+    "source": "field-sites/item-ball/blender/model.glb",
+    "output": "public/models/field-sites/item-ball.glb",
+    "trianglesBefore": 736,
+    "trianglesAfter": 736,
+    "texture": 256,
+    "clips": [],
+    "bytes": 71212
+  },
+  "fishing": {
+    "name": "fishing",
+    "source": "field-sites/fishing/blender/model.glb",
+    "output": "public/models/field-sites/fishing.glb",
+    "trianglesBefore": 520,
+    "trianglesAfter": 520,
+    "texture": 256,
+    "clips": [],
+    "bytes": 43128
+  },
+  "fossil": {
+    "name": "fossil",
+    "source": "field-sites/fossil/blender/model.glb",
+    "output": "public/models/field-sites/fossil.glb",
+    "trianglesBefore": 716,
+    "trianglesAfter": 716,
+    "texture": 256,
+    "clips": [],
+    "bytes": 54592
+  },
+  "raid-den": {
+    "name": "raid-den",
+    "source": "field-sites/raid-den/blender/model.glb",
+    "output": "public/models/field-sites/raid-den.glb",
+    "trianglesBefore": 484,
+    "trianglesAfter": 484,
+    "texture": 256,
+    "clips": [],
+    "bytes": 42844
+  },
+  "spring": {
+    "name": "spring",
+    "source": "field-sites/spring/blender/model.glb",
+    "output": "public/models/field-sites/spring.glb",
+    "trianglesBefore": 588,
+    "trianglesAfter": 588,
+    "texture": 256,
+    "clips": [],
+    "bytes": 52172
+  },
+  "egg": {
+    "name": "egg",
+    "source": "field-sites/egg/blender/model.glb",
+    "output": "public/models/field-sites/egg.glb",
+    "trianglesBefore": 320,
+    "trianglesAfter": 320,
+    "texture": 256,
+    "clips": [],
+    "bytes": 37592
   }
 }

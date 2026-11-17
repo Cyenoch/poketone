@@ -8,6 +8,8 @@ import {
   HemisphereLight,
   Mesh,
   MeshBasicMaterial,
+  type Material,
+  type Object3D,
   PerspectiveCamera,
   PlaneGeometry,
   Scene,
@@ -28,6 +30,8 @@ import {
   stationFiles,
   yawFor,
 } from "../../run/view/assets";
+import { shinyLook } from "../../run/view/shiny";
+import type { EnemyId } from "../../run/sim/content/enemies";
 
 /** Idle turn (rad/s), the pause after the player turns it, and the turn per arrow key / pixel. */
 const SPIN = 0.45;
@@ -49,8 +53,43 @@ function modelUrl(model: CodexModel): string {
       : stationFiles[model.id].url;
 }
 
+/** The species whose shiny palette the picture wears, if any. */
+const shinyOf = (model: CodexModel): EnemyId | undefined =>
+  model.kind === "enemy" && model.shiny ? model.id : undefined;
+
+/** Species can share a GLB, palettes are per species: a shiny picture is keyed by both. */
+const pictureKey = (model: CodexModel): string => {
+  const shiny = shinyOf(model);
+  return shiny ? `${modelUrl(model)}#shiny:${shiny}` : modelUrl(model);
+};
+
+/**
+ * Own copies of the shared model's materials in `id`'s shiny palette: the store's materials are the
+ * run's and the lobby's too, so the 图鉴 never patches them.
+ */
+function wearShiny(root: Object3D, id: EnemyId): Material[] {
+  const copies = new Map<Material, Material>();
+  const recolour = (source: Material) => {
+    let copy = copies.get(source);
+    if (!copy) {
+      copy = source.clone();
+      shinyLook(copy, id);
+      copies.set(source, copy);
+    }
+    return copy;
+  };
+  root.traverse((node) => {
+    if (!(node instanceof Mesh)) return;
+    node.material = Array.isArray(node.material)
+      ? node.material.map(recolour)
+      : recolour(node.material);
+  });
+  return [...copies.values()];
+}
+
 interface Prepared {
-  url: string;
+  /** `pictureKey`: the model and its palette. */
+  key: string;
   /** The 图鉴's own copy of the shared model (its skeleton) and its hold on the shared entry. */
   loaded: { releaseUploads(): void; dispose(): void };
   /** Facing and unit height applied; turns about its own centre. */
@@ -64,7 +103,8 @@ interface Prepared {
  * memory is neither refetched nor re-parsed), copied for the 图鉴 and centred at unit height, facing
  * +Z like the run view.
  */
-async function loadPrepared(url: string, signal: AbortSignal): Promise<Prepared> {
+async function loadPrepared(model: CodexModel, signal: AbortSignal): Promise<Prepared> {
+  const url = modelUrl(model);
   const handle = models.acquire(url, "interactive");
   const abort = () => handle.release();
   signal.addEventListener("abort", abort, { once: true });
@@ -74,11 +114,18 @@ async function loadPrepared(url: string, signal: AbortSignal): Promise<Prepared>
     throw signal.reason;
   }
   const copy = instantiate(canonical);
+  const shiny = shinyOf(model);
+  const recoloured = shiny ? wearShiny(copy.root, shiny) : [];
   const loaded = {
-    // Shared geometry, materials and textures are the store's; the copy owns its skeletons.
-    releaseUploads: () => copy.releaseUploads(),
+    // Shared geometry, materials and textures are the store's; the copy owns its skeletons and
+    // its shiny materials (a disposed material compiles again on its next draw).
+    releaseUploads() {
+      copy.releaseUploads();
+      for (const material of recoloured) material.dispose();
+    },
     dispose() {
       copy.dispose();
+      for (const material of recoloured) material.dispose();
       handle.release();
     },
   };
@@ -106,7 +153,13 @@ async function loadPrepared(url: string, signal: AbortSignal): Promise<Prepared>
     mixer = new AnimationMixer(root);
     mixer.clipAction(idle).play();
   }
-  return { url, loaded, holder, radius: sphere.radius, ...(mixer ? { mixer } : {}) };
+  return {
+    key: pictureKey(model),
+    loaded,
+    holder,
+    radius: sphere.radius,
+    ...(mixer ? { mixer } : {}),
+  };
 }
 
 /** Light rig shared by the stage and the thumbnails, so a thumbnail looks like its model. */
@@ -208,6 +261,9 @@ export class CodexModelStage {
   /** The mounted picture; hidden until the wanted model has drawn, so the last one never shows. */
   private mesh: Mesh | undefined;
   private wanted: string | undefined;
+  private showing: CodexModel | undefined;
+  /** On a recolour, the picture being replaced: the new one starts from its idle pose. */
+  private posedAfter: Prepared | undefined;
   private request: AbortController | undefined;
   private yaw = START_YAW;
   private sinceTurn = SPIN_RESUME_MS;
@@ -235,22 +291,34 @@ export class CodexModelStage {
   }
 
   show(model: CodexModel | undefined): void {
-    const url = model && modelUrl(model);
-    if (url === this.wanted) return;
-    this.wanted = url;
+    const key = model && pictureKey(model);
+    if (key === this.wanted) {
+      this.showing = model;
+      return;
+    }
+    // The same species in its other palette keeps its turn, its idle pose and the last picture
+    // until the new one draws: only the colours change.
+    const recolour =
+      model?.kind === "enemy" && this.showing?.kind === "enemy" && this.showing.id === model.id;
+    const previous = this.current;
+    this.wanted = key;
+    this.showing = model;
     this.request?.abort();
     this.request = undefined;
     this.turntable.clear();
     this.current = undefined;
-    if (this.mesh) this.mesh.visible = false;
-    this.yaw = START_YAW;
-    this.sinceTurn = SPIN_RESUME_MS;
     this.dirty = true;
-    if (!url) {
+    this.posedAfter = recolour ? previous : undefined;
+    if (!recolour) {
+      if (this.mesh) this.mesh.visible = false;
+      this.yaw = START_YAW;
+      this.sinceTurn = SPIN_RESUME_MS;
+    }
+    if (!model || !key) {
       this.state = "idle";
       return;
     }
-    const at = this.cache.findIndex((entry) => entry.url === url);
+    const at = this.cache.findIndex((entry) => entry.key === key);
     if (at >= 0) {
       const [known] = this.cache.splice(at, 1);
       this.cache.push(known!);
@@ -259,7 +327,7 @@ export class CodexModelStage {
     }
     this.state = "loading";
     const request = (this.request = new AbortController());
-    void loadPrepared(url, request.signal).then(
+    void loadPrepared(model, request.signal).then(
       (prepared) => {
         if (request.signal.aborted) return;
         this.cache.push(prepared);
@@ -271,12 +339,17 @@ export class CodexModelStage {
         if (request.signal.aborted) return;
         console.error(error);
         this.state = "error";
+        // A failed recolour must not leave the other palette standing in for it.
+        if (this.mesh) this.mesh.visible = false;
         this.onChange();
       },
     );
   }
 
   private use(prepared: Prepared): void {
+    const pose = this.posedAfter?.mixer;
+    this.posedAfter = undefined;
+    if (pose && prepared.mixer) prepared.mixer.setTime(pose.time);
     this.current = prepared;
     this.turntable.clear();
     this.turntable.add(prepared.holder);
@@ -395,7 +468,7 @@ export class CodexThumbs {
   /** Until its picture exists a row draws nothing, through the same program. */
   private readonly empty = new DataTexture(new Uint8Array(4), 1, 1);
   private readonly thumbs = new Map<string, Thumb>();
-  private readonly queue: string[] = [];
+  private readonly queue: CodexModel[] = [];
   private loading: AbortController | undefined;
   private readonly ready: Prepared[] = [];
   private readonly onChange: () => void;
@@ -407,9 +480,9 @@ export class CodexThumbs {
 
   /** A layout node that fills its parent with the model's picture once it exists. */
   mount(model: CodexModel): Content {
-    const url = modelUrl(model);
-    let thumb = this.thumbs.get(url);
-    if (!thumb) this.thumbs.set(url, (thumb = { meshes: new Set(), queued: false }));
+    const key = pictureKey(model);
+    let thumb = this.thumbs.get(key);
+    if (!thumb) this.thumbs.set(key, (thumb = { meshes: new Set(), queued: false }));
     const material = pictureMaterial("thumb", thumb.texture ?? this.empty);
     const mesh = new Mesh(this.geometry, material);
     mesh.visible = !!thumb.texture;
@@ -422,7 +495,7 @@ export class CodexThumbs {
     });
     if (!thumb.texture && !thumb.queued) {
       thumb.queued = true;
-      this.queue.push(url);
+      this.queue.push(model);
     }
     return content;
   }
@@ -430,9 +503,9 @@ export class CodexThumbs {
   /** Starts the next load; one at a time so the visible rows fill in order. */
   update(): void {
     if (this.loading || !this.queue.length) return;
-    const url = this.queue.shift()!;
+    const model = this.queue.shift()!;
     const request = (this.loading = new AbortController());
-    void loadPrepared(url, request.signal).then(
+    void loadPrepared(model, request.signal).then(
       (prepared) => {
         if (request.signal.aborted) return;
         this.loading = undefined;
@@ -467,7 +540,7 @@ export class CodexThumbs {
     const texture = new DataTexture(pixels, THUMB, THUMB);
     texture.colorSpace = SRGBColorSpace;
     texture.needsUpdate = true;
-    const thumb = this.thumbs.get(prepared.url)!;
+    const thumb = this.thumbs.get(prepared.key)!;
     thumb.texture = texture;
     for (const mesh of thumb.meshes) {
       (mesh.material as MeshBasicMaterial).map = texture;

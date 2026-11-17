@@ -1,4 +1,5 @@
 import { firstBeats, laterBeats } from "./beatTemplates";
+import { fieldContent } from "./fieldContent";
 import { forest } from "./forest";
 import type { StageDef } from "./index";
 
@@ -10,6 +11,7 @@ export const glacier = {
   enemyHp: 0.75,
   zones: [
     {
+      ...fieldContent("glacier"),
       roster: [
         [0, "zubat"],
         [0, "geodude"],
@@ -41,6 +43,7 @@ export const glacier = {
       atmosphere: "glacier-clear",
     },
     {
+      ...fieldContent("glacier"),
       roster: [
         [0, "seel"],
         [0, "shellder"],
@@ -68,6 +71,7 @@ export const glacier = {
       atmosphere: "glacier-aurora",
     },
     {
+      ...fieldContent("glacier"),
       roster: [
         [0, "snorlax"],
         [0, "kadabra"],

@@ -87,6 +87,8 @@ function projectPlayer(world, player) {
     kills: player.kills,
     ult: q(player.ult.charge),
     ultimate: [q(player.ult.elapsed), q(player.ult.protection)],
+    dex: Object.entries(player.dex).sort(([a], [b]) => text(a, b)),
+    egg: player.egg ? [player.egg.species, q(player.egg.distance)] : null,
     partners: world.partners.filter((p) => p.owner === player.id).length,
     statuses: playerStatuses(player),
     left: [player.rerolls, player.skips, player.banishes, player.revives],
@@ -106,6 +108,8 @@ function projectEnemy(enemy) {
     enemy.elite,
     enemy.alpha,
     enemy.boss,
+    enemy.shiny,
+    enemy.escape !== null,
     enemy.phase,
     enemyStatuses(enemy),
   ];
@@ -127,6 +131,16 @@ export function project(world) {
     stations: world.stations
       .map((s) => [s.kind, world.players.length === 1 ? s.used.length > 0 : s.used])
       .sort((a, b) => text(a[0], b[0])),
+    sites: byId(world.sites).map((s) => [
+      s.kind,
+      s.state,
+      s.owner,
+      q(s.data.progress),
+      s.data.uses,
+    ]),
+    weather: world.weather
+      ? [world.weather.id, q(world.weather.from), q(world.weather.until)]
+      : null,
   };
 }
 
@@ -162,7 +176,7 @@ export function eventFacts(e) {
     case "impact":
       return [e.t, q(e.x), q(e.y), q(e.z)];
     case "capture":
-      return [e.t, e.player, e.species, q(e.x), q(e.z)];
+      return [e.t, e.source, e.player, e.species, q(e.x), q(e.z)];
     case "partner-attack":
       return [e.t, e.style, e.type, q(e.x), q(e.z), q(e.tx), q(e.tz)];
     case "partner-guard":
@@ -172,6 +186,14 @@ export function eventFacts(e) {
     case "ult":
     case "ult-release":
       return [e.t, e.player, e.line, e.stage];
+    case "weather":
+      return [e.t, e.id, e.phase];
+    case "site":
+      return [e.t, e.kind, e.phase, e.player ?? null, q(e.x), q(e.z)];
+    case "shiny":
+      return [e.t, e.species, q(e.x), q(e.z)];
+    case "shiny-caught":
+      return [e.t, e.species, e.by];
     case "ult-pulse":
       return [
         e.t,
@@ -342,7 +364,7 @@ const STARTERS = Object.keys(starters);
 const SEEDS = [61, 11];
 
 /** The solo case that plays the whole six-map run: the scripted line that levels fastest. */
-const FULL_RUN = "solo/pikachu/d1/s11";
+const FULL_RUN = "solo/pikachu/d1/s5";
 
 const CASES = [
   // Kept alive (HP refilled) so every line reaches its first evolution, the guardian (which comes on
@@ -352,12 +374,14 @@ const CASES = [
       const difficulty = (i + s) % 3;
       // Durable enemies and adaptive supply move the loot path; keep evolution/capture in real runs.
       const seed =
-        starter === "abra"
-          ? 7
-          : s === 1 && ["squirtle", "charmander", "gastly"].includes(starter)
+        starter === "abra" || (s === 1 && starter === "pikachu")
+          ? 5
+          : s === 1 && starter === "squirtle"
             ? 61
-            : s === 0 && starter === "gastly"
-              ? 11
+            : starter === "gastly"
+              ? difficulty === 2
+                ? 5
+                : 11
               : baseSeed;
       const name = `solo/${starter}/d${difficulty}/s${seed}`;
       const full = name === FULL_RUN;
@@ -374,7 +398,7 @@ const CASES = [
           "solo/squirtle/d2/s61",
           "solo/squirtle/d0/s61",
           "solo/pikachu/d0/s61",
-          "solo/abra/d1/s7",
+          "solo/abra/d1/s5",
         ].includes(name)
           ? { ticks: 6 * 2 * STAGE_TICKS }
           : {}),

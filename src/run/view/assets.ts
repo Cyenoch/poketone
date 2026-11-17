@@ -33,6 +33,9 @@ import type { Need } from "../../prepare/preparation";
 import type { IdleKind, UnitSize } from "../../prepare/idle";
 import { glbUnitSize } from "../../game/models/glbSize";
 import { resources, type DecodedImage } from "../../platform/resources";
+import { SITE_POOLS } from "../sim/content/sites";
+import type { SiteKind } from "../sim/state/field";
+import { siteModelHeight, siteModelOf, type SiteModel } from "./fieldSites";
 
 export interface InstanceSource {
   geometry: BufferGeometry;
@@ -61,6 +64,8 @@ export interface RunAssets {
   props: Record<Obstacle["kind"], InstanceSource[]>;
   scenery: Record<string, InstanceSource>;
   stations: Record<StationKind, InstanceSource>;
+  /** The stage's field-site props (`stageSiteModels`); Snorlax's sleeper is in `enemies`. */
+  sites: Partial<Record<SiteModel, InstanceSource>>;
   ground: GroundTextures;
   /** Frees the GPU copies the run owns (its skeletons); shared models and maps are the store's. */
   releaseUploads(): void;
@@ -70,15 +75,43 @@ export interface RunAssets {
 /** Each species' GLB (Tripo, `public/models/game-models.provenance.json`). */
 export const enemyModel = (id: EnemyId) => `/models/enemies/${enemies[id].model ?? id}.glb`;
 
-/** All zones are prepared together: captured partners and later floors never fetch mid-fight. */
+/** Species a field site can bring out beyond the zone roster (`sim/sites/*`); eggs and raids use the roster. */
+export const siteSpecies: Partial<Record<SiteKind, readonly EnemyId[]>> = {
+  "honey-tree": ["heracross", "pinsir", "munchlax"],
+  "item-ball": ["voltorb"],
+  snorlax: ["snorlax"],
+  fishing: ["magikarp", "gyarados"],
+  fossil: ["aerodactyl"],
+  ghost: ["marowak"],
+};
+
+/**
+ * All zones are prepared together: captured partners, later floors and every field encounter the
+ * stage's sites can start never fetch mid-fight.
+ */
 export function stageEnemyIds(stage: StageId): EnemyId[] {
   return [
-    ...new Set(
-      stageDefs[stage].zones.flatMap((zone) => [
+    ...new Set([
+      ...stageDefs[stage].zones.flatMap((zone) => [
         ...zone.roster.map(([, id]) => id),
         zone.guardian.species,
-        ...zone.beats.flatMap(([, beat]) => ("species" in beat ? [beat.species].flat() : [])),
+        ...zone.beats.flatMap(({ beat }) => ("species" in beat ? [beat.species].flat() : [])),
       ]),
+      ...SITE_POOLS[stage].flatMap((kind) => siteSpecies[kind] ?? []),
+    ]),
+  ];
+}
+
+/** Field-site prop files (`assets/field-models.provenance.json`). */
+export const siteModelUrl = (model: SiteModel) => `/models/field-sites/${model}.glb`;
+/** The props a stage's site pool draws (the Silph Scope reuses the item ball). */
+export function stageSiteModels(stage: StageId): SiteModel[] {
+  return [
+    ...new Set(
+      SITE_POOLS[stage].flatMap((kind) => {
+        const model = siteModelOf[kind];
+        return model && model !== "snorlax" ? [model] : [];
+      }),
     ),
   ];
 }
@@ -441,6 +474,14 @@ const facingYaw: Record<string, number> = {
   "tower-tomb-1": 0,
   "tower-tomb-2": 0,
   "tower-tomb-3": 0,
+  // Scripted field props are authored facing +Z; the Tripo altar keeps the default.
+  "honey-tree": 0,
+  "item-ball": 0,
+  fishing: 0,
+  fossil: 0,
+  "raid-den": 0,
+  spring: 0,
+  egg: 0,
   caterpie: (-3 * Math.PI) / 4,
   ekans: Math.PI,
   metapod: -Math.PI / 4,
@@ -848,6 +889,7 @@ export function runSharedNeeds(stage: StageId): Need[] {
     ...Object.values(theme.props).flatMap((look) => look.models.map(model)),
     ...sceneryFiles(theme).map(({ url }) => model(url)),
     ...Object.values(stationFiles).map((file) => model(file.url)),
+    ...stageSiteModels(stage).map((name) => model(siteModelUrl(name))),
     ...[theme.ground.grass, theme.ground.meadow, theme.ground.dirt, theme.ground.cliff].flatMap(
       ({ map, detail }) =>
         [map, detail].map((url): Need => ({
@@ -899,6 +941,7 @@ export async function loadRunAssets(
     const propKinds = Object.keys(theme.props) as Obstacle["kind"][];
     const scenery = sceneryFiles(theme);
     const stationKinds = Object.keys(stationFiles) as StationKind[];
+    const siteModels = stageSiteModels(world.stage);
     const groundMap = async (url: string) => {
       const map = await hold(models.acquireTexture(url, "critical"));
       map.wrapS = map.wrapT = RepeatWrapping;
@@ -913,6 +956,7 @@ export async function loadRunAssets(
       propModels,
       stationModels,
       sceneryModels,
+      sitePropModels,
       grass,
       meadow,
       dirt,
@@ -937,6 +981,7 @@ export async function loadRunAssets(
         stationKinds.map((kind) => hold(models.acquire(stationFiles[kind].url, "critical"))),
       ),
       Promise.all(scenery.map(({ url }) => hold(models.acquire(url, "critical")))),
+      Promise.all(siteModels.map((name) => hold(models.acquire(siteModelUrl(name), "critical")))),
       groundMap(theme.ground.grass.map),
       groundMap(theme.ground.meadow.map),
       groundMap(theme.ground.dirt.map),
@@ -980,6 +1025,7 @@ export async function loadRunAssets(
         (url) => scenery.find((file) => file.url === url)!.height,
       ),
       stations: bake(stationKinds, stationModels, (kind) => stationFiles[kind].height),
+      sites: bake(siteModels, sitePropModels, (name) => siteModelHeight[name]),
       ground: { grass, meadow, dirt, cliff, grassDetail, meadowDetail, dirtDetail, cliffDetail },
       // Shared models and maps are the store's to release on loss; the run owns its skeletons.
       releaseUploads() {

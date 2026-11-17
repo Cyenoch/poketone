@@ -25,6 +25,8 @@ export interface PlayableSpots {
   landmarks: readonly { x: number; z: number }[];
   /** `reach`: how far past body + player its dialog opens (stations.ts `STATION_REACH`). */
   stations: readonly { x: number; z: number; radius: number; reach: number }[];
+  /** Field sites use the same body and two-way approach guarantee as stations. */
+  sites?: readonly { x: number; z: number; radius: number; reach: number }[];
   passages: readonly Passage[];
 }
 
@@ -41,7 +43,7 @@ export function stageBodies(stage: StageDef): Bodies {
   const bodies: [EnemyId, number][] = stage.zones.flatMap((zone): [EnemyId, number][] => [
     [zone.guardian.species, 1],
     ...zone.roster.map(([, id]): [EnemyId, number] => [id, ELITE_BODY]),
-    ...zone.beats.flatMap(([, beat]) =>
+    ...zone.beats.flatMap(({ beat }) =>
       "species" in beat ? [beat.species].flat().map((id): [EnemyId, number] => [id, 1]) : [],
     ),
   ]);
@@ -88,7 +90,7 @@ export function checkPlayable(nav: Nav, spots: PlayableSpots, bodies: Bodies, wh
     )
       fail(`守卫地标 ${at(landmark.x, landmark.z)} 站不下最大身体或不能从出生点往返`);
   }
-  for (const station of spots.stations) {
+  for (const station of [...spots.stations, ...(spots.sites ?? [])]) {
     // Inside the smallest form's zone, so every larger form's zone holds it too.
     const distance = station.radius + bodies.playerMin + station.reach - ZONE_MARGIN;
     let reachable = false;

@@ -46,6 +46,7 @@ test("fullscreen exit cancels the initial gesture path; only restore re-enters a
   for (const [key, value] of Object.entries(globals))
     Object.defineProperty(globalThis, key, { configurable: true, value });
   let stop;
+  const { info, warn } = console;
   try {
     const landscape = await import("../src/platform/landscape.ts");
     landscape.requestLandscapeOnFirstTap();
@@ -63,7 +64,27 @@ test("fullscreen exit cancels the initial gesture path; only restore re-enters a
     assert.equal(requests, 2);
     assert.equal(locks, 2);
     assert.equal(changes, 3);
+    const notices = [];
+    console.info = (...args) => notices.push(["info", ...args]);
+    console.warn = (...args) => notices.push(["warn", ...args]);
+    for (const name of [null, "NotSupportedError", "NotAllowedError"]) {
+      await landscape.toggleFullscreen();
+      globals.screen.orientation.lock = name
+        ? async () => {
+            throw new DOMException("orientation lock unavailable", name);
+          }
+        : undefined;
+      await landscape.restoreFullscreen();
+      assert.equal(page.fullscreenElement, root, "orientation failure must not exit fullscreen");
+      assert.equal(landscape.needsFullscreen(), false);
+      const notice = notices.at(-1);
+      assert.equal(notice[0], name === "NotAllowedError" ? "warn" : "info");
+      assert.match(notice[1], name === "NotAllowedError" ? /锁定失败/ : /不支持横屏锁定/);
+    }
+    assert.equal(notices.length, 3, "each unsupported or denied lock remains observable");
   } finally {
+    console.info = info;
+    console.warn = warn;
     stop?.();
     for (const [key, descriptor] of saved) {
       if (descriptor) Object.defineProperty(globalThis, key, descriptor);

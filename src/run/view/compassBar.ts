@@ -11,6 +11,8 @@ import type { PlayerId } from "../sim/state/entities";
 import type { World } from "../sim/state/world";
 import { MapInk } from "./mapInk";
 import { loadMapIcon, stationIconUrls } from "./minimapLayers";
+import { fieldMarks, loadSiteIcons } from "./fieldMapMarks";
+import type { SiteKind } from "../sim/state/field";
 const SPAN = (100 * Math.PI) / 180,
   PIN = (80 * Math.PI) / 180,
   TICK = (15 * Math.PI) / 180,
@@ -117,6 +119,15 @@ export function createCompassBar(
     icon.content.setProperties({ zIndex: 3 });
     panel.add(icon.content);
   }
+  const siteTextures = loadSiteIcons(world, () => stage.invalidate());
+  const siteIcons = new Map<SiteKind, MapInk>(
+    [...siteTextures].map(([kind, texture]) => [kind, new MapInk(texture)]),
+  );
+  for (const icon of siteIcons.values()) {
+    icon.content.setProperties({ zIndex: 3 });
+    panel.add(icon.content);
+  }
+  const allIcons = () => [...icons, ...siteIcons.values()];
   const cardinals = CARDINALS.map(([name]) => {
     const holder = new Container({
       positionType: "absolute",
@@ -191,7 +202,7 @@ export function createCompassBar(
     });
     shapes.uniforms.inkSize.value.set(width, height);
     shapes.begin();
-    for (const icon of icons) {
+    for (const icon of allIcons()) {
       icon.uniforms.inkSize.value.set(width, height);
       icon.begin();
     }
@@ -201,8 +212,9 @@ export function createCompassBar(
     const pin = (
       key: string,
       angle: number,
-      kind: "station" | "chest" | "boss" | "landmark",
+      kind: "station" | "chest" | "boss" | "landmark" | "site",
       icon = 0,
+      site?: SiteKind,
     ) => {
       seen.add(key);
       let side = sides.get(key) ?? 1;
@@ -216,6 +228,16 @@ export function createCompassBar(
       if (kind === "station") {
         shapes.add(x, y, markSize + 4, markSize + 4, 0, "#ffd45b", "#ffd45b", 0, 0, opacity);
         icons[icon]!.add(x, y, markSize, markSize, 10, "#fff", "#0d233f", 2, 0, opacity);
+      } else if (kind === "site") {
+        // A ready field site: the station's gold disc, the site's own badge art; item balls a ball.
+        if (site === "item-ball") shapes.add(x, y, 14, 14, 0, "#e0475a", "#0d233f", 2, 0, opacity);
+        else {
+          shapes.add(x, y, markSize + 2, markSize + 2, 0, "#ffd45b", "#ffd45b", 0, 0, opacity);
+          shapes.add(x, y, markSize - 4, markSize - 4, 0, "#1d3d63", "#0d233f", 0, 0, opacity);
+          siteIcons
+            .get(site!)
+            ?.add(x, y, markSize - 8, markSize - 8, 9, "#fff", "#0d233f", 0, 0, opacity);
+        }
       } else if (kind === "chest") shapes.add(x, y, 16, 16, 2, "#ffd45b", "#b48129", 2, 0, opacity);
       else if (kind === "landmark") {
         const fill = value.zone.phase === "active" ? "#ffd45b" : "#bff4ff";
@@ -244,6 +266,8 @@ export function createCompassBar(
             "station",
             station.kind === "hypno" ? 0 : 1,
           );
+      for (const mark of fieldMarks(value))
+        if (mark.ready) pin(mark.key, bearing(mark.x - px, mark.z - pz), "site", 0, mark.kind);
       for (const pickup of value.pickups)
         if (pickup.kind === "chest")
           pin(`chest:${pickup.id}`, bearing(pickup.x - px, pickup.z - pz), "chest");
@@ -257,7 +281,7 @@ export function createCompassBar(
     }
     for (const key of sides.keys()) if (!seen.has(key)) sides.delete(key);
     shapes.end();
-    for (const icon of icons) icon.end();
+    for (const icon of allIcons()) icon.end();
     dirty = false;
     stage.invalidate();
   }
@@ -289,29 +313,29 @@ export function createCompassBar(
     },
     afterLayout() {
       shapes.afterLayout();
-      for (const icon of icons) icon.afterLayout();
+      for (const icon of allIcons()) icon.afterLayout();
       if (dirty) draw(lastWorld, lastAlpha, lastYaw);
     },
     restore() {
       ticks.restore();
       shapes.restore();
-      for (const icon of icons) icon.restore();
-      for (const texture of textures) texture.needsUpdate = true;
+      for (const icon of allIcons()) icon.restore();
+      for (const texture of [...textures, ...siteTextures.values()]) texture.needsUpdate = true;
       dirty = true;
       stage.invalidate();
     },
     releaseUploads() {
       ticks.releaseUploads();
       shapes.releaseUploads();
-      for (const icon of icons) icon.releaseUploads();
+      for (const icon of allIcons()) icon.releaseUploads();
       // The icon samplers live in MapInk's onBeforeCompile closure, owned by this compass.
-      for (const texture of textures) texture.dispose();
+      for (const texture of [...textures, ...siteTextures.values()]) texture.dispose();
     },
     dispose() {
       ticks.dispose();
       shapes.dispose();
-      for (const icon of icons) icon.dispose();
-      for (const texture of textures) texture.dispose();
+      for (const icon of allIcons()) icon.dispose();
+      for (const texture of [...textures, ...siteTextures.values()]) texture.dispose();
       for (const { holder, nodes } of cardinals) {
         for (const text of nodes) text.dispose();
         holder.dispose();

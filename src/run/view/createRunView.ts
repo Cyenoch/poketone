@@ -59,6 +59,10 @@ import { createExitPortal } from "./exitPortal";
 import { zoneDef } from "../sim/currentZone";
 import { playerRings } from "./player-rings";
 import { Deployment } from "./deployment";
+import { createFieldSites } from "./fieldSites";
+import { createWeather } from "./weather";
+import { shinyLook } from "./shiny";
+import { isUnidentifiedGhost } from "../sim/combat";
 
 const dummy = new Object3D();
 const tint = new Color();
@@ -181,7 +185,8 @@ export function* createRunView(
   const theme = zoneTheme(world);
   const scene = new Scene();
   // Fog is mixed in after the colour grade (grade.ts), so its colour is already the graded haze.
-  scene.fog = new Fog(theme.haze.color, theme.haze.near, theme.haze.far);
+  const fog = new Fog(theme.haze.color, theme.haze.near, theme.haze.far);
+  scene.fog = fog;
   // The world target stores display colour and three clears an ordinary target in working
   // (linear) values, so the clear colour carries the haze's display values as its own.
   const haze = new Color(theme.haze.color).getRGB({ r: 0, g: 0, b: 0 }, SRGBColorSpace);
@@ -209,6 +214,12 @@ export function* createRunView(
   // Same five PCF taps spread over ~6 cm: soft edges at no extra cost.
   sun.shadow.radius = 2.5;
   scene.add(hemi, sun, sun.target);
+  const weather = createWeather(
+    world.stage,
+    { fog, background, hemi, sun, add: (mesh) => scene.add(mesh) },
+    coarsePointer,
+  );
+  if (weather) disposables.push(weather);
   // Light-space axes of the shadow camera (it looks back along the sun offset with +Y up), for texel snapping.
   const sunBack = sunOffset.clone().normalize();
   const sunRight = new Vector3(0, 1, 0).cross(sunBack).normalize();
@@ -376,6 +387,14 @@ export function* createRunView(
   const exitPortal = createExitPortal(ground);
   scene.add(exitPortal.root);
   disposables.push(exitPortal);
+  // Field sites: props, state rings and their light; Snorlax sleeps as its own species model.
+  const fieldSites = createFieldSites(
+    { ...assets.sites, snorlax: assets.enemies.snorlax },
+    ground,
+    wind,
+  );
+  scene.add(fieldSites.root);
+  disposables.push(fieldSites);
 
   yield;
   // Swarm enemies: one instanced draw per species, blob shadows instead of shadow casting.
@@ -385,61 +404,70 @@ export function* createRunView(
   let shellClose: InstancedBufferAttribute | undefined;
   const shellEnds = new Map<number, number>();
   const guardian = zoneDef(world).guardian.species;
+  /** A shiny of each ordinary species: its own few-instance draw with the species' shiny palette. */
+  const shinyMeshes = new Map<EnemyId, InstancedMesh>();
+  const shinyFades = new Map<EnemyId, InstancedBufferAttribute>();
+  const shinySilhouettes = new Map<EnemyId, InstancedMesh>();
+  let warming = false;
   for (const id of Object.keys(assets.enemies) as EnemyId[]) {
     const source = assets.enemies[id]!;
-    const material = creatureLook(lambertCopy(source.material));
-    enemyLook(material, id);
-    decoration?.patchEnemyMaterial?.(material);
-    shadeUnderClouds(material, wind);
-    disposables.push(material);
-    const capacity = id === guardian ? 2 : 320;
     const kind = enemyDefs[id].skill?.kind;
     const fades =
       enemyDefs[id].types.includes("ghost") ||
       kind === "melt" ||
       kind === "teleport" ||
       id === "alakazam";
-    const geometry = fades || id === "cloyster" ? source.geometry.clone() : source.geometry;
-    if (fades || id === "cloyster") disposables.push(geometry);
-    if (fades) {
-      const fade = new InstancedBufferAttribute(new Float32Array(capacity).fill(1), 1);
-      fade.setUsage(DynamicDrawUsage);
-      geometry.setAttribute("aFade", fade);
-      ditherFade(material);
-      enemyFades.set(id, fade);
-    }
-    if (id === "cloyster") {
-      shellClose = new InstancedBufferAttribute(new Float32Array(capacity), 1);
-      shellClose.setUsage(DynamicDrawUsage);
-      geometry.setAttribute("aShellClose", shellClose);
-      foldCloysterShell(material);
-    }
-    const mesh = new InstancedMesh(geometry, material, capacity);
-    mesh.instanceMatrix.setUsage(DynamicDrawUsage);
-    // Allocated now: the first tint would otherwise add instance colours and change the program.
-    for (let i = 0; i < mesh.instanceMatrix.count; i++) mesh.setColorAt(i, white);
-    mesh.instanceColor!.setUsage(DynamicDrawUsage);
-    mesh.count = 0;
-    mesh.frustumCulled = false;
-    mesh.castShadow = id === guardian;
-    if (id === "cloyster") {
-      const depth = ownShadowDepth(mesh);
-      foldCloysterShell(depth);
-      disposables.push(depth);
-    }
-    enemyMeshes[id] = mesh;
-    scene.add(mesh);
-    disposables.push(mesh);
-    if (world.stage === "tower") {
-      const silhouetteMaterial = towerEnemySilhouette();
-      if (fades) ditherFade(silhouetteMaterial);
-      const silhouette = new InstancedMesh(geometry, silhouetteMaterial, 0);
-      silhouette.instanceMatrix = mesh.instanceMatrix;
-      silhouette.frustumCulled = false;
-      silhouette.renderOrder = 0.9;
-      enemySilhouettes.set(id, silhouette);
-      scene.add(silhouette);
-      disposables.push(silhouette, silhouetteMaterial);
+    for (const shiny of id === guardian || id === "cloyster" ? [false] : [false, true]) {
+      const material = creatureLook(lambertCopy(source.material));
+      enemyLook(material, id);
+      decoration?.patchEnemyMaterial?.(material);
+      shadeUnderClouds(material, wind);
+      if (shiny) shinyLook(material, id);
+      disposables.push(material);
+      const capacity = shiny ? 2 : id === guardian ? 2 : 320;
+      const geometry = fades || id === "cloyster" ? source.geometry.clone() : source.geometry;
+      if (fades || id === "cloyster") disposables.push(geometry);
+      if (fades) {
+        const fade = new InstancedBufferAttribute(new Float32Array(capacity).fill(1), 1);
+        fade.setUsage(DynamicDrawUsage);
+        geometry.setAttribute("aFade", fade);
+        ditherFade(material);
+        (shiny ? shinyFades : enemyFades).set(id, fade);
+      }
+      if (id === "cloyster") {
+        shellClose = new InstancedBufferAttribute(new Float32Array(capacity), 1);
+        shellClose.setUsage(DynamicDrawUsage);
+        geometry.setAttribute("aShellClose", shellClose);
+        foldCloysterShell(material);
+      }
+      const mesh = new InstancedMesh(geometry, material, capacity);
+      mesh.instanceMatrix.setUsage(DynamicDrawUsage);
+      // Allocated now: the first tint would otherwise add instance colours and change the program.
+      for (let i = 0; i < mesh.instanceMatrix.count; i++) mesh.setColorAt(i, white);
+      mesh.instanceColor!.setUsage(DynamicDrawUsage);
+      mesh.count = 0;
+      mesh.frustumCulled = false;
+      mesh.castShadow = id === guardian;
+      if (id === "cloyster") {
+        const depth = ownShadowDepth(mesh);
+        foldCloysterShell(depth);
+        disposables.push(depth);
+      }
+      if (shiny) shinyMeshes.set(id, mesh);
+      else enemyMeshes[id] = mesh;
+      scene.add(mesh);
+      disposables.push(mesh);
+      if (world.stage === "tower") {
+        const silhouetteMaterial = towerEnemySilhouette();
+        if (fades) ditherFade(silhouetteMaterial);
+        const silhouette = new InstancedMesh(geometry, silhouetteMaterial, 0);
+        silhouette.instanceMatrix = mesh.instanceMatrix;
+        silhouette.frustumCulled = false;
+        silhouette.renderOrder = 0.9;
+        (shiny ? shinySilhouettes : enemySilhouettes).set(id, silhouette);
+        scene.add(silhouette);
+        disposables.push(silhouette, silhouetteMaterial);
+      }
     }
   }
   const blobGeometry = new CircleGeometry(1, 16).rotateX(-Math.PI / 2);
@@ -550,10 +578,15 @@ export function* createRunView(
     const rightZ = -Math.sin(yaw);
     const counts = {} as Record<EnemyId, number>;
     for (const id of Object.keys(enemyMeshes) as EnemyId[]) counts[id] = 0;
+    const shinyCounts = new Map<EnemyId, number>();
     let blobCount = 0;
     for (const enemy of world.enemies) {
-      const mesh = enemyMeshes[enemy.species];
-      const index = counts[enemy.species]++;
+      const shinyMesh = enemy.shiny ? shinyMeshes.get(enemy.species) : undefined;
+      const mesh = shinyMesh ?? enemyMeshes[enemy.species];
+      const index = shinyMesh
+        ? (shinyCounts.set(enemy.species, (shinyCounts.get(enemy.species) ?? 0) + 1),
+          shinyCounts.get(enemy.species)! - 1)
+        : counts[enemy.species]++;
       if (index >= mesh.instanceMatrix.count) continue;
       const def = enemyDefs[enemy.species];
       const x = lerp(enemy.px, enemy.x, alpha);
@@ -590,7 +623,7 @@ export function* createRunView(
         if (enemy.hardened > 0) shellEnds.set(enemy.id, world.time + enemy.hardened);
         shellClose!.setX(index, cloysterClosure(frameTime, shellEnds.get(enemy.id)));
       }
-      const fade = enemyFades.get(enemy.species);
+      const fade = (shinyMesh ? shinyFades : enemyFades).get(enemy.species);
       if (fade) fade.setX(index, motion.show);
       const bodyScale = fade ? 1 : motion.show;
       dummy.position.set(
@@ -608,12 +641,28 @@ export function* createRunView(
       );
       dummy.updateMatrix();
       mesh.setMatrixAt(index, dummy.matrix);
+      const unseen = isUnidentifiedGhost(world, enemy);
       if (enemy.flash > 0) tint.setRGB(3, 3, 3);
+      else if (unseen) tint.setRGB(0.05, 0.04, 0.07);
       else if (!statusTint(enemy, elapsed, tint)) {
         if (enemy.elite) tint.setRGB(1.3, 1.08, 0.7);
         else tint.setRGB(1, 1, 1);
       }
-      vfx.tells.tint(enemy.id, tint);
+      // Without the Silph Scope the ghost is a black shadow; a hit only greys it.
+      if (unseen && enemy.flash > 0) tint.setRGB(0.45, 0.4, 0.55);
+      else vfx.tells.tint(enemy.id, tint);
+      if (enemy.shiny && dt > 0) {
+        // Twinkles around the shiny, quickening as it is about to flee.
+        const leaving = enemy.escape !== null || (enemy.shinyUntil ?? Infinity) - world.time < 6;
+        if (Math.random() < dt * (leaving ? 9 : 3.5))
+          fieldSites.twinkle(
+            x + (Math.random() - 0.5) * enemy.radius * 2.4,
+            base + height * (0.25 + Math.random() * 0.85),
+            z + (Math.random() - 0.5) * enemy.radius * 2.4,
+            "#fff2b0",
+            0.18 + Math.random() * 0.12,
+          );
+      }
       mesh.setColorAt(index, tint);
       if (blobCount < blobs.instanceMatrix.count) {
         dummy.position.set(x, 0, z);
@@ -656,6 +705,18 @@ export function* createRunView(
         dummy.updateMatrix();
         blobs.setMatrixAt(blobCount++, dummy.matrix);
       }
+    }
+    for (const [id, mesh] of shinyMeshes) {
+      mesh.count = Math.min(shinyCounts.get(id) ?? 0, mesh.instanceMatrix.count);
+      // Idle shiny draws stay out of the frame; the warm shows them so their program compiles.
+      mesh.visible = warming || mesh.count > 0;
+      const silhouette = shinySilhouettes.get(id);
+      if (silhouette) silhouette.count = mesh.count;
+      if (mesh.count === 0) continue;
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.instanceColor!.needsUpdate = true;
+      const fade = shinyFades.get(id);
+      if (fade) fade.needsUpdate = true;
     }
     for (const id of Object.keys(enemyMeshes) as EnemyId[]) {
       const mesh = enemyMeshes[id];
@@ -836,6 +897,10 @@ export function* createRunView(
         if (event.t === "ult-pulse" && mine) shake.add(ULT_KNOCK[event.look] ?? 0);
         // combat flags the guardian's death as elite too.
         if (event.t === "death" && event.elite) shake.add(TRAUMA.bigKill);
+        fieldSites.handle(event, world);
+        // A shiny's entrance: a star burst where it appears.
+        if (event.t === "shiny")
+          fieldSites.burst(event.x, ground(event.x, event.z) + 0.8, event.z, "#ffe27a", 26, 2.8);
       }
       frameGuardianDash();
       updateWindUniforms(wind, windAt(world.seed, world.time), dt);
@@ -847,6 +912,7 @@ export function* createRunView(
       vfx.tells.select(world, alpha, ground, player);
       frameEnemies(alpha, yaw, hitClock, dt);
       frameStations(dt);
+      fieldSites.frame(world, alpha, elapsed, dt);
       landmark.update(world, elapsed);
       exitPortal.update(world, elapsed);
       for (const body of avatars)
@@ -870,6 +936,7 @@ export function* createRunView(
       dressing.update(camera);
       decoration?.update?.(cameraTarget);
       water?.update(cameraTarget.x, cameraTarget.z);
+      weather?.frame(world.weather, world.time - (1 - alpha) * TICK, cameraTarget, dt);
       frameSun(yaw);
     },
     project(x, y, z, width, height) {
@@ -878,6 +945,9 @@ export function* createRunView(
       return [(projected.x * 0.5 + 0.5) * width, (-projected.y * 0.5 + 0.5) * height];
     },
     warmSet(on) {
+      warming = on;
+      weather?.warm(on);
+      for (const mesh of shinyMeshes.values()) mesh.visible = on || mesh.count > 0;
       deployment.root.visible = on || deployment.elapsed !== null;
       for (const body of avatars)
         for (const [form, mounted] of body.forms) mounted.holder.visible = on || form === body.form;

@@ -130,7 +130,7 @@ function fly(world: World, bone: Hazard): void {
     const feet = heightAt(world.map.terrain, player.x, player.z);
     if (bone.y < feet - bone.radius || bone.y > feet + formOf(player).height + bone.radius)
       continue;
-    damagePlayer(world, player, bone.dmg);
+    damagePlayer(world, player, bone.dmg, bone.element);
   }
 }
 

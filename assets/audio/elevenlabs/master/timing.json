@@ -179,6 +179,16 @@
     "hitMs": 30,
     "peakMs": 50
   },
+  "egg-hatch-1.flac": {
+    "lenMs": 476,
+    "hitMs": 15,
+    "peakMs": 170
+  },
+  "egg-hatch-2.flac": {
+    "lenMs": 807,
+    "hitMs": 10,
+    "peakMs": 246
+  },
   "elite-kill.flac": {
     "lenMs": 692,
     "hitMs": 0,
@@ -414,6 +424,66 @@
     "hitMs": 0,
     "peakMs": 5
   },
+  "shiny-1.flac": {
+    "lenMs": 887,
+    "hitMs": 0,
+    "peakMs": 10
+  },
+  "shiny-2.flac": {
+    "lenMs": 787,
+    "hitMs": 0,
+    "peakMs": 5
+  },
+  "site-den-1.flac": {
+    "lenMs": 1609,
+    "hitMs": 526,
+    "peakMs": 1052
+  },
+  "site-den-2.flac": {
+    "lenMs": 1554,
+    "hitMs": 236,
+    "peakMs": 241
+  },
+  "site-dig-1.flac": {
+    "lenMs": 220,
+    "hitMs": 10,
+    "peakMs": 10
+  },
+  "site-dig-2.flac": {
+    "lenMs": 120,
+    "hitMs": 25,
+    "peakMs": 25
+  },
+  "site-dig-3.flac": {
+    "lenMs": 125,
+    "hitMs": 20,
+    "peakMs": 20
+  },
+  "site-dig-4.flac": {
+    "lenMs": 165,
+    "hitMs": 20,
+    "peakMs": 20
+  },
+  "site-fishing-1.flac": {
+    "lenMs": 476,
+    "hitMs": 336,
+    "peakMs": 341
+  },
+  "site-fishing-2.flac": {
+    "lenMs": 391,
+    "hitMs": 5,
+    "peakMs": 55
+  },
+  "site-flute-1.flac": {
+    "lenMs": 1719,
+    "hitMs": 872,
+    "peakMs": 1062
+  },
+  "site-flute-2.flac": {
+    "lenMs": 1944,
+    "hitMs": 100,
+    "peakMs": 496
+  },
   "sting-defeat.flac": {
     "lenMs": 1333,
     "hitMs": 70,
@@ -459,6 +529,21 @@
     "hitMs": 25,
     "peakMs": 30
   },
+  "tell-voltorb-1.flac": {
+    "lenMs": 350,
+    "hitMs": 25,
+    "peakMs": 286
+  },
+  "tell-voltorb-2.flac": {
+    "lenMs": 350,
+    "hitMs": 20,
+    "peakMs": 25
+  },
+  "tell-voltorb-3.flac": {
+    "lenMs": 251,
+    "hitMs": 40,
+    "peakMs": 40
+  },
   "ui-back.flac": {
     "lenMs": 411,
     "hitMs": 0,
@@ -503,5 +588,45 @@
     "lenMs": 952,
     "hitMs": 0,
     "peakMs": 45
+  },
+  "weather-hail-1.flac": {
+    "lenMs": 822,
+    "hitMs": 90,
+    "peakMs": 396
+  },
+  "weather-hail-2.flac": {
+    "lenMs": 787,
+    "hitMs": 65,
+    "peakMs": 65
+  },
+  "weather-rain-1.flac": {
+    "lenMs": 436,
+    "hitMs": 5,
+    "peakMs": 5
+  },
+  "weather-rain-2.flac": {
+    "lenMs": 336,
+    "hitMs": 15,
+    "peakMs": 20
+  },
+  "weather-sand-1.flac": {
+    "lenMs": 481,
+    "hitMs": 145,
+    "peakMs": 180
+  },
+  "weather-sand-2.flac": {
+    "lenMs": 376,
+    "hitMs": 25,
+    "peakMs": 55
+  },
+  "weather-sun-1.flac": {
+    "lenMs": 636,
+    "hitMs": 0,
+    "peakMs": 185
+  },
+  "weather-sun-2.flac": {
+    "lenMs": 636,
+    "hitMs": 0,
+    "peakMs": 65
   }
 }

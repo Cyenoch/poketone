@@ -18,6 +18,7 @@ import type { Enemy, Hazard, Player } from "../state/entities";
 import { hypot } from "../math";
 import { activeCaster, addHazard, chestOf, enter, inPatch, tell, type HazardRule } from "./kit";
 import type { SkillDef } from "./index";
+import type { ElementType } from "../content/elements";
 
 export type LandingKind = keyof typeof LANDING;
 
@@ -40,9 +41,11 @@ export function lockLanding(
   radius: number,
   dmg: number,
   seconds: number,
+  element: ElementType = "normal",
 ): Hazard {
   return addHazard(world, {
     kind: "landing",
+    element,
     x,
     y: heightAt(world.map.terrain, x, z),
     z,
@@ -69,7 +72,7 @@ export function landingHit(world: World, circle: Hazard): void {
         player.z,
       )
     )
-      damagePlayer(world, player, circle.dmg);
+      damagePlayer(world, player, circle.dmg, circle.element);
   circle.dmg = 0;
   circle.life = LANDING_RESIDUE;
 }
@@ -83,6 +86,14 @@ export function standable(world: World, enemy: Enemy, x: number, z: number): boo
 
 function landing(kind: LandingKind): SkillDef {
   const n = LANDING[kind];
+  const element: ElementType =
+    kind === "burrow" || kind === "triple-burrow" || kind === "dig"
+      ? "ground"
+      : kind === "shadow-sneak"
+        ? "ghost"
+        : kind === "high-jump-kick"
+          ? "fighting"
+          : "normal";
   const under = n.travel === 0;
   const begin = (world: World, enemy: Enemy, target: Player, every: number) => {
     if (hypot(target.x - enemy.x, target.z - enemy.z) > n.range) return;
@@ -110,7 +121,16 @@ function landing(kind: LandingKind): SkillDef {
         const x = target.x - enemy.dashZ * side * n.side;
         const z = target.z + enemy.dashX * side * n.side;
         if (standable(world, enemy, x, z))
-          lockLanding(world, enemy, x, z, n.radius * enemy.scale, enemy.dmg * n.damage, n.windup);
+          lockLanding(
+            world,
+            enemy,
+            x,
+            z,
+            n.radius * enemy.scale,
+            enemy.dmg * n.damage,
+            n.windup,
+            element,
+          );
       }
     }
     lockLanding(
@@ -121,6 +141,7 @@ function landing(kind: LandingKind): SkillDef {
       n.radius * enemy.scale,
       enemy.dmg * n.damage,
       n.windup + n.travel,
+      element,
     );
   };
   return {

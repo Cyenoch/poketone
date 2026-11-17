@@ -1,6 +1,6 @@
 # Design
 
-本 change 遵守 `add-field-events/design.md` 的「共用约定」：随机只用世界 rng，共享结果由房主结算，新增世界字段时提升快照版本，内容写成 `sim/content/` 下带稳定 ID 的数据表。
+本 change 遵守 [野外与路线规划](../archive/2026-11-18-add-field-events/design.md#共用约定) 的共用约定：随机只用世界 rng，共享结果由房主结算，新增世界字段时提升快照版本，内容写成 `sim/content/` 下带稳定 ID 的数据表。
 
 ## 现状
 

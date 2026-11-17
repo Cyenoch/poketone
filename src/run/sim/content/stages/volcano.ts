@@ -1,4 +1,5 @@
-import { firstBeats, laterBeats } from "./beatTemplates";
+import { beatWindow, firstBeats, laterBeats } from "./beatTemplates";
+import { fieldContent } from "./fieldContent";
 import { forest } from "./forest";
 import type { StageDef } from "./index";
 
@@ -10,6 +11,7 @@ export const volcano = {
   enemyHp: 0.6,
   zones: [
     {
+      ...fieldContent("volcano"),
       roster: [
         [0, "vulpix"],
         [0, "geodude"],
@@ -41,6 +43,7 @@ export const volcano = {
       atmosphere: "ash-day",
     },
     {
+      ...fieldContent("volcano"),
       roster: [
         [0, "ninetales"],
         [0, "dugtrio"],
@@ -64,13 +67,14 @@ export const volcano = {
           { kind: "swarm", species: ["ponyta"], banner: "群体来袭" },
           { kind: "stampede", species: "rapidash", banner: "冲锋来袭" },
         ),
-        [150, { kind: "eruption" }],
-        [360, { kind: "eruption" }],
+        beatWindow(150, { kind: "eruption" }),
+        beatWindow(360, { kind: "eruption" }),
       ],
       guardian: { species: "arcanine", brain: "arcanine", banner: "风速狗 出现" },
       atmosphere: "ember-dusk",
     },
     {
+      ...fieldContent("volcano"),
       roster: [
         [0, "hitmonchan"],
         [0, "flareon"],
@@ -94,8 +98,8 @@ export const volcano = {
           { kind: "swarm", species: ["dratini"], banner: "群体来袭" },
           { kind: "stampede", species: "rapidash", banner: "冲锋来袭" },
         ),
-        [120, { kind: "eruption" }],
-        [330, { kind: "eruption" }],
+        beatWindow(120, { kind: "eruption" }),
+        beatWindow(330, { kind: "eruption" }),
       ],
       guardian: { species: "dragonite", brain: "dragonite", banner: "快龙 出现" },
       atmosphere: "eruption",

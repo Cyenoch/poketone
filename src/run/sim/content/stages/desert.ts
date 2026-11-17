@@ -1,5 +1,6 @@
 import type { StampedeBeat } from "../../beats";
 import { firstBeats, laterBeats } from "./beatTemplates";
+import { fieldContent } from "./fieldContent";
 import type { StageDef, StageZone } from "./index";
 
 /** Zone 1 (热霾): the forest's swarm and early desert species; Cubone's bonemerang is the new read (docs/state-machines/simulation.md). */
@@ -204,6 +205,7 @@ export const desert = {
     pads: [
       { tag: "building", radius: 4, count: 2, maxSlope: 0.05 },
       { tag: "landmark", radius: 4, count: 1, maxSlope: 0.05 },
+      { tag: "site", radius: 2.5, count: 4, maxSlope: 0.08 },
     ],
     puddles: { count: [1, 2], depth: 0.42 },
     props: [
@@ -213,9 +215,27 @@ export const desert = {
     wall: { count: 100, kinds: ["rock"] },
   },
   zones: [
-    { roster: heatRoster, beats: heatBeats, guardian: sandslash, atmosphere: "heat" },
-    { roster: sunsetRoster, beats: sunsetBeats, guardian: marowak, atmosphere: "sunset" },
-    { roster: stormRoster, beats: stormBeats, guardian: aerodactyl, atmosphere: "sandstorm" },
+    {
+      ...fieldContent("desert"),
+      roster: heatRoster,
+      beats: heatBeats,
+      guardian: sandslash,
+      atmosphere: "heat",
+    },
+    {
+      ...fieldContent("desert"),
+      roster: sunsetRoster,
+      beats: sunsetBeats,
+      guardian: marowak,
+      atmosphere: "sunset",
+    },
+    {
+      ...fieldContent("desert"),
+      roster: stormRoster,
+      beats: stormBeats,
+      guardian: aerodactyl,
+      atmosphere: "sandstorm",
+    },
   ],
   rampage: { banner: "沙漠暴走：敌人越来越强" },
   stations: ["hypno", "bill"],

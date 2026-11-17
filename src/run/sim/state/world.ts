@@ -6,6 +6,7 @@ import type { Nav } from "../nav/index";
 import type { Rng } from "../rng";
 import type { Area, Enemy, Hazard, Partner, Pickup, Player, Projectile, Station } from "./entities";
 import type { RunEvent } from "./events";
+import type { FieldEventId, ScheduledBeat, Site, WeatherState } from "./field";
 
 /** Simulation tick. Fixed so a future host can step every peer's world identically. */
 export const TICK = 1 / 30;
@@ -17,7 +18,10 @@ export interface SpawnState {
   pressure: number;
   pool: EnemyId[];
   /** Timeline beats already fired (plain array: the world must survive a JSON snapshot). */
-  fired: string[];
+  fired: number[];
+  outbreak: { species: EnemyId; until: number } | null;
+  /** Counts births, so an escaped shiny does not reopen the field's quota. */
+  shinySpawned: boolean;
   /** Index in `players` of the last player a spawn or beat was placed around (-1 before the first). */
   anchor: number;
 }
@@ -35,6 +39,7 @@ export interface ZoneState {
   phase: "active" | "cleared" | "transitioning";
   /** Where the fallen guardian opened the way out; set when the zone is cleared. */
   exit: { x: number; z: number } | null;
+  schedule: ScheduledBeat[];
 }
 
 export interface World {
@@ -55,6 +60,10 @@ export interface World {
   hazards: Hazard[];
   pickups: Pickup[];
   stations: Station[];
+  sites: Site[];
+  eventsUsed: FieldEventId[];
+  weather: WeatherState | null;
+  silphScope: boolean;
   /** Complete static generation result; navigation remains runtime state. */
   map: GeneratedMap;
   nav: Nav;

@@ -58,7 +58,7 @@ function fingerprint(world) {
   const hash = createHash("sha256");
   const nav = world.nav;
   const running = nav.flow?.layer ?? null;
-  const skip = new Set([world.map, nav.flow, nav.search, nav.targets]);
+  const skip = new Set([world.map]);
   for (const layer of nav.layers) if (layer.field && layer !== running) skip.add(layer.field.work);
   let parts = [];
   const bytes = (array) => {
@@ -80,7 +80,8 @@ function fingerprint(world) {
     for (const key of Object.keys(value).sort()) {
       if (value[key] === undefined) continue;
       parts.push(`${key}:`);
-      walk(value[key]);
+      if (value === nav && ["flow", "search", "targets"].includes(key)) parts.push("~");
+      else walk(value[key]);
     }
     parts.push("}");
   };
@@ -208,14 +209,21 @@ if (isMainThread) {
       [(value) => (value.navigation.clock = Infinity), /不是有限数/],
       [(value) => (value.version += 1), /快照格式/],
       [(value) => (value.version -= 1), /快照格式/],
-      [(value) => (value.players[0].ult.protection = 6), /ult.protection/],
-      [(value) => (value.players[0].ult.cast = -1), /ult.cast/],
       [(value) => delete value.spawn.pressure, /快照增援压力无效/],
       [(value) => (value.spawn.pressure = 2), /快照增援压力无效/],
       [(value) => delete value.zone.exit, /快照出口无效/],
       [(value) => (value.zone.exit = { x: 0 }), /快照出口无效/],
       [(value) => (value.zone.phase = "cleared"), /快照出口无效/],
       [(value) => (value.zone.exit = { x: 0, z: 0 }), /快照出口无效/],
+      [(value) => delete value.zone.schedule, /zone.schedule/],
+      [(value) => (value.spawn.fired = [value.zone.schedule.length]), /spawn.fired/],
+      [(value) => (value.eventsUsed = ["horde", "horde"]), /eventsUsed/],
+      [(value) => (value.weather = { id: "missing", from: 5, until: 80 }), /weather/],
+      [(value) => (value.sites[0].owner = 99), /sites.*owner/],
+      [(value) => (value.players[0].egg = { species: "rattata", distance: 2 }), /egg/],
+      [(value) => (value.players[0].dex = { missing: { seen: 1, defeated: 0, shiny: 0 } }), /dex/],
+      [(value) => (value.players[0].ult.protection = 6), /ult.protection/],
+      [(value) => (value.players[0].ult.cast = -1), /ult.cast/],
     ]) {
       const invalid = structuredClone(snapshot);
       mutate(invalid);

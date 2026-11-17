@@ -6,20 +6,27 @@ import { chestOf, hitFrom, launchPoint, type MoveParams, type Zone } from "./arc
 import { moves } from "./content/moves";
 import { damageEnemy, findPlayer, type Ctx } from "./combat";
 import { MOVE_LIMITS, MOVE_RETRY } from "./content/params/moves";
-import { areaGrowth, currentStats, type PlayerStats } from "./stats";
+import { areaGrowth, currentStats, weatherMoveStats, type PlayerStats } from "./stats";
+import { activeWeather } from "./content/weather";
+import type { WeatherId } from "./state/field";
 import { heightAt } from "./terrain";
 import type { Area, Enemy, MoveState, Player } from "./state/entities";
 
-export function moveParams(state: MoveState, stats: PlayerStats): MoveParams {
+export function moveParams(
+  state: MoveState,
+  stats: PlayerStats,
+  weather: WeatherId | null,
+): MoveParams {
   const def = moves[state.id];
+  const tweak = weatherMoveStats(state.id, weather);
   const { mods } = state;
   return {
     dmg: def.dmg * (1 + mods.dmg),
     cd: Math.max(
       def.fusion ? MOVE_LIMITS.fusionMinCd : MOVE_LIMITS.minCd,
-      def.cd * mods.cd * stats.cooldown,
+      def.cd * mods.cd * stats.cooldown * tweak.cooldown,
     ),
-    count: def.count + mods.count + stats.projectiles,
+    count: def.count + mods.count + stats.projectiles + tweak.count,
     area: def.area * areaGrowth((1 + mods.area) * stats.area),
     speed: def.speed * (1 + mods.speed) * stats.projSpeed,
     dur: def.dur * (1 + mods.dur) * stats.duration,
@@ -37,7 +44,7 @@ export function updateMoves(ctx: Ctx, player: Player, dt: number): void {
   for (const state of player.moves) {
     state.cooldown -= dt;
     if (state.cooldown > 0) continue;
-    const params = moveParams(state, stats);
+    const params = moveParams(state, stats, activeWeather(ctx.world));
     const def = moves[state.id];
     if (!archetypes[def.archetype].cast(ctx, player, def, params)) {
       // Nothing in range: retry soon instead of wasting the full cooldown.

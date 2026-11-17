@@ -22,6 +22,8 @@ export interface EnemyDef<Id extends string = EnemyId> {
   /** 韧性 0–1: the share of every push and pull it shrugs off (sim/poise.ts; elites ≥ 0.7, guardians 1). */
   poise: number;
   xp: number;
+  /** Ordinary field-event budget; the same species' guardian keeps its original base stats. */
+  encounter?: Pick<EnemyDef<string>, "hp" | "speed" | "dmg" | "xp">;
   /** Rendered height in world units. */
   height: number;
   mobility: MobilityProfile;
@@ -651,6 +653,7 @@ const enemiesTable = {
     radius: 1.4,
     poise: 1,
     xp: 60,
+    encounter: { hp: 46, speed: 1.9, dmg: 11, xp: 5 },
     height: 2.8,
     mobility: mobilityClasses.ground,
   },
@@ -929,6 +932,7 @@ const enemiesTable = {
     radius: 1.2,
     poise: 1,
     xp: 60,
+    encounter: { hp: 44, speed: 1.4, dmg: 11, xp: 5 },
     height: 2.4,
     mobility: mobilityClasses.ground,
   },
@@ -998,6 +1002,7 @@ const enemiesTable = {
     radius: 1.2,
     poise: 1,
     xp: 60,
+    encounter: { hp: 40, speed: 2.4, dmg: 11, xp: 5 },
     height: 2.6,
     mobility: mobilityClasses.flying,
   },
@@ -1181,6 +1186,7 @@ const enemiesTable = {
     radius: 1.4,
     poise: 1,
     xp: 60,
+    encounter: { hp: 64, speed: 1.5, dmg: 12, xp: 7 },
     height: 3.4,
     mobility: mobilityClasses.amphibious,
   },
@@ -1635,6 +1641,47 @@ const enemiesTable = {
     xp: 60,
     height: 3,
     mobility: mobilityClasses.flying,
+  },
+  heracross: {
+    id: "heracross",
+    name: "赫拉克罗斯",
+    types: ["bug", "fighting"],
+    hp: 46,
+    speed: 1.9,
+    dmg: 11,
+    radius: 0.6,
+    poise: 0.5,
+    xp: 5,
+    height: 1.3,
+    mobility: mobilityClasses.ground,
+    skill: { kind: "megahorn", every: 6 },
+  },
+  munchlax: {
+    id: "munchlax",
+    name: "小卡比兽",
+    types: ["normal"],
+    hp: 64,
+    speed: 0.9,
+    dmg: 10,
+    radius: 0.6,
+    poise: 0.7,
+    xp: 6,
+    height: 1.1,
+    mobility: mobilityClasses.ground,
+    skill: { kind: "body-slam", every: 7 },
+  },
+  magikarp: {
+    id: "magikarp",
+    name: "鲤鱼王",
+    types: ["water"],
+    hp: 10,
+    speed: 0.7,
+    dmg: 0,
+    radius: 0.45,
+    poise: 0,
+    xp: 1,
+    height: 0.7,
+    mobility: mobilityClasses.amphibious,
   },
 } as const satisfies Record<string, EnemyDef<string>>;
 

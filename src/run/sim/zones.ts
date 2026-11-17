@@ -15,6 +15,7 @@ import type { World } from "./state/world";
 import type { Player } from "./state/entities";
 import { nextField, STAGE_ROUTE } from "./content/campaign";
 import type { StageId } from "./content/stages/index";
+import { scheduleField } from "./field-events";
 
 /** Fixed stream labels mixed into a zone's seeds (any distinct constants; changing one changes every map). */
 const ZONE_STREAM = 0x7a6f6e65;
@@ -77,7 +78,7 @@ export function sweepClearedField(world: World): void {
 }
 
 /** A map assembled for `world`'s stage and players, not yet installed (nothing of `world` changes). */
-export type Field = Pick<World, "map" | "nav" | "stations">;
+export type Field = Pick<World, "map" | "nav" | "stations" | "sites" | "rng" | "nextId">;
 
 /**
  * Generates and furnishes a map from `seed` on a scratch copy of the world, so the live one keeps
@@ -89,9 +90,23 @@ export function assembleField(world: World, seed: number): Field {
     const draw = attempt === 0 ? seed : mixSeed(seed, attempt);
     try {
       const built = generateMap(draw, zoneDef(world).map ?? stageDefs[world.stage].map);
-      const scratch: World = { ...world, ...built, stations: [], seed: draw };
+      const scratch: World = {
+        ...world,
+        ...built,
+        stations: [],
+        sites: [],
+        events: [],
+        seed: draw,
+        rng: createRng(mixSeed(draw, SIM_STREAM)),
+      };
       furnishMap(scratch, world.players.length);
-      return { ...built, stations: scratch.stations };
+      return {
+        ...built,
+        stations: scratch.stations,
+        sites: scratch.sites,
+        rng: scratch.rng,
+        nextId: scratch.nextId,
+      };
     } catch (error) {
       if (!(error instanceof MapGenError) || attempt + 1 >= FIELD_ATTEMPTS) throw error;
     }
@@ -112,6 +127,7 @@ export function installField(world: World, field: Field): void {
   world.players.forEach((player, index) => {
     const x = spawnX(index, world.players.length);
     Object.assign(player, { x, z: 0, px: x, pz: 0, vx: 0, vz: 0, inputX: 0, inputZ: 0 });
+    if (player.egg) Object.assign(player.egg, { x, z: 0 });
     player.moving = false;
     player.dashTime = 0;
     player.dialog = null;
@@ -138,7 +154,7 @@ export function prepareZone(world: World): Field & { stage: StageId; zone: numbe
   const next = {
     ...world,
     stage,
-    zone: { index: zone, tick: 0, phase: "active" as const, exit: null },
+    zone: { index: zone, tick: 0, phase: "active" as const, exit: null, schedule: [] },
   };
   return { ...assembleField(next, zoneSeed(next, zone)), stage, zone };
 }
@@ -173,11 +189,21 @@ export function enterZone(world: World, prepared: Field & { stage: StageId; zone
     player.ult.protection = 0;
     player.ult.crossed = [];
   }
-  world.zone = { index: zone, tick: 0, phase: "active", exit: null };
-  world.spawn = { credit: 0, pressure: 0.5, pool: [], fired: [], anchor: -1 };
+  world.zone = { index: zone, tick: 0, phase: "active", exit: null, schedule: [] };
+  world.spawn = {
+    credit: 0,
+    pressure: 0.5,
+    pool: [],
+    fired: [],
+    anchor: -1,
+    outbreak: null,
+    shinySpawned: false,
+  };
+  world.weather = null;
+  world.silphScope = false;
   world.bossId = null;
   world.rampage = false;
-  world.rng = createRng(mixSeed(zoneSeed(world, zone), SIM_STREAM));
+  scheduleField(world);
   const stage = stageDefs[world.stage];
   world.events.push({
     t: "banner",

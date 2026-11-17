@@ -28,9 +28,11 @@ import { starterOrder, starters } from "../src/run/sim/content/lines/index.ts";
 import { CAMPAIGN_FIELDS } from "../src/run/sim/content/campaign.ts";
 import { GUARDIAN_REFERENCE_SECONDS } from "../src/run/sim/content/params/pacing.ts";
 import type { EntryWindow } from "../src/run/balance/entry-windows.ts";
+import { FIELD_MODEL_LIMITS } from "../src/run/balance/field-events.ts";
 
 // Optional reduced diagnostic scope; defaults retain the full model and build sample count.
 const samples = process.env.BALANCE_SAMPLES ? Number(process.env.BALANCE_SAMPLES) : undefined;
+const fieldEvents = process.env.BALANCE_FIELD_EVENTS !== "0";
 if (samples !== undefined && (!Number.isInteger(samples) || samples < 1))
   throw new Error("BALANCE_SAMPLES must be a positive integer.");
 const selectedStarters = process.env.BALANCE_STARTERS?.split(",") ?? starterOrder;
@@ -39,7 +41,7 @@ if (selectedStarters.some((id) => !starterOrder.includes(id as (typeof starterOr
 const roster = starterOrder.filter((id) => selectedStarters.includes(id));
 const entryCell = (w: EntryWindow | null) =>
   w
-    ? `${w.complete}/${w.samples} full, ${fixed(w.seconds)}s, mass ${fixed(w.weight, 2)} · stock ${fixed(w.living, 1)}+${fixed(w.elites, 1)} elites (${fixed(w.fill, 2)} cap), backlog ${fixed(w.backlog, 1)}s · cap/in ${fixed(w.pressure, 2)} · landed ${fixed(w.landed * 100, 3)}% HP/s, loss ${fixed(w.lost, 2)} HP · HP ${pct(w.frac)}, survive ${w.survive === null ? "censored" : pct(w.survive)} · partners ${fixed(w.partnerDps)} HP/s`
+    ? `${w.complete}/${w.samples} full, ${fixed(w.seconds)}s, mass ${fixed(w.weight, 2)} · stock ${fixed(w.living, 1)}+${fixed(w.elites, 1)} elites (${fixed(w.fill, 2)} cap), backlog ${fixed(w.backlog, 1)}s · cap/in ${fixed(w.pressure, 2)} · landed ${fixed(w.landed * 100, 3)}% HP/s, loss ${fixed(w.lost, 2)} HP · field raw ${fixed(w.fieldRaw * 100, 3)}% HP/s · HP ${pct(w.frac)}, survive ${w.survive === null ? "censored" : pct(w.survive)} · partners ${fixed(w.partnerDps)} HP/s`
     : "not observed";
 
 const difficulty = Number(process.argv[2] ?? 0) as Difficulty;
@@ -102,11 +104,25 @@ console.log(
   `Guardian calibration: ${clock(GUARDIAN_REFERENCE_SECONDS)}; local summons: ${summonSeconds.map(clock).join(" → ")}.`,
 );
 console.log(`Build samples per run: ${samples ?? BUILD_SAMPLES}; starters: ${roster.join(", ")}.`);
+console.log(
+  `Field mechanisms: ${fieldEvents ? "enabled, rewards consumed during progression" : "disabled for paired comparison"}; main beats use the shared seeded window scheduler.`,
+);
 
 const all: RunModel[] = [];
 for (const starter of roster) {
   const runs = profiles.map((skill) =>
-    runModel({ stage, starter, difficulty, skill, lab, zones, campaign, summonSeconds, samples }),
+    runModel({
+      stage,
+      starter,
+      difficulty,
+      skill,
+      lab,
+      zones,
+      campaign,
+      summonSeconds,
+      samples,
+      fieldEvents,
+    }),
   );
   all.push(...runs);
   const mid = runs[profiles.indexOf(average)]!;
@@ -170,6 +186,16 @@ for (const starter of roster) {
       console.log(`      previous final 120s (guardian included): ${entryCell(w.exit)}`);
       console.log(`      previous pre-summon 120s (swarm): ${entryCell(w.preSummon)}`);
     }
+  }
+  console.log(
+    "  field event income (alive-weighted per starting run; parentheses conditional on entering; no final-account top-up):",
+  );
+  for (const field of mid.fieldEvents) {
+    const income = field.income,
+      conditional = field.conditional;
+    console.log(
+      `    ${field.stage}: entered ${field.entered}/${samples ?? BUILD_SAMPLES}, completed ${field.completed}/${field.entered}, entry mass ${fixed(field.entryWeight, 3)} · +XP ${fixed(income.xp, 1)}, cards ${fixed(income.cards, 2)}, 星星沙子 ${fixed(income.stardust, 1)} (${conditional ? `${fixed(conditional.xp, 1)}/${fixed(conditional.cards, 2)}/${fixed(conditional.stardust, 1)}` : "not reached"}) · exploring ${fixed(income.occupiedSeconds, 1)}s, XP opportunity ${fixed(income.opportunityXp, 1)}, unfinished ${fixed(income.unfinished, 2)} · weather loss ${fixed(income.weatherHpCost, 1)} HP`,
+    );
   }
   console.log(
     `  ultimate: preparation ${mid.ultimate.timing.windup}s / protection ${mid.ultimate.timing.protection}s; accepted ${fixed(mid.ultimate.casts, 1)} / released ${fixed(mid.ultimate.releases, 1)}; first ${fixed(mid.ultimate.firstCast, 1)} → ${fixed(mid.ultimate.firstRelease, 1)}s; protected ${fixed(mid.ultimate.protectedSeconds, 1)}s, prevented ${fixed(mid.ultimate.preventedDamage, 1)} HP (alive-weighted).`,
@@ -252,6 +278,7 @@ for (const starter of roster) {
       campaign,
       summonSeconds,
       samples,
+      fieldEvents,
     });
     return `${name} ${pct(run.outcome.clear)} · ${fightAt(run, run.fights.length - 1)} · L${fixed(at(run, 300)?.level)}`;
   });
@@ -372,3 +399,4 @@ console.log(
   "Analytical estimates, not measured playthroughs; completed-only guardian costs have survivor bias, and incomplete fights cannot establish ease.",
 );
 console.log(`${(performance.now() - started).toFixed(0)} ms`);
+for (const limit of FIELD_MODEL_LIMITS) console.log(`Field model: ${limit}`);

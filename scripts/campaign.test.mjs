@@ -39,7 +39,15 @@ test("later-map entry builds ordinary supply without advancing rosters, beats or
       world.difficulty = difficulty;
       world.enemies = [];
       world.zone.tick = 0;
-      world.spawn = { credit: 0, pressure: 0.5, pool: [], fired: [], anchor: -1 };
+      world.spawn = {
+        credit: 0,
+        pressure: 0.5,
+        pool: [],
+        fired: [],
+        anchor: -1,
+        outbreak: null,
+        shinySpawned: false,
+      };
       updateDirector(world, TICK);
       assert.equal(world.enemies.length, 0, `${stage}: loading does not fill the field`);
       let firstHalf = 0;
@@ -56,9 +64,9 @@ test("later-map entry builds ordinary supply without advancing rosters, beats or
       ]);
       assert.deepEqual(
         world.spawn.fired,
-        zone.beats
-          .filter(([at]) => at - difficulties[difficulty].earlyBy <= 16)
-          .map(([at, beat]) => `${beat.kind}@${at}`),
+        world.zone.schedule.flatMap(({ at }, index) =>
+          at - difficulties[difficulty].earlyBy <= 16 ? [index] : [],
+        ),
       );
       assert.equal(world.bossId, null);
       assert.equal(world.rampage, false);
@@ -216,7 +224,9 @@ test("six single-field maps advance through early guardian exits, preserving bui
     visited.push(world.stage);
     assert.equal(world.stage, stage);
     assert.equal(stageDefs[stage].zones.length, 1, `${stage} is one complete field`);
-    assert.deepEqual(world.zone, { index: 0, tick: 0, phase: "active", exit: null });
+    const { schedule, ...zone } = world.zone;
+    assert.deepEqual(zone, { index: 0, tick: 0, phase: "active", exit: null });
+    assert.ok(schedule.length > 0, `${stage}: entry schedules the field`);
     assert.equal(world.outcome, "playing");
     assert.throws(() => prepareZone(world), /还没有离开/);
 
@@ -286,14 +296,15 @@ test("six single-field maps advance through early guardian exits, preserving bui
     assert.deepEqual(snapshotWorld(world), waiting, "preparation does not mutate the live world");
     assert.deepEqual({ stage: prepared.stage, zone: prepared.zone }, next);
     const kept = carried(world);
-    const identity = [world.seed, world.tick, world.time, world.nextId];
+    const identity = [world.seed, world.tick, world.time];
     enterZone(world, prepared);
     assert.deepEqual(
       carried(world),
       kept,
       `${stage}: growth, resources, partners and choices carry`,
     );
-    assert.deepEqual([world.seed, world.tick, world.time, world.nextId], identity);
+    assert.deepEqual([world.seed, world.tick, world.time], identity);
+    assert.equal(world.nextId, prepared.nextId, "new field site IDs are committed once");
     assert.deepEqual(rewards(world), earned, "installing a map does not repeat rewards");
     assert.equal(isFrozen(world), false, "co-op choices do not block the new map");
     for (const partner of world.partners) {

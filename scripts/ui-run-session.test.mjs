@@ -159,6 +159,7 @@ if (!process.argv.includes("--run-session-fixture")) {
     time: 300,
     level: 10,
     kills: 100,
+    dex: { rattata: { seen: 2, defeated: 1, shiny: 1 } },
     stardust: dust,
     moves: [],
     items: [],
@@ -321,6 +322,7 @@ if (!process.argv.includes("--run-session-fixture")) {
         assert.equal(t.session.state().busy, false);
         assert.equal(overlays.state.kind, "save-error");
         assert.equal(t.disk().runs, 0);
+        assert.deepEqual(t.disk().dex, {}, "a failed save does not bank encounters");
         t.fail();
         overlays.callbacks.retry();
         assert.equal(overlays.state.kind, "save-error");
@@ -330,6 +332,7 @@ if (!process.argv.includes("--run-session-fixture")) {
         else if (intent === "retry") await t.next(first);
         assert.equal(t.disk().runs, 1);
         assert.equal(t.disk().stardust, 123);
+        assert.deepEqual(t.disk().dex.rattata, { seen: 2, defeated: 1, shiny: 1 });
         if (intent === "natural") {
           assert.equal(overlays.state.kind, "result");
           overlays.callbacks.retry();
@@ -342,6 +345,11 @@ if (!process.argv.includes("--run-session-fixture")) {
         await t.idle();
         assert.equal(t.disk().runs, 2);
         assert.equal(t.disk().stardust, 130);
+        assert.deepEqual(
+          t.disk().dex.rattata,
+          { seen: 4, defeated: 2, shiny: 2 },
+          "retries bank each run's encounters only once",
+        );
       } finally {
         t.session.dispose();
       }

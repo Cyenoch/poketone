@@ -124,7 +124,7 @@ function land(world: World, glob: Hazard): void {
     radius: ACID.pool,
   });
   for (const player of world.players)
-    if (inPatch(world, pool, player, ground) && damagePlayer(world, player, glob.dmg))
+    if (inPatch(world, pool, player, ground) && damagePlayer(world, player, glob.dmg, glob.element))
       sustain(player, "poison", ACID.poison, -1);
 }
 
@@ -153,7 +153,7 @@ function blast(world: World, egg: Hazard): void {
         player.z,
       )
     )
-      damagePlayer(world, player, egg.dmg);
+      damagePlayer(world, player, egg.dmg, egg.element);
 }
 
 export const hazards = {

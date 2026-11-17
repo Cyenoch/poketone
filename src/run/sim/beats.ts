@@ -1,4 +1,5 @@
 import { ERUPTION } from "./content/params/late-zones";
+import { FIELD_EVENTS } from "./content/params/field-events";
 import { addHazard } from "./skills/kit";
 // Timeline beats (`StageDef.beats`): one rule per kind, each spawning around the director's target and
 // raising its banner. The beat carries its own numbers, so a new kind is a spec plus a rule here. Every
@@ -45,12 +46,54 @@ export interface StampedeBeat {
 export interface EruptionBeat {
   kind: "eruption";
 }
-export type Beat = AlphaBeat | EliteWaveBeat | SwarmBeat | StampedeBeat | EruptionBeat;
+export interface HordeBeat {
+  kind: "horde";
+  species: EnemyId;
+}
+export interface OutbreakBeat {
+  kind: "outbreak";
+  species: EnemyId;
+}
+export type Beat =
+  | AlphaBeat
+  | EliteWaveBeat
+  | SwarmBeat
+  | StampedeBeat
+  | EruptionBeat
+  | HordeBeat
+  | OutbreakBeat;
 export type BeatKind = Beat["kind"];
 
 type BeatRule<B extends Beat> = (world: World, beat: B, player: Player) => void;
 
 const beatRules: { [K in BeatKind]: BeatRule<Extract<Beat, { kind: K }>> } = {
+  horde(world, { species }, player) {
+    for (let i = 0; i < FIELD_EVENTS.hordeCount; i++) {
+      const angle = (i / FIELD_EVENTS.hordeCount) * Math.PI * 2;
+      spawnReachable(
+        world,
+        species,
+        player,
+        player.x + cos(angle) * BEAT_RINGS.swarm,
+        player.z + sin(angle) * BEAT_RINGS.swarm,
+      );
+    }
+    world.events.push({
+      t: "banner",
+      text: `${enemyDefs[species].name}群体出现`,
+      tone: "danger",
+      kind: "horde",
+    });
+  },
+  outbreak(world, { species }) {
+    world.spawn.outbreak = { species, until: world.time + FIELD_EVENTS.outbreak.seconds };
+    world.events.push({
+      t: "banner",
+      text: `${enemyDefs[species].name}大量出现`,
+      tone: "danger",
+      kind: "outbreak",
+    });
+  },
   eruption(world) {
     addHazard(world, {
       kind: "eruption",

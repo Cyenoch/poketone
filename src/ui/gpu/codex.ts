@@ -9,9 +9,12 @@ import { getAudio } from "../../audio/engine";
 import {
   codexEntry,
   codexSections,
+  dexBlock,
   formKey,
+  hasShinyRecord,
   type CodexBlock,
   type CodexEntry,
+  type CodexModel,
   type CodexRef,
 } from "../../run/codex";
 import { rarityNames } from "../../run/sim/upgrades";
@@ -62,7 +65,7 @@ const formLines = new Map<string, StarterId>(
 /** What a locked partner's page keeps: its evolution chain (in silhouette). */
 const LOCKED_BLOCKS = new Set(["进化"]);
 
-type Region = "back" | "close" | "settings" | "tab" | "entry" | "model" | "ref";
+type Region = "back" | "close" | "settings" | "tab" | "entry" | "model" | "look" | "ref";
 
 interface Control {
   region: Region;
@@ -176,6 +179,8 @@ export class GpuCodex {
   private list: Part | undefined;
   private detail: Part | undefined;
   private modelNote: Text | undefined;
+  /** The enemy page whose model shows in its shiny palette (browsing only, never saved). */
+  private shinyOf: string | undefined;
   private readonly memory = new Map<string, string>();
   private section = 0;
   private selectedKey = "";
@@ -545,15 +550,17 @@ export class GpuCodex {
       paddingRight: 12,
     });
     const lock = this.lock(entry);
+    // Another page, or a record no longer there (imported progress), starts in its own colours.
+    if (this.shinyOf !== key || !this.shinyRecord(entry)) this.shinyOf = undefined;
     root.add(this.hero(entry, lock, owned));
-    for (const block of entry.blocks)
+    for (const block of this.pageBlocks(entry))
       if (!lock || LOCKED_BLOCKS.has(block.title)) root.add(this.block(block, entry, owned));
     this.detail = { root, owned, wraps: this.building };
     this.building = [];
     this.detailPane.add(root);
     this.detailPane.scrollPosition.value = [0, 0];
     // A partner not yet unlocked shows its portrait's silhouette, not its model.
-    this.model.show(lock ? undefined : entry.model);
+    this.model.show(lock ? undefined : this.picture(entry));
     this.paintModelNote();
     if (this.controls.length) this.rebuildControls();
     const plate = this.namePlate as SlantPlate | undefined;
@@ -574,6 +581,60 @@ export class GpuCodex {
         EASE,
       ),
     );
+  }
+
+  /** An enemy's page carries the player's record of it after its numbers. */
+  private pageBlocks(entry: CodexEntry): readonly CodexBlock[] {
+    const model = entry.model;
+    if (model?.kind !== "enemy") return entry.blocks;
+    const [numbers, ...rest] = entry.blocks;
+    return [numbers!, dexBlock(this.options.progress.dex, model.id), ...rest];
+  }
+
+  private shinyRecord(entry: CodexEntry): boolean {
+    const model = entry.model;
+    return model?.kind === "enemy" && hasShinyRecord(this.options.progress.dex, model.id);
+  }
+
+  /** The model the stage shows for `entry`: in the shiny palette while that is picked. */
+  private picture(entry: CodexEntry): CodexModel | undefined {
+    const model = entry.model;
+    return model?.kind === "enemy" && this.shinyOf === entry.key
+      ? { ...model, shiny: true }
+      : model;
+  }
+
+  /** 普通 / 异色 on the page's ink tray, like the section segments; picking one recolours the
+   *  model in place (same turn and pose). */
+  private palettePicker(entry: CodexEntry, owned: { dispose(): void }[]): Container {
+    const tray = segmentTray();
+    owned.push(tray);
+    for (const [shiny, text] of [
+      [false, "普通"],
+      [true, "异色"],
+    ] as const) {
+      const face = new SegmentFace(this.stage, text);
+      owned.push(face);
+      face.fitTouch();
+      face.label.setProperties({ fontSize: this.compact ? 15 : 16 });
+      tray.tray.add(stack(face.panel, 1));
+      this.details.push({
+        region: "look",
+        panel: face.panel,
+        activate: () => this.pickPalette(entry, shiny),
+        paint: (state) =>
+          face.paint({ ...state, checked: (this.shinyOf === entry.key) === shiny, locked: false }),
+      });
+    }
+    return tray.tray;
+  }
+
+  private pickPalette(entry: CodexEntry, shiny: boolean): void {
+    if ((this.shinyOf === entry.key) === shiny) return;
+    this.shinyOf = shiny ? entry.key : undefined;
+    this.model.show(this.picture(entry));
+    this.paintModelNote();
+    this.paintFocus();
   }
 
   /** A text broken by `line-break.ts` at the width `width` reports (see `Wrap`). */
@@ -774,6 +835,9 @@ export class GpuCodex {
       tags.add(chip.tag);
     }
     if (entry.types.length || entry.tags.length) copy.add(stack(tags, 1));
+    // After the model's control, so focus reads stage → palette → the page's links.
+    if (entry.model && !lock && this.shinyRecord(entry))
+      copy.add(stack(this.palettePicker(entry, owned), 1));
     hero.add(copy);
     return hero;
   }
@@ -1315,6 +1379,21 @@ export class GpuCodex {
           this.focus(this.controls.indexOf(this.details[1]));
         else if (action === "up") this.focusSelectedRow();
         return true;
+      case "look": {
+        // Like the section segments: ←→ move and pick; ↑ back to the stage, ↓ on to the links.
+        const looks = this.details.filter((detail) => detail.region === "look");
+        if (action === "left" || action === "right") {
+          const next = looks[(looks.indexOf(control) + step + looks.length) % looks.length]!;
+          next.activate();
+          this.focus(this.controls.indexOf(next));
+        } else if (action === "confirm") control.activate();
+        else if (action === "up") this.focus(this.controls.indexOf(this.details[0]!));
+        else if (action === "down") {
+          const after = this.details[this.details.indexOf(looks.at(-1)!) + 1];
+          if (after) this.focus(this.controls.indexOf(after));
+        }
+        return true;
+      }
       case "ref": {
         const at = this.details.indexOf(control);
         if (isNavigationDirection(action)) {
@@ -1384,7 +1463,7 @@ export class GpuCodex {
       (control) =>
         (control.region === "entry"
           ? pane === this.listPane
-          : control.region === "model" || control.region === "ref"
+          : control.region === "model" || control.region === "look" || control.region === "ref"
             ? pane === this.detailPane
             : true) && this.contains(control.panel, x, y),
     );

@@ -28,6 +28,8 @@ export interface EntryProbe {
   /** Hit streams after profile dodges/armor, before shields/guards: swarm and guardian separately. */
   swarmRaw: number;
   guardianRaw: number;
+  /** Extra site encounters/traps and weather, before shields and protection. */
+  fieldRaw: number;
   partnerDps: number;
 }
 
@@ -67,6 +69,7 @@ export interface EntryWindow {
   lost: number;
   swarmRaw: number;
   guardianRaw: number;
+  fieldRaw: number;
   /** Mean HP share and conditional survival (null if any window was censored by an early exit). */
   frac: number;
   survive: number | null;
@@ -108,6 +111,7 @@ export function windowOf(parts: readonly WindowSample[]): EntryWindow | null {
     lost: total(probes.map((probe) => probe.alive * probe.landed)) / startAlive,
     swarmRaw: mean((probe) => probe.swarmRaw),
     guardianRaw: mean((probe) => probe.guardianRaw),
+    fieldRaw: mean((probe) => probe.fieldRaw),
     frac: mean((probe) => probe.frac),
     survive: samples.every((part) => part.resolved)
       ? total(samples.map((part) => part.aliveEnd)) / startAlive

@@ -11,6 +11,8 @@ bun run balance:model 0 none
 bun run balance:model 0 none forest 1
 # 首关按参考时间挑战，后图进图30秒挑战；等级由连续成长决定
 bun run balance:model 0 none campaign 1 510,30,30,30,30,30
+# 同一连续构筑比较野外事件开启/关闭，并输出逐图收益与模型假设
+bun scripts/balance-field-events.ts 0 8 --json
 # 机器人仅用于森林走位策略校准，参数以脚本入口为准
 bun run balance 0 8
 bun test scripts/model.test.mjs scripts/model-survival.test.mjs
@@ -42,11 +44,16 @@ CLI 参数见 [balance-model.ts](../scripts/balance-model.ts)。输出分 novice
 | [skill.ts](../src/run/balance/skill.ts)                 | 玩家水平、构筑场景及参数           |
 | [budget.ts](../src/run/balance/budget.ts)               | 参考点、预算和提示                 |
 | [targets.ts](../src/run/balance/targets.ts)             | 非阻塞目标区间                     |
+| [field-events.ts](../src/run/balance/field-events.ts)   | 正式事件排程、天气、站点探索与收益 |
 | [状态地图 BM01–BM05](state-machines/view-tools.md#bm01) | 模型阶段、所有者和测试边界         |
 
 ## 证据与限制
 
 历史数值、公式取舍和校准输出不在仓库中保留；新实验在对应change登记实际日期和基线，不往本手册追加流水账。
+
+野外对照脚本使用同种子的连续构筑，`fieldEvents:false` 只关闭额外事件机制，主线节拍仍按正式时间窗抽取。事件经验、宝箱、同伴和星星沙子在发生的分析步消费，影响后续等级、输出和存活；`income` 是机制归因，`earned` 是实际收益，不能把两者再加到总账。携带蛋跨图保留，满栏孵化卡不经过地上宝箱的拾取概率。地图探索率、引导受击中断和战斗分流属于画像假设，详见该模块的 `FIELD_MODEL_ASSUMPTIONS` 与 `FIELD_MODEL_LIMITS`。CLI 可用 `BALANCE_FIELD_EVENTS=0` 关闭额外机制做配对诊断，不能将不同种子或不同样本数混为前后对照。
+
+终极技读取正式准备与保护时长，准备期间不提前兑现伤害，脉冲按分析步与时间线的交集结算。报告的施放、释放、保护秒数和避免伤害用于核对时序与 HP 过程；瞬时接敌、状态唤醒和空间命中仍是模型近似。
 
 守卫经验与宝箱、神奇糖果即时升级已接入模型。模型仍以敌池平均、聚合存量和几何近似计算；真实旧怪保留出生时生命，模型普通怪存量不逐只记录出生年龄。不能据模型单独下自然通关率结论。受控目标/状态数增伤已计入守卫输出，但通用睡眠唤醒、冻结易伤及真实冷却相位仍未完整重建；诅咒已按占用率近似，需用正式伤害函数校准相应构筑。
 

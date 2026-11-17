@@ -1,10 +1,12 @@
 import { enemies as enemyDefs } from "./content/enemies";
+import type { ElementType } from "./content/elements";
 import { guardianBrains } from "./bosses/index";
 import { furyStep } from "./bosses/fury";
 import { furyOf } from "./content/params/guardian";
 import { dodgeStep, dodgeThreats } from "./enemy-dodge";
 import { zoneDef } from "./currentZone";
-import { findPlayer, killEnemy, type Ctx } from "./combat";
+import { findPlayer, isUnidentifiedGhost, killEnemy, type Ctx } from "./combat";
+import { escaping } from "./encounters";
 import { damagePlayer } from "./hurt";
 import { STAMPEDE_SPEEDUP } from "./content/params/pacing";
 import { nearestPlayer } from "./director";
@@ -51,7 +53,7 @@ export function updateEnemies(ctx: Ctx, dt: number): void {
   const threats = dodgeThreats(world, grid);
   refreshFlowFields(world.nav, world.players, FLOW_BUDGET);
   for (const enemy of world.enemies) {
-    if (enemy.hp <= 0) continue;
+    if (enemy.hp <= 0 || escaping(world, enemy)) continue;
     enemy.px = enemy.x;
     enemy.pz = enemy.z;
     enemy.flash = Math.max(0, enemy.flash - dt);
@@ -69,7 +71,7 @@ export function updateEnemies(ctx: Ctx, dt: number): void {
     const dotBy = dot > 0 ? dotSource(enemy) : -1;
     const held = stopped(enemy) || staggered(enemy);
     decay(enemy, dt);
-    if (dot > 0) {
+    if (dot > 0 && !isUnidentifiedGhost(world, enemy)) {
       enemy.hp -= dot * dt;
       if (enemy.hp <= 0) {
         killEnemy(ctx, enemy, dotBy === -1 ? null : findPlayer(world, dotBy));
@@ -116,10 +118,14 @@ export function updateEnemies(ctx: Ctx, dt: number): void {
         : null;
       if (step) [moveX, moveZ, speed] = step;
       else {
-        const heading = steerToward(world, enemy, target);
-        if (def.move) enemyMoves[def.move](world, enemy, heading);
-        moveX = heading.x;
-        moveZ = heading.z;
+        const reach = Math.min(enemy.radius + formOf(target).radius, speed * dt);
+        // Skip the final overshooting stride only once contact is possible; keep a nonzero aim.
+        if ((enemy.x - target.x) ** 2 + (enemy.z - target.z) ** 2 > reach * reach) {
+          const heading = steerToward(world, enemy, target);
+          if (def.move) enemyMoves[def.move](world, enemy, heading);
+          moveX = heading.x;
+          moveZ = heading.z;
+        }
       }
     }
     if (held && enemy.dodge) {
@@ -245,7 +251,18 @@ function touch(ctx: Ctx, enemy: Enemy, player: Player): void {
   if ((enemy.x - player.x) ** 2 + (enemy.z - player.z) ** 2 > reach * reach) return;
   const { terrain } = ctx.world.map;
   if (!withinStep(terrain, enemy, heightAt(terrain, player.x, player.z))) return;
-  if (!damagePlayer(ctx.world, player, enemy.dmg)) return;
+  let element: ElementType = "normal";
+  if (enemy.phase === "dash") {
+    if (enemy.boss) {
+      const attack = enemy.action?.attack;
+      if (attack === "slide") element = "ice";
+      else if (attack === "dive") element = "flying";
+    } else {
+      const skill = enemyDefs[enemy.species].skill;
+      if (skill) element = skills[skill.kind].dashElement ?? "normal";
+    }
+  }
+  if (!damagePlayer(ctx.world, player, enemy.dmg, element)) return;
   if (!enemy.boss && player.alive) guard(ctx.world, player);
   const { contact } = enemyDefs[enemy.species];
   if (contact) apply(player, contact.status, CONTACT_SECONDS, 0, -1);

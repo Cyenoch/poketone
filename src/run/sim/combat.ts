@@ -1,4 +1,7 @@
 import { present } from "./team";
+import { activeWeather, weatherDefs, weatherMultiplier } from "./content/weather";
+import { escaping, recordDefeat } from "./encounters";
+import { settleSiteKill } from "./sites/index";
 import { enemies as enemyDefs } from "./content/enemies";
 import { typeMultiplier, type ElementType } from "./content/elements";
 import { moves, type MoveId } from "./content/moves";
@@ -12,7 +15,7 @@ import { chance, range } from "./rng";
 import { currentStats, earnStardust, itemRule, type PlayerStats } from "./stats";
 import { BERRY, LOOT, STARDUST } from "./content/params/economy";
 import { apply, consume, find, held, inflict, targetable, vulnerability, wake } from "./status";
-import type { Enemy, Pickup, Player } from "./state/entities";
+import type { Enemy, Pickup, Player, Rarity } from "./state/entities";
 import type { World } from "./state/world";
 import { HARDEN } from "./content/params/enemy-skills";
 import { chargeUltimate } from "./ultimates/index";
@@ -50,7 +53,21 @@ export function statusEnemy(
   owner: Player,
 ): void {
   if (ctx.report) ctx.report({ t: "status", enemy: enemy.id, status, time, power });
-  else apply(enemy, status, time, power, owner.id);
+  else if (!isUnidentifiedGhost(ctx.world, enemy))
+    apply(enemy, status, time * freezeDuration(ctx.world, status), power, owner.id);
+}
+
+export function isUnidentifiedGhost(world: World, enemy: Enemy): boolean {
+  return (
+    !world.silphScope &&
+    enemy.site !== null &&
+    world.sites.some((site) => site.id === enemy.site && site.kind === "ghost")
+  );
+}
+
+function freezeDuration(world: World, status: EnemyStatusId): number {
+  const id = activeWeather(world);
+  return status === "freeze" && id ? (weatherDefs[id].freezeDuration ?? 1) : 1;
 }
 
 export function pullEnemy(
@@ -141,10 +158,12 @@ function settleDamage(
   confirmedContact = false,
 ): void {
   const { world } = ctx;
+  if (isUnidentifiedGhost(world, enemy) || escaping(world, enemy)) return;
   const stats = currentStats(hit.owner);
   const def = enemyDefs[enemy.species];
   const effectiveness = typeMultiplier(hit.type, def.types, enemy.id === world.bossId);
   let amount = hit.dmg * stats.damage * effectiveness * hitFactor(stats, hit, enemy, effectiveness);
+  amount *= weatherMultiplier(world, hit.type);
   amount *= damageTriggers(ctx, hit.owner, hit, enemy);
   const crit = chance(world.rng, hit.crit + stats.crit);
   if (crit) amount *= stats.critDamage;
@@ -220,7 +239,16 @@ export function inflictBy(
   owner: Player,
 ): void {
   const stats = currentStats(owner);
-  const landed = inflict(enemy, status, amount, owner.id, stats.duration, stats.statusDamage);
+  if (isUnidentifiedGhost(world, enemy)) return;
+  const landed = inflict(
+    enemy,
+    status,
+    amount,
+    owner.id,
+    stats.duration,
+    stats.statusDamage,
+    freezeDuration(world, "freeze"),
+  );
   if (landed !== status)
     world.events.push({ t: "status-built", status: landed, x: enemy.x, z: enemy.z });
 }
@@ -248,7 +276,11 @@ function react(ctx: Ctx, enemy: Enemy, hit: Hit, amount: number): number {
     const share = amount * effect.share;
     splash(ctx, enemy, effect.radius, effect.limit, {
       ...hit,
-      dmg: (effect.kind === "detonate" ? share + stored : share) / currentStats(hit.owner).damage,
+      // Both the shared hit and stored DoT already contain their weather multiplier.
+      dmg:
+        (effect.kind === "detonate" ? share + stored : share) /
+        currentStats(hit.owner).damage /
+        weatherMultiplier(ctx.world, hit.type),
       secondary: true,
     });
     return effect.kind === "detonate" ? amount * def.bonus + stored : amount * def.bonus;
@@ -290,6 +322,7 @@ export function heal(player: Player, amount: number): number {
 export function killEnemy(ctx: Ctx, enemy: Enemy, killer: Player | null): void {
   const { world } = ctx;
   if (killer) killer.kills += 1;
+  recordDefeat(world, enemy, killer);
   world.events.push({
     t: "death",
     x: enemy.x,
@@ -297,7 +330,8 @@ export function killEnemy(ctx: Ctx, enemy: Enemy, killer: Player | null): void {
     species: enemy.species,
     elite: enemy.elite || enemy.boss,
   });
-  dropLoot(world, enemy, killer);
+  const siteReward = settleSiteKill(ctx, enemy, killer);
+  dropLoot(world, enemy, killer, siteReward?.chest);
   if (killer) {
     if (enemy.elite) capture(world, enemy, killer);
     fire(ctx, killer, "kill", { enemy });
@@ -310,7 +344,7 @@ export function killEnemy(ctx: Ctx, enemy: Enemy, killer: Player | null): void {
   }
 }
 
-function dropLoot(world: World, enemy: Enemy, killer: Player | null): void {
+function dropLoot(world: World, enemy: Enemy, killer: Player | null, chest?: Rarity | null): void {
   const add = (kind: Pickup["kind"], value: number, spread: number) =>
     world.pickups.push({
       id: world.nextId++,
@@ -319,13 +353,15 @@ function dropLoot(world: World, enemy: Enemy, killer: Player | null): void {
       x: enemy.x + range(world.rng, -spread, spread),
       z: enemy.z + range(world.rng, -spread, spread),
       magnet: false,
+      ...(kind === "chest" && chest !== undefined && chest !== null ? { minRarity: chest } : {}),
     });
   if (enemy.elite || enemy.boss) {
-    add("chest", 1, LOOT.chestSpread);
+    if (chest !== null) add("chest", 1, LOOT.chestSpread);
     for (let i = 0; i < LOOT.eliteXpCount; i++)
       add("xp", Math.ceil(enemy.xp / LOOT.eliteXpCount), LOOT.eliteXpSpread);
     if (!enemy.boss) add("stardust", STARDUST.elite, LOOT.eliteStardustSpread);
   } else {
+    if (chest !== undefined && chest !== null) add("chest", 1, LOOT.chestSpread);
     add("xp", enemy.xp, LOOT.xpSpread);
     if (chance(world.rng, STARDUST.ordinary.chance))
       add("stardust", STARDUST.ordinary.value, LOOT.stardustSpread);

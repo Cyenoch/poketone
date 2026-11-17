@@ -7,12 +7,33 @@ import { keys, locate, openConfig, pointAt, press, waitLobby } from "./page.mjs"
 
 const OV = "window.__poketoneUi.run?.overlays";
 const UI = "window.__poketoneUi";
-const until = (page, expr, timeout = 20_000) =>
-  page.waitForFunction(expr, null, { timeout, polling: 100 });
+const until = async (page, expr, timeout = 20_000) => {
+  try {
+    await page.waitForFunction(expr, null, { timeout, polling: 100 });
+  } catch (error) {
+    throw new Error(`waiting for ${expr}: ${error.message}`, { cause: error });
+  }
+};
 
 async function startRun(page, config) {
   await press(page, config, `${UI}.lobby.stage`, "出发");
   await until(page, "window.__poketoneWorld?.tick > 60 && !!window.__poketoneUi.run?.hud", 60_000);
+}
+
+async function pauseRun(page, config) {
+  // Switching from KeyP to touch consumes the first tap to change input mode.
+  if (config.touch) {
+    const at = await page.evaluate(() => {
+      const hud = window.__poketoneUi.run.hud;
+      const control = hud.controls.find((c) => c.action === "pause");
+      if (!control) throw new Error("HUD has no pause control");
+      const m = control.panel.globalMatrix.value.elements;
+      const { camera, viewport } = hud.stage;
+      return [(m[12] - camera.left) * viewport.scale, (camera.top - m[13]) * viewport.scale];
+    });
+    await pointAt(page, config, at);
+  } else await keys(page, "KeyP");
+  await until(page, `${OV}?.state?.kind === "pause"`);
 }
 
 /** Waits for a run other than `old` (a handle to the previous world) to be playing. */
@@ -37,6 +58,9 @@ export async function lifecycle(browser, url, config, outDir) {
       name,
       await page.evaluate(() => ({
         tick: window.__poketoneWorld?.tick ?? null,
+        overlay: window.__poketoneUi.run?.overlays.state?.kind ?? null,
+        modal: window.__poketoneUi.run?.overlays.isModal ?? false,
+        fullscreen: !!document.fullscreenElement,
         contexts: window.__qaContexts.map(
           (e) => `${e.cls}:${e.ctx.isContextLost() ? "lost" : "ok"}`,
         ),
@@ -53,8 +77,8 @@ export async function lifecycle(browser, url, config, outDir) {
         .map((e) => e.ctx);
     });
     await note("run");
-    await keys(page, "KeyP");
-    await until(page, `${OV}?.state?.kind === "pause"`);
+    await pauseRun(page, config);
+    await note("paused");
     await page.evaluate(() => {
       window.__qaLosers = window.__qaCtxAtStart.map((c) => c.getExtension("WEBGL_lose_context"));
       for (const l of window.__qaLosers) l?.loseContext();
@@ -91,11 +115,11 @@ export async function lifecycle(browser, url, config, outDir) {
     await page.evaluate(() => {
       window.__poketoneWorld.players[0].invulnerable = 1e6;
     });
-    await keys(page, "KeyP");
-    await until(page, `${OV}?.state?.kind === "pause"`);
+    await pauseRun(page, config);
     await sleep(300);
     await press(page, config, `${OV}.stage`, "放弃冒险");
     await until(page, `${OV}?.state?.quitting === true`);
+    await note("quit confirmation");
     await press(page, config, `${OV}.stage`, "返回大厅");
     await until(page, `!window.__poketoneWorld && !!${UI}.lobby`, 20_000);
     await sleep(1500);

@@ -81,7 +81,8 @@ export const strikeCircle: HazardRule = {
       return;
     }
     for (const player of world.players)
-      if (inPatch(world, circle, player, circle.y)) damagePlayer(world, player, circle.dmg);
+      if (inPatch(world, circle, player, circle.y))
+        damagePlayer(world, player, circle.dmg, circle.element);
     circle.dmg = 0;
   },
 };

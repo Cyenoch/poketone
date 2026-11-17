@@ -1,0 +1,29 @@
+{
+  "flow": "Ak3RbtQLnUYWennQTQkg",
+  "model": "eleven_text_to_sound_v2",
+  "sourceThread": "thread:delegated-task:command%3Amcp%3A7eedaf2b-1ef9-4672-8be7-6649f1cdcb08%3Adelegate-task%3A15e3d4d6-3ccd-46ed-b2ef-394149266c3a",
+  "sourceActivity": {
+    "nodeCreation": [37, 72],
+    "estimateOnly": 75
+  },
+  "note": "Only the 15 add-field-events:1.4 nodes. Creation/estimate activity references identify the original shared source, not field-only prices. All original and reworked field generations and scoped actual costs are preserved in field-route-production.json; do not regenerate.",
+  "tasks": {
+    "add-field-events:1.4": {
+      "weather-sun": "skDu2B3XBWEtgDMJenhU",
+      "weather-rain": "JsllronnDOEzgOj0Mv6i",
+      "weather-sand": "JXGQzcZf8AvymHQbjKQM",
+      "weather-hail": "2zGXsQpstHePnMojJbhO",
+      "loop-weather-sun": "LJS6NDRyPLbOhoou8hL5",
+      "loop-weather-rain": "WCjYGwQiZFKC8iZrjmWS",
+      "loop-weather-sand": "FuCMGtWh4KUAQBa3dIho",
+      "loop-weather-hail": "kHNs8dSTaess5cOHLzKU",
+      "site-flute": "61k3BwTbF3vpvmcJ8wjh",
+      "site-fishing": "n9RYHFnPZ2T3VcXcOMp9",
+      "site-dig": "lQh1pDlWTpYyG1AJTeRL",
+      "site-den": "3KL8jRMW7Y2xMUpfx144",
+      "shiny": "KQkIAzfzdmaomZB2aMI7",
+      "egg-hatch": "2iALtnxwwmoRTAXOEitK",
+      "tell-voltorb": "36DyoYcW4QmMI4tPx866"
+    }
+  }
+}

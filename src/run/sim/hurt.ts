@@ -2,6 +2,8 @@
 // damage without importing combat.ts (combat → partners → skills/index would close a load-order loop).
 
 import { chance } from "./rng";
+import type { ElementType } from "./content/elements";
+import { weatherMultiplier } from "./content/weather";
 import { armorFactor, currentStats } from "./stats";
 import type { ItemId } from "./content/items";
 import type { Player } from "./state/entities";
@@ -12,7 +14,12 @@ import { LETHAL_SAVE_MIN_HP, PLAYER_IFRAMES, SHIELD } from "./content/params/pla
  * Player damage: i-frames and dashes ignore it, evasion may void it, then armor and the damage-taken
  * stat scale it and the shield soaks it before HP. Both co-op and solo players use this path.
  */
-export function damagePlayer(world: World, player: Player, raw: number): boolean {
+export function damagePlayer(
+  world: World,
+  player: Player,
+  raw: number,
+  type: ElementType = "normal",
+): boolean {
   if (!player.alive || player.ult.protection > 0 || player.invulnerable > 0 || player.dashTime > 0)
     return false;
   const stats = currentStats(player);
@@ -21,7 +28,8 @@ export function damagePlayer(world: World, player: Player, raw: number): boolean
     world.events.push({ t: "evade", player: player.id });
     return false;
   }
-  const amount = raw * armorFactor(stats.armor) * stats.damageTaken;
+  const amount =
+    raw * weatherMultiplier(world, type) * armorFactor(stats.armor) * stats.damageTaken;
   const soaked = Math.min(player.shield, amount);
   player.shield -= soaked;
   player.hp -= amount - soaked;
@@ -29,6 +37,18 @@ export function damagePlayer(world: World, player: Player, raw: number): boolean
   player.hurt = 0.25;
   player.lastHurt = world.time;
   world.events.push({ t: "player-hit", player: player.id, amount });
+  settleKnockout(world, player);
+  return true;
+}
+
+/** Weather bypasses mitigation and never interrupts a channel or grants hit i-frames. */
+export function weatherDamagePlayer(world: World, player: Player, amount: number): void {
+  if (!player.alive || player.ult.protection > 0 || amount <= 0) return;
+  player.hp -= amount;
+  settleKnockout(world, player);
+}
+
+function settleKnockout(world: World, player: Player): void {
   if (player.hp <= 0 && !lethalSave(world, player)) {
     player.hp = 0;
     player.alive = false;
@@ -41,7 +61,6 @@ export function damagePlayer(world: World, player: Player, raw: number): boolean
       if (player.revives === 0) world.events.push({ t: "down", player: player.id });
     }
   }
-  return true;
 }
 
 /** A ready `block` trigger (Guard Spec) takes the hit whole and starts its return timer. */

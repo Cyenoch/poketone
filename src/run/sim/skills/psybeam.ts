@@ -77,7 +77,11 @@ function beamRule(active: number, slows: boolean): HazardRule {
         return;
       }
       for (const player of world.players)
-        if (player.alive && beamHits(world, beam, player) && damagePlayer(world, player, beam.dmg))
+        if (
+          player.alive &&
+          beamHits(world, beam, player) &&
+          damagePlayer(world, player, beam.dmg, beam.element)
+        )
           if (slows) sustain(player, "slow", statuses.slow.duration, -1);
     },
   };

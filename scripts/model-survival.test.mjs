@@ -11,6 +11,7 @@ import {
   healPerSecond,
   occupancy,
   runModel,
+  applyModelWeatherDamage,
 } from "../src/run/balance/model.ts";
 import { castPeriod, moveOutput, TERRAIN_SIGHT } from "../src/run/balance/output.ts";
 import { moveParams } from "../src/run/sim/attacks.ts";
@@ -34,6 +35,8 @@ import { TICK } from "../src/run/sim/state/world.ts";
 import { newMoveState } from "../src/run/sim/upgrades.ts";
 import { createPlayer, createWorld } from "../src/run/sim/world.ts";
 import { ULT_CHARGE, ULT_WINDUP } from "../src/run/sim/content/params/ultimates.ts";
+import { difficulties } from "../src/run/sim/content/difficulties.ts";
+import { FIELD_MODEL_ASSUMPTIONS } from "../src/run/balance/field-events.ts";
 import { average } from "../src/run/balance/skill.ts";
 import { enemies } from "../src/run/sim/content/enemies.ts";
 
@@ -70,6 +73,7 @@ test("ultimate protection reduces existing combat damage in a progressing run an
       difficulty: 0,
       skill: average,
       samples: 1,
+      fieldEvents: false,
     };
     const exposed = runModel({ ...options, ultimateTiming: { windup: ULT_WINDUP, protection: 0 } });
     const protectedRun = runModel(options);
@@ -85,6 +89,78 @@ test("ultimate protection reduces existing combat damage in a progressing run an
     zone.beats = saved.beats;
     guardian.hp = saved.hp;
     ULT_CHARGE.time = saved.charge;
+  }
+});
+
+test("weather drains on its depletion second and consumes a lethal save only once", () => {
+  const hp = createHp();
+  const charges = [{ hp: 0.5, chance: 1, rescue: 1 }];
+  let carry = 0;
+  for (let time = 1; time <= 150; time++) {
+    carry = applyModelWeatherDamage(hp, 0.01, carry, charges, null);
+    if (time === 99) assert.equal(aliveOf(hp), 1);
+    if (time === 100) {
+      assert.equal(aliveOf(hp), 1, "weather uses the available save instead of bypassing it");
+      assert.ok(Math.abs(hpShare(hp) - 0.5) < 1e-9);
+    }
+  }
+  assert.equal(aliveOf(hp), 0, "the spent charge cannot save the second weather depletion");
+});
+
+test("ultimate protection blocks weather in a progressing run and improves survival", () => {
+  const stage = stageDefs.desert,
+    zone = stage.zones[0],
+    guardian = enemies[zone.guardian.species];
+  const saved = {
+    events: zone.events,
+    beats: zone.beats,
+    amount: difficulties[0].amount,
+    damage: guardian.dmg,
+    hp: guardian.hp,
+    charge: ULT_CHARGE.time,
+    reach: FIELD_MODEL_ASSUMPTIONS.reach.average,
+  };
+  try {
+    zone.events = { windows: [[1, 1]], pool: ["sandstorm"] };
+    zone.beats = [];
+    difficulties[0].amount = 0;
+    guardian.hp = 1e12;
+    guardian.dmg = 0;
+    ULT_CHARGE.time = 0.25;
+    FIELD_MODEL_ASSUMPTIONS.reach.average = 0;
+    const options = {
+      stage: "desert",
+      starter: "charmander",
+      difficulty: 0,
+      skill: average,
+      samples: 1,
+    };
+    const exposed = runModel({ ...options, ultimateTiming: { windup: ULT_WINDUP, protection: 0 } });
+    const protectedRun = runModel(options);
+    assert.ok(exposed.fieldEvents[0].income.weatherHpCost > 0);
+    assert.ok(
+      protectedRun.fieldEvents[0].income.weatherHpCost <
+        exposed.fieldEvents[0].income.weatherHpCost,
+    );
+    assert.ok(
+      protectedRun.outcome.meanSurvival > exposed.outcome.meanSurvival,
+      "protection changes the HP process, not only a report column",
+    );
+    assert.ok(protectedRun.ultimate.preventedDamage > 0);
+    const immune = runModel({ ...options, starter: "geodude" });
+    assert.equal(
+      immune.fieldEvents[0].income.weatherHpCost,
+      0,
+      "Rock/Ground remains immune without mitigation",
+    );
+  } finally {
+    zone.events = saved.events;
+    zone.beats = saved.beats;
+    difficulties[0].amount = saved.amount;
+    guardian.hp = saved.hp;
+    guardian.dmg = saved.damage;
+    ULT_CHARGE.time = saved.charge;
+    FIELD_MODEL_ASSUMPTIONS.reach.average = saved.reach;
   }
 });
 
@@ -281,7 +357,7 @@ test("one cast's volleys share each victim's HP, and procs need a live neighbour
   const stats = playerStats(player);
   const lone = target({ hp: 1 });
   const out = moveOutput(player.moves[0], stats, lone);
-  const casts = TERRAIN_SIGHT / castPeriod(moveParams(player.moves[0], stats).cd);
+  const casts = TERRAIN_SIGHT / castPeriod(moveParams(player.moves[0], stats, null).cd);
   assert.ok(
     Math.abs(out.useful / casts - 1) < 1e-9,
     `${(out.useful / casts).toFixed(3)} HP per cast`,

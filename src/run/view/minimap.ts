@@ -26,6 +26,7 @@ import {
   stationIconUrls,
   type MapTransform,
 } from "./minimapLayers";
+import { FieldMapMarks, loadSiteIcons } from "./fieldMapMarks";
 
 const MINI_RADIUS = 22,
   ICON_RIM = 0.84,
@@ -173,6 +174,7 @@ export function createMinimap(
   const textures = stationIconUrls(world, local).map((url) =>
     loadMapIcon(url, () => stage.invalidate()),
   );
+  const siteTextures = loadSiteIcons(world, () => stage.invalidate());
   const mini = new Container({
     width: 184,
     height: 184,
@@ -233,6 +235,8 @@ export function createMinimap(
   const miniLayers = new MapLayers(mini, 1.6, textures, 10, local),
     fullLayers = new MapLayers(fullPanel, 2.4, textures, 21, local);
   miniTerrain.uniforms.pressure.value = miniLayers.pressure;
+  const miniSites = new FieldMapMarks(mini, siteTextures, 10),
+    fullSites = new FieldMapMarks(fullPanel, siteTextures, 21);
   const map: MapTransform = { xx: 1, xz: 0, zx: 0, zz: 1, ox: 0, oy: 0 };
   const point = new Vector3(),
     inverse = new Matrix4();
@@ -277,12 +281,14 @@ export function createMinimap(
         0.75 + 0.25 * danger,
         false,
       );
+      miniSites.update(lastWorld, alpha, map, miniSize, 1, half * ICON_RIM, false);
     }
     if (open) {
       const k = fullSize / (FULL_HALF * 2);
       Object.assign(map, { xx: k, xz: 0, zx: 0, zz: k, ox: fullSize / 2, oy: fullSize / 2 });
       fullTerrain.setMap(map, fullSize, 1);
       fullLayers.update(lastWorld, alpha, yaw, map, fullSize, 1.5, Infinity, 1, true);
+      fullSites.update(lastWorld, alpha, map, fullSize, 1.5, Infinity, true);
     }
     dirty = false;
     stage.invalidate();
@@ -351,6 +357,8 @@ export function createMinimap(
       }
       miniLayers.afterLayout();
       fullLayers.afterLayout();
+      miniSites.afterLayout();
+      fullSites.afterLayout();
       if (dirty) draw(lastAlpha, lastYaw, 0);
     },
     setFullMap(value) {
@@ -363,6 +371,7 @@ export function createMinimap(
         pose.alpha = 0;
         fullTerrain.uniforms.mapAlpha.value = 0;
         fullLayers.setOpacity(0);
+        fullSites.setOpacity(0);
         full.setProperties({ opacity: 0 });
         stage.motion.animate(
           pose,
@@ -372,6 +381,7 @@ export function createMinimap(
             full.setProperties({ opacity: pose.alpha });
             fullTerrain.uniforms.mapAlpha.value = pose.alpha;
             fullLayers.setOpacity(pose.alpha);
+            fullSites.setOpacity(pose.alpha);
             stage.invalidate();
           },
           uiEaseOut,
@@ -391,11 +401,13 @@ export function createMinimap(
     restore() {
       // Three reuploads the retained CPU data / icon images into whichever UI context is restored.
       base.needsUpdate = true;
-      for (const texture of textures) texture.needsUpdate = true;
+      for (const texture of [...textures, ...siteTextures.values()]) texture.needsUpdate = true;
       miniTerrain.restore();
       fullTerrain.restore();
       miniLayers.restore();
       fullLayers.restore();
+      miniSites.restore();
+      fullSites.restore();
       dirty = true;
       stage.invalidate();
     },
@@ -404,17 +416,21 @@ export function createMinimap(
       fullTerrain.releaseUploads();
       miniLayers.releaseUploads();
       fullLayers.releaseUploads();
+      miniSites.releaseUploads();
+      fullSites.releaseUploads();
       // These textures are borrowed by shader closures, outside the stage's material traversal.
       base.dispose();
-      for (const texture of textures) texture.dispose();
+      for (const texture of [...textures, ...siteTextures.values()]) texture.dispose();
     },
     dispose() {
       stage.motion.cancel(pose);
       miniLayers.dispose();
       fullLayers.dispose();
+      miniSites.dispose();
+      fullSites.dispose();
       miniTerrain.dispose();
       fullTerrain.dispose();
-      for (const texture of textures) texture.dispose();
+      for (const texture of [...textures, ...siteTextures.values()]) texture.dispose();
       base.dispose();
       mapCap.dispose();
       closeCap.dispose();

@@ -477,7 +477,9 @@ const tick = 1 / 30;
 test("客机下行断流时同次大招状态不能续长房主的五秒保护", async () => {
   const { damagePlayer } = await import("../src/run/sim/hurt.ts");
   const { wire, host, guest, world } = await memoryRun();
+  world.zone.schedule = [];
   world.spawn.credit = -1e6;
+  world.sites = [];
   for (const player of world.players) {
     player.moves = [];
     player.invulnerable = 0;
@@ -507,7 +509,9 @@ test("积压的客机大招保留原事件年龄，房主不会当作刚发生",
   performance.now = () => now;
   try {
     const { wire, host, guest, world } = await memoryRun();
+    world.zone.schedule = [];
     world.spawn.credit = -1e6;
+    world.sites = [];
     for (const player of world.players) player.moves = [];
     world.players[1].ult.charge = 1;
     host.publishMap(world);
@@ -553,7 +557,9 @@ test("错相低延迟联机不会将两端大招保护倒计时叠加", async ()
     for (const latency of [1, 5]) {
       now = 0;
       const { wire, host, guest, world } = await memoryRun(latency);
+      world.zone.schedule = [];
       world.spawn.credit = -1e6;
+      world.sites = [];
       for (const player of world.players) {
         player.moves = [];
         player.invulnerable = 0;
@@ -1014,6 +1020,7 @@ test("通知年龄保留背压与后台积压时间，可靠事件仍按序交�
     const recent = { t: "banner", text: "新喷发", tone: "danger", kind: "eruption" };
     const captured = {
       t: "capture",
+      source: "capture",
       player: 1,
       partner: 71,
       species: "rattata",
@@ -1227,6 +1234,7 @@ test("owner 的终极技、弹体和范围攻击缺字段在修改世界前拒�
     (copy) =>
       copy.events.push({
         t: "capture",
+        source: "capture",
         player: 1,
         partner: 3,
         species: "rattata",

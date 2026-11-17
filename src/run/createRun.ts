@@ -12,6 +12,11 @@ import { items, type ItemId } from "./sim/content/items";
 import { enemies as enemyDefs } from "./sim/content/enemies";
 import { formOf } from "./sim/evolution";
 import { moveParams } from "./sim/attacks";
+import { activeWeather } from "./sim/content/weather";
+import { ULT_WINDUP } from "./sim/content/params/ultimates";
+import { siteHere } from "./sim/sites/index";
+import type { RunDex, SiteKind, WeatherId } from "./sim/state/field";
+import { sites as siteDefs } from "./sim/content/sites";
 import { archetypes } from "./sim/archetypes/index";
 import { playerStats, statBreakdown, type StatBreakdown } from "./sim/stats";
 import { TICK, type World } from "./sim/state/world";
@@ -36,7 +41,6 @@ import {
   RELEASE as ULT_RELEASE_CUE,
   type TrainerCue,
 } from "./trainer-cues";
-import { ULT_WINDUP } from "./sim/content/params/ultimates";
 import { DEPLOYMENT_MS } from "./view/deployment";
 import { COOP } from "./sim/content/params/coop";
 import { DASH_COOLDOWN } from "./sim/content/params/player";
@@ -56,6 +60,7 @@ import { afterFrame, drive, type Steps } from "../prepare/steps";
 import { bakeMap } from "./view/minimapBake";
 import type { StageId } from "./sim/content/stages/index";
 import { getAudio, RUN_SOUNDS, type SfxName } from "../audio/engine";
+import { playFieldEvent, syncFieldAmbience } from "../audio/field-events";
 import { createBoundaryWall, type BoundaryWall } from "./view/boundaryWall";
 import { createDebugOverlay, type DebugOverlay } from "./view/debug/layers";
 import { applyWorldOutput, createGrade } from "./view/grade";
@@ -75,6 +80,9 @@ const dangerLabels = {
   swarm: "群体包围",
   stampede: "冲锋群",
   eruption: "火山喷发",
+  weather: "天气变化",
+  horde: "群体遭遇",
+  outbreak: "大量出现",
 };
 
 /** What the build panel shows: the stat breakdown and the run's tallies at the moment it opens. */
@@ -124,6 +132,8 @@ export interface RunSnapshot {
   pending: PendingChoice | null;
   pendingCount: number;
   rescueProgress: number | null;
+  siteProgress: number | null;
+  weather: { id: WeatherId; phase: "forecast" | "active"; remaining: number } | null;
   /** The level the front level-up card is for: one card per level, so later ones queue behind it. */
   cardLevel: number;
   rerolls: number;
@@ -158,19 +168,17 @@ export interface RunSnapshot {
 }
 
 /** A station's prompt, the landmark's summon, or the exit the fallen guardian opened. */
-export type InteractPrompt = StationKind | "summon" | "leave" | "choices" | "rescue";
+export type InteractPrompt = StationKind | SiteKind | "summon" | "leave" | "choices" | "rescue";
 
 function interactPrompt(world: World, player: World["players"][number]): InteractPrompt | null {
   if (!player.alive || player.dialog) return null;
   if (player.rescue || rescueTarget(world, player)) return "rescue";
-  if (manualCards(world, player)) {
-    const action = zoneAction(world, player);
-    if (action && (action !== "leave" || canLeave(world))) return action;
-    if (player.pending.length > 0) return "choices";
-  }
-  // The same order as the interact command (sim/world.ts): the landmark or exit, then a station.
+  // Match the command's rescue → zone → field site → choices → station order.
   const action = zoneAction(world, player);
   if (action === "summon" || (action === "leave" && canLeave(world))) return action;
+  const site = siteHere(world, player);
+  if (site) return site.kind;
+  if (manualCards(world, player) && player.pending.length > 0) return "choices";
   const station = stationHere(world, player);
   return station ? station.kind : null;
 }
@@ -217,6 +225,7 @@ export interface RunResult {
   time: number;
   level: number;
   kills: number;
+  dex: RunDex;
   /** 星星沙子 this run carries out (stardust gain already applied), banked once by `recordRun`. */
   stardust: number;
   moves: { id: MoveId; level: number; damage: number }[];
@@ -332,6 +341,13 @@ function snapshot(world: World, playerId: PlayerId): RunSnapshot {
   const player = world.players[playerId]!;
   const stats = playerStats(player);
   const boss = world.enemies.find((enemy) => enemy.id === world.bossId);
+  const channel = world.sites.find(
+    (site) =>
+      site.owner === playerId &&
+      site.state === "busy" &&
+      typeof siteDefs[site.kind].interact === "object",
+  );
+  const channelRule = channel && siteDefs[channel.kind].interact;
   return {
     time: world.time,
     hp: player.hp,
@@ -345,7 +361,7 @@ function snapshot(world: World, playerId: PlayerId): RunSnapshot {
     moves: player.moves.map((move) => ({
       id: move.id,
       level: move.level,
-      ...moveReadiness(move, moveParams(move, stats).cd),
+      ...moveReadiness(move, moveParams(move, stats, activeWeather(world)).cd),
     })),
     items: player.items.map((item) => ({ ...item })),
     dash: 1 - player.dashCooldown / DASH_COOLDOWN,
@@ -357,6 +373,22 @@ function snapshot(world: World, playerId: PlayerId): RunSnapshot {
     pending: cardShown(player) ? player.pending[0]! : null,
     pendingCount: player.pending.length,
     rescueProgress: player.rescue ? player.rescue.elapsed / COOP.rescueSeconds : null,
+    siteProgress:
+      channel && typeof channelRule === "object"
+        ? Math.min(1, channel.data.progress / channelRule.channel)
+        : null,
+    weather:
+      world.weather && world.time < world.weather.until
+        ? {
+            id: world.weather.id,
+            phase: world.time < world.weather.from ? "forecast" : "active",
+            remaining: Math.max(
+              0,
+              (world.time < world.weather.from ? world.weather.from : world.weather.until) -
+                world.time,
+            ),
+          }
+        : null,
     cardLevel: player.level + 1 - player.pending.filter((card) => card.source === "level").length,
     rerolls: player.rerolls,
     skips: player.skips,
@@ -519,6 +551,7 @@ export function createRun(
   // Released while the old context is lost, before three replaces its managers (docs/LESSONS.md).
   const unregisterResident = app.resident({
     release() {
+      syncFieldAmbience(audio, world, false);
       view?.releaseUploads();
       assets?.releaseUploads();
       minimap?.releaseUploads();
@@ -581,6 +614,7 @@ export function createRun(
     if (open === mapOpen || !minimap) return;
     if (open && (menuPaused || isFrozen(world) || world.outcome !== "playing")) return;
     mapOpen = open;
+    if (open) syncFieldAmbience(audio, world, false);
     minimap.setFullMap(open);
     callbacks.onMapChange(open);
   }
@@ -608,6 +642,7 @@ export function createRun(
   function fail(error: Error) {
     if (disposed || failed) return;
     failed = true;
+    syncFieldAmbience(audio, world, false);
     deployment?.done();
     deployment = undefined;
     hud.trainers.clear();
@@ -695,6 +730,32 @@ export function createRun(
 
   /** One feedback bundle per event, scaled by importance tier (docs/GAME-FEEL.md). */
   function drain(events: RunEvent[]): void {
+    const fieldVisible = app.available && !menuPaused && !mapOpen && !callbacks.inputBlocked();
+    const fieldSounds = new Set<SfxName>();
+    if (fieldVisible)
+      for (const event of events)
+        if (
+          event.t === "weather" ||
+          event.t === "site" ||
+          event.t === "shiny" ||
+          event.t === "shiny-caught"
+        ) {
+          const sound = playFieldEvent(
+            audio,
+            event,
+            world,
+            PLAYER,
+            network?.eventAgeMs(event) ?? 0,
+          );
+          if (sound) fieldSounds.add(sound);
+        }
+    const hatching = events.some(
+      (event) =>
+        event.t === "site" &&
+        event.kind === "egg" &&
+        event.phase === "complete" &&
+        event.player === PLAYER,
+    );
     // A big moment brings its own sound; the generic boss or level cue would stack on top of it.
     const hasOwnSound = events.some(
       (e) => (e.t === "death" && e.elite) || (e.t === "capture" && e.player === PLAYER),
@@ -712,7 +773,7 @@ export function createRun(
       (e) => ((e.t === "hit" && !e.confirmedContact) || e.t === "contact") && e.type === "rock",
     );
     const tell = loudestTell(events);
-    if (tell) audio.sfx(tell);
+    if (tell && !fieldSounds.has("tell-voltorb")) audio.sfx(tell);
     const dangers = new Map<keyof typeof dangerLabels, { text: string; ageMs: number }>();
     const notify = (event: RunEvent, text: string, tone: "info" | "danger" | "reward") => {
       callbacks.onBanner(text, tone, network?.eventAgeMs(event) ?? 0);
@@ -727,7 +788,7 @@ export function createRun(
             (event.kind !== "fusion" || event.player === PLAYER)
           )
             audio.sfx("boss");
-          else if (event.tone === "danger") audio.sfx("danger");
+          else if (event.tone === "danger" && event.kind !== "weather") audio.sfx("danger");
           switch (event.kind) {
             case "fusion":
               if (event.player !== PLAYER) break;
@@ -741,6 +802,8 @@ export function createRun(
             case "elite-wave":
             case "swarm":
             case "stampede":
+            case "horde":
+            case "outbreak":
             case "eruption": {
               const ageMs = network?.eventAgeMs(event) ?? 0;
               if (ageMs < RUN_NOTICE_MS.danger)
@@ -750,7 +813,13 @@ export function createRun(
             case "zone":
               notify(event, event.text, "info");
               break;
+            case "weather":
+              if (fieldVisible) notify(event, event.text, "danger");
+              break;
           }
+          break;
+        case "shiny":
+          if (fieldVisible) notify(event, `异色 ${enemyDefs[event.species].name}！`, "reward");
           break;
         case "evade":
           // The local player's dodge floats over them, like their own hits do.
@@ -887,8 +956,12 @@ export function createRun(
           break;
         case "capture":
           if (event.player !== PLAYER) break;
-          notify(event, `捕获 ${enemyDefs[event.species].name}！`, "reward");
-          audio.sfx("capture");
+          notify(
+            event,
+            `${event.source === "egg" ? "孵化" : "捕获"} ${enemyDefs[event.species].name}！`,
+            "reward",
+          );
+          if (!hatching) audio.sfx("capture");
           hitStop(0.15, 0.1);
           break;
         case "revive":
@@ -995,6 +1068,7 @@ export function createRun(
     if (!started) return canvasStale;
     if (network?.host) network.restoreHost(world);
     if (network?.suspended) {
+      syncFieldAmbience(audio, world, false);
       cancelInput();
       network.submit(queue.splice(0));
       accumulator = 0;
@@ -1115,6 +1189,11 @@ export function createRun(
       // The guardian is the only boss on the world; its fight has its own track.
       if (playing) audio.music.play(snap.boss ? "boss" : "run");
     }
+    syncFieldAmbience(
+      audio,
+      world,
+      app.available && !callbacks.inputBlocked() && !menuPaused && !mapOpen && !isFrozen(world),
+    );
     settle();
     return changed;
   }
@@ -1139,6 +1218,7 @@ export function createRun(
     if (world.outcome === "playing") return;
     if (!ended) {
       ended = true;
+      syncFieldAmbience(audio, world, false);
       audio.music.play(null);
       // The guardian's fall freezes the screen for 0.35 s; the victory sting lands after the freeze,
       // not on the elite-kill sound (whose tail still overlaps its start).
@@ -1165,6 +1245,7 @@ export function createRun(
         time: world.time,
         level: player.level,
         kills: player.kills,
+        dex: structuredClone(player.dex),
         stardust: Math.floor(player.stardust),
         moves: player.moves.map((move) => ({
           id: move.id,
@@ -1296,6 +1377,7 @@ export function createRun(
   async function changeZone(incoming?: World): Promise<void> {
     if (changingZone) return;
     changingZone = true;
+    syncFieldAmbience(audio, world, false);
     hud.trainers.clear();
     callbacks.onZoneLoading(true, incoming?.stage ?? nextField(world)?.stage ?? world.stage);
     callbacks.onLoadProgress?.(0);
@@ -1511,7 +1593,7 @@ export function createRun(
           id: move.id,
           level: move.level,
           damage: move.damage,
-          cd: moveParams(move, stats).cd,
+          cd: moveParams(move, stats, activeWeather(world)).cd,
         })),
         items: player.items.map((item) => ({ ...item })),
       };
@@ -1534,6 +1616,7 @@ export function createRun(
     },
     setPaused(paused) {
       menuPaused = paused;
+      if (paused) syncFieldAmbience(audio, world, false);
       audio.music.setPaused(paused);
       if (paused) setFullMap(false);
       queuePause(paused);
@@ -1557,6 +1640,7 @@ export function createRun(
       if (started && view && app.available) app.retainWorldPrograms(view.scene);
       releaseWorld();
       unregisterResident();
+      syncFieldAmbience(audio, world, false);
       audio.music.setPaused(false);
       disposeScene();
       healthBars?.dispose();

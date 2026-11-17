@@ -2,7 +2,7 @@
 
 ## 所属版本
 
-大版本「野外与路线」。共用约定见 `add-field-events/design.md`「共用约定」。依赖 `extend-progress-v5`、`redesign-lab`、`add-shiny-looks`。
+大版本「野外与路线」。共用约定见 [野外与路线规划](../archive/2026-11-18-add-field-events/design.md#共用约定)。依赖 `extend-progress-v5`、`redesign-lab`、`add-shiny-looks`。
 
 ## 羁绊点
 

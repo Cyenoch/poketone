@@ -4,7 +4,7 @@ import { statIds } from "../sim/content/effects";
 import { zoneClock } from "../sim/content/params/zones";
 import { stageDefs } from "../sim/content/stages/index";
 import { liveCap, spawnRate, zoneScaling } from "../sim/director";
-import { zoneDef, zoneFactors, zoneTime } from "../sim/currentZone";
+import { zoneFactors, zoneTime } from "../sim/currentZone";
 import { steepnessAt } from "../sim/nav/index";
 import { currentStats } from "../sim/stats";
 import type { PlayerId } from "../sim/state/entities";
@@ -106,10 +106,10 @@ export function createDevReadout(
     const early = diff.earlyBy;
     let next: string | null = null;
     let nextAt = Infinity;
-    for (const [at, beat] of zoneDef(world).beats) {
-      if (at - early < nextAt && !world.spawn.fired.includes(`${beat.kind}@${at}`)) {
+    for (const [index, { at, beat }] of world.zone.schedule.entries()) {
+      if (at - early < nextAt && !world.spawn.fired.includes(index)) {
         nextAt = at - early;
-        next = beat.kind;
+        next = beat.kind === "event" ? beat.id : beat.kind;
       }
     }
     const boss = world.enemies.find((enemy) => enemy.id === world.bossId);

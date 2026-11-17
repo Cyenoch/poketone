@@ -2319,6 +2319,609 @@
         "date": "2026-11-16"
       },
       "note": "Hit of a move of this element (the hit event carries the element); other elements use the plain `hit`."
+    },
+    "weather-sun": {
+      "ship": "weather-sun",
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.7,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "skDu2B3XBWEtgDMJenhU",
+      "prompt": "A cartoon warm air puff, one rounded leathery whump with a hollow woody midrange body and a brief breath release, no sustained hum, no bass rumble, no hiss, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-weather-sun-3.mp3",
+          "generationId": "2c5ArunhBnMdhAAq8ffY",
+          "prompt": "A cartoon warm air puff, one rounded leathery whump with a hollow woody midrange body and a brief breath release, no sustained hum, no bass rumble, no hiss, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-weather-sun-4.mp3",
+          "generationId": "DKLMilGSWnk8ruWKDeG3",
+          "prompt": "A cartoon warm air puff, one rounded leathery whump with a hollow woody midrange body and a brief breath release, no sustained hum, no bass rumble, no hiss, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": ["sfx-weather-sun-3.mp3", "sfx-weather-sun-4.mp3"],
+      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published.",
+      "tier": "medium",
+      "frequent": false,
+      "maxMs": 2000,
+      "spend": {
+        "credits": 17.9982,
+        "date": "2026-11-17"
+      }
+    },
+    "weather-rain": {
+      "ship": "weather-rain",
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "JsllronnDOEzgOj0Mv6i",
+      "prompt": "A cartoon cluster of fat raindrops plopping into a wooden bowl, hollow rounded midrange knocks with a wet gurgle, no spray hiss, no needle clicks, no bass rumble, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-weather-rain-3.mp3",
+          "generationId": "QtjLm9b2Ht4Nh8fHDMtQ",
+          "prompt": "A cartoon cluster of fat raindrops plopping into a wooden bowl, hollow rounded midrange knocks with a wet gurgle, no spray hiss, no needle clicks, no bass rumble, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-weather-rain-4.mp3",
+          "generationId": "VB3pTBOW0VJYCwx9yNp7",
+          "prompt": "A cartoon cluster of fat raindrops plopping into a wooden bowl, hollow rounded midrange knocks with a wet gurgle, no spray hiss, no needle clicks, no bass rumble, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": ["sfx-weather-rain-3.mp3", "sfx-weather-rain-4.mp3"],
+      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published.",
+      "tier": "medium",
+      "frequent": false,
+      "maxMs": 2000,
+      "spend": {
+        "credits": 19.998,
+        "date": "2026-11-17"
+      }
+    },
+    "weather-sand": {
+      "ship": "weather-sand",
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "JXGQzcZf8AvymHQbjKQM",
+      "prompt": "One heavy canvas flap billowing with a rounded leathery whump, a warm hollow midrange body swelling briefly and settling, cartoon wind effect, no bass rumble, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-weather-sand-5.mp3",
+          "generationId": "RBNJnrLPpu0h77oqNlqr",
+          "prompt": "One heavy canvas flap billowing with a rounded leathery whump, a warm hollow midrange body swelling briefly and settling, cartoon wind effect, no bass rumble, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-weather-sand-6.mp3",
+          "generationId": "fS9wIPttlCYc3WHntKMS",
+          "prompt": "One heavy canvas flap billowing with a rounded leathery whump, a warm hollow midrange body swelling briefly and settling, cartoon wind effect, no bass rumble, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": ["sfx-weather-sand-5.mp3", "sfx-weather-sand-6.mp3"],
+      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published.",
+      "tier": "medium",
+      "frequent": false,
+      "maxMs": 2000,
+      "spend": {
+        "credits": 26.664,
+        "date": "2026-11-17"
+      }
+    },
+    "weather-hail": {
+      "ship": "weather-hail",
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "2zGXsQpstHePnMojJbhO",
+      "prompt": "A cartoon handful of hail bouncing on a hollow wooden box, rounded rubbery tok-tok knocks getting slower, chunky midrange body, no glass, no clinking, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-weather-hail-3.mp3",
+          "generationId": "cgliO83j4Fu8SIQDulda",
+          "prompt": "A cartoon handful of hail bouncing on a hollow wooden box, rounded rubbery tok-tok knocks getting slower, chunky midrange body, no glass, no clinking, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-weather-hail-4.mp3",
+          "generationId": "suvjgC3VCNof0wio9INh",
+          "prompt": "A cartoon handful of hail bouncing on a hollow wooden box, rounded rubbery tok-tok knocks getting slower, chunky midrange body, no glass, no clinking, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": ["sfx-weather-hail-3.mp3", "sfx-weather-hail-4.mp3"],
+      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published.",
+      "tier": "medium",
+      "frequent": false,
+      "maxMs": 2000,
+      "spend": {
+        "credits": 19.998,
+        "date": "2026-11-17"
+      }
+    },
+    "site-flute": {
+      "ship": "site-flute",
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 2,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "61k3BwTbF3vpvmcJ8wjh",
+      "prompt": "Three soft notes on a warm wooden flute, a gentle rising then settling phrase that ends on a held note and fades, round and breathy, mid-range, original melody, no shrill, no whistle, dry close-mic, no reverb, no music backing, no voice",
+      "takes": [
+        {
+          "file": "sfx-site-flute-1.mp3",
+          "generationId": "5FkcsYjuUgLDJOxUwLJI",
+          "prompt": "Three soft notes on a warm wooden flute, a gentle rising then settling phrase that ends on a held note and fades, round and breathy, mid-range, original melody, no shrill, no whistle, dry close-mic, no reverb, no music backing, no voice"
+        },
+        {
+          "file": "sfx-site-flute-2.mp3",
+          "generationId": "apsbI8XgSQahPOlVrOiF",
+          "prompt": "Three soft notes on a warm wooden flute, a gentle rising then settling phrase that ends on a held note and fades, round and breathy, mid-range, original melody, no shrill, no whistle, dry close-mic, no reverb, no music backing, no voice"
+        }
+      ],
+      "pick": ["sfx-site-flute-1.mp3", "sfx-site-flute-2.mp3"],
+      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published.",
+      "tier": "medium",
+      "frequent": false,
+      "maxMs": 2000,
+      "spend": {
+        "credits": 13.332,
+        "date": "2026-11-17"
+      }
+    },
+    "site-fishing": {
+      "ship": "site-fishing",
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.7,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "n9RYHFnPZ2T3VcXcOMp9",
+      "prompt": "A cartoon fishing catch, one rubbery wet gulp ending in a hollow wooden plonk, chunky rounded midrange body, no ratchet clicks, no hiss, no bass boom, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-site-fishing-3.mp3",
+          "generationId": "XtIN5TD4HnxzMh9fpWsN",
+          "prompt": "A cartoon fishing catch, one rubbery wet gulp ending in a hollow wooden plonk, chunky rounded midrange body, no ratchet clicks, no hiss, no bass boom, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-site-fishing-4.mp3",
+          "generationId": "LTzRcdNVWtJHE7jewrG5",
+          "prompt": "A cartoon fishing catch, one rubbery wet gulp ending in a hollow wooden plonk, chunky rounded midrange body, no ratchet clicks, no hiss, no bass boom, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": ["sfx-site-fishing-3.mp3", "sfx-site-fishing-4.mp3"],
+      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published.",
+      "tier": "medium",
+      "frequent": false,
+      "maxMs": 1300,
+      "spend": {
+        "credits": 13.332,
+        "date": "2026-11-17"
+      }
+    },
+    "site-dig": {
+      "ship": "site-dig",
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "lQh1pDlWTpYyG1AJTeRL",
+      "prompt": "A rounded cartoon hollow wood knock, one firm chunky tok with a thick rubbery body, immediate attack and short damped tail, midrange, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-site-dig-9.mp3",
+          "generationId": "bFEVXKu0aEKOp00WGthu",
+          "prompt": "Rounded hollow coconut knock, a single thick tok with a full midrange wooden body and a quick muted tail. Cartoon percussion, immediate attack, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-site-dig-13.mp3",
+          "generationId": "RcYOT47VGlBYsKnip2jE",
+          "prompt": "A rounded cartoon hollow wood knock, one firm chunky tok with a thick rubbery body, immediate attack and short damped tail, midrange, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-site-dig-14.mp3",
+          "generationId": "sYzcr5ACPKn5ofgxVPK9",
+          "prompt": "A rounded cartoon hollow wood knock, one firm chunky tok with a thick rubbery body, immediate attack and short damped tail, midrange, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-site-dig-16.mp3",
+          "generationId": "NOZMoVk0gk7XHhDkLlNM",
+          "prompt": "A rounded cartoon hollow wood knock, one firm chunky tok with a thick rubbery body, immediate attack and short damped tail, midrange, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": [
+        "sfx-site-dig-9.mp3",
+        "sfx-site-dig-13.mp3",
+        "sfx-site-dig-14.mp3",
+        "sfx-site-dig-16.mp3"
+      ],
+      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published.",
+      "tier": "small",
+      "frequent": true,
+      "maxMs": 220,
+      "spend": {
+        "credits": 30.6636,
+        "date": "2026-11-17"
+      }
+    },
+    "site-den": {
+      "ship": "site-den",
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1.8,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "3KL8jRMW7Y2xMUpfx144",
+      "prompt": "A heavy stone lid sliding aside with a rounded wooden-stone scrape, then a deep soft whoomp of rising air, rounded and powerful but not harsh, mid-range audible on a small speaker, no siren, no explosion boom, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-site-den-1.mp3",
+          "generationId": "Mj76glGWOqnbatPywB7X",
+          "prompt": "A heavy stone lid sliding aside with a rounded wooden-stone scrape, then a deep soft whoomp of rising air, rounded and powerful but not harsh, mid-range audible on a small speaker, no siren, no explosion boom, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-site-den-2.mp3",
+          "generationId": "7LayZk0jrwopX6HJQgvO",
+          "prompt": "A heavy stone lid sliding aside with a rounded wooden-stone scrape, then a deep soft whoomp of rising air, rounded and powerful but not harsh, mid-range audible on a small speaker, no siren, no explosion boom, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-site-den-1.mp3", "sfx-site-den-2.mp3"],
+      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published.",
+      "tier": "large",
+      "frequent": false,
+      "maxMs": 1800,
+      "spend": {
+        "credits": 11.9988,
+        "date": "2026-11-17"
+      }
+    },
+    "shiny": {
+      "ship": "shiny",
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1.3,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "KQkIAzfzdmaomZB2aMI7",
+      "prompt": "A soft rounded rising run of a few felt-mallet marimba notes ending in one warm gentle glassy tone that fades, friendly and magical but muted, mid-range, no sparkle, no shimmer, no harsh high tones, no hiss, dry close-mic, no reverb, no voice",
+      "takes": [
+        {
+          "file": "sfx-shiny-1.mp3",
+          "generationId": "7shDiunoEoPMGIr2lhwm",
+          "prompt": "A soft rounded rising run of a few felt-mallet marimba notes ending in one warm gentle glassy tone that fades, friendly and magical but muted, mid-range, no sparkle, no shimmer, no harsh high tones, no hiss, dry close-mic, no reverb, no voice"
+        },
+        {
+          "file": "sfx-shiny-2.mp3",
+          "generationId": "LMZfLuEWOqU1Cf4wZ9s0",
+          "prompt": "A soft rounded rising run of a few felt-mallet marimba notes ending in one warm gentle glassy tone that fades, friendly and magical but muted, mid-range, no sparkle, no shimmer, no harsh high tones, no hiss, dry close-mic, no reverb, no voice"
+        }
+      ],
+      "pick": ["sfx-shiny-1.mp3", "sfx-shiny-2.mp3"],
+      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published.",
+      "tier": "medium",
+      "frequent": false,
+      "maxMs": 1300,
+      "spend": {
+        "credits": 8.6658,
+        "date": "2026-11-17"
+      }
+    },
+    "egg-hatch": {
+      "ship": "egg-hatch",
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "2iALtnxwwmoRTAXOEitK",
+      "prompt": "A bouncy cartoon pop followed by two rounded hollow wooden knocks, thick rubbery midrange body, a cheerful little emergence, no hiss, no bass boom, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-egg-hatch-7.mp3",
+          "generationId": "PnYSc1RpKOuuRq3QqXyx",
+          "prompt": "A bouncy cartoon pop followed by two rounded hollow wooden knocks, thick rubbery midrange body, a cheerful little emergence, no hiss, no bass boom, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-egg-hatch-8.mp3",
+          "generationId": "S2k2DG78aQyafm3DujHl",
+          "prompt": "A bouncy cartoon pop followed by two rounded hollow wooden knocks, thick rubbery midrange body, a cheerful little emergence, no hiss, no bass boom, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": ["sfx-egg-hatch-7.mp3", "sfx-egg-hatch-8.mp3"],
+      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published.",
+      "tier": "medium",
+      "frequent": false,
+      "maxMs": 1300,
+      "spend": {
+        "credits": 24.6642,
+        "date": "2026-11-17"
+      }
+    },
+    "tell-voltorb": {
+      "ship": "tell-voltorb",
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "36DyoYcW4QmMI4tPx866",
+      "prompt": "Double knock on a wooden door. Two separate rounded hollow tocks, first immediately, short gap, second tock, then silence. Dull woody midrange, nonmusical urgent cartoon warning. No ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-tell-voltorb-15.mp3",
+          "generationId": "hszaN59zTCn7Kf2ZFWho",
+          "prompt": "Exactly two firm knocks on a hollow wooden door: tok, tok. A short pause between the knocks, then silence. Both rounded, dull, punchy and midrange, first knock stronger. Urgent cartoon warning, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.8,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-tell-voltorb-19.mp3",
+          "generationId": "8yFcDrB6H7j5R87xDaOo",
+          "prompt": "Double knock on a wooden door. Two separate rounded hollow tocks, first immediately, short gap, second tock, then silence. Dull woody midrange, nonmusical urgent cartoon warning. No ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-tell-voltorb-20.mp3",
+          "generationId": "tctn0MNZkVGjFrPt1ZuL",
+          "prompt": "Double knock on a wooden door. Two separate rounded hollow tocks, first immediately, short gap, second tock, then silence. Dull woody midrange, nonmusical urgent cartoon warning. No ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": ["sfx-tell-voltorb-15.mp3", "sfx-tell-voltorb-19.mp3", "sfx-tell-voltorb-20.mp3"],
+      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published.",
+      "tier": "medium",
+      "frequent": true,
+      "maxMs": 350,
+      "spend": {
+        "credits": 47.9952,
+        "date": "2026-11-17"
+      }
+    },
+    "loop-weather-sun": {
+      "ship": "sun",
+      "kind": "ambience",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 8,
+        "prompt_influence": 0.5,
+        "loop": true
+      },
+      "node": "LJS6NDRyPLbOhoou8hL5",
+      "prompt": "Continuous smooth swishing of a heavy canvas sail in a warm breeze, rounded leathery fluttering with full midrange body, evenly present throughout, steady moderate volume, no impacts, no sub bass, no whistle, no bell, no high-pitched sound, dry close-mic, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-loop-weather-sun-6.mp3",
+          "generationId": "GbWx8k80bKi909FE0xsW",
+          "prompt": "Continuous smooth swishing of a heavy canvas sail in a warm breeze, rounded leathery fluttering with full midrange body, evenly present throughout, steady moderate volume, no impacts, no sub bass, no whistle, no bell, no high-pitched sound, dry close-mic, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          }
+        }
+      ],
+      "pick": ["sfx-loop-weather-sun-6.mp3"],
+      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published. Independent -28 LUFS ambience mastering with 250ms seam; no BPM or bars.",
+      "spend": {
+        "credits": 213.312,
+        "date": "2026-11-17"
+      }
+    },
+    "loop-weather-rain": {
+      "ship": "rain",
+      "kind": "ambience",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 8,
+        "prompt_influence": 0.5,
+        "loop": true
+      },
+      "node": "WCjYGwQiZFKC8iZrjmWS",
+      "prompt": "A continuous scattered patter of muted hollow wooden knocks and thick liquid plops, irregular tiny rounded tok sounds overlapping into an even texture, warm midrange body, moderate volume, cartoon water ambience, no sharp clicks, no spray hiss, no bell, no high-pitched sound, dry close-mic, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-loop-weather-rain-7.mp3",
+          "generationId": "RDNpPOJrnlWfzObvz9GX",
+          "prompt": "A continuous scattered patter of muted hollow wooden knocks and thick liquid plops, irregular tiny rounded tok sounds overlapping into an even texture, warm midrange body, moderate volume, cartoon water ambience, no sharp clicks, no spray hiss, no bell, no high-pitched sound, dry close-mic, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          }
+        }
+      ],
+      "pick": ["sfx-loop-weather-rain-7.mp3"],
+      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published. Independent -28 LUFS ambience mastering with 250ms seam; no BPM or bars.",
+      "spend": {
+        "credits": 266.64,
+        "date": "2026-11-17"
+      }
+    },
+    "loop-weather-sand": {
+      "ship": "sandstorm",
+      "kind": "ambience",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 16,
+        "prompt_influence": 0.5,
+        "loop": true
+      },
+      "node": "FuCMGtWh4KUAQBa3dIho",
+      "prompt": "Steady low wind blowing fine dry sand across the ground, a soft even rustling rush, muted and warm, constant, no whistle, no sudden gusts, no thunder, no hiss, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-loop-weather-sand-1.mp3",
+          "generationId": "0B9f7MXrtP5Xz2UPxLnl",
+          "prompt": "Steady low wind blowing fine dry sand across the ground, a soft even rustling rush, muted and warm, constant, no whistle, no sudden gusts, no thunder, no hiss, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-loop-weather-sand-1.mp3"],
+      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published. Independent -28 LUFS ambience mastering with 250ms seam; no BPM or bars.",
+      "spend": {
+        "credits": 106.656,
+        "date": "2026-11-17"
+      }
+    },
+    "loop-weather-hail": {
+      "ship": "hail",
+      "kind": "ambience",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 8,
+        "prompt_influence": 0.5,
+        "loop": true
+      },
+      "node": "kHNs8dSTaess5cOHLzKU",
+      "prompt": "A continuous scattered patter of muted hollow wooden knocks and thick rubbery plops, irregular tiny rounded tok sounds overlapping into an even texture, warm midrange body, moderate volume, cartoon ambience of small round objects bouncing on wood. No loud accents, no sharp clicks, no spray hiss, no ring, no bell, no high-pitched sound, dry close-mic, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-loop-weather-hail-1.mp3",
+          "generationId": "RPsqBxpuOjmZ8MQizs4A",
+          "prompt": "Steady cold wind with a constant light soft hail patter on snow and wood, quiet, even and muted, no ice chime, no glass, no sudden sounds, no hiss, no music, no voice"
+        },
+        {
+          "file": "sfx-loop-weather-hail-2.mp3",
+          "generationId": "9GX0OnMt5MQNED1fA43w",
+          "prompt": "Steady cold wind with a constant light soft hail patter on snow and wood, quiet, even and muted, no ice chime, no glass, no sudden sounds, no hiss, no music, no voice"
+        },
+        {
+          "file": "sfx-loop-weather-hail-9.mp3",
+          "generationId": "cAp2bMtwdbskriUsMpOY",
+          "prompt": "A continuous scattered patter of muted hollow wooden knocks and thick rubbery plops, irregular tiny rounded tok sounds overlapping into an even texture, warm midrange body, moderate volume, cartoon ambience of small round objects bouncing on wood. No loud accents, no sharp clicks, no spray hiss, no ring, no bell, no high-pitched sound, dry close-mic, no music, no voice.",
+          "params": {
+            "duration_seconds": 8,
+            "prompt_influence": 0.5,
+            "loop": true
+          }
+        }
+      ],
+      "pick": ["sfx-loop-weather-hail-9.mp3"],
+      "note": "Hail ambience take9 passes measured raw/encoded QC: EBU -28.1 LUFS, true peak -6.07 dBTP, centroid 689Hz. 250ms seam, no BPM. Two old rejected raws retained per user preservation scope. Not auditioned, runtime-wired or published; no ship.",
+      "spend": {
+        "credits": 319.968,
+        "date": "2026-11-17"
+      }
     }
   }
 }

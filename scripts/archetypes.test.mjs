@@ -265,7 +265,7 @@ test("a melee combo waits, follows position without turning, and finishes with a
   const above = dummy(world, 1.5, 1.5);
   const ctx = { world, grid: new EnemyGrid() };
   const def = moves["karate-chop"];
-  const p = { ...moveParams(newMoveState(def.id), playerStats(player)), crit: -1 };
+  const p = { ...moveParams(newMoveState(def.id), playerStats(player), null), crit: -1 };
   touchingBack.hp = 0;
   assert.equal(combo.cast(ctx, player, def, p), true);
   touchingBack.hp = touchingBack.maxHp;
@@ -303,7 +303,10 @@ test("each count on Dragon Tempest adds a stream: apart at separate enemies, con
     state.mods.count = extra;
     const ctx = { world, grid: new EnemyGrid() };
     const def = moves["dragon-tempest"];
-    assert.equal(tempest.cast(ctx, player, def, moveParams(state, playerStats(player))), true);
+    assert.equal(
+      tempest.cast(ctx, player, def, moveParams(state, playerStats(player), null)),
+      true,
+    );
     return world.areas.filter((a) => a.kind === "tempest");
   };
   for (const extra of [0, 1, 3]) {

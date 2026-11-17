@@ -33,10 +33,21 @@ import {
   GUARDIAN_REFERENCE_SECONDS,
 } from "../src/run/sim/content/params/pacing.ts";
 import { CAPTURE_CHANCE } from "../src/run/sim/content/params/partners.ts";
+import { partnerSlots } from "../src/run/sim/partners.ts";
 import { ULT_CHARGE, ULT_WINDUP } from "../src/run/sim/content/params/ultimates.ts";
 import { ultChargeRate, ultCast, ultimateTiming } from "../src/run/balance/ultimate.ts";
 import { chargeUltimate } from "../src/run/sim/ultimates/index.ts";
 import { stageDefs } from "../src/run/sim/content/stages/index.ts";
+import { scheduleField } from "../src/run/sim/field-events.ts";
+import { SITE } from "../src/run/sim/content/params/sites.ts";
+import { SHINY } from "../src/run/sim/content/params/field-events.ts";
+import { weatherDefs } from "../src/run/sim/content/weather.ts";
+import {
+  FIELD_MODEL_ASSUMPTIONS,
+  modelFieldSchedule,
+  newModelFieldEvents,
+  stepModelSites,
+} from "../src/run/balance/field-events.ts";
 import { spawnEnemy } from "../src/run/sim/director.ts";
 import { EnemyGrid } from "../src/run/sim/grid.ts";
 import { killEnemy } from "../src/run/sim/combat.ts";
@@ -47,6 +58,7 @@ import { decay, dotRate } from "../src/run/sim/status.ts";
 import { TERRAIN_HALF } from "../src/run/sim/terrain.ts";
 import { TICK } from "../src/run/sim/state/world.ts";
 import { applyChoice, newMoveState } from "../src/run/sim/upgrades.ts";
+import { pickEffects } from "../src/run/sim/progression.ts";
 import {
   applyCommand,
   collectRemainingPickups,
@@ -55,6 +67,379 @@ import {
 } from "../src/run/sim/world.ts";
 
 const SECONDS = 60;
+
+test("model schedules use the real seeded scheduler and retain used events across fields", () => {
+  const world = createWorld({
+    stage: "forest",
+    seed: 3,
+    difficulty: 0,
+    players: [{ starter: "charmander" }],
+  });
+  const rng = createRng(483);
+  const used = [];
+  world.rng = createRng(483);
+  world.eventsUsed = [];
+  for (const stage of Object.keys(stageDefs)) {
+    world.stage = stage;
+    const actual = modelFieldSchedule(stage, 0, rng, used);
+    scheduleField(world);
+    assert.deepEqual(actual, world.zone.schedule);
+    assert.equal(rng.state, world.rng.state, "no midpoint schedule or extra scheduling draw");
+  }
+  assert.equal(new Set(used).size, used.length);
+  const a = modelFieldSchedule("forest", 0, createRng(1), []);
+  const b = modelFieldSchedule("forest", 0, createRng(2), []);
+  assert.notDeepEqual(a, b, "different seeds draw real times inside the windows");
+});
+
+test("weather affects move derivation and enemy streams once, without changing neutral contact", () => {
+  const player = createPlayer(0, "charmander", 0);
+  const target = targetFor(fieldAt("forest", 300, 0, false), 30, average);
+  const dry = moveOutput(newMoveState("ember"), playerStats(player), target);
+  const sunny = moveOutput(newMoveState("ember"), playerStats(player), {
+    ...target,
+    weather: "sun",
+  });
+  assert.ok(Math.abs(sunny.single / dry.single - weatherDefs.sun.element.fire) < 1e-12);
+  const beam = (weather) =>
+    moveOutput(newMoveState("solar-beam"), playerStats(player), { ...target, weather });
+  assert.ok(beam("sun").single > beam(null).single, "shared cooldown tweak increases beam output");
+  const thunder = (weather) =>
+    moveOutput(newMoveState("thunder"), playerStats(player), { ...target, weather });
+  assert.ok(
+    thunder("rain").useful > thunder(null).useful,
+    "shared count tweak reaches more crowd targets",
+  );
+  assert.equal(
+    thunder("rain").single,
+    thunder(null).single,
+    "distinct-target strikes do not duplicate a lone guardian",
+  );
+  const calm = bossHits("gyarados", 0, 1, 1, 0, false, 0.4);
+  const rain = bossHits("gyarados", 0, 1, 1, 0, false, 0.4, undefined, null, Infinity, "rain");
+  assert.ok(calm.some((stream) => stream.element === "water"));
+  for (let i = 0; i < calm.length; i++) {
+    const multiplier = weatherDefs.rain.element[calm[i].element] ?? 1;
+    assert.ok(Math.abs(rain[i].dmg / calm[i].dmg - multiplier) < 1e-12);
+    assert.equal(rain[i].rate, calm[i].rate);
+  }
+});
+
+test("event encounters use ordinary encounter stats, pay one floor-bearing box, and timeouts pay nothing", () => {
+  const skill = { ...expert };
+  const run = (kind, species, dps = 1000) => {
+    const rng = createRng(8);
+    const state = newModelFieldEvents("forest", 0, rng, [], skill);
+    state.sites.forEach((site) => {
+      site.reachable = false;
+    });
+    const site = {
+      kind,
+      species,
+      ready: true,
+      reachable: true,
+      at: 0,
+      phase: "wait",
+      left: 0,
+      progress: 0,
+      attempts: 0,
+      encounter: null,
+    };
+    state.active = site;
+    state.scope = true;
+    const context = {
+      time: 0,
+      seconds: 1,
+      rng,
+      skill,
+      hpScale: 1,
+      xpScale: 1,
+      dmgScale: 1,
+      speed: 4,
+      hitRate: 0,
+      protected: false,
+      weather: null,
+      outbreak: null,
+      berryMultiplier: 1,
+      focusedDps: () => dps,
+    };
+    const player = { egg: null, x: 0, z: 0 };
+    stepModelSites(state, context, player);
+    site.encounter.retreatAt = Infinity;
+    const reward = stepModelSites(
+      state,
+      {
+        ...context,
+        time: kind === "raid-den" && dps === 0 ? site.encounter.until : 1,
+      },
+      player,
+    );
+    assert.equal(
+      stepModelSites(state, { ...context, time: 100 }, player).xp,
+      0,
+      "settled encounter cannot pay twice",
+    );
+    return reward;
+  };
+  const honey = run("honey-tree", "pinsir");
+  assert.equal(
+    honey.killed,
+    1,
+    "ordinary encounter durability is killable here; old guardian HP would not be",
+  );
+  assert.equal(honey.chests.length, 1);
+  const fossil = run("fossil", "aerodactyl");
+  assert.deepEqual(fossil.chests, [1], "the fossil grants one rare chest");
+  const snorlax = run("snorlax", "snorlax", 10000);
+  assert.equal(snorlax.chests.length, 0);
+  assert.deepEqual(snorlax.items, ["leftovers"]);
+  const timeout = run("raid-den", "rattata", 0);
+  assert.equal(timeout.xp + timeout.stardust + timeout.chests.length, 0);
+  assert.equal(timeout.unfinished, 1);
+});
+
+test("site items enter the progressing build and a zero-touch strategy earns no site rewards", () => {
+  const zone = stageDefs.forest.zones[0];
+  const saved = {
+    sites: zone.sites,
+    events: zone.events,
+    beats: zone.beats,
+    dormant: SITE.dormantChance,
+    reach: FIELD_MODEL_ASSUMPTIONS.reach.expert,
+    from: FIELD_MODEL_ASSUMPTIONS.visitFrom,
+    margin: FIELD_MODEL_ASSUMPTIONS.leaveMargin,
+    travel: FIELD_MODEL_ASSUMPTIONS.travelSeconds,
+    shiny: SHINY.chance,
+  };
+  const options = {
+    stage: "forest",
+    starter: "bulbasaur",
+    difficulty: 0,
+    skill: expert,
+    samples: 1,
+  };
+  try {
+    zone.sites = ["glint", "spring", "item-ball", "egg"];
+    zone.events = { windows: [], pool: [] };
+    zone.beats = [];
+    SITE.dormantChance = 0;
+    SHINY.chance = 0;
+    FIELD_MODEL_ASSUMPTIONS.reach.expert = 1;
+    FIELD_MODEL_ASSUMPTIONS.visitFrom = 1;
+    FIELD_MODEL_ASSUMPTIONS.leaveMargin = 1e4;
+    FIELD_MODEL_ASSUMPTIONS.travelSeconds = 0;
+    const before = runModel({ ...options, fieldEvents: false });
+    const touched = runModel(options);
+    assert.ok(touched.fieldEvents[0].income.items > 0);
+    assert.ok(
+      touched.minutes[0].items > before.minutes[0].items,
+      "items are present during minute one, not added after the run",
+    );
+    FIELD_MODEL_ASSUMPTIONS.reach.expert = 0;
+    const missed = runModel(options);
+    assert.equal(missed.fieldEvents[0].income.occupiedSeconds, 0);
+    assert.equal(missed.fieldEvents[0].income.items, 0);
+    assert.deepEqual(
+      missed.minutes,
+      before.minutes,
+      "unreached sites do not secretly grant build strength",
+    );
+  } finally {
+    zone.sites = saved.sites;
+    zone.events = saved.events;
+    zone.beats = saved.beats;
+    SITE.dormantChance = saved.dormant;
+    SHINY.chance = saved.shiny;
+    FIELD_MODEL_ASSUMPTIONS.reach.expert = saved.reach;
+    FIELD_MODEL_ASSUMPTIONS.visitFrom = saved.from;
+    FIELD_MODEL_ASSUMPTIONS.leaveMargin = saved.margin;
+    FIELD_MODEL_ASSUMPTIONS.travelSeconds = saved.travel;
+  }
+});
+
+test("outbreak replacement XP is consumed before later choices without an extra crowd beat", () => {
+  const zone = stageDefs.forest.zones[0];
+  const saved = {
+    roster: zone.roster,
+    beats: zone.beats,
+    events: zone.events,
+    reach: FIELD_MODEL_ASSUMPTIONS.reach.expert,
+    shiny: SHINY.chance,
+    xp: enemies.rattata.xp,
+  };
+  try {
+    zone.roster = [[0, "rattata"]];
+    zone.beats = [];
+    zone.events = { windows: [[5, 5]], pool: ["outbreak"] };
+    FIELD_MODEL_ASSUMPTIONS.reach.expert = 0;
+    SHINY.chance = 0;
+    enemies.rattata.xp = 3;
+    const options = {
+      stage: "forest",
+      starter: "bulbasaur",
+      difficulty: 0,
+      skill: expert,
+      samples: 1,
+    };
+    const before = runModel({ ...options, fieldEvents: false });
+    const after = runModel(options);
+    assert.ok(after.fieldEvents[0].income.xp > 0);
+    assert.ok(
+      after.levelAt[3] < before.levelAt[3],
+      "outbreak XP changes upgrade timing while progressing",
+    );
+    assert.equal(
+      after.beats.length,
+      0,
+      "outbreak changes weights/rewards, never adds a crowd batch",
+    );
+  } finally {
+    zone.roster = saved.roster;
+    zone.beats = saved.beats;
+    zone.events = saved.events;
+    FIELD_MODEL_ASSUMPTIONS.reach.expert = saved.reach;
+    SHINY.chance = saved.shiny;
+    enemies.rattata.xp = saved.xp;
+  }
+});
+
+function withModelEgg(check) {
+  const fields = Object.values(stageDefs);
+  const saved = fields.map((stage) => ({
+    duration: stage.duration,
+    zone: { ...stage.zones[0] },
+    guardian: { ...enemies[stage.zones[0].guardian.species] },
+  }));
+  const assumptions = { ...FIELD_MODEL_ASSUMPTIONS };
+  const reach = FIELD_MODEL_ASSUMPTIONS.reach.expert;
+  const siteParams = { ...SITE };
+  const amount = difficulties[0].amount;
+  const shiny = SHINY.chance;
+  try {
+    difficulties[0].amount = 0;
+    SHINY.chance = 0;
+    SITE.count = 1;
+    SITE.dormantChance = 0;
+    FIELD_MODEL_ASSUMPTIONS.reach.expert = 1;
+    FIELD_MODEL_ASSUMPTIONS.visitFrom = 1;
+    FIELD_MODEL_ASSUMPTIONS.leaveMargin = 1e4;
+    FIELD_MODEL_ASSUMPTIONS.travelSeconds = 0;
+    for (const stage of fields) {
+      stage.duration = 180;
+      const zone = stage.zones[0];
+      zone.sites = stage.id === "forest" ? ["egg"] : ["spring"];
+      zone.events = { windows: [], pool: [] };
+      zone.beats = [];
+      zone.roster = [[0, stage.id === "forest" ? "rattata" : "zubat"]];
+      Object.assign(enemies[zone.guardian.species], { hp: 1e12, dmg: 0, xp: 0 });
+    }
+    check({
+      stage: "forest",
+      starter: "squirtle",
+      difficulty: 0,
+      skill: { ...expert, chests: 0.9 },
+      samples: 1,
+    });
+  } finally {
+    fields.forEach((stage, index) => {
+      stage.duration = saved[index].duration;
+      Object.assign(stage.zones[0], saved[index].zone);
+      Object.assign(enemies[stage.zones[0].guardian.species], saved[index].guardian);
+    });
+    Object.assign(FIELD_MODEL_ASSUMPTIONS, assumptions);
+    FIELD_MODEL_ASSUMPTIONS.reach.expert = reach;
+    Object.assign(SITE, siteParams);
+    difficulties[0].amount = amount;
+    SHINY.chance = shiny;
+  }
+}
+
+test("runModel always grants a full-party hatch card regardless of chest pickup skill", () => {
+  withModelEgg((options) => {
+    SITE.eggDistance = 1;
+    const lab = {
+      rules: { partners: -partnerSlots(createPlayer(0, "squirtle", 0)) },
+      modifiers: [],
+    };
+    for (const chests of [0, 0.9]) {
+      for (let seed = 1; seed <= 64; seed++) {
+        const run = runModel({ ...options, lab, seed, skill: { ...options.skill, chests } });
+        assert.equal(run.fieldEvents[0].earned.cards, 1, `seed ${seed}, chest pickup ${chests}`);
+        assert.equal(run.fieldEvents[0].income.cards, 1);
+        assert.equal(run.fieldEvents[0].income.partners, 0);
+      }
+    }
+  });
+});
+
+test("runModel keeps walking a carried egg after exhausting the exploration budget", () => {
+  withModelEgg((options) => {
+    FIELD_MODEL_ASSUMPTIONS.explorationSeconds = 1;
+    const run = runModel(options);
+    assert.equal(run.fieldEvents[0].income.occupiedSeconds, 1);
+    assert.equal(run.fieldEvents[0].income.unfinished, 0);
+    assert.equal(run.fieldEvents[0].income.partners, 1);
+    assert.equal(
+      run.minutes[0].partners,
+      1,
+      "the carried egg hatches during later ordinary walking",
+    );
+    SITE.eggDistance = 1e6;
+    assert.equal(
+      runModel(options).minutes[0].partners,
+      0,
+      "pickup alone does not grant the partner",
+    );
+  });
+});
+
+test("runModel carries egg distance and species into the next map without replacing it", () => {
+  withModelEgg((options) => {
+    const forest = stageDefs.forest.zones[0];
+    const desert = stageDefs.desert.zones[0];
+    enemies[forest.guardian.species].hp = 1;
+    // A second egg is available immediately, but must not replace the one from the forest.
+    desert.sites = ["egg"];
+    const speed = playerStats(createPlayer(0, "squirtle", 0)).speed;
+    SITE.eggDistance = speed * FIELD_MODEL_ASSUMPTIONS.movingShare * 50;
+    const route = { ...options, campaign: true, summonSeconds: [20, 180, 180, 180, 180, 180] };
+    const run = runModel(route);
+    assert.equal(run.zoneClears[0].t, 20);
+    assert.equal(run.fieldEvents[0].income.partners, 0, "the egg has not hatched at the exit");
+    assert.equal(
+      run.fieldEvents[0].income.unfinished,
+      0,
+      "carrying across an exit is not abandonment",
+    );
+    assert.equal(
+      run.minutes[0].partners,
+      1,
+      "the first 19 seconds of walking survive the transition",
+    );
+    assert.ok(
+      Math.abs(run.fieldEvents[1].income.partners - 2) < 1e-6,
+      "both eggs hatch in the desert, weighted by the surviving share",
+    );
+    // At minute one only the forest egg has hatched, exposing lost or replaced species.
+    const damage = enemies.rattata.dmg;
+    const zubat = { ...enemies.zubat };
+    try {
+      difficulties[0].amount = 0.1;
+      Object.assign(enemies.zubat, { hp: 1e12, dmg: 0, xp: 0 });
+      enemies.rattata.dmg = 0;
+      const harmless = runModel({ ...route, skill: { ...route.skill, contact: 0 } });
+      enemies.rattata.dmg = 100;
+      const armed = runModel({ ...route, skill: { ...route.skill, contact: 0 } });
+      assert.ok(
+        armed.minutes[0].partnerDps > harmless.minutes[0].partnerDps,
+        "the hatched partner retains the forest species rather than the new map's species",
+      );
+    } finally {
+      enemies.rattata.dmg = damage;
+      Object.assign(enemies.zubat, zubat);
+    }
+  });
+});
 
 test("ultimate preparation delays the original pulses instead of paying their damage at trigger", () => {
   const player = createPlayer(0, "charmander", 0);
@@ -75,6 +460,26 @@ test("ultimate preparation delays the original pulses instead of paying their da
   for (let at = 0; at <= whole.duration; at++)
     total += ultCast(player, target, { from: at, to: at + 1 }).useful;
   assert.ok(Math.abs(total - whole.useful) < 1e-9, "the original pulse sequence pays once");
+});
+
+test("item previews preserve the seeded immediate effect of a newly granted Loaded Dice", () => {
+  const world = createWorld({
+    stage: "forest",
+    seed: 3,
+    difficulty: 0,
+    players: [{ starter: "charmander" }],
+  });
+  world.rng = createRng(391);
+  const player = world.players[0];
+  const choice = { kind: "item", item: "loaded-dice" };
+  const target = targetFor(fieldAt("forest", 60, 0, false), 10, average);
+  const state = world.rng.state;
+  const preview = previewChoice(player, choice, world.rng, target, average);
+  assert.equal(world.rng.state, state, "a preview does not consume the committed reward stream");
+  applyChoice(player, choice);
+  pickEffects(world, player, choice.item);
+  assert.deepEqual(preview.fx, player.fx, "the preview and actual grant keep the same rolled face");
+  assert.deepEqual(playerStats(preview), playerStats(player));
 });
 
 test("poison contributes persistent damage but extra applications refresh instead of stacking", () => {
@@ -441,6 +846,7 @@ test("modelled swarm stats match spawned enemies through entry ramp, growth and 
       difficulty: 0,
       players: [{ starter: "squirtle" }],
     });
+    world.spawn.shinySpawned = true; // This fixture compares ordinary spawn stats, not shiny encounters.
     for (const [index, zone] of stage.zones.entries()) {
       const roster = zone.roster;
       // A single species isolates spawn HP from the model's hardening/healer estimates.
@@ -487,6 +893,7 @@ function withEliteField(check) {
   const options = {
     stage: "forest",
     starter: "squirtle",
+    fieldEvents: false,
     difficulty: 0,
     skill: { ...expert, contact: 0, pickup: 1, chests: 0 },
     lab: {
@@ -524,8 +931,8 @@ test("mixed alpha and elite batches spend crossing damage at their own birth cos
     const empty = runModel(options);
     const player = createPlayer(0, options.starter, 0, options.lab);
     zone.beats = [
-      [57, { kind: "alpha" }],
-      [58, { kind: "elite-wave" }],
+      { window: [57, 57], beat: { kind: "alpha" } },
+      { window: [58, 58], beat: { kind: "elite-wave" } },
     ];
     const run = runModel(options);
     const alphaHp = fieldAt("forest", 57, 0, false).hp * ELITE.hp * ALPHA_HP;
@@ -576,8 +983,8 @@ test("elite contact pressure uses remaining count even when enemy HP tuning chan
     options.skill.contact = expert.contact;
     enemies.rattata.dmg = 1;
     zone.beats = [
-      [30, { kind: "alpha" }],
-      [45, { kind: "elite-wave" }],
+      { window: [30, 30], beat: { kind: "alpha" } },
+      { window: [45, 45], beat: { kind: "elite-wave" } },
     ];
     const before = runModel(options);
     ENEMY_HEALTH.earlyGain += 1;
@@ -601,8 +1008,8 @@ test("cleared mixed batches grant one chest and capture chance each; fixed partn
     CAPTURE_CHANCE.alpha = 1;
     options.skill.chests = 1;
     zone.beats = [
-      [60, { kind: "alpha" }],
-      [60, { kind: "elite-wave" }],
+      { window: [60, 60], beat: { kind: "alpha" } },
+      { window: [60, 60], beat: { kind: "elite-wave" } },
     ];
     const before = runModel(options);
     ENEMY_HEALTH.earlyGain += 1;
@@ -639,8 +1046,8 @@ test("mixed batches pay XP and ultimate charge for their count, not their extra 
     const count = 1 + ELITE_WAVE_SIZE;
     // Clear everything on the final second: XP cannot change the preceding build or kill rate.
     zone.beats = [
-      [180, { kind: "alpha" }],
-      [180, { kind: "elite-wave" }],
+      { window: [180, 180], beat: { kind: "alpha" } },
+      { window: [180, 180], beat: { kind: "elite-wave" } },
     ];
     enemies.rattata.xp = 0.00001;
     const rounded = runModel(options);
@@ -666,8 +1073,8 @@ test("mixed batches pay XP and ultimate charge for their count, not their extra 
 
     // Put the full charge boundary between four and five kills; a phantom alpha kill would cast at 60.
     zone.beats = [
-      [59, { kind: "alpha" }],
-      [59, { kind: "elite-wave" }],
+      { window: [59, 59], beat: { kind: "alpha" } },
+      { window: [59, 59], beat: { kind: "elite-wave" } },
     ];
     enemies.rattata.xp = 0.01;
     const quiet = runModel(options);
@@ -762,7 +1169,7 @@ test("an eruption hurts the player without adding enemies", () => {
     runModel({ stage: "volcano", starter: "squirtle", difficulty: 0, skill: average, samples: 4 });
   const calm = run();
   const beats = zone.beats;
-  zone.beats = [...beats, [55, { kind: "eruption" }]];
+  zone.beats = [...beats, { window: [55, 55], beat: { kind: "eruption" } }];
   try {
     const erupting = run();
     assert.ok(erupting.minutes[0].inDps > calm.minutes[0].inDps + 0.1, "bombs land on the kiter");
@@ -794,6 +1201,7 @@ test("guardian chests and rounded XP carry real build strength into later zones"
     skill,
     samples: 1,
     campaign: true,
+    fieldEvents: false,
   };
   try {
     difficulties[0].amount = 0;

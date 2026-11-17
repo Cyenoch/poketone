@@ -49,6 +49,7 @@ test("Xiaqing unlocks on banked lifetime kills and follows imported progress", (
       difficulty: 0,
       time: 10,
       kills: 1,
+      dex: {},
       stardust: 0,
     });
     assert.equal(trainerUnlocked(after, "xiaqing"), true);
