@@ -10,6 +10,8 @@
 // those functions (and the status helpers) so they read the same facts from the new shape.
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
+import { availableParallelism } from "node:os";
+import { Worker, isMainThread, parentPort, workerData } from "node:worker_threads";
 import { labBonuses } from "../src/run/lab.ts";
 import { starters } from "../src/run/sim/content/lines/index.ts";
 import { formOf } from "../src/run/sim/evolution.ts";
@@ -536,15 +538,34 @@ function firstDifference(recorded, current) {
   return `end differs: ${recorded.end} → ${current.end}`;
 }
 
+/** Replays the cases on one worker thread each (longest first), at most one per core. */
+async function replayAll(cases) {
+  const queue = [...cases].sort((a, b) => (b.ticks ?? STAGE_TICKS) - (a.ticks ?? STAGE_TICKS));
+  const done = new Map();
+  const lane = async () => {
+    for (let spec = queue.shift(); spec; spec = queue.shift()) {
+      const worker = new Worker(import.meta.filename, { workerData: { golden: spec.name } });
+      done.set(
+        spec.name,
+        await new Promise((resolve, reject) => {
+          worker.once("message", resolve);
+          worker.once("error", reject);
+        }),
+      );
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(availableParallelism(), cases.length) }, lane));
+  return cases.map((spec) => [spec, done.get(spec.name)]);
+}
+
 /** The CLI; importing the module (scripts/snapshot.test.mjs reuses the projection) runs nothing. */
-function main() {
+async function main() {
   const started = performance.now();
   const results = {};
   let failed = false;
   const coopOnly = process.argv.includes("--coop");
   const cases = coopOnly ? CASES.filter((spec) => spec.players.length > 1) : CASES;
-  for (const spec of cases) {
-    const result = replay(spec);
+  for (const [spec, result] of await replayAll(cases)) {
     results[spec.name] = { end: result.end, samples: result.samples };
     if (result.missing.length > 0) {
       console.log(`coverage lost ${spec.name}: never reached ${result.missing.join(", ")}`);
@@ -579,4 +600,6 @@ function main() {
   }
 }
 
-if (process.argv[1] === import.meta.filename) main();
+if (!isMainThread && workerData?.golden) {
+  parentPort.postMessage(replay(CASES.find((spec) => spec.name === workerData.golden)));
+} else if (process.argv[1] === import.meta.filename) await main();
