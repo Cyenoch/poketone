@@ -15,7 +15,7 @@ await test("shutdown closes room and idle sockets with Going Away and releases t
         version: PROTOCOL_VERSION,
         build: "test",
         code: "",
-        player: { starter: "charmander" },
+        player: { starter: "charmander", trainer: "chengxi" },
       }),
     );
     assert.equal(JSON.parse((await room).data).t, "room");
