@@ -12,7 +12,8 @@ import { STAGE_ROUTE } from "../src/run/sim/content/campaign.ts";
 import { enemies } from "../src/run/sim/content/enemies.ts";
 import { difficulties, SWARM_HP } from "../src/run/sim/content/difficulties.ts";
 import { coopScaling } from "../src/run/sim/content/params/coop.ts";
-import { zoneClock, zoneFactorsFor, zoneHealthClock } from "../src/run/sim/content/params/zones.ts";
+import { zoneClock, zoneFactorsFor } from "../src/run/sim/content/params/zones.ts";
+import { partnerHit } from "../src/run/sim/partners.ts";
 import { ALPHA_HP } from "../src/run/sim/content/params/pacing.ts";
 import {
   spawnEnemy,
@@ -123,8 +124,7 @@ test("enemy durability ramps after the unchanged opening without changing its da
       world.zone.tick = Math.round(time / TICK);
       const enemy = spawnEnemy(world, "pidgey", 0, 0);
       const base = enemyScaling(zoneClock(stage, 0, time), difficulty, null);
-      const health = enemyScaling(zoneHealthClock(stage, 0, time), difficulty, null);
-      const before = def.hp * health.hp * SWARM_HP * zone.hp * coopScaling(seats).hp;
+      const before = def.hp * base.hp * SWARM_HP * zone.hp * coopScaling(seats).hp;
       const durability = enemy.hp / before;
       if (time === 0) assert.ok(Math.abs(durability - 1) < 1e-12, "opening is unchanged");
       else assert.ok(durability > previousDurability, "extra durability grows through the field");
@@ -201,14 +201,13 @@ test("each map's guardian keeps its challenge across summon times and player gro
   }
 });
 
-test("later maps keep a durable enemy baseline while restarting their local pacing", () => {
+test("later maps ramp new enemies and carried partners together while preserving the build", () => {
   const world = createWorld({
     stage: "forest",
     seed: 11,
     difficulty: 0,
     players: [{ starter: "squirtle" }],
   });
-  let previousHp = spawnEnemy(world, "pidgey", 0, 0).hp;
   for (const stageId of STAGE_ROUTE.slice(1)) {
     world.time += 600;
     world.zone.phase = "transitioning";
@@ -220,20 +219,36 @@ test("later maps keep a durable enemy baseline while restarting their local paci
     assert.equal(player.level, level);
     assert.deepEqual(player.moves, moves);
     const stage = stageDefs[stageId];
-    const enemy = spawnEnemy(world, "pidgey", 0, 0);
-    const base = enemyScaling(zoneClock(stage, 0, 0), 0, null);
     const factors = zoneFactorsFor(stage, 0);
-    const healthClock = zoneHealthClock(stage, 0, 0);
-    assert.ok(healthClock > zoneClock(stage, 0, 0), "later maps retain a durable HP-clock floor");
-    const expectedHp = enemies.pidgey.hp * enemyHealthScaling(healthClock, 0, null) * factors.hp;
-    assert.ok(Math.abs(enemy.hp / expectedHp - 1) < 1e-12);
-    assert.ok(
-      enemy.hp > previousHp,
-      `${stageId} does not reset durability to the previous opening`,
-    );
-    assert.ok(Math.abs(enemy.dmg - enemies.pidgey.dmg * base.dmg * factors.dmg) < 1e-12);
-    assert.ok(Math.abs(enemy.speed - enemies.pidgey.speed * base.speed * factors.speed) < 1e-12);
-    previousHp = enemy.hp;
+    const opening = spawnEnemy(world, "pidgey", 0, 0);
+    const openingBody = { ...opening };
+    const partner = { species: "pidgey" };
+    let previous = {
+      hp: opening.hp,
+      dmg: opening.dmg,
+      speed: opening.speed,
+      hit: partnerHit(world, partner),
+    };
+    for (const time of [4, 8, 120]) {
+      world.zone.tick = Math.round(time / TICK);
+      const enemy = spawnEnemy(world, "pidgey", 0, 0);
+      const clock = zoneClock(stage, 0, time);
+      const base = enemyScaling(clock, 0, null);
+      const expectedHp = enemies.pidgey.hp * enemyHealthScaling(clock, 0, null) * factors.hp;
+      assert.ok(Math.abs(enemy.hp / expectedHp - 1) < 1e-12);
+      assert.ok(Math.abs(enemy.dmg - enemies.pidgey.dmg * base.dmg * factors.dmg) < 1e-12);
+      assert.ok(Math.abs(enemy.speed - enemies.pidgey.speed * base.speed * factors.speed) < 1e-12);
+      const current = {
+        hp: enemy.hp,
+        dmg: enemy.dmg,
+        speed: enemy.speed,
+        hit: partnerHit(world, partner),
+      };
+      for (const key of Object.keys(current))
+        assert.ok(current[key] > previous[key], `${stageId}/${time}: ${key} grows through entry`);
+      previous = current;
+    }
+    assert.deepEqual(opening, openingBody, "later clock changes do not retrofit existing enemies");
   }
 });
 

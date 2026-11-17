@@ -8,7 +8,7 @@ import { updateSpawnPressure } from "./director-pressure";
 import { canReach, refreshFlowFields, requestFlowField } from "./nav/index";
 import { chance, pick, range } from "./rng";
 import { stageDefs } from "./content/stages/index";
-import { zoneClock, zoneHealthClock } from "./content/params/zones";
+import { zoneClock } from "./content/params/zones";
 import { landmarkOf, zoneDef, zoneFactors, zoneTime } from "./currentZone";
 import { ARENA_HALF, type World } from "./state/world";
 import type { Enemy, Player } from "./state/entities";
@@ -96,18 +96,12 @@ export function zoneScaling(world: World): EnemyScaling {
   const zone = world.zone.index;
   const stage = stageDefs[world.stage];
   const factors = zoneFactors(world);
-  const base = enemyScaling(
-    zoneClock(stage, zone, zoneTime(world)),
-    world.difficulty,
-    world.rampage ? zoneClock(stage, zone, stage.duration) : null,
-  );
+  const clock = zoneClock(stage, zone, zoneTime(world));
+  const rampageSince = world.rampage ? zoneClock(stage, zone, stage.duration) : null;
+  const base = enemyScaling(clock, world.difficulty, rampageSince);
   return {
     hp:
-      enemyHealthScaling(
-        zoneHealthClock(stage, zone, zoneTime(world)),
-        world.difficulty,
-        world.rampage ? zoneHealthClock(stage, zone, stage.duration) : null,
-      ) *
+      enemyHealthScaling(clock, world.difficulty, rampageSince) *
       factors.hp *
       coopScaling(teamSize(world)).hp,
     dmg: base.dmg * factors.dmg,

@@ -7,8 +7,8 @@ export const FIELD_SECONDS = { outdoor: 600, tower: 600 } as const;
 export const EXIT_RADIUS = 2.4;
 export const EXIT_SEARCH = { rings: 12, step: 1 } as const;
 
-/** HP-clock floors keep new-map bodies near the preceding field's late-game durability. */
-export const CAMPAIGN_HP_CLOCK: Record<StageId, number> = {
+/** Seconds added to swarm and partner growth after entering each map. */
+export const CAMPAIGN_ENTRY_CLOCK: Record<StageId, number> = {
   forest: 0,
   desert: 480,
   coast: 480,
@@ -16,6 +16,9 @@ export const CAMPAIGN_HP_CLOCK: Record<StageId, number> = {
   volcano: 480,
   tower: 480,
 };
+
+/** Seconds to blend in the map's entry clock. */
+export const ENTRY_RAMP_SECONDS = 8;
 
 /** Fixed route baselines, independent of a player's equipment or elapsed loading time. */
 export const CAMPAIGN_GROWTH: Record<

@@ -71,7 +71,14 @@ import {
 import { bossHp, enemyHealthScaling, enemyScaling, liveCap, spawnRate } from "../sim/director";
 import { advancePressure, pressureSupply, pressureTarget } from "../sim/director-pressure";
 import { stageDefs, type StageId, type StageZone } from "../sim/content/stages/index";
-import { zoneClock, zoneHealthClock, zoneFactorsFor, zonesOf } from "../sim/content/params/zones";
+import { zoneClock, zoneFactorsFor, zonesOf } from "../sim/content/params/zones";
+import {
+  ENTRY_WINDOW,
+  windowOf,
+  type EntryComparison,
+  type EntryProbe,
+  type WindowSample,
+} from "./entry-windows";
 import { CONTACT_SECONDS, STAGGER, DRAIN_FLOOR, LIFESTEAL_CAP } from "../sim/content/params/combat";
 import { skills } from "../sim/skills/index";
 import {
@@ -274,18 +281,10 @@ export function fieldAt(
   const zoneDef = stageDef.zones[zone]!;
   const pool = poolAt(zoneDef, time);
   const clock = zoneClock(stageDef, zone, time);
-  const base = enemyScaling(
-    clock,
-    difficulty,
-    rampage ? zoneClock(stageDef, zone, stageDef.duration) : null,
-  );
+  const rampageSince = rampage ? zoneClock(stageDef, zone, stageDef.duration) : null;
+  const base = enemyScaling(clock, difficulty, rampageSince);
   const s = {
-    hp:
-      enemyHealthScaling(
-        zoneHealthClock(stageDef, zone, time),
-        difficulty,
-        rampage ? zoneHealthClock(stageDef, zone, stageDef.duration) : null,
-      ) * z.hp,
+    hp: enemyHealthScaling(clock, difficulty, rampageSince) * z.hp,
     dmg: base.dmg * z.dmg,
     speed: base.speed * z.speed,
   };
@@ -1037,6 +1036,8 @@ export interface RunModel {
   stardust: number;
   /** Exposure of every item and kit move, from the offers the samples saw. */
   exposure: Map<string, Exposure>;
+  /** Campaign only: each later map's first two minutes against the map before (entry pace). */
+  entryWindows: EntryComparison[];
 }
 
 export interface Outcome {
@@ -2208,6 +2209,9 @@ interface Track {
   guardianReach: number[];
   /** Per zone: the guardian fight so far (`GuardianFight`). */
   fights: { seconds: number; cost: number; complete: boolean }[];
+  /** Run second each zone began, and the entry-pace probes per zone. */
+  zoneStarts: number[];
+  probes: EntryProbe[][];
   done: boolean;
 }
 
@@ -2256,6 +2260,8 @@ function newTrack(i: number, starter: StarterId, lab: LabBonuses | undefined): T
     zoneClears: [],
     guardianReach: [],
     fights: [],
+    zoneStarts: [0],
+    probes: [[]],
     done: false,
   };
 }
@@ -2665,7 +2671,8 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   const spawnsNow =
     spawnRate(clock, difficulty, rampage) * zoneDef.spawns * SPAWN_SUCCESS * m.spawns * spawnScale;
   const spawned = spawnsNow * STEP;
-  if (track.living + track.approaching < cap) {
+  const admits = track.living + track.approaching < cap;
+  if (admits) {
     const elites = spawned * diff.eliteChance * m.elites;
     track.approaching += spawned - elites;
     // Random elites can join too: one more capture chance each, once it is cleared.
@@ -2747,6 +2754,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
       caught.reduce((sum, h) => sum + h.rate, 0),
     );
   const saves = savesOf(m.defence, m.maxHp, catchHit || m.maxHp, skill.burst);
+  const aliveBefore = track.alive;
   stepHp(track.hp, {
     events,
     heal: heal / m.maxHp,
@@ -2764,6 +2772,31 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   track.survival.push(track.alive);
   if (tz === summon && fieldIndex === env.zones - 1) track.reachBoss = track.alive;
 
+  if (options.campaign) {
+    const rawShare = (list: readonly { rate: number; dmg: number }[]) =>
+      list.reduce((sum, h) => sum + h.rate * h.dmg, 0) / m.maxHp;
+    track.probes[fieldIndex]!.push({
+      tz,
+      alive: aliveBefore,
+      frac: track.frac,
+      living: track.living + track.approaching,
+      elites: track.elites.reduce((sum, cohort) => sum + cohort.n, 0),
+      stockHp:
+        (track.living + track.approaching) * field.hp +
+        track.elites.reduce((sum, cohort) => sum + cohort.n * cohort.hp, 0),
+      cap,
+      incoming: spawnsNow * field.hp,
+      admitted: admits ? spawnsNow * field.hp : 0,
+      capacity: buildOutput(player, targetFor(field, cap, skill)).useful,
+      spawnScale,
+      hp: field.hp,
+      landed: (meanDps + poison) / m.maxHp,
+      swarmRaw: rawShare(swarm.hits),
+      guardianRaw: rawShare(guardianHits),
+      partnerDps,
+    });
+  }
+
   // Fractional kills can leave a completed chest a rounding bit short.
   const chests = Math.floor(track.chestCredit + 1e-9);
   track.chestCredit = Math.max(0, track.chestCredit - chests);
@@ -2774,7 +2807,6 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
     const rewardXp = LOOT.eliteXpCount * Math.ceil(guardianXp / LOOT.eliteXpCount);
     settleRewards(env, track, target, t, rewardXp * playerStats(player).xp, 1);
   }
-
   if (t % 60 === 0) {
     const capacity = measure(player, targetFor(field, cap, skill), skill, track.frac).out.useful;
     const incoming = spawnsNow * field.hp;
@@ -2809,6 +2841,8 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
       // The next zone: a fresh field and timeline; the build, HP and partners carry over.
       track.zone += 1;
       track.zoneStart = t;
+      track.zoneStarts.push(t);
+      track.probes.push([]);
       track.fired.clear();
       track.eruptionUntil = 0;
       track.boss = null;
@@ -2857,6 +2891,47 @@ function damageElites(track: Track, damage: number, field: Field, m: Means) {
 function exposureKeys(starter: StarterId, items: readonly string[]): string[] {
   const kit = [...starters[starter].kit, ...starters[starter].evolutionMoves];
   return [...items.map((id) => `item:${id}`), ...kit.map((id) => `move:${id}`)];
+}
+
+/** Entry pace: each later map's first two minutes against the map before (campaign runs). */
+function entryComparisons(tracks: readonly Track[], env: RunEnv): EntryComparison[] {
+  return Array.from({ length: env.zones - 1 }, (_, i): EntryComparison => {
+    const prev = i;
+    const field = i + 1;
+    const entry: WindowSample[] = [];
+    const exit: WindowSample[] = [];
+    const preSummon: WindowSample[] = [];
+    for (const tr of tracks) {
+      const cleared = tr.zoneClears[prev];
+      if (!cleared) continue;
+      const aliveAt = (second: number) =>
+        second <= 0 ? 1 : (tr.survival[Math.min(second, tr.survival.length) - 1] ?? 1);
+      const window = (zone: number, from: number, to: number): WindowSample => {
+        const start = tr.zoneStarts[zone]!;
+        const end = Math.min(to, (tr.zoneClears[zone]?.t ?? tr.survival.length) - start);
+        const complete = end >= to;
+        return {
+          probes: tr.probes[zone]!.filter((probe) => probe.tz > from && probe.tz <= end),
+          aliveStart: aliveAt(start + from),
+          aliveEnd: aliveAt(start + end),
+          seconds: Math.max(0, end - from),
+          complete,
+          resolved: complete || (tr.zone === zone && tr.alive < 1e-4),
+        };
+      };
+      const left = cleared.t - tr.zoneStarts[prev]!;
+      const beforeSummon = Math.max(0, env.summonSeconds[prev]! - 1);
+      entry.push(window(field, 0, ENTRY_WINDOW));
+      exit.push(window(prev, Math.max(0, left - ENTRY_WINDOW), left));
+      preSummon.push(window(prev, Math.max(0, beforeSummon - ENTRY_WINDOW), beforeSummon));
+    }
+    return {
+      field,
+      entry: windowOf(entry),
+      exit: windowOf(exit),
+      preSummon: windowOf(preSummon),
+    };
+  });
 }
 
 /** The samples' runs, averaged. */
@@ -3045,5 +3120,6 @@ export function runModel(options: RunOptions): RunModel {
     },
     stardust: mean(tracks.map((tr) => tr.stardust)),
     exposure,
+    entryWindows: options.campaign ? entryComparisons(tracks, env) : [],
   };
 }

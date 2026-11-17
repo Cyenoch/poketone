@@ -1,15 +1,10 @@
 import type { StageDef } from "../stages/index";
-import { CAMPAIGN_GROWTH, CAMPAIGN_HP_CLOCK } from "./campaign";
+import { CAMPAIGN_ENTRY_CLOCK, CAMPAIGN_GROWTH, ENTRY_RAMP_SECONDS } from "./campaign";
 
 export interface ZoneDef {
   /**
-   * Seconds added to the stage clock the swarm curves read (HP, damage, speed, spawns, live cap),
-   * ramped in over the zone's first 20 s: clock = t + `clockOffset` × min(1, t / 20) (reference `mn`).
-   */
-  clockOffset: number;
-  /**
    * × swarm and elite HP. Guardians use guardianHp separately. These factors are calibrated
-   * with the continuing build and the HP-clock floor, not copied from another game's growth.
+   * with the continuing build and entry clock, not copied from another game's growth.
    */
   hp: number;
   dmg: number;
@@ -31,7 +26,6 @@ type ZoneTable = readonly [ZoneDef];
 /** Each map is one field. Route growth is applied once in zoneFactorsFor. */
 const FIELD: ZoneTable = [
   {
-    clockOffset: 0,
     hp: 1,
     dmg: 1,
     speed: 1,
@@ -63,11 +57,6 @@ export function zoneFactorsFor(stage: Pick<StageDef, "id" | "enemyHp">, zone: nu
 }
 
 /** The stage clock the swarm curves read in `stage`'s zone `zone` (0-based) at `t` seconds into it. */
-export function zoneClock(stage: Pick<StageDef, "id">, zone: number, t: number): number {
-  return t + zonesOf(stage)[zone]!.clockOffset * Math.min(1, t / 20);
-}
-
-/** Swarm HP only: other swarm stats/partners use zoneClock; guardians use their fixed reference. */
-export function zoneHealthClock(stage: Pick<StageDef, "id">, zone: number, t: number): number {
-  return Math.max(zoneClock(stage, zone, t), CAMPAIGN_HP_CLOCK[stage.id]);
+export function zoneClock(stage: Pick<StageDef, "id">, _zone: number, t: number): number {
+  return t + CAMPAIGN_ENTRY_CLOCK[stage.id] * Math.min(1, t / ENTRY_RAMP_SECONDS);
 }

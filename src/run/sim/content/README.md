@@ -12,7 +12,7 @@ AI Agent 从这里定位所有可调玩法数据。内容表和参数都在本�
 | 玩家战斗与机动       | `params/player.ts`、`params/combat.ts`                              | 属性上限、伤害/击退、冲刺、无敌、攻击高度/视线；world/hurt/movement/sight                                                |
 | 普通怪、精英与头目   | `enemies.ts`、`difficulties.ts`、`params/pacing.ts`                 | 物种基础属性、难度、生命曲线、头目倍率、刷新/容量/暴走；director/beats/模型                                              |
 | 动态增援压力         | `params/pacing.ts` 的 `DIRECTOR_PRESSURE`                           | 邻近半径/权重、受伤记忆秒数、平滑秒数、供给上下限和开局/入区缓冲；director-pressure/模型                                 |
-| 区域与楼层承接       | `params/zones.ts`                                                   | 区域倍率、原成长时钟和敌人生命时钟下限；director/partners/模型                                                           |
+| 区域与楼层承接       | `params/zones.ts`、`params/campaign.ts`                             | 区域倍率、共享入图成长时钟与升温；director/partners/模型                                                                 |
 | 敌人技能与走位       | `params/enemy-skills.ts`、`params/enemy-motion.ts`                  | 预警、阶段时间、范围、弹速、伤害份额、追击/绕行；skills/enemies/movement/VFX/模型                                        |
 | 守卫与后区危险物     | `params/guardian.ts`、`params/late-zones.ts`、`params/zones.ts`     | 连段、阶段、命中几何、伤害倍率、风场/喷发；后图守卫强化（追击加速、追加落点节拍、固定属性基准）；bosses/hazards/VFX/模型 |
 | 招式与融合           | `moves.ts`、`fusions.ts`、`params/moves.ts`、`params/archetypes.ts` | 基础伤害/冷却、融合配方、形状/命中/选敌；attacks/archetypes/模型/VFX                                                     |
@@ -35,9 +35,9 @@ AI Agent 从这里定位所有可调玩法数据。内容表和参数都在本�
 ## 生命调优的边界
 
 - `HP_CURVE` 是共享基础成长，**也影响同伴输出**。只想改敌人生命时，改 `ENEMY_HEALTH`；不要直接增强共享曲线。
-- `ENEMY_HEALTH` 的早期/后期增幅使用敌人生命时钟。`ALPHA_HP` 在同期精英基础上额外相乘，只作用头目；普通精英不叠加头目倍率。
+- `ENEMY_HEALTH` 的早期/后期增幅使用共享入图时钟。`ALPHA_HP` 在同期精英基础上额外相乘，只作用头目；普通精英不叠加头目倍率。
 - `GUARDIAN_HP` 使用守卫独立曲线，不叠加怪群增幅；生命、伤害和速度统一按 `GUARDIAN_REFERENCE_SECONDS` 校准，与实际召唤时间和玩家战力无关。
-- `CAMPAIGN_HP_CLOCK` 给后续地图固定的生命成长下限。`zoneClock` 仍管伤害、速度、刷新、事件和同伴，不能为修复生命回落而改动所有时钟。
+- `CAMPAIGN_ENTRY_CLOCK` 与 `ENTRY_RAMP_SECONDS` 定义后图入图时钟及升温，`zoneClock` 统一供生命、伤害、速度、刷新、容量和同伴读取；事件、名单、狂暴触发仍读局部时间，守卫保留固定参考。
 - 地图 `enemyHp`、路线、难度、人数倍率各自应用一次。比较时注明地图、区域、区内时间、席位数和难度。
 - 生命在敌人出生时确定；修改曲线不会给已在场的敌人实时补血。模型采用聚合近似，不能把其平均怪等同于场上每一只。
 - `DIRECTOR_PRESSURE` 只调普通增援，不改生命或容量；压力越高供给越低。它与模型中越高越易清场的 `pressure`（清怪供需比）不是同一指标。改供给会改变经验收入，须复算完整成长。

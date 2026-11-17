@@ -15,7 +15,7 @@ import {
   starterKits,
   warnings,
 } from "../src/run/balance/budget.ts";
-import { runModel, type RunModel } from "../src/run/balance/model.ts";
+import { BUILD_SAMPLES, runModel, type RunModel } from "../src/run/balance/model.ts";
 import { labBonuses } from "../src/run/lab.ts";
 import { type LabLevels } from "../src/run/sim/content/lab.ts";
 import { average, expert, profiles, scenarios } from "../src/run/balance/skill.ts";
@@ -27,6 +27,20 @@ import { stageDefs, type StageId } from "../src/run/sim/content/stages/index.ts"
 import { starterOrder, starters } from "../src/run/sim/content/lines/index.ts";
 import { CAMPAIGN_FIELDS } from "../src/run/sim/content/campaign.ts";
 import { GUARDIAN_REFERENCE_SECONDS } from "../src/run/sim/content/params/pacing.ts";
+import type { EntryWindow } from "../src/run/balance/entry-windows.ts";
+
+// Optional reduced diagnostic scope; defaults retain the full model and build sample count.
+const samples = process.env.BALANCE_SAMPLES ? Number(process.env.BALANCE_SAMPLES) : undefined;
+if (samples !== undefined && (!Number.isInteger(samples) || samples < 1))
+  throw new Error("BALANCE_SAMPLES must be a positive integer.");
+const selectedStarters = process.env.BALANCE_STARTERS?.split(",") ?? starterOrder;
+if (selectedStarters.some((id) => !starterOrder.includes(id as (typeof starterOrder)[number])))
+  throw new Error(`Unknown BALANCE_STARTERS: ${selectedStarters.join(",")}`);
+const roster = starterOrder.filter((id) => selectedStarters.includes(id));
+const entryCell = (w: EntryWindow | null) =>
+  w
+    ? `${w.complete}/${w.samples} full, ${fixed(w.seconds)}s, mass ${fixed(w.weight, 2)} · stock ${fixed(w.living, 1)}+${fixed(w.elites, 1)} elites (${fixed(w.fill, 2)} cap), backlog ${fixed(w.backlog, 1)}s · cap/in ${fixed(w.pressure, 2)} · landed ${fixed(w.landed * 100, 3)}% HP/s, loss ${fixed(w.lost, 2)} HP · HP ${pct(w.frac)}, survive ${w.survive === null ? "censored" : pct(w.survive)} · partners ${fixed(w.partnerDps)} HP/s`
+    : "not observed";
 
 const difficulty = Number(process.argv[2] ?? 0) as Difficulty;
 if (!difficulties[difficulty]) throw new Error(`未知难度 ${process.argv[2]}（0/1/2）。`);
@@ -87,11 +101,12 @@ console.log(
 console.log(
   `Guardian calibration: ${clock(GUARDIAN_REFERENCE_SECONDS)}; local summons: ${summonSeconds.map(clock).join(" → ")}.`,
 );
+console.log(`Build samples per run: ${samples ?? BUILD_SAMPLES}; starters: ${roster.join(", ")}.`);
 
 const all: RunModel[] = [];
-for (const starter of starterOrder) {
+for (const starter of roster) {
   const runs = profiles.map((skill) =>
-    runModel({ stage, starter, difficulty, skill, lab, zones, campaign, summonSeconds }),
+    runModel({ stage, starter, difficulty, skill, lab, zones, campaign, summonSeconds, samples }),
   );
   all.push(...runs);
   const mid = runs[profiles.indexOf(average)]!;
@@ -146,6 +161,16 @@ for (const starter of starterOrder) {
     console.log(
       `    ${index + 1}. ${stageDefs[field.stage].name} (${field.stage}) reach ${band(runs, (r) => pct(r.zoneClears[index]!.reach))} · clear ${band(runs, (r) => pct(r.zoneClears[index]!.clear))} · L${band(runs, (r) => fixed(r.zoneClears[index]!.level, 1))} · elapsed ${band(runs, (r) => (r.zoneClears[index]!.t === null ? "—" : clock(r.zoneClears[index]!.t!)))} · guardian ${band(runs, (r) => fightAt(r, index))}`,
     );
+  if (campaign) {
+    console.log(
+      "  entry windows (average; alive-weighted analytical estimates; loss includes poison, before healing):",
+    );
+    for (const w of mid.entryWindows) {
+      console.log(`    ${fields[w.field]!.stage} 0–120s: ${entryCell(w.entry)}`);
+      console.log(`      previous final 120s (guardian included): ${entryCell(w.exit)}`);
+      console.log(`      previous pre-summon 120s (swarm): ${entryCell(w.preSummon)}`);
+    }
+  }
   console.log(
     `  wind-ups staggered: ${[180, 300, 420].map((t) => `${clock(t)} ${band(runs, (r) => (at(r, t) ? pct(at(r, t)!.cancelled) : "—"))}`).join(" · ")}`,
   );
@@ -211,7 +236,7 @@ console.log(`  least owned: ${owned.slice(-8).map(cell).join(" · ")}`);
 console.log(
   `\nbuild scenarios (average skill, ${scope}): clear · final guardian completed/attempted·seconds·cost in max HP (completed only) · level at 5:00`,
 );
-for (const starter of starterOrder) {
+for (const starter of roster) {
   const cells = scenarios.map(({ name, picks }) => {
     const run = runModel({
       stage,
@@ -223,6 +248,7 @@ for (const starter of starterOrder) {
       zones,
       campaign,
       summonSeconds,
+      samples,
     });
     return `${name} ${pct(run.outcome.clear)} · ${fightAt(run, run.fights.length - 1)} · L${fixed(at(run, 300)?.level)}`;
   });

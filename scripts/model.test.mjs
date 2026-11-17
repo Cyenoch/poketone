@@ -100,6 +100,25 @@ test("guardian exposure excludes unfinished fights instead of scoring early deat
   }
 });
 
+test("campaign pre-summon windows exclude the second when guardian combat begins", () => {
+  const options = {
+    stage: "forest",
+    starter: "bulbasaur",
+    difficulty: 0,
+    skill: expert,
+    samples: 1,
+    campaign: true,
+  };
+  const immediate = runModel({ ...options, summonSeconds: Array(6).fill(1) });
+  assert.ok(immediate.entryWindows.length > 0);
+  assert.equal(immediate.entryWindows[0].preSummon, null, "no pre-combat second was observed");
+  const delayed = runModel({ ...options, summonSeconds: Array(6).fill(10) });
+  const before = delayed.entryWindows[0].preSummon;
+  assert.ok(before);
+  assert.equal(before.seconds, 9);
+  assert.equal(before.guardianRaw, 0, "the swarm baseline excludes guardian damage");
+});
+
 test("extra guardian exposure waits for the first cast and slows with phase and paralysis delays", () => {
   const fury = furyOf("desert", 2);
   const extra = (status, seconds = 60) =>
@@ -393,7 +412,7 @@ test("the model and the sim give each zone of every stage the same guardian HP",
   }
 });
 
-test("field HP matches spawned enemies at entry, growth and rampage without changing damage or speed", () => {
+test("modelled swarm stats match spawned enemies through entry ramp, growth and rampage", () => {
   for (const stage of Object.values(stageDefs)) {
     const world = createWorld({
       stage: stage.id,
@@ -409,7 +428,7 @@ test("field HP matches spawned enemies at entry, growth and rampage without chan
         world.zone.index = index;
         for (const difficulty of [0, 1, 2]) {
           world.difficulty = difficulty;
-          for (const time of [0, 60, 120, 480, stage.duration + 60]) {
+          for (const time of [0, 1, 4, 8, 20, 60, 120, 480, stage.duration + 60]) {
             world.zone.tick = time / TICK;
             world.rampage = time > stage.duration;
             const field = fieldAt(stage.id, time, difficulty, world.rampage, index);

@@ -5,7 +5,16 @@ import { createWorld } from "../src/run/sim/world.ts";
 import { addCircleBlocker, createNav } from "../src/run/sim/nav/index.ts";
 import { TERRAIN_HALF } from "../src/run/sim/terrain.ts";
 import { TICK } from "../src/run/sim/state/world.ts";
-import { spawnEnemy, updateDirector } from "../src/run/sim/director.ts";
+import {
+  liveCap,
+  primeEnemyNav,
+  spawnEnemy,
+  spawnRate,
+  updateDirector,
+} from "../src/run/sim/director.ts";
+import { viewClearance } from "../src/run/sim/viewFootprint.ts";
+import { zoneClock, zoneFactorsFor } from "../src/run/sim/content/params/zones.ts";
+import { coopScaling } from "../src/run/sim/content/params/coop.ts";
 import { updateEnemies } from "../src/run/sim/enemies.ts";
 import { updateHazards } from "../src/run/sim/hazards.ts";
 import { EnemyGrid } from "../src/run/sim/grid.ts";
@@ -169,6 +178,57 @@ function run(w, seconds, each) {
 const marks = (w, kind) => w.hazards.filter((h) => h.kind === kind && h.life > 0);
 const begin = (w, e) =>
   guardianBrains[currentZone.zoneDef(w).guardian.brain](w, e, w.players[0], e.speed, TICK);
+
+test("entry supply and actual admission use the warmed clock and apply co-op scaling once", () => {
+  for (const stage of Object.values(stageDefs)) {
+    const world = arena(stage.id);
+    primeEnemyNav(world);
+    const player = world.players[0];
+    const factors = zoneFactorsFor(stage, 0);
+    for (const difficulty of [0, 1, 2]) {
+      world.difficulty = difficulty;
+      for (const seats of [1, 4]) {
+        world.players = Array.from({ length: seats }, (_, id) => ({ ...player, id }));
+        const team = coopScaling(seats);
+        for (const time of [4, 8]) {
+          const clock = zoneClock(stage, 0, time);
+          world.zone.tick = Math.round(time / TICK) - 1;
+          world.enemies = [];
+          world.spawn = { credit: 0, pressure: 0.5, pool: [], fired: [], anchor: -1 };
+          updateDirector(world, TICK);
+          assert.ok(
+            Math.abs(
+              world.spawn.credit -
+                TICK * spawnRate(clock, difficulty, false) * factors.spawns * team.spawns,
+            ) < 1e-12,
+          );
+          const cap = Math.ceil(liveCap(clock, difficulty) * factors.cap * team.cap);
+          if (stage.id !== "forest")
+            assert.ok(cap > Math.ceil(liveCap(time, difficulty) * factors.cap * team.cap));
+          const body = spawnEnemy(world, "pidgey", 0, 10);
+          world.enemies = Array.from({ length: cap - 1 }, () => ({ ...body, id: world.nextId++ }));
+          world.spawn.credit = 1;
+          world.zone.tick--;
+          updateDirector(world, TICK);
+          assert.equal(
+            world.enemies.length,
+            cap,
+            `${stage.id}/${difficulty}/${seats}/${time}: admits the last body`,
+          );
+          const spawned = world.enemies.at(-1);
+          assert.ok(
+            viewClearance(world, spawned.x, spawned.z) > 1,
+            "reinforcements remain off screen",
+          );
+          world.spawn.credit = 1;
+          world.zone.tick--;
+          updateDirector(world, TICK);
+          assert.equal(world.enemies.length, cap, "a full field rejects more ordinary spawns");
+        }
+      }
+    }
+  }
+});
 
 // This protects playable content: every promised species can spawn in the right stage, with a real skill.
 test("guardian catalogue keeps 13 distinct brains and complete rosters; every map allows early summons and forces its guardian at 600 s", () => {

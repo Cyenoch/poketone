@@ -7,6 +7,8 @@ import { nextField } from "../src/run/sim/content/campaign.ts";
 import { STARDUST } from "../src/run/sim/content/params/economy.ts";
 import { coopScaling } from "../src/run/sim/content/params/coop.ts";
 import { stageDefs } from "../src/run/sim/content/stages/index.ts";
+import { difficulties } from "../src/run/sim/content/difficulties.ts";
+import { updateDirector } from "../src/run/sim/director.ts";
 import { landmarkOf } from "../src/run/sim/currentZone.ts";
 import { EnemyGrid } from "../src/run/sim/grid.ts";
 import { mapDigest, restoreWorld, snapshotWorld } from "../src/run/sim/snapshot.ts";
@@ -28,6 +30,41 @@ const config = {
   difficulty: 0,
   players: [{ starter: "charmander" }, { starter: "squirtle" }],
 };
+
+test("later-map entry builds ordinary supply without advancing rosters, beats or guardians", () => {
+  for (const stage of ROUTE) {
+    const world = createWorld({ ...config, stage, players: [config.players[0]] });
+    const zone = stageDefs[stage].zones[0];
+    for (const difficulty of [0, 1, 2]) {
+      world.difficulty = difficulty;
+      world.enemies = [];
+      world.zone.tick = 0;
+      world.spawn = { credit: 0, pressure: 0.5, pool: [], fired: [], anchor: -1 };
+      updateDirector(world, TICK);
+      assert.equal(world.enemies.length, 0, `${stage}: loading does not fill the field`);
+      let firstHalf = 0;
+      for (let tick = 1; tick < 16 / TICK; tick++) {
+        updateDirector(world, TICK);
+        if (world.zone.tick === 8 / TICK) firstHalf = world.enemies.length;
+      }
+      const secondHalf = world.enemies.length - firstHalf;
+      assert.ok(firstHalf > 0 && secondHalf > 0, `${stage}: ordinary reinforcements arrive`);
+      if (stage !== "forest")
+        assert.ok(secondHalf > firstHalf * 1.2, `${stage}/${difficulty}: supply warms up`);
+      assert.deepEqual(world.spawn.pool, [
+        ...new Set(zone.roster.filter(([at]) => at <= 16).map(([, id]) => id)),
+      ]);
+      assert.deepEqual(
+        world.spawn.fired,
+        zone.beats
+          .filter(([at]) => at - difficulties[difficulty].earlyBy <= 16)
+          .map(([at, beat]) => `${beat.kind}@${at}`),
+      );
+      assert.equal(world.bossId, null);
+      assert.equal(world.rampage, false);
+    }
+  }
+});
 
 /** On the landmark while the zone is active, on the exit the guardian opened once it has fallen. */
 function standAtMarker(world) {

@@ -355,7 +355,7 @@ const CASES = [
             ? 7
             : 5
           : s === 1 && starter === "squirtle"
-            ? 41
+            ? 61
             : s === 0 && starter === "gastly"
               ? 11
               : baseSeed;
@@ -372,7 +372,7 @@ const CASES = [
         ...(full ? { ticks: 6 * 2 * STAGE_TICKS, script: campaign } : {}),
         ...([
           "solo/squirtle/d2/s61",
-          "solo/squirtle/d0/s41",
+          "solo/squirtle/d0/s61",
           "solo/pikachu/d0/s61",
           "solo/abra/d1/s5",
         ].includes(name)
