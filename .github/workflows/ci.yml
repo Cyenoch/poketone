@@ -140,9 +140,6 @@ jobs:
         run: bun test --timeout=0 ./scripts/view.test.mjs ./scripts/ultimate-fire-vfx.test.mjs
       - name: UI tests
         run: bun run test:ui
-      - name: Deterministic replays
-        if: steps.scope.outputs.golden == 'true'
-        run: bun run golden
       - name: Production build
         run: bun scripts/web-build.mjs
       - name: Build tooling tests

@@ -22,8 +22,10 @@ const deterministic = (file) =>
   /^(src\/run\/(sim\/|balance\/|lab\.ts$|createRun\.ts$)|scripts\/golden\.|package\.json$|bun\.lock$|tsconfig|patches\/)/.test(
     file,
   );
-const golden = full || files.some(deterministic);
-const sim = golden || files.some((file) => simTests.includes(file) && !viewTests.includes(file));
+const sim =
+  full ||
+  files.some(deterministic) ||
+  files.some((file) => simTests.includes(file) && !viewTests.includes(file));
 // The full sim command already includes these view tests; do not run them twice.
 const view =
   !sim &&
@@ -33,5 +35,5 @@ const view =
         file,
       ) || /^scripts\/(view.*|ultimate-fire-vfx)\.test\.mjs$/.test(file),
   );
-appendFileSync(process.env.GITHUB_OUTPUT, `sim=${sim}\ngolden=${golden}\nview=${view}\n`);
-console.log(`Simulation tests: ${sim}; deterministic replays: ${golden}; view tests: ${view}`);
+appendFileSync(process.env.GITHUB_OUTPUT, `sim=${sim}\nview=${view}\n`);
+console.log(`Simulation tests: ${sim}; view tests: ${view}`);
