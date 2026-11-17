@@ -33,8 +33,8 @@ import {
   GUARDIAN_REFERENCE_SECONDS,
 } from "../src/run/sim/content/params/pacing.ts";
 import { CAPTURE_CHANCE } from "../src/run/sim/content/params/partners.ts";
-import { ULT_CHARGE } from "../src/run/sim/content/params/ultimates.ts";
-import { ultChargeRate } from "../src/run/balance/ultimate.ts";
+import { ULT_CHARGE, ULT_WINDUP } from "../src/run/sim/content/params/ultimates.ts";
+import { ultChargeRate, ultCast, ultimateTiming } from "../src/run/balance/ultimate.ts";
 import { chargeUltimate } from "../src/run/sim/ultimates/index.ts";
 import { stageDefs } from "../src/run/sim/content/stages/index.ts";
 import { spawnEnemy } from "../src/run/sim/director.ts";
@@ -54,7 +54,28 @@ import {
   createWorld,
 } from "../src/run/sim/world.ts";
 
-const SECONDS = 20;
+const SECONDS = 60;
+
+test("ultimate preparation delays the original pulses instead of paying their damage at trigger", () => {
+  const player = createPlayer(0, "charmander", 0);
+  const target = targetFor(fieldAt("forest", 300, 0, false), 30, average);
+  const timing = ultimateTiming();
+  const preparing = ultCast(player, target, { from: 0, to: timing.windup });
+  assert.equal(preparing.useful + preparing.single + preparing.heal, 0);
+  const immediate = ultCast(player, target, { from: 0, to: 1 }, { ...timing, windup: 0 });
+  const released = ultCast(player, target, { from: timing.windup, to: timing.windup + 1 });
+  assert.ok(immediate.useful > 0);
+  assert.equal(
+    released.useful,
+    immediate.useful,
+    "preparation shifts the pulse; it does not rescale it",
+  );
+  const whole = ultCast(player, target);
+  let total = 0;
+  for (let at = 0; at <= whole.duration; at++)
+    total += ultCast(player, target, { from: at, to: at + 1 }).useful;
+  assert.ok(Math.abs(total - whole.useful) < 1e-9, "the original pulse sequence pays once");
+});
 
 test("poison contributes persistent damage but extra applications refresh instead of stacking", () => {
   const player = createPlayer(0, "gastly", 0);
@@ -656,15 +677,27 @@ test("mixed batches pay XP and ultimate charge for their count, not their extra 
     const charge = 59 * ULT_CHARGE.time + xpWorth * ULT_CHARGE.perXp;
     const halfElite = (ELITE.xp * enemies.rattata.xp * ULT_CHARGE.perXp) / 2;
     options.lab.modifiers[1].value = 1 / (charge + halfElite);
-    assert.equal(
-      runModel(options).minutes[0].useful,
-      row.useful,
+    const below = runModel(options);
+    assert.ok(
+      below.ultimate.firstCast === null || below.ultimate.firstCast > 60,
       "alpha HP does not buy an early ultimate",
     );
     options.lab.modifiers[1].value = 1 / (charge - halfElite);
-    assert.ok(
-      runModel(options).minutes[0].useful > row.useful,
-      "the earned damage credit still fires the ultimate at the correct boundary",
+    const accepted = runModel(options);
+    assert.equal(
+      accepted.ultimate.firstCast,
+      60,
+      "earned credit accepts the trigger at the boundary",
+    );
+    assert.equal(
+      accepted.minutes[0].useful,
+      row.useful,
+      "preparation grants no premature pulse damage",
+    );
+    assert.equal(
+      accepted.ultimate.firstRelease,
+      60 + ULT_WINDUP,
+      "release follows the shared preparation interval",
     );
   });
 });

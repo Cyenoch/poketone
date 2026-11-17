@@ -171,3 +171,66 @@ test("prepare settles only when the opening line's pages are resident", async ()
     cutin.dispose();
   }
 });
+
+const { TrainerCues, RELEASE, cueDuration } = await import("../src/run/trainer-cues.ts");
+const ult = (local = true, seat = local ? null : 1) => ({
+  kind: "ultimate",
+  trainer: "chengxi",
+  text: trainers.chengxi.ultimate,
+  type: "grass",
+  seat,
+  local,
+});
+
+test("the player's ultimate holds through its preparation and leaves after the actual release", () => {
+  const cues = new TrainerCues();
+  assert.equal(cues.show(ult(), 0), true);
+  assert.equal(cues.show(ult(), 400), false, "a repeated start never reopens the band");
+  assert.equal(cues.read(400).born, 0);
+  assert.equal(cues.release(1, false, 2000), false, "another seat's release is not this band's");
+  // The release lands late (a hit-stop, a slow frame): the band stays for the beat after it.
+  assert.equal(cues.release(null, true, 2300), true);
+  assert.equal(cues.release(null, true, 2310), false, "the burst plays once");
+  assert.equal(cues.read(2300 + RELEASE.after - 1)?.released, 2300);
+  assert.equal(cues.read(2300 + RELEASE.after), null);
+  // Without a release the band still ends on its own time.
+  cues.show(ult(), 10_000);
+  assert.ok(cues.read(10_000 + cueDuration(ult()) - 1));
+  assert.equal(cues.read(10_000 + cueDuration(ult())), null);
+});
+
+test("a stale, obscured or teammate release replays nothing", () => {
+  const cues = new TrainerCues();
+  cues.show(ult(), 0);
+  assert.equal(cues.release(null, true, 2000, RELEASE.late), false, "too old to play its burst");
+  assert.equal(cues.read(2000).released, null);
+  cues.suppress("blocked");
+  cues.suppress("open");
+  assert.equal(cues.release(null, true, 2100), false, "a band cleared under a window stays gone");
+  assert.equal(cues.read(2100), null);
+  // A teammate's compact band is long gone by its release two seconds later.
+  cues.show(ult(false), 5000);
+  assert.equal(cues.release(1, false, 7000), false);
+});
+
+test("release reaches only the ultimate band on screen", async () => {
+  const pages = pagesLater();
+  pages.arrive();
+  const { cutin } = mount(pages.glyphs);
+  try {
+    assert.equal(cutin.release(null, true), false, "nothing showing");
+    cutin.show(ult());
+    cutin.frame({ bottom: 120, top: 100 });
+    await new Promise((done) => setTimeout(done, 0));
+    cutin.frame({ bottom: 120, top: 100 });
+    assert.equal(cutin.showing?.kind, "ultimate");
+    assert.equal(cutin.release(2, false), false);
+    assert.equal(cutin.release(null, true), true);
+    cutin.frame({ bottom: 120, top: 100 });
+    assert.equal(cutin.root.properties.peek().display, "flex");
+    cutin.clear();
+    assert.equal(cutin.release(null, true), false, "cleared bands do not come back");
+  } finally {
+    cutin.dispose();
+  }
+});

@@ -806,12 +806,10 @@
 
 ### BM05 解析模型必杀窗口（M）
 
-- **所有者/定位**：[src/run/balance/model.ts:1975,2323,2366,2396](../../src/run/balance/model.ts#L1975)；`ultimate.ts:23,90`
-- **编码字段**：ultCharge、casting、invulnerable、ults[]
-- **逻辑状态**：charging → 满charge等待本秒检查 → casting → countdown结束 → charging；无敌窗口可与进化叠加
-- **触发、守卫与转换**：casting>0先减STEP，else charge≥1启动；cast总damage/heal在这一秒入账，casting=duration、charge=0；秒末casting≤0才charge；invulnerable以STEP减、用于这一秒exposed比例
-- **终态/取消/不变量**：不是逐pulse重放器；冷却/charging整秒量化，casting刚跨0也要下一步才能走else-if发新cast；终态随sample.done冻结；不在ultimate.ts另造状态机
-- **测试与风险**：T8模型伤害间接；T10 ultimate模拟charge测试不是本模型施放窗口验证
+- **所有者/定位**：[src/run/balance/model.ts](../../src/run/balance/model.ts) 与 [ultimate.ts](../../src/run/balance/ultimate.ts)；时间参数读取模拟的 `params/ultimates.ts`
+- **编码与转换**：充能→成功施放→准备→按当前分析步与技能时间线的交集结算脉冲→施放结束；保护使用独立剩余时间，决定本步暴露比例
+- **关键不变量**：准备期没有终极技伤害；原脉冲只平移，不在触发时提前兑现总伤害；跨图取消当前施放。进化保护与 F 保护各自计算，不借重复计入增加保护时长
+- **测试与风险**：`model.test.mjs` 对照准备前后伤害及分步总量；模型仍以分析步和生存概率近似实战，不是人类通关率或实际渲染时序
 
 <a id="bm06"></a>
 

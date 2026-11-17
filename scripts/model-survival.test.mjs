@@ -10,6 +10,7 @@ import {
   defenceOf,
   healPerSecond,
   occupancy,
+  runModel,
 } from "../src/run/balance/model.ts";
 import { castPeriod, moveOutput, TERRAIN_SIGHT } from "../src/run/balance/output.ts";
 import { moveParams } from "../src/run/sim/attacks.ts";
@@ -32,6 +33,9 @@ import { playerStats } from "../src/run/sim/stats.ts";
 import { TICK } from "../src/run/sim/state/world.ts";
 import { newMoveState } from "../src/run/sim/upgrades.ts";
 import { createPlayer, createWorld } from "../src/run/sim/world.ts";
+import { ULT_CHARGE, ULT_WINDUP } from "../src/run/sim/content/params/ultimates.ts";
+import { average } from "../src/run/balance/skill.ts";
+import { enemies } from "../src/run/sim/content/enemies.ts";
 
 const neutral = Object.fromEntries(
   ["normal", "fire", "water", "grass", "electric", "bug", "flying", "poison", "rock", "ground"].map(
@@ -51,6 +55,38 @@ const target = (over = {}) => ({
   ...over,
 });
 const quiet = { heal: 0, poison: 0, floor: 0, charges: [], fallback: null };
+
+test("ultimate protection reduces existing combat damage in a progressing run and improves survival", () => {
+  const zone = stageDefs.forest.zones[0];
+  const guardian = enemies[zone.guardian.species];
+  const saved = { beats: zone.beats, hp: guardian.hp, charge: ULT_CHARGE.time };
+  try {
+    zone.beats = [];
+    guardian.hp = 1e12;
+    ULT_CHARGE.time = 0.25;
+    const options = {
+      stage: "forest",
+      starter: "charmander",
+      difficulty: 0,
+      skill: average,
+      samples: 1,
+    };
+    const exposed = runModel({ ...options, ultimateTiming: { windup: ULT_WINDUP, protection: 0 } });
+    const protectedRun = runModel(options);
+    assert.equal(exposed.ultimate.preventedDamage, 0);
+    assert.ok(protectedRun.ultimate.preventedDamage > 0);
+    assert.ok(protectedRun.ultimate.protectedSeconds > 0);
+    assert.equal(protectedRun.ultimate.firstRelease, protectedRun.ultimate.firstCast + ULT_WINDUP);
+    assert.ok(
+      protectedRun.outcome.meanSurvival > exposed.outcome.meanSurvival,
+      "protection changes the HP process, not only a report column",
+    );
+  } finally {
+    zone.beats = saved.beats;
+    guardian.hp = saved.hp;
+    ULT_CHARGE.time = saved.charge;
+  }
+});
 
 test("evolution fills only the gained max HP and preserves deaths and spent saves", () => {
   const hp = createHp();

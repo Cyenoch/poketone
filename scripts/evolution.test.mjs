@@ -10,6 +10,7 @@ import { playerStats } from "../src/run/sim/stats.ts";
 import { TERRAIN_HALF } from "../src/run/sim/terrain.ts";
 import { TICK } from "../src/run/sim/state/world.ts";
 import { fireUltimate, timeline, updateUltimate } from "../src/run/sim/ultimates/index.ts";
+import { ULT_WINDUP } from "../src/run/sim/content/params/ultimates.ts";
 import { items } from "../src/run/sim/content/items.ts";
 import { createRng } from "../src/run/sim/rng.ts";
 import {
@@ -273,10 +274,10 @@ test("the ultimate charges, can't fire early, fires once per charge and charges 
   stepWorld(w, [{ t: "ult", player: 0 }]);
   assert.equal(casts(), 1);
   assert.equal(player.ult.charge, 0);
-  assert.ok(player.invulnerable > 0);
+  assert.ok(player.ult.protection > 0);
   const last = timeline(starters.squirtle.ultimate, 0).at(-1).at;
   let ticks = 0;
-  while (player.ult.elapsed >= 0 && ticks++ < (last + 1) / TICK) {
+  while (player.ult.elapsed >= 0 && ticks++ < (ULT_WINDUP + last + 1) / TICK) {
     assert.equal(player.ult.charge, 0, "no charge while it plays out");
     stepWorld(w, [{ t: "ult", player: 0 }]);
   }
@@ -310,6 +311,8 @@ function dummy(w, x, z) {
 /** Plays a whole cast of the player's ultimate with nothing else running (enemies hold still). */
 function cast(w) {
   const player = w.players[0];
+  // Independent tier casts: the shared protection clock is covered by ultimate-windup.test.mjs.
+  player.ult.protection = 0;
   player.ult.charge = 1;
   assert.ok(fireUltimate(w, player));
   const ctx = { world: w, grid: new EnemyGrid() };

@@ -5,20 +5,34 @@ import { starters } from "../sim/content/lines/index";
 import { playerStats } from "../sim/stats";
 import type { Player } from "../sim/state/entities";
 import { timeline, ultDamage, ultRate, ultScale } from "../sim/ultimates/index";
-import { ULT_CHARGE } from "../sim/content/params/ultimates";
+import { ULT_CHARGE, ULT_INVULNERABLE, ULT_WINDUP } from "../sim/content/params/ultimates";
 import { ultimates } from "../sim/content/ultimates";
 import { AIM_DISTANCE, critFactor, MAX_DENSITY, TERRAIN_SIGHT, type Target } from "./output";
+
+export interface UltimateTiming {
+  windup: number;
+  protection: number;
+}
+export const ultimateTiming = (): UltimateTiming => ({
+  windup: ULT_WINDUP,
+  protection: ULT_INVULNERABLE,
+});
 
 export interface UltCast {
   /** Swarm HP removed (overkill discarded) and guardian damage, per cast. */
   useful: number;
   single: number;
   heal: number;
-  /** Seconds from the first pulse to the last (no charge meanwhile). */
+  /** Seconds from accepted trigger through preparation and the last original pulse. */
   duration: number;
 }
 
-export function ultCast(player: Player, target: Target): UltCast {
+export function ultCast(
+  player: Player,
+  target: Target,
+  window: { from: number; to: number } = { from: -Infinity, to: Infinity },
+  timing: UltimateTiming = ultimateTiming(),
+): UltCast {
   const stats = playerStats(player);
   const { ultimate } = starters[player.starter];
   const { type } = ultimates[ultimate];
@@ -35,7 +49,9 @@ export function ultCast(player: Player, target: Target): UltCast {
   const disc = (r: number) => density * Math.PI * (r + rE) ** 2;
   const out: UltCast = { useful: 0, single: 0, heal: 0, duration: 0 };
   for (const p of timeline(ultimate, player.stage)) {
-    out.duration = Math.max(out.duration, p.at);
+    const at = timing.windup + p.at;
+    out.duration = Math.max(out.duration, at);
+    if (at < window.from || at >= window.to) continue;
     const r = p.radius * scale;
     const count = p.count ?? 1;
     const length = (p.length ?? 0) * scale;

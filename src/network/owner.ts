@@ -42,6 +42,8 @@ export interface OwnerFrame {
   projectiles: Projectile[];
   areas: Area[];
   events: RunEvent[];
+  /** Age at send time, in the same order as events; retries preserve the original birth. */
+  eventAges: number[];
   effects: CombatEffect[];
 }
 /** Host-produced changes to fields that also have owner-side timers. */
@@ -111,6 +113,7 @@ export class OwnerSimulation {
   private projectiles: Projectile[];
   private areas: Area[];
   private events: RunEvent[] = [];
+  private readonly eventTimes = new WeakMap<RunEvent, number>();
   private effects: CombatEffect[] = [];
   private shown = 0;
   private preview = false;
@@ -144,6 +147,7 @@ export class OwnerSimulation {
     }
   }
   advance(world: World, commands: Command[], dt: number, frozen: boolean) {
+    const firstEvent = this.events.length;
     const player = this.player;
     const local: World = {
       ...world,
@@ -202,6 +206,10 @@ export class OwnerSimulation {
           },
           player,
         );
+        player.ult.protection = Math.max(
+          0,
+          Math.round((player.ult.protection - TICK) / TICK) * TICK,
+        );
       }
     } else {
       player.px = player.x;
@@ -211,6 +219,9 @@ export class OwnerSimulation {
     this.projectiles = local.projectiles;
     this.areas = local.areas;
     this.preview = !frozen && !isFrozen(local) && local.outcome === "playing";
+    const born = performance.now();
+    for (let i = firstEvent; i < this.events.length; i++)
+      this.eventTimes.set(this.events[i]!, born);
   }
   frame(): OwnerFrame {
     return {
@@ -220,6 +231,9 @@ export class OwnerSimulation {
       projectiles: this.projectiles,
       areas: this.areas,
       events: this.events,
+      eventAges: this.events.map((event) =>
+        Math.max(0, performance.now() - this.eventTimes.get(event)!),
+      ),
       effects: this.effects,
     };
   }

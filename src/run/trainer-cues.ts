@@ -24,11 +24,17 @@ export interface ActiveTrainerCue extends TrainerCue {
   id: number;
   born: number;
   duration: number;
+  /** When the ultimate actually released (the sim's `ult-release`), or null before it. */
+  released: number | null;
 }
 
-/** How long each cue holds the slot, entrance and exit included (ms). */
+/** How long each cue holds the slot, entrance and exit included (ms). The player's own ultimate
+ *  spans its two-second preparation and the release beat after it. */
 export const cueDuration = (cue: Pick<TrainerCue, "kind" | "local">) =>
-  cue.kind === "deploy" ? 1750 : cue.kind === "dialogue" ? 3000 : cue.local ? 1300 : 950;
+  cue.kind === "deploy" ? 1750 : cue.kind === "dialogue" ? 3000 : cue.local ? 3000 : 950;
+/** The release beat: its burst (ms), how long the band stays after the release, exit included,
+ *  and the oldest release event that may still play its burst. */
+export const RELEASE = { burst: 520, after: 1000, late: 400 } as const;
 
 const priority = (cue: TrainerCue) =>
   cue.kind === "deploy" ? 3 : cue.kind === "ultimate" ? (cue.local ? 2 : 1) : 0;
@@ -53,10 +59,39 @@ export class TrainerCues {
     const current = this.read(now);
     if (
       current &&
-      (priority(current) > priority(cue) || (!cue.local && priority(current) === priority(cue)))
+      (priority(current) > priority(cue) ||
+        (!cue.local && priority(current) === priority(cue)) ||
+        // A repeated start of the same ultimate never reopens its band.
+        (cue.kind === "ultimate" && current.kind === "ultimate" && current.seat === cue.seat))
     )
       return false;
-    this.active = { ...cue, id: ++this.sequence, born: now - Math.max(0, ageMs), duration };
+    this.active = {
+      ...cue,
+      id: ++this.sequence,
+      born: now - Math.max(0, ageMs),
+      duration,
+      released: null,
+    };
+    return true;
+  }
+
+  /** Marks the showing ultimate of `seat` as released and keeps its band up for the beat after.
+   *  A release for another seat, a band already gone or obscured, a second release, or one too
+   *  old to play its burst changes nothing. */
+  release(seat: number | null, local: boolean, now: number, ageMs = 0): boolean {
+    const cue = this.read(now);
+    if (
+      !cue ||
+      cue.kind !== "ultimate" ||
+      cue.seat !== seat ||
+      cue.local !== local ||
+      cue.released !== null ||
+      ageMs >= RELEASE.late
+    )
+      return false;
+    const at = now - Math.max(0, ageMs);
+    cue.released = at;
+    cue.duration = Math.max(cue.duration, at - cue.born + RELEASE.after);
     return true;
   }
 

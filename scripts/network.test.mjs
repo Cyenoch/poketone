@@ -387,7 +387,7 @@ test("重返时服务暂时不可达不清除凭据，恢复服务后自动重�
 });
 
 /** Ordered/reliable like both production transports, with independently jittered one-way delays. */
-function delayedTransport(count = 2) {
+function delayedTransport(count = 2, latency) {
   let now = 0;
   let enabled = false;
   let random = 7123;
@@ -424,7 +424,7 @@ function delayedTransport(count = 2) {
         }
         random = (Math.imul(random, 1664525) + 1013904223) >>> 0;
         const edge = `${self}:${target}`;
-        const due = Math.max(last.get(edge) ?? 0, now + 60 + (random / 2 ** 32) * 30);
+        const due = Math.max(last.get(edge) ?? 0, now + (latency ?? 60 + (random / 2 ** 32) * 30));
         last.set(edge, due);
         packets.push({ due, target, packet: copy, from: self });
       }
@@ -459,8 +459,8 @@ function delayedTransport(count = 2) {
   };
 }
 
-async function memoryRun() {
-  const wire = delayedTransport();
+async function memoryRun(latency) {
+  const wire = delayedTransport(2, latency);
   const host = new MultiplayerRun(wire.endpoints[0], config);
   const guest = new MultiplayerRun(wire.endpoints[1], config);
   const world = createWorld(config);
@@ -473,6 +473,274 @@ async function memoryRun() {
 }
 
 const tick = 1 / 30;
+
+test("客机下行断流时同次大招状态不能续长房主的五秒保护", async () => {
+  const { damagePlayer } = await import("../src/run/sim/hurt.ts");
+  const { wire, host, guest, world } = await memoryRun();
+  world.spawn.credit = -1e6;
+  for (const player of world.players) {
+    player.moves = [];
+    player.invulnerable = 0;
+  }
+  world.players[1].ult.charge = 1;
+  host.publishMap(world);
+  const remote = guest.takeMap();
+  guest.loading(remote);
+  await guest.ready();
+  guest.submit([{ t: "ult", player: 1 }]);
+  wire.endpoints[0].blocked = true;
+  for (let i = 0; i < 210; i++) {
+    guest.apply(remote, tick);
+    host.step(world, []);
+    host.publish(world, world.events.splice(0), tick);
+  }
+  assert.ok(remote.players[1].ult.protection > 0, "the disconnected owner stopped its own clock");
+  const player = world.players[1];
+  assert.equal(player.ult.protection, 0, "repeated owner snapshots cannot renew one cast");
+  player.invulnerable = player.dashTime = 0;
+  assert.equal(damagePlayer(world, player, 1), true);
+});
+
+test("积压的客机大招保留原事件年龄，房主不会当作刚发生", async () => {
+  const realNow = performance.now.bind(performance);
+  let now = 0;
+  performance.now = () => now;
+  try {
+    const { wire, host, guest, world } = await memoryRun();
+    world.spawn.credit = -1e6;
+    for (const player of world.players) player.moves = [];
+    world.players[1].ult.charge = 1;
+    host.publishMap(world);
+    const remote = guest.takeMap();
+    guest.loading(remote);
+    await guest.ready();
+    wire.endpoints[1].blocked = true;
+    guest.submit([{ t: "ult", player: 1 }]);
+    for (let i = 0; i < 180; i++) {
+      now = (i * 1000) / 30;
+      guest.apply(remote, tick);
+      remote.events = [];
+      host.step(world, []);
+      host.publish(world, world.events.splice(0), tick);
+    }
+    wire.endpoints[1].blocked = false;
+    now = 6000;
+    guest.apply(remote, tick);
+    for (let i = 0; i < 6; i++) {
+      now += 1000 / 30;
+      host.publish(world, [], tick);
+    }
+    const cues = host
+      .takeEvents()
+      .filter((event) => event.t === "ult" || event.t === "ult-release");
+    assert.deepEqual(
+      cues.map((event) => event.t),
+      ["ult", "ult-release"],
+    );
+    assert.ok(host.eventAgeMs(cues[0]) >= 6000);
+    assert.ok(host.eventAgeMs(cues[1]) >= 4000);
+  } finally {
+    performance.now = realNow;
+  }
+});
+
+test("错相低延迟联机不会将两端大招保护倒计时叠加", async () => {
+  const { damagePlayer } = await import("../src/run/sim/hurt.ts");
+  const realNow = performance.now.bind(performance);
+  let now = 0;
+  performance.now = () => now;
+  try {
+    for (const latency of [1, 5]) {
+      now = 0;
+      const { wire, host, guest, world } = await memoryRun(latency);
+      world.spawn.credit = -1e6;
+      for (const player of world.players) {
+        player.moves = [];
+        player.invulnerable = 0;
+      }
+      world.players[1].ult.charge = 1;
+      host.publishMap(world);
+      const remote = guest.takeMap();
+      guest.loading(remote);
+      await guest.ready();
+      wire.start();
+      const startX = remote.players[1].x;
+      guest.submit([
+        { t: "move", player: 1, x: 1, z: 0 },
+        { t: "ult", player: 1 },
+      ]);
+      const releases = [];
+      let nextGuest = 0,
+        nextHost = 8,
+        accumulator = 0;
+      let hostZero = null,
+        ownerZero = null;
+      for (now = 0; now <= 5400; now++) {
+        wire.advance(now);
+        if (now + 1e-6 >= nextGuest) {
+          guest.apply(remote, 1 / 60);
+          for (const event of remote.events) if (event.t === "ult-release") releases.push(now);
+          if (now === 0) {
+            assert.equal(remote.players[1].ult.cast, 1, "F 不等待网络往返");
+            assert(remote.players[1].ult.protection > 0);
+          }
+          remote.events = [];
+          nextGuest += 1000 / 60;
+          if (
+            remote.players[1].ult.cast &&
+            remote.players[1].ult.protection === 0 &&
+            ownerZero === null
+          )
+            ownerZero = now;
+        }
+        if (now + 1e-6 >= nextHost) {
+          accumulator += 1 / 60;
+          while (accumulator + 1e-9 >= tick) {
+            host.step(world, []);
+            accumulator -= tick;
+          }
+          host.publish(world, world.events.splice(0), 1 / 60);
+          nextHost += 1000 / 60;
+          if (
+            world.players[1].ult.cast &&
+            world.players[1].ult.protection === 0 &&
+            hostZero === null
+          )
+            hostZero = now;
+        }
+        if (now === 4900 || now === 5100) {
+          const player = world.players[1];
+          player.invulnerable = player.dashTime = 0;
+          assert.equal(
+            damagePlayer(world, player, 1),
+            now === 5100,
+            `latency ${latency}, at ${now}ms`,
+          );
+        }
+        if (now === 1900) assert(remote.players[1].x > startX, "准备时继续移动");
+      }
+      assert.equal(releases.length, 1, "本机释放不因房主转发重播");
+      assert(releases[0] >= 1980 && releases[0] <= 2020, `released at ${releases[0]}ms`);
+      assert.ok(hostZero >= 4900 && hostZero <= 5100, `host expired at ${hostZero}ms`);
+      assert.ok(ownerZero >= 4900 && ownerZero <= 5100, `owner expired at ${ownerZero}ms`);
+    }
+  } finally {
+    performance.now = realNow;
+  }
+});
+
+test("F 演出按发送席位归属，损坏演出不打断同包移动与命中，转发与重传只播放一次", async () => {
+  const { OwnerSimulation } = await import("../src/network/owner.ts");
+  const { spawnEnemy } = await import("../src/run/sim/director.ts");
+  const { newMoveState } = await import("../src/run/sim/upgrades.ts");
+  const wire = delayedTransport(3);
+  const settings = { ...config, players: [...config.players, config.players[0]] };
+  const host = new MultiplayerRun(wire.endpoints[0], settings);
+  const guests = [1, 2].map((id) => new MultiplayerRun(wire.endpoints[id], settings));
+  const world = createWorld(settings);
+  host.publishMap(world);
+  const remotes = await Promise.all(guests.map((guest) => guest.initial()));
+  for (const [i, guest] of guests.entries()) {
+    guest.loading(remotes[i]);
+    await guest.ready();
+  }
+  await host.ready();
+  const player = world.players[1];
+  player.moves = [newMoveState("giga-drain")];
+  player.moves[0].cooldown = 0;
+  const enemy = spawnEnemy(world, "rattata", player.x, player.z + 1);
+  enemy.hp = enemy.maxHp = 10000;
+  const owner = new OwnerSimulation(world, 1, -2e12);
+  let frame;
+  for (let i = 0; i < 120; i++) {
+    owner.advance(world, [], tick, false);
+    frame = decode(encode(owner.frame()));
+    if (frame.effects.some((effect) => effect.t === "hit")) break;
+  }
+  assert(
+    frame.effects.some((effect) => effect.t === "hit"),
+    "使用真实技能命中",
+  );
+  const packet = {
+    t: "owner",
+    revision: host.guests.get(1).revision,
+    sequence: 1,
+    grantAck: 0,
+    eventAck: -1,
+    life: 0,
+    ...frame,
+    events: [
+      { t: "ult", player: 0, line: "geodude", stage: 0 },
+      { t: "ult-release", player: 999, line: "missing", stage: 0 },
+      { t: "ult", stage: 99 },
+      { t: "ult-release", stage: -1 },
+      { t: "ult", stage: 0.5 },
+      { t: "ult-release" },
+      { t: "ult", stage: NaN },
+      { t: "ult-release", stage: 0 },
+      { t: "ult", stage: 0 }, // Missing age drops only this cut-in, not the packet's movement/hit.
+    ],
+    eventAges: [2500, 500, 0, 0, 0, 0, 0, NaN],
+  };
+  packet.state.x += 0.25;
+  guests[0].ownerSequence = packet.sequence; // This fixture injects the owner's wire packet.
+  assert.doesNotThrow(() => wire.endpoints[0].receiver(structuredClone(packet), 1));
+  assert.equal(player.x, packet.state.x, "演出字段不丢失同包移动");
+  assert(enemy.hp < 10000, "同包命中照常结算");
+  const hp = enemy.hp;
+  wire.endpoints[0].receiver(structuredClone(packet), 1);
+  assert.equal(enemy.hp, hp, "重传不重复命中");
+  for (let i = 0; i < 12; i++) host.publish(world, world.events.splice(0), tick);
+  const cues = host.takeEvents().filter((event) => event.t === "ult" || event.t === "ult-release");
+  assert.deepEqual(cues, [
+    { t: "ult", player: 1, line: "squirtle", stage: 0 },
+    { t: "ult-release", player: 1, line: "squirtle", stage: 0 },
+  ]);
+  assert(host.eventAgeMs(cues[0]) >= 2500);
+  assert(host.eventAgeMs(cues[1]) >= 500);
+  for (let i = 0; i < 30; i++) guests[1].apply(remotes[1], tick);
+  const forwarded = remotes[1].events.filter(
+    (event) => event.t === "ult" || event.t === "ult-release",
+  );
+  assert.deepEqual(forwarded, cues, "第三人看到正确归属且演出只出现一次");
+  assert(guests[1].eventAgeMs(forwarded[0]) >= 2500);
+  assert.equal(host.takeEvents().length, 0);
+  assert.doesNotThrow(() => host.step(world, []));
+});
+
+test("旧 cast 随新包到达不回滚 F，也不丢同包移动；保护不按游戏上限拒收", async () => {
+  const { OwnerSimulation } = await import("../src/network/owner.ts");
+  const { wire, host, guest, world } = await memoryRun();
+  const player = world.players[1];
+  const frame = new OwnerSimulation(world, 1, -2e12).frame();
+  const packet = {
+    t: "owner",
+    revision: host.revision,
+    sequence: 1,
+    grantAck: 0,
+    eventAck: -1,
+    life: 0,
+    ...frame,
+  };
+  packet.state.ult.cast = 2;
+  packet.state.ult.protection = 6;
+  assert.doesNotThrow(() => wire.endpoints[0].receiver(structuredClone(packet), 1));
+  assert.equal(player.ult.protection, 6);
+  packet.sequence++;
+  packet.state.ult.cast = 1;
+  packet.state.ult.protection = 5;
+  packet.state.x += 0.25;
+  packet.events = [{ t: "ult", player: 1, line: "squirtle", stage: 0 }];
+  packet.eventAges = [1000];
+  assert.doesNotThrow(() => wire.endpoints[0].receiver(packet, 1));
+  assert.equal(player.x, packet.state.x);
+  assert.equal(player.ult.cast, 2);
+  assert.equal(player.ult.protection, 6);
+  guest.ownerSequence = packet.sequence;
+  for (let i = 0; i < 6; i++) host.publish(world, [], tick);
+  assert.equal(host.takeEvents().filter((event) => event.t === "ult").length, 0);
+});
+
 const screenX = (world, id, alpha) => {
   const p = world.players[id];
   return p.px + (p.x - p.px) * alpha;
@@ -744,7 +1012,14 @@ test("通知年龄保留背压与后台积压时间，可靠事件仍按序交�
   try {
     const old = { t: "banner", text: "旧冲锋", tone: "danger", kind: "stampede" };
     const recent = { t: "banner", text: "新喷发", tone: "danger", kind: "eruption" };
-    const captured = { t: "capture", player: 1, partner: 71, species: "rattata", x: 1, z: 2 };
+    const captured = {
+      t: "capture",
+      player: 1,
+      partner: 71,
+      species: "rattata",
+      x: 1,
+      z: 2,
+    };
     wire.endpoints[0].blocked = true;
     host.publish(world, [old, captured], tick);
     for (let i = 0; i < 100; i++) host.publish(world, [], tick);
@@ -933,6 +1208,11 @@ test("owner 的终极技、弹体和范围攻击缺字段在修改世界前拒�
   const before = ownerState(player);
   for (const corrupt of [
     (copy) => (copy.state.ult = {}),
+    (copy) => delete copy.state.ult.protection,
+    (copy) => (copy.state.ult.protection = NaN),
+    (copy) => delete copy.state.ult.cast,
+    (copy) => (copy.state.ult.cast = 0.5),
+    (copy) => (copy.eventAges = []),
     (copy) => (copy.state.ult.stage = 999),
     (copy) => (copy.state.ult.next = -1),
     (copy) => (copy.state.ult.crossed = null),
@@ -945,7 +1225,14 @@ test("owner 的终极技、弹体和范围攻击缺字段在修改世界前拒�
     (copy) =>
       copy.events.push({ t: "banner", kind: "fusion", tone: "boss", player: 1, text: "伪造融合" }),
     (copy) =>
-      copy.events.push({ t: "capture", player: 1, partner: 3, species: "rattata", x: 0, z: 0 }),
+      copy.events.push({
+        t: "capture",
+        player: 1,
+        partner: 3,
+        species: "rattata",
+        x: 0,
+        z: 0,
+      }),
     (copy) => copy.events.push({ t: "evolve", player: 1, stage: 1, form: "charmeleon" }),
     (copy) => copy.events.push({ t: "revive", player: 1 }),
     (copy) => copy.events.push({ t: "down", player: 999 }),
@@ -1902,6 +2189,7 @@ test("同tick致死后个人复活重置owner必杀", async () => {
   guest.apply(remote, tick);
   assert(remote.players[1].ult.elapsed >= 0);
   p.invulnerable = 0;
+  p.ult.protection = 0; // Expose this cast to test the death/revive boundary.
   const enemy = spawnEnemy(world, "rattata", p.x, p.z);
   enemy.dmg = 1000;
   enemy.x = p.x;
@@ -1932,6 +2220,7 @@ test("同tick倒地后清区救回重置owner必杀，不接收旧生命回写",
   );
   stale.sequence += 10;
   p.invulnerable = 0;
+  p.ult.protection = 0;
   const enemy = spawnEnemy(world, "rattata", p.x, p.z);
   Object.assign(enemy, { dmg: 1000, x: p.x, z: p.z });
   // Contact knocks the guest out before the later guardian DoT death clears the zone this tick.
@@ -1970,6 +2259,7 @@ test("复活道具挡住致死伤害时仍是同一生命，保留owner进行中
   guest.submit([{ t: "ult", player: 1 }]);
   guest.apply(remote, tick);
   p.invulnerable = 0;
+  p.ult.protection = 0;
   const enemy = spawnEnemy(world, "rattata", p.x, p.z);
   enemy.dmg = 1000;
   host.step(world, []);

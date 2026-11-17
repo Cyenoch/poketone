@@ -226,6 +226,7 @@ if (!fixture) {
         ready: Promise.resolve(),
         prepare: async () => {},
         show: (cue) => (cue.kind === "deploy" && openings.push("cue"), true),
+        release: noop,
         clear: noop,
       },
       stage: {
@@ -602,8 +603,15 @@ if (!fixture) {
       }
       assert.equal(flashes, 3);
       assert.equal(sounds.filter((name) => name === "hurt").length, 3);
-      world.events.push({ t: "ult", player: 0 });
+      world.events.push({ t: "ult", player: 0, line: player.starter, stage: player.stage });
       client.advance(0);
+      const preparingTick = world.tick;
+      advance();
+      assert.equal(world.tick - preparingTick, 3, "starting preparation preserves normal pacing");
+      assert.equal(sounds.filter((name) => name === "ult").length, 0, "no release sound at start");
+      world.events.push({ t: "ult-release", player: 0, line: player.starter, stage: player.stage });
+      client.advance(0);
+      assert.equal(sounds.filter((name) => name === "ult").length, 1, "sound lands on release");
       hit(1);
       const tick = world.tick;
       advance();

@@ -10,7 +10,9 @@ export const ULT_CHARGE = { time: 1 / 210, perXp: 0.004, room: 0.01 } as const;
 /** Base damage per pulse (× pulse `mul`), growing with level and tier like the reference. */
 export const ULT_DMG = { base: 30, perLevel: 0.1, tier: [1, 1.15, 1.3] } as const;
 /** Seconds of invulnerability from firing an ultimate. */
-export const ULT_INVULNERABLE = 1;
+export const ULT_INVULNERABLE = 5;
+/** Preparation before the first original pulse; included in the protection window. */
+export const ULT_WINDUP = 2;
 
 /** Initial aim range in world units. */
 export const ULT_AIM_RANGE = 15;

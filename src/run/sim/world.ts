@@ -444,6 +444,8 @@ function step(world: World, commands: readonly Command[], shared: boolean): void
   // A guardian falling on the tick the last player does still loses the run.
   if (world.players.every((player) => !player.alive)) world.outcome = "defeat";
   else sweepClearedField(world);
+  for (const player of world.players)
+    player.ult.protection = Math.max(0, Math.round((player.ult.protection - dt) / TICK) * TICK);
 }
 
 function updatePlayer(ctx: Ctx, player: Player, dt: number): void {
@@ -472,7 +474,8 @@ function updatePlayer(ctx: Ctx, player: Player, dt: number): void {
   if (stats.regen > 0) heal(player, stats.regen * dt);
   updateShield(ctx.world, player, dt);
   // Poison wears you down but never finishes you, matching the series' field rule.
-  if (drain > 0) player.hp = Math.max(DRAIN_FLOOR, player.hp - drain * dt);
+  if (drain > 0 && player.ult.protection <= 0)
+    player.hp = Math.max(DRAIN_FLOOR, player.hp - drain * dt);
   if (player.rescue || !owned) return;
   updateMoves(ctx, player, dt);
   fire(ctx, player, "tick", { dt });

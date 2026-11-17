@@ -60,6 +60,10 @@ export type TrainStat = "dmg" | "hp" | "speed" | "area" | "cd";
 export interface UltState {
   /** 0 → 1; the ultimate can fire at 1. */
   charge: number;
+  /** Monotonic identity of a successful cast; owner snapshots cannot renew an old cast. */
+  cast: number;
+  /** Seconds of ultimate invulnerability and super armor, separate from pulse execution. */
+  protection: number;
   /** Damage credit the next hits may still turn into charge; refills over time (caps late-game damage). */
   room: number;
   /** Seconds into the running cast, or -1 when none runs. */

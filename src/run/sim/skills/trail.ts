@@ -45,6 +45,7 @@ export const trail: SkillDef = {
 
 /** Static lakes and Dewgong's temporary strips share only the player's inertia rule. */
 export function onIce(world: Pick<World, "map" | "hazards">, player: Player): boolean {
+  if (player.ult.protection > 0) return false;
   if (formOf(player).types.includes("flying")) return false;
   if (sampleSurface(world.map.terrain.surface, player.x, player.z).kind === "ice-slick")
     return true;

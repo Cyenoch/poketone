@@ -5,8 +5,10 @@ import type { GeneratedMap } from "./mapgen/index";
 import { navContinuation, restoreNav, type NavContinuation } from "./nav/index";
 import { ARENA_HALF, type World } from "./state/world";
 
+import { ULT_INVULNERABLE } from "./content/params/ultimates";
+
 /** Snapshot format; bumped when the snapshot's dynamic state shape changes. */
-export const SNAPSHOT_VERSION = 5;
+export const SNAPSHOT_VERSION = 6;
 
 /** Static map and runtime navigation; snapshots carry only the nav's continuation facts. */
 type MapFields = "map" | "nav";
@@ -68,6 +70,18 @@ export function restoreWorld(map: GeneratedMap, snapshot: WorldSnapshot): World 
     (zone.phase === "active" ? exit !== null : exit === null)
   )
     throw new Error(`快照出口无效（${dynamic.stage}，${zone?.phase}）。`);
+  for (const player of dynamic.players) {
+    if (
+      !(
+        typeof player.ult.protection === "number" &&
+        player.ult.protection >= 0 &&
+        player.ult.protection <= ULT_INVULNERABLE
+      )
+    )
+      throw new Error(`快照终极技状态无效：players.${player.id}.ult.protection`);
+    if (!Number.isSafeInteger(player.ult.cast) || player.ult.cast < 0)
+      throw new Error(`快照终极技状态无效：players.${player.id}.ult.cast`);
+  }
   return { map, nav: restoreNav(map.terrain, navigation), ...dynamic };
 }
 

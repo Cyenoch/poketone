@@ -46,6 +46,7 @@ export function settlePlayerSurface(world: World, player: Player, dt: number): v
 
 /** The owner runs terrain displacement alongside its own movement. */
 export function pullPlayerSurface(world: World, player: Player, dt: number): void {
+  if (player.ult.protection > 0) return;
   const surface = sampleSurface(world.map.terrain.surface, player.x, player.z);
   if (surface.patch?.kind === "quicksand") {
     const [px, pz] = quicksandPull(surface.patch, player.x, player.z, QUICKSAND.pull);

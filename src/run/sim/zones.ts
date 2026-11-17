@@ -170,6 +170,7 @@ export function enterZone(world: World, prepared: Field & { stage: StageId; zone
     // The old field's afflictions and a cast in flight stay behind; spent charge is not refunded.
     player.statuses = [];
     player.ult.elapsed = -1;
+    player.ult.protection = 0;
     player.ult.crossed = [];
   }
   world.zone = { index: zone, tick: 0, phase: "active", exit: null };

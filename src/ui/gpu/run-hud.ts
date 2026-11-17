@@ -1,3 +1,4 @@
+import { ULT_INVULNERABLE } from "../../run/sim/content/params/ultimates";
 import { MAX_ITEM_SLOTS } from "../../run/sim/content/params/cards";
 import { STAGE_ROUTE } from "../../run/sim/content/campaign";
 import { stageDefs } from "../../run/sim/content/stages/index";
@@ -128,6 +129,10 @@ const HEAL_BIG = 0.03;
 const HEAL_MS = 420;
 /** Below this share of real HP the bar takes the low-HP look and the screen edge breathes. */
 const LOW_HP = 0.3;
+/** The ultimate key's ring while the cast protects the player: warm yellow, apart from the charge. */
+const PROTECT = "#ffd45b";
+/** One gathering of the ultimate's halo into its key while the cast prepares (s). */
+const WINDUP_PULSE = 0.6;
 /** XP ring chase, in levels: ease-out time constant, the slowest and fastest it moves (laps/s). */
 const XP_TAU_MS = 120;
 const XP_MIN_SPEED = 0.35;
@@ -1272,9 +1277,21 @@ export class GpuRunHud {
     this.updateDashPips(snap.dashes, snap.dashMax);
     this.updateShield(snap.shield, snap.shieldMax);
     this.dash.uniforms.hudReady.value = snap.dash >= 1 ? 1 : 0;
+    // While the cast protects the player, the ring is that protection draining in warm yellow and
+    // the halo gathers into the key until the release; the charge ring returns after.
+    const protection = Math.max(0, snap.ultProtection);
+    const windup = Math.max(0, snap.ultWindup);
     this.ultimate.uniforms.hudReady.value = snap.ult >= 1 ? 1 : 0;
-    this.ultimate.uniforms.hudFill.value = Math.max(0, Math.min(1, snap.ult));
-    this.halo.content.setProperties({ display: snap.ult >= 1 && !snap.casting ? "flex" : "none" });
+    this.ultimate.uniforms.hudFill.value = Math.max(
+      0,
+      Math.min(1, protection > 0 ? protection / ULT_INVULNERABLE : snap.ult),
+    );
+    if (protection > 0) this.ultimate.uniforms.hudColor.value.set(PROTECT);
+    this.halo.content.setProperties({
+      display: (snap.ult >= 1 && !snap.casting) || windup > 0 ? "flex" : "none",
+    });
+    if (previous && previous.ultWindup > 0 && windup === 0 && protection > 0)
+      this.readyPulse("ultimate", this.ultPose, 320);
     if (snap.dash >= 1 && previous && previous.dash < 1)
       this.readyPulse("dash", this.dashPose, 260);
     if (snap.ult >= 1 && !snap.casting && previous && (previous.ult < 1 || previous.casting))
@@ -1295,7 +1312,7 @@ export class GpuRunHud {
       );
     }
     const ult = this.controls.find((c) => c.action === "ultimate")!;
-    fade(ult.panel, snap.casting ? 0.6 : 1);
+    fade(ult.panel, snap.casting && protection === 0 ? 0.6 : 1);
     this.interact.set(
       snap.prompt,
       state.blocked || this.choiceOpen,
@@ -1669,7 +1686,10 @@ export class GpuRunHud {
       this.stage.invalidate();
     }
     if (this.halo.content.properties.peek().display !== "none") {
-      this.halo.uniforms.hudTime.value = (this.elapsed % 1.2) / 1.2;
+      this.halo.uniforms.hudTime.value =
+        (this.state.snapshot?.ultWindup ?? 0) > 0
+          ? 1 - (this.elapsed % WINDUP_PULSE) / WINDUP_PULSE
+          : (this.elapsed % 1.2) / 1.2;
       this.stage.invalidate();
     }
     const pose = crestPose(this.state.theme, this.elapsed);

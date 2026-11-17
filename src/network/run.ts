@@ -138,6 +138,7 @@ export class MultiplayerRun {
   private unacked: { sequence: number; commands: Command[] }[] = [];
   /** Sent owner packets carrying hits or events, kept until a host frame acknowledges them. */
   private ownerUnacked: Extract<Packet, { t: "owner" }>[] = [];
+  private readonly ownerSentAt = new WeakMap<object, number>();
   /** Clock of the newest host event batch applied; a resent batch at or before it is a duplicate. */
   private eventClock = -1;
   private ownerCommands: Command[] = [];
@@ -432,7 +433,10 @@ export class MultiplayerRun {
     }
     this.hello();
     // Facts and input lost with the old path go again; the host skips sequences it already applied.
-    for (const sent of this.ownerUnacked) this.session.send(sent);
+    for (const sent of this.ownerUnacked) {
+      const elapsed = Math.max(0, performance.now() - this.ownerSentAt.get(sent)!);
+      this.session.send({ ...sent, eventAges: sent.eventAges.map((age) => age + elapsed) });
+    }
     for (const sample of this.unacked)
       this.session.send({ t: "commands", revision: this.revision, ...sample });
     this.held.clear();
@@ -635,11 +639,19 @@ export class MultiplayerRun {
     if (packet.life !== guest.life) return;
     const world = this.world;
     const player = world.players[from]!;
+    const olderCast = packet.state.ult.cast < player.ult.cast;
     // Reliable facts produced before a transition still settle; a hit in flight is not discarded.
     if (world.zone.phase === "transitioning" || world.outcome !== "playing") return;
     guest.grants = guest.grants.filter((grant) => grant.id > packet.grantAck);
     if (player.alive) {
+      const before = player.ult;
       applyOwnerState(player, packet.state);
+      // An owner stalled by a missing host frame may resend its old countdown. Only this
+      // authoritative boundary clamps it; feeding the clamp back into prediction double-counts time.
+      // Late cast state cannot rewind F, but its current-life movement and hits still land.
+      if (olderCast) player.ult = before;
+      else if (before.cast === packet.state.ult.cast)
+        player.ult.protection = Math.min(before.protection, packet.state.ult.protection);
       for (const grant of guest.grants) applyOwnerGrant(player, grant);
       if (packet.cancelRescue) player.rescue = null;
       if (player.rescue) {
@@ -674,14 +686,23 @@ export class MultiplayerRun {
     // In-flight hits still settle while the host's render loop is stopped.
     for (let i = start; i < world.events.length; i++) this.eventTimes.set(world.events[i]!, born);
     this.captureGrant(from, guest);
+    const batches: PendingEvents[] = [];
+    for (const [i, event] of packet.events.entries()) {
+      if (olderCast && (event.t === "ult" || event.t === "ult-release")) continue;
+      const eventBorn = born - packet.eventAges[i]!;
+      this.eventTimes.set(event, eventBorn);
+      const last = batches.at(-1);
+      if (last?.born === eventBorn) last.events.push(event);
+      else batches.push({ clock: this.clock, events: [event], born: eventBorn });
+    }
     for (const [id, target] of this.guests)
       if (
         id !== from &&
         (target.phase === "playing" || target.phase === "loading") &&
         packet.events.length
       )
-        target.events.push({ clock: this.clock, events: packet.events, born });
-    if (packet.events.length) this.hostEvents.push({ clock: this.clock, events: packet.events });
+        target.events.push(...batches);
+    if (packet.events.length) this.hostEvents.push(...batches);
   }
   private snapshot(world: World): WorldSnapshot {
     const snapshot = snapshotWorld(world);
@@ -1041,7 +1062,10 @@ export class MultiplayerRun {
       // Skipped under congestion: effects and events stay queued and go with the next frame.
       if (this.session.send(packet, true)) {
         this.ownerSendElapsed = 0;
-        if (packet.effects.length || packet.events.length) this.ownerUnacked.push(packet);
+        if (packet.effects.length || packet.events.length) {
+          this.ownerUnacked.push(packet);
+          this.ownerSentAt.set(packet, performance.now());
+        }
         local.sent();
       }
     }

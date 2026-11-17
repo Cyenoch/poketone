@@ -172,6 +172,9 @@ for (const starter of roster) {
     }
   }
   console.log(
+    `  ultimate: preparation ${mid.ultimate.timing.windup}s / protection ${mid.ultimate.timing.protection}s; accepted ${fixed(mid.ultimate.casts, 1)} / released ${fixed(mid.ultimate.releases, 1)}; first ${fixed(mid.ultimate.firstCast, 1)} → ${fixed(mid.ultimate.firstRelease, 1)}s; protected ${fixed(mid.ultimate.protectedSeconds, 1)}s, prevented ${fixed(mid.ultimate.preventedDamage, 1)} HP (alive-weighted).`,
+  );
+  console.log(
     `  wind-ups staggered: ${[180, 300, 420].map((t) => `${clock(t)} ${band(runs, (r) => (at(r, t) ? pct(at(r, t)!.cancelled) : "—"))}`).join(" · ")}`,
   );
   console.log(

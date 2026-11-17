@@ -382,12 +382,12 @@ Owner 简写：除 [createRun.ts](../../src/run/createRun.ts) 指 [src/run/creat
 
 ### A12 大招充能和时间线
 
-- **所有者/定位**：[ultimates/index.ts:46,68,86,109](../../src/run/sim/ultimates/index.ts#L46)
-- **编码与逻辑状态**：charge/room、elapsed=-1或>=0、next/stage、origin/aim；charging→ready→casting→charging
-- **守卫与转换**：alive且charge>=1且非casting才fire；耗charge、锁stage和aim；update按时间排序依次消费pulses；最后elapsed=-1；casting禁充能
-- **终态/取消/恢复**：死亡/开始救援/Z取消，不退款；F停；救援中不update；R保存游标和施放阶段
-- **关键不变量**：charge<=1、room有上限；同一pulse只执行一次；升级不改当前cast tier
-- **测试/风险**：[evolution.test.mjs:143,202,236](../../scripts/evolution.test.mjs#L143)。四timeline：frenzy-plant/blast-burn/hydro-cannon/volt-tackle ([content/ultimates.ts:169](../../src/run/sim/content/ultimates.ts#L169))；风险：最后pulse当tick结束后，后续同tick伤害可能已可再充能
+- **所有者/定位**：[ultimates/index.ts](../../src/run/sim/ultimates/index.ts) 的 `fireUltimate/updateUltimate`；保护倒计时分别由共享 `world.ts` 与本机 `network/owner.ts` 推进
+- **编码与逻辑状态**：`charge/room`、`cast`、`elapsed`、`next/stage`、origin/aim；charging→ready→preparing→releasing→charging，`protection` 是独立的保护计时
+- **守卫与转换**：存活、充满、未施放且保护已结束才 fire；立即耗能并锁 stage/aim、清敌方控制、发 `ult`；准备结束发一次 `ult-release`，按 `elapsed - ULT_WINDUP` 消费原脉冲；最后 elapsed=-1，施放期间禁充能
+- **终态/取消/恢复**：暂停停时；跨图取消技能与保护，不退款；快照保留已过时间、脉冲游标和剩余保护。主动移动/冲刺不取消准备，保护阻止伤害、敌方控制与强制位移
+- **关键不变量**：保护不借普通受击无敌期续长，不随最后脉冲提前结束；同一 pulse 只执行一次；升级不改当前 cast tier；两端各推进自己的计时，不叠加扣时
+- **测试/风险**：[ultimate-windup.test.mjs](../../scripts/ultimate-windup.test.mjs)、[evolution.test.mjs](../../scripts/evolution.test.mjs)、[network.test.mjs](../../scripts/network.test.mjs)；模拟时间与宿主释放演出的墙钟分开，迟到反馈不能重启模拟施放
 
 <a id="a13"></a>
 

@@ -114,6 +114,7 @@ export type RunEvent =
   | { t: "evolve"; player: PlayerId; stage: Stage; form: FormId }
   /** An ultimate fired at its tier; its pulses follow as `ult-pulse`. */
   | { t: "ult"; player: PlayerId; line: StarterId; stage: Stage }
+  | { t: "ult-release"; player: PlayerId; line: StarterId; stage: Stage }
   | UltPulseEvent
   /** An item's burst or strike: drawn with the ultimate pulse looks (shape and size are the hitbox). */
   | (Omit<UltPulseEvent, "t"> & { t: "item-burst" })

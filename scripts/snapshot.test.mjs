@@ -208,6 +208,8 @@ if (isMainThread) {
       [(value) => (value.navigation.clock = Infinity), /不是有限数/],
       [(value) => (value.version += 1), /快照格式/],
       [(value) => (value.version -= 1), /快照格式/],
+      [(value) => (value.players[0].ult.protection = 6), /ult.protection/],
+      [(value) => (value.players[0].ult.cast = -1), /ult.cast/],
       [(value) => delete value.spawn.pressure, /快照增援压力无效/],
       [(value) => (value.spawn.pressure = 2), /快照增援压力无效/],
       [(value) => delete value.zone.exit, /快照出口无效/],

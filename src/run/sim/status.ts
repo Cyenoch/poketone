@@ -16,9 +16,19 @@ import { staggered } from "./poise";
 
 interface Holder<Id extends StatusId> {
   statuses: ActiveStatus<Id>[];
+  ult?: { protection: number };
 }
 
 const def = (id: StatusId): StatusDef => statuses[id];
+
+const control = (id: StatusId) => {
+  const status = def(id);
+  return status.move !== undefined || status.control || status.blocksAttacks || status.interrupts;
+};
+
+export function clearControl<Id extends StatusId>(holder: Holder<Id>): void {
+  holder.statuses = holder.statuses.filter((status) => !control(status.id));
+}
 
 export function find<Id extends StatusId>(
   holder: Holder<Id>,
@@ -42,6 +52,7 @@ export function apply<Id extends StatusId>(
   power: number,
   source: number,
 ): void {
+  if ((holder.ult?.protection ?? 0) > 0 && control(id)) return;
   const { builds, stacking } = def(id);
   const active = find(holder, id);
   if (!active) {
@@ -73,6 +84,7 @@ export function sustain<Id extends StatusId>(
   time: number,
   source: number,
 ): void {
+  if ((holder.ult?.protection ?? 0) > 0 && control(id)) return;
   const active = find(holder, id);
   if (active) active.time = Math.max(active.time, time);
   else holder.statuses.push({ id, time, power: 0, source });
@@ -160,6 +172,7 @@ export function drainRate(holder: Holder<StatusId>, time: number): number {
 
 /** `speed` after every active speed factor and stutter, in registry order (stops are `stopped`). */
 export function slowed(holder: Holder<StatusId>, speed: number, time: number, id: number): number {
+  if ((holder.ult?.protection ?? 0) > 0) return speed;
   for (const status of statusIds) {
     const move = def(status).move;
     if (!move || move.kind === "stop" || !has(holder, status)) continue;

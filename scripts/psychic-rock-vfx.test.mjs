@@ -326,9 +326,10 @@ for (const starter of ["abra", "geodude"])
     for (const stage of [0, 1, 2]) {
       player.stage = stage;
       player.ult.charge = 1;
+      player.ult.protection = 0;
       assert.ok(fireUltimate(world, player));
       const looks = new Set();
-      for (let tick = 0; tick < 130; tick++) {
+      for (let tick = 0; tick < 190; tick++) {
         updateUltimate(ctx, player, TICK);
         for (const e of world.events) {
           if (e.t === "ult-pulse") looks.add(e.look);

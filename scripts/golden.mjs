@@ -86,6 +86,7 @@ function projectPlayer(world, player) {
     stardust: q(player.stardust),
     kills: player.kills,
     ult: q(player.ult.charge),
+    ultimate: [q(player.ult.elapsed), q(player.ult.protection)],
     partners: world.partners.filter((p) => p.owner === player.id).length,
     statuses: playerStatuses(player),
     left: [player.rerolls, player.skips, player.banishes, player.revives],
@@ -169,6 +170,7 @@ export function eventFacts(e) {
     case "evolve":
       return [e.t, e.player, e.stage, e.form];
     case "ult":
+    case "ult-release":
       return [e.t, e.player, e.line, e.stage];
     case "ult-pulse":
       return [
@@ -351,10 +353,8 @@ const CASES = [
       // Durable enemies and adaptive supply move the loot path; keep evolution/capture in real runs.
       const seed =
         starter === "abra"
-          ? difficulty === 2
-            ? 7
-            : 5
-          : s === 1 && starter === "squirtle"
+          ? 7
+          : s === 1 && ["squirtle", "charmander", "gastly"].includes(starter)
             ? 61
             : s === 0 && starter === "gastly"
               ? 11
@@ -374,7 +374,7 @@ const CASES = [
           "solo/squirtle/d2/s61",
           "solo/squirtle/d0/s61",
           "solo/pikachu/d0/s61",
-          "solo/abra/d1/s5",
+          "solo/abra/d1/s7",
         ].includes(name)
           ? { ticks: 6 * 2 * STAGE_TICKS }
           : {}),

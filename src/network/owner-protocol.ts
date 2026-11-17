@@ -12,6 +12,27 @@ import type { Player } from "../run/sim/state/entities";
 export function validateOwner(frame: OwnerFrame, player: Player): void {
   const finite = (value: unknown): value is number =>
     typeof value === "number" && Number.isFinite(value);
+  if (!Array.isArray(frame.events)) throw new Error("玩家事件数据无效。");
+  const ages = Array.isArray(frame.eventAges) ? frame.eventAges : [];
+  const events: OwnerFrame["events"] = [];
+  const eventAges: number[] = [];
+  for (const [i, event] of frame.events.entries()) {
+    if (record(event) && (event.t === "ult" || event.t === "ult-release")) {
+      // A broken cut-in must not interrupt movement or hits in the same packet.
+      if (
+        !Number.isSafeInteger(event.stage) ||
+        event.stage < 0 ||
+        event.stage >= starters[player.starter].stages.length ||
+        !finite(ages[i]) ||
+        ages[i]! < 0
+      )
+        continue;
+      events.push({ t: event.t, player: player.id, line: player.starter, stage: event.stage });
+    } else events.push(event);
+    eventAges.push(ages[i]!);
+  }
+  frame.events = events;
+  frame.eventAges = eventAges;
   const check = (value: unknown, depth = 0): boolean => {
     if (depth > 16) return false;
     if (typeof value === "number") return finite(value);
@@ -29,6 +50,7 @@ export function validateOwner(frame: OwnerFrame, player: Player): void {
   };
   if (
     !check(frame) ||
+    !frame.eventAges.every((age) => finite(age) && age >= 0) ||
     typeof frame.cancelRescue !== "boolean" ||
     frame.effects.length > 8192 ||
     frame.events.length > 8192 ||
@@ -80,9 +102,21 @@ export function validateOwner(frame: OwnerFrame, player: Player): void {
     throw new Error("玩家技能状态无效。");
   const ult = state.ult;
   if (
-    ![ult.charge, ult.room, ult.elapsed, ult.x, ult.z, ult.ax, ult.az, ult.pathX, ult.pathZ].every(
-      finite,
-    ) ||
+    ![
+      ult.charge,
+      ult.room,
+      ult.elapsed,
+      ult.protection,
+      ult.x,
+      ult.z,
+      ult.ax,
+      ult.az,
+      ult.pathX,
+      ult.pathZ,
+    ].every(finite) ||
+    ult.protection < 0 ||
+    !Number.isSafeInteger(ult.cast) ||
+    ult.cast < 0 ||
     !Number.isSafeInteger(ult.stage) ||
     ult.stage < 0 ||
     ult.stage >= starters[player.starter].stages.length ||

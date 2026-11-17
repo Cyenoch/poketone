@@ -9,7 +9,7 @@ import { next } from "../rng";
 import { CHEST } from "../content/params/combat";
 import { coverHit, lineOfFire, sees, withinStep } from "../sight";
 import { areaGrowth, currentStats, playerStats } from "../stats";
-import { targetable } from "../status";
+import { clearControl, targetable } from "../status";
 import { heightAt } from "../terrain";
 import type { Enemy, Player, UltState } from "../state/entities";
 import type { World } from "../state/world";
@@ -22,6 +22,7 @@ import {
   ULT_CHARGE,
   ULT_DMG,
   ULT_INVULNERABLE,
+  ULT_WINDUP,
   ULT_PULL,
 } from "../content/params/ultimates";
 
@@ -50,6 +51,8 @@ export function timeline(ultimate: UltimateId, stage: Stage): readonly Pulse[] {
 export function newUltState(): UltState {
   return {
     charge: 0,
+    cast: 0,
+    protection: 0,
     room: ULT_CHARGE.room,
     elapsed: -1,
     next: 0,
@@ -89,9 +92,12 @@ export function ultScale(player: Player): number {
 /** Starts a cast; false when not charged, already casting or down. */
 export function fireUltimate(world: World, player: Player): boolean {
   const ult = player.ult;
-  if (!player.alive || ult.charge < 1 || ult.elapsed >= 0) return false;
+  if (!player.alive || ult.charge < 1 || ult.elapsed >= 0 || ult.protection > 0) return false;
   ult.charge = 0;
+  ult.cast += 1;
   ult.elapsed = 0;
+  ult.protection = ULT_INVULNERABLE;
+  clearControl(player);
   ult.next = 0;
   ult.stage = player.stage;
   ult.x = ult.pathX = player.x;
@@ -105,7 +111,7 @@ export function fireUltimate(world: World, player: Player): boolean {
   const length = hypot(dx, dz) || 1;
   ult.ax = dx / length;
   ult.az = dz / length;
-  player.invulnerable = Math.max(player.invulnerable, ULT_INVULNERABLE);
+  // Protection has its own clock; ordinary hit i-frames must not extend it on release.
   world.events.push({ t: "ult", player: player.id, line: player.starter, stage: ult.stage });
   return true;
 }
@@ -117,9 +123,18 @@ export function updateUltimate(ctx: Ctx, player: Player, dt: number): void {
     ult.charge = Math.min(1, ult.charge + ULT_CHARGE.time * ultRate(player) * dt);
     return;
   }
+  const before = ult.elapsed;
   ult.elapsed += dt;
+  if (ult.elapsed < ULT_WINDUP) return;
+  if (before < ULT_WINDUP)
+    ctx.world.events.push({
+      t: "ult-release",
+      player: player.id,
+      line: player.starter,
+      stage: ult.stage,
+    });
   const pulses = timeline(starters[player.starter].ultimate, ult.stage);
-  while (ult.next < pulses.length && pulses[ult.next]!.at <= ult.elapsed) {
+  while (ult.next < pulses.length && pulses[ult.next]!.at <= ult.elapsed - ULT_WINDUP) {
     pulse(ctx, player, pulses[ult.next]!);
     ult.next += 1;
   }

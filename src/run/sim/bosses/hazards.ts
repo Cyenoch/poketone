@@ -81,6 +81,7 @@ export const guardianHazards = {
   "quicksand-pit": {
     update(world, pit) {
       for (const player of world.players) {
+        if (player.ult.protection > 0) continue;
         if (!inPatch(world, pit, player, pit.y)) continue;
         sustain(player, "slow", QUICKSAND_PIT.linger, -1);
         const [px, pz] = quicksandPull(pit, player.x, player.z, QUICKSAND.pull * QUICKSAND.speed);

@@ -122,7 +122,6 @@ import {
 import { rarityPower } from "../sim/content/params/cards";
 import { fuseMoves } from "../sim/fusion";
 import { evolve, formOf, hazardRadius } from "../sim/evolution";
-import { ULT_INVULNERABLE } from "../sim/content/params/ultimates";
 import { drainAt } from "../sim/status";
 import { createPlayer } from "../sim/world";
 import { PARTNER_ATTACK, CAPTURE_CHANCE, GUARD } from "../sim/content/params/partners";
@@ -155,7 +154,7 @@ import {
   type HpState,
   type Save,
 } from "./survival";
-import { ultCast, ultChargeRate } from "./ultimate";
+import { ultCast, ultChargeRate, ultimateTiming, type UltimateTiming } from "./ultimate";
 import { CAMPAIGN_FIELDS } from "../sim/content/campaign";
 
 const STEP = 1;
@@ -1038,6 +1037,15 @@ export interface RunModel {
   exposure: Map<string, Exposure>;
   /** Campaign only: each later map's first two minutes against the map before (entry pace). */
   entryWindows: EntryComparison[];
+  ultimate: {
+    timing: UltimateTiming;
+    casts: number;
+    releases: number;
+    firstCast: number | null;
+    firstRelease: number | null;
+    protectedSeconds: number;
+    preventedDamage: number;
+  };
 }
 
 export interface Outcome {
@@ -1068,6 +1076,8 @@ export interface RunOptions {
   campaign?: boolean;
   /** One integer second per field, from 1 through its forced-summon time. Default: reference time. */
   summonSeconds?: readonly number[];
+  /** Analysis-only historical comparison; defaults are read from shared sim parameters. */
+  ultimateTiming?: UltimateTiming;
 }
 
 /** What one build sample brings this second, at HP share `frac` (low HP turns on Blaze / Torrent). */
@@ -2185,7 +2195,11 @@ interface Track {
   bossTtk: number | null;
   partners: EnemyId[];
   ultCharge: number;
-  casting: number;
+  casting: { elapsed: number; stage: Player["stage"]; released: boolean } | null;
+  ultimateProtection: number;
+  ultimateReleases: number[];
+  protectedSeconds: number;
+  preventedDamage: number;
   invulnerable: number;
   ults: number[];
   damage: Map<MoveId, number>;
@@ -2241,7 +2255,11 @@ function newTrack(i: number, starter: StarterId, lab: LabBonuses | undefined): T
     bossTtk: null,
     partners: [],
     ultCharge: 0,
-    casting: 0,
+    casting: null,
+    ultimateProtection: 0,
+    ultimateReleases: [],
+    protectedSeconds: 0,
+    preventedDamage: 0,
     invulnerable: 0,
     ults: [],
     damage: new Map(),
@@ -2576,7 +2594,6 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   if (boss) {
     const fight = (track.fights[fieldIndex] ??= { seconds: 0, cost: 0, complete: false });
     fight.seconds += STEP;
-    fight.cost += (guardianHits.reduce((sum, h) => sum + h.rate * h.dmg, 0) * STEP) / m.maxHp;
   }
   const sideEffect = (key: "poison" | "slow") =>
     guardianHits.reduce((sum, h) => sum + h.rate * (h[key] ?? 0), 0);
@@ -2628,18 +2645,33 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
     partnerSwarm *= 1 - ELITE_SHARE;
   }
   useful = useful * swarmShare + partnerSwarm;
-  // The ultimate fires as soon as it is full: one cast's damage lands in this second.
+  // Accept the trigger immediately; original pulses keep their relative times after preparation.
   let ultHeal = 0;
-  if (track.casting > 0) track.casting -= STEP;
-  else if (track.ultCharge >= 1) {
-    const cast = ultCast(player, target);
-    useful += cast.useful;
-    if (boss) boss.hp -= cast.single;
-    ultHeal = cast.heal;
-    track.casting = cast.duration;
-    track.invulnerable = Math.max(track.invulnerable, ULT_INVULNERABLE);
+  const timing = options.ultimateTiming ?? ultimateTiming();
+  if (!track.casting && track.ultCharge >= 1 && track.ultimateProtection <= 0) {
+    track.casting = { elapsed: 0, stage: player.stage, released: false };
+    track.ultimateProtection = timing.protection;
     track.ultCharge = 0;
     track.ults.push(t);
+  }
+  const ultimateBusy = track.casting !== null;
+  if (track.casting) {
+    const casting = track.casting;
+    if (!casting.released && casting.elapsed + STEP > timing.windup) {
+      casting.released = true;
+      track.ultimateReleases.push(t + Math.max(0, timing.windup - casting.elapsed));
+    }
+    const cast = ultCast(
+      { ...player, stage: casting.stage },
+      target,
+      { from: casting.elapsed, to: casting.elapsed + STEP },
+      timing,
+    );
+    useful += cast.useful / STEP;
+    if (boss) boss.hp -= cast.single;
+    ultHeal = cast.heal;
+    casting.elapsed += STEP;
+    if (casting.elapsed > cast.duration) track.casting = null;
   }
   for (const { move, out } of m.out.perMove) {
     const onBoss = boss ? out.single * skill.bossFocus : 0;
@@ -2695,7 +2727,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   track.killRate = (kills + eliteKills) / STEP;
 
   const xp = (kills * field.xp + eliteXp) * m.xp * m.pickup;
-  if (track.casting <= 0)
+  if (!ultimateBusy)
     track.ultCharge +=
       ultChargeRate(
         player,
@@ -2730,8 +2762,14 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   const heal = sustain + berries + ultHeal / STEP;
 
   // Ultimate and evolution invulnerability blanks this share of the second's hits.
-  const exposed = 1 - Math.min(1, track.invulnerable / STEP);
+  const ultimateExposed = 1 - Math.min(1, track.ultimateProtection / STEP);
+  const exposed = 1 - Math.min(1, Math.max(track.invulnerable, track.ultimateProtection) / STEP);
+  track.protectedSeconds += track.alive * Math.min(STEP, track.ultimateProtection);
+  track.ultimateProtection = Math.max(0, track.ultimateProtection - STEP);
   track.invulnerable = Math.max(0, track.invulnerable - STEP);
+  if (boss)
+    track.fights[fieldIndex]!.cost +=
+      (guardianHits.reduce((sum, h) => sum + h.rate * h.dmg, 0) * exposed * STEP) / m.maxHp;
   const caught = hits.filter((h) => h.clumped);
   const catches = caught.reduce((sum, h) => sum + h.rate, 0) / Math.max(1, skill.burst);
   const party = track.partners.length;
@@ -2747,6 +2785,20 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
     heal * full,
   );
   track.hurtRate = landed;
+  if (ultimateExposed < 1) {
+    const unprotected = damageEvents(
+      hits,
+      m.maxHp,
+      skill.burst,
+      m.defence,
+      guard,
+      m.spareDashes,
+      heal * full,
+    );
+    track.preventedDamage +=
+      track.alive *
+      ((unprotected.meanDps - meanDps) * STEP + poison * STEP * (1 - ultimateExposed));
+  }
   const catchHit =
     caught.reduce((sum, h) => sum + h.rate * h.dmg, 0) /
     Math.max(
@@ -2758,7 +2810,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   stepHp(track.hp, {
     events,
     heal: heal / m.maxHp,
-    poison: poison / m.maxHp,
+    poison: (poison * ultimateExposed) / m.maxHp,
     floor: DRAIN_FLOOR / m.maxHp,
     charges: saves.charges,
     fallback: saves.fallback,
@@ -2790,7 +2842,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
       capacity: buildOutput(player, targetFor(field, cap, skill)).useful,
       spawnScale,
       hp: field.hp,
-      landed: (meanDps + poison) / m.maxHp,
+      landed: (meanDps + poison * ultimateExposed) / m.maxHp,
       swarmRaw: rawShare(swarm.hits),
       guardianRaw: rawShare(guardianHits),
       partnerDps,
@@ -2824,7 +2876,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
       living: track.living + track.approaching,
       kills: track.killed + track.eliteKilled,
       single: bossDps,
-      inDps: meanDps + poison,
+      inDps: meanDps + poison * ultimateExposed,
       ehp: m.maxHp / m.armor,
       hp: track.frac,
       alive: track.alive,
@@ -2850,6 +2902,8 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
       track.living = 0;
       track.approaching = 0;
       track.elites = [];
+      track.casting = null;
+      track.ultimateProtection = 0;
       track.directorPressure = 0.5;
       return;
     }
@@ -2939,6 +2993,9 @@ export function runModel(options: RunOptions): RunModel {
   const { starter, difficulty } = options;
   const stage = stageDefs[options.stage];
   const count = options.samples ?? BUILD_SAMPLES;
+  const timing = options.ultimateTiming ?? ultimateTiming();
+  if (![timing.windup, timing.protection].every((value) => Number.isFinite(value) && value >= 0))
+    throw new RangeError("runModel: ultimate timing must be finite and nonnegative");
   const tracks = Array.from({ length: count }, (_, i) => newTrack(i, starter, options.lab));
   const zones = options.campaign ? CAMPAIGN_FIELDS.length : (options.zones ?? 1);
   if (!(Number.isInteger(zones) && zones >= 1 && (options.campaign || zones <= stage.zones.length)))
@@ -3121,5 +3178,22 @@ export function runModel(options: RunOptions): RunModel {
     stardust: mean(tracks.map((tr) => tr.stardust)),
     exposure,
     entryWindows: options.campaign ? entryComparisons(tracks, env) : [],
+    ultimate: {
+      timing,
+      casts: mean(tracks.map((track) => track.ults.length)),
+      releases: mean(tracks.map((track) => track.ultimateReleases.length)),
+      firstCast: tracks.some((track) => track.ults.length > 0)
+        ? mean(tracks.flatMap((track) => (track.ults.length > 0 ? [track.ults[0]!] : [])))
+        : null,
+      firstRelease: tracks.some((track) => track.ultimateReleases.length > 0)
+        ? mean(
+            tracks.flatMap((track) =>
+              track.ultimateReleases.length > 0 ? [track.ultimateReleases[0]!] : [],
+            ),
+          )
+        : null,
+      protectedSeconds: mean(tracks.map((track) => track.protectedSeconds)),
+      preventedDamage: mean(tracks.map((track) => track.preventedDamage)),
+    },
   };
 }

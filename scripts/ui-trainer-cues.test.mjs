@@ -34,7 +34,7 @@ test("simultaneous remote ultimates cannot replace the local trainer or stack a 
   cues.show(cue("ultimate", true, "yewei"), 110);
   assert.equal(cues.show(cue("ultimate", false), 120), false);
   assert.equal(cues.read(120).trainer, "yewei");
-  assert.equal(cues.read(1500), null);
+  assert.equal(cues.read(3200), null);
 });
 
 test("Xiaqing unlocks on banked lifetime kills and follows imported progress", () => {
@@ -67,14 +67,14 @@ test("Xiaqing unlocks on banked lifetime kills and follows imported progress", (
 
 test("old and obscured cues are discarded instead of replaying on return", () => {
   const cues = new TrainerCues();
-  assert.equal(cues.show(cue("ultimate"), 5000, 2000), false);
+  assert.equal(cues.show(cue("ultimate"), 5000, 3000), false);
   cues.show(cue("dialogue"), 5000);
   cues.suppress("blocked");
   assert.equal(cues.show(cue("dialogue"), 5100), false);
   cues.suppress("open");
   assert.equal(cues.read(5200), null);
   cues.show(cue("ultimate"), 5300, 600);
-  assert.equal(cues.read(6100), null);
+  assert.equal(cues.read(7700), null);
 });
 
 test("a danger notice keeps the player's own ultimate and drops chatter and teammates", () => {

@@ -30,7 +30,13 @@ import { itemSlots, moveSlots } from "./sim/upgrades";
 import { fusionStatus, type FusionPart } from "./sim/fusion";
 import { rescueTarget } from "./sim/rescue";
 import { trainers, type TrainerId } from "../trainers";
-import { deployCall, ultimateCall, type TrainerCue } from "./trainer-cues";
+import {
+  deployCall,
+  ultimateCall,
+  RELEASE as ULT_RELEASE_CUE,
+  type TrainerCue,
+} from "./trainer-cues";
+import { ULT_WINDUP } from "./sim/content/params/ultimates";
 import { DEPLOYMENT_MS } from "./view/deployment";
 import { COOP } from "./sim/content/params/coop";
 import { DASH_COOLDOWN } from "./sim/content/params/player";
@@ -130,6 +136,8 @@ export interface RunSnapshot {
   /** Ultimate charge 0 → 1; `casting` while one plays out. */
   ult: number;
   casting: boolean;
+  ultWindup: number;
+  ultProtection: number;
   form: FormId;
   rampage: boolean;
   /** The zone (0-based of `count`), its seconds so far and the second its final swarm starts. */
@@ -358,6 +366,8 @@ function snapshot(world: World, playerId: PlayerId): RunSnapshot {
     stardust: Math.floor(player.stardust),
     ult: player.ult.charge,
     casting: player.ult.elapsed >= 0,
+    ultWindup: player.ult.elapsed < 0 ? 0 : Math.max(0, ULT_WINDUP - player.ult.elapsed),
+    ultProtection: player.ult.protection,
     form: formOf(player).id,
     rampage: world.rampage,
     zone: {
@@ -854,6 +864,14 @@ export function createRun(
                   : ultimateCall(event.line, event.stage),
               ...speaker(event.player),
             },
+            network?.eventAgeMs(event) ?? 0,
+          );
+          break;
+        case "ult-release":
+          if ((network?.eventAgeMs(event) ?? 0) >= ULT_RELEASE_CUE.late) break;
+          hud.trainers.release(
+            network ? event.player : null,
+            event.player === PLAYER,
             network?.eventAgeMs(event) ?? 0,
           );
           if (event.player !== PLAYER) break;

@@ -2,19 +2,26 @@ import { Container, Content, Image, Text } from "@pmndrs/uikit";
 import { Color, Mesh, PlaneGeometry, Vector2, Vector3 } from "three";
 import { images } from "../../prepare/images";
 import { lineForms, starters, type StarterId } from "../../run/sim/content/lines/index";
-import { TrainerCues, type ActiveTrainerCue, type TrainerCue } from "../../run/trainer-cues";
 import { trainerArt, trainerOrder, trainers } from "../../trainers";
+import {
+  RELEASE,
+  TrainerCues,
+  type ActiveTrainerCue,
+  type TrainerCue,
+} from "../../run/trainer-cues";
 import { RevisionGate, type PageAcquisition, type PageSource } from "./fonts";
 import { fade, stack } from "./layer";
-import { EASE, SNAP } from "./motion";
+import { EASE, POP, SNAP } from "./motion";
 import { SlantPlate } from "./slant-plate";
 import { HARD_SHADOW, RADIUS, RADIUS_INNER, SLANT, srgb, ui } from "./tokens";
 import { playerColors } from "../player-colors";
 import type { UiStage } from "./stage";
 import { UiShaderMaterial } from "./ui-shader";
 
-/** Room around the band's box for its hard shadow. */
-const REACH = 12;
+/** Room around the band's box for its hard shadow and the ultimate's colour ribbon. */
+const REACH = 18;
+/** Where the ultimate's ribbon sits behind the band, down and right (px). */
+const RIBBON = { x: 12, y: 8 } as const;
 const INK = ui.ink;
 const PAPER = ui.paper;
 const clamp = (t: number) => Math.max(0, Math.min(1, t));
@@ -38,7 +45,9 @@ const textOn = (hex: string) => {
 /**
  * The cut-in band in one quad, on the shared slant, radius and hard shadow (`tokens`): ink fill, the
  * trainer slab on its left, a thin accent top line, the crest's tinted disc and rim on the
- * right, speed streaks, a light sweep and a slanted wipe. Name and seat tags are `SlantPlate`s.
+ * right, speed streaks, a light sweep and a slanted wipe. An ultimate adds the trainer-colour
+ * ribbon behind the band, a glint on its leading end and the release burst (an accent wash and a
+ * shock ring from the crest). Name and seat tags are `SlantPlate`s.
  */
 class CutinBand {
   readonly content = new Content({
@@ -61,8 +70,15 @@ class CutinBand {
     radius: { value: RADIUS },
     reveal: { value: 1 },
     shine: { value: -1 },
+    /** Streak phase (seconds of travel; negative draws none) and strength. */
     streak: { value: -1 },
-    flash: { value: 0 },
+    streakGain: { value: 0.28 },
+    /** The ribbon's wipe 0 → 1 behind the band (0: none). */
+    ribbon: { value: 0 },
+    /** The leading end's glint, 1 → 0. */
+    glint: { value: 0 },
+    /** The release burst's progress 0 → 1 (negative: none). */
+    burst: { value: -1 },
     opacity: { value: 1 },
   };
   private readonly material = new UiShaderMaterial("trainer-skew", {
@@ -80,7 +96,7 @@ class CutinBand {
     fragmentShader: /* glsl */ `
       uniform vec2 boxSize, slab;
       uniform vec3 fill, accent, light, ring;
-      uniform float radius, reveal, shine, streak, flash, opacity;
+      uniform float radius, reveal, shine, streak, streakGain, ribbon, glint, burst, opacity;
       varying vec2 boxPoint;
       #include <clipping_planes_pars_fragment>
       vec3 toLinear(vec3 c) { return mix(c / 12.92, pow((c + .055) / 1.055, vec3(2.4)), step(.04045, c)); }
@@ -102,6 +118,19 @@ class CutinBand {
         vec4 acc = vec4(0.);
         // The shared hard shadow, down-right.
         over(acc, vec3(0.), ${HARD_SHADOW.alpha} * (1. - smoothstep(-aa, aa, shape(p - vec2(${HARD_SHADOW.offset}.)))));
+        float k = burst >= 0. ? (1. - burst) * (1. - burst) : 0.;
+        if (ribbon > 0.) {
+          // The trainer's colour ribbon: the band's shape behind it, wiped in a beat late.
+          vec2 o = vec2(${RIBBON.x}., ${RIBBON.y}.);
+          float dr = max(shape(p - o), along(p - o) - ribbon * (w + 8.));
+          if (dr < aa) {
+            float row = floor((p.y - o.y) / 3.);
+            float x = fract(along(p - o) / w * 2.4 + streak * 2.2 * (1. + hash(row + 11.)) + hash(row + 5.));
+            float line = (1. - smoothstep(0., .05, x - .25)) * step(.45, hash(row + 2.));
+            vec3 rc = mix(accent, light, .55 * line + .5 * k);
+            over(acc, rc, 1. - smoothstep(-aa, aa, dr));
+          }
+        }
         float d = shape(p);
         float u = along(p);
         if (d < aa) {
@@ -115,7 +144,9 @@ class CutinBand {
             float row = floor(p.y / 5.);
             float x = fract(u / w * 1.6 + streak * (1.4 + hash(row)) + hash(row + 7.));
             float line = (1. - smoothstep(.0, .06, x - .2)) * step(.3, hash(row + 3.)) * (1. - smoothstep(.35, .5, abs(fract(p.y / 5.) - .5)));
-            col = mix(col, light, .28 * line * step(slab.x + 3., u));
+            // A few rows run in the trainer's colour, the rest in its light.
+            vec3 ink = mix(light, accent, step(.82, hash(row + 13.)));
+            col = mix(col, ink, streakGain * line * step(slab.x + 3., u));
           }
           if (ring.z > 0.) {
             vec2 q = vec2(u, p.y) - ring.xy;
@@ -124,13 +155,21 @@ class CutinBand {
             float circle = abs(length(q) - r) - 2.;
             col = mix(col, accent, .22 * (1. - smoothstep(-aa, aa, length(q) - r)));
             col = mix(col, light, .9 * (1. - smoothstep(-aa, aa, circle)));
+            if (burst >= 0.) {
+              // The release: the band takes the trainer's colour for a beat and a ring runs out
+              // from the crest.
+              col = mix(col, accent, .34 * k * step(slab.x + 3., u));
+              float wave = abs(length(q) - r - burst * h * 1.2) - (1. + 3. * k);
+              col = mix(col, light, (1. - burst) * (1. - smoothstep(-aa, aa, wave)));
+            }
           }
           if (shine >= 0.) {
             float c = mix(-48., boxSize.x + 48., shine);
             float b0 = (u - c) / 18., b1 = (u - c + 34.) / 5.;
             col = mix(col, vec3(1.), .45 * min(1., exp(-b0 * b0) + .6 * exp(-b1 * b1)));
           }
-          col = mix(col, vec3(1.), flash);
+          // The leading end's glint while the band arrives: a narrow light edge, not a flash.
+          col = mix(col, light, glint * .85 * (1. - smoothstep(0., 26., w - u)));
           over(acc, col, 1. - smoothstep(-aa, aa, d));
         }
         // The slanted wipe: shown up to reveal of the band's length.
@@ -212,8 +251,8 @@ const lookOf = (cue: ActiveTrainerCue, compact: boolean): Look => {
       : { height: 104, line: 32, name: 16, portrait: 200, enter: 420, exit: 300 };
   if (cue.kind === "ultimate" && cue.local)
     return compact
-      ? { height: 60, line: 18, name: 12, portrait: 116, enter: 260, exit: 220 }
-      : { height: 84, line: 26, name: 15, portrait: 160, enter: 260, exit: 220 };
+      ? { height: 64, line: 20, name: 12, portrait: 126, enter: 380, exit: 300 }
+      : { height: 96, line: 30, name: 16, portrait: 188, enter: 380, exit: 300 };
   return compact
     ? { height: 44, line: 14, name: 11, portrait: 80, enter: 300, exit: 220 }
     : { height: 58, line: 18, name: 13, portrait: 104, enter: 300, exit: 220 };
@@ -232,6 +271,10 @@ export interface CutinAnchor {
  * a slanted name plate on its own row, the line on the next, and the partner's crest in a disc
  * on its right. Its strings are set only once their font pages are resident (`CueGlyphs`):
  * a cue whose pages are still loading stays hidden, and drops if it outlives its time first.
+ *
+ * The player's own ultimate is the long beat (`cueDuration`): a fast slam with the trainer's
+ * ribbon and an afterimage, the line held through the two-second preparation, then the burst on
+ * the sim's actual release (`release`), and the exit a second later.
  */
 export class GpuTrainerCutin {
   readonly cues = new TrainerCues();
@@ -248,6 +291,8 @@ export class GpuTrainerCutin {
   });
   private readonly band = new CutinBand(this.bandBox);
   private readonly portrait = new Image({ positionType: "absolute", positionBottom: 0 });
+  /** The portrait's afterimage: trails its entrance and swells out on the release. */
+  private readonly echo = new Image({ positionType: "absolute", positionBottom: 0 });
   private readonly lead = new Container({ flexShrink: 0 });
   private readonly copy = new Container({
     flexDirection: "column",
@@ -281,6 +326,9 @@ export class GpuTrainerCutin {
   /** Pages an awaited `prepare` holds until its cue commits. */
   private primed: PageAcquisition | null = null;
   private drawn = 0;
+  /** The streaks' travel (s), advanced at the beat's speed; the frame clock it last advanced on. */
+  private phase = 0;
+  private last = 0;
   private readonly stage: UiStage;
   private readonly glyphs: CueGlyphs;
 
@@ -298,6 +346,7 @@ export class GpuTrainerCutin {
     this.tail.add(stack(this.crest, 2));
     this.root.add(
       this.bandBox,
+      stack(this.echo, 3),
       stack(this.portrait, 3),
       stack(this.lead, 1),
       stack(this.copy, 2),
@@ -330,6 +379,14 @@ export class GpuTrainerCutin {
     return shown;
   }
 
+  /** The sim's `ult-release` for `seat`: the showing ultimate band plays its burst once and holds
+   *  for the exit. Nothing replays for a band that is gone, obscured or another player's. */
+  release(seat: number | null, local: boolean, ageMs = 0): boolean {
+    const released = this.cues.release(seat, local, performance.now(), ageMs);
+    if (released) this.stage.invalidate();
+    return released;
+  }
+
   clear(): void {
     this.cues.clear();
     this.committed = null;
@@ -354,11 +411,12 @@ export class GpuTrainerCutin {
     const compact = this.stage.viewport.height <= 480;
     const look = lookOf(cue, compact);
     const mate = cue.seat !== null && !cue.local;
-    this.portrait.setProperties({
-      src: trainerArt(cue.trainer, "cutin"),
-      width: look.portrait,
-      height: look.portrait,
-    });
+    for (const image of [this.portrait, this.echo])
+      image.setProperties({
+        src: trainerArt(cue.trainer, "cutin"),
+        width: look.portrait,
+        height: look.portrait,
+      });
     this.crest.setProperties({ src: `/art/icons/crests/${cue.type}.webp` });
     this.name.set(trainer.name, trainer.color, look.name);
     this.seat.set(
@@ -424,29 +482,47 @@ export class GpuTrainerCutin {
       positionLeft: tail / 2 - slant / 2 - crest / 2,
       positionTop: h / 2 - crest / 2,
     });
-    this.portrait.setProperties({ positionLeft: -look.portrait * 0.06 });
+    for (const image of [this.portrait, this.echo])
+      image.setProperties({ positionLeft: -look.portrait * 0.06 });
     const box = this.band.update();
     const u = this.band.uniforms;
+    // The player's own ultimate is the long beat: ribbon, afterimage and the release burst.
+    const own = ult && cue.local;
     if (box) {
-      u.slab.value.set(lead * 0.62, ult ? 3 : 2);
+      u.slab.value.set(lead * 0.62, own ? 4 : ult ? 3 : 2);
       u.ring.value.set(box[0] - slant - tail * 0.5 - slant * 0.5, h / 2, h * 0.3);
     }
 
     const age = now - cue.born;
+    const since = cue.released === null ? -1 : now - cue.released;
+    // The release burst 0 → 1 from the actual release, −1 before it and once played.
+    const burst = since >= 0 && since < RELEASE.burst ? since / RELEASE.burst : -1;
+    const kick = burst >= 0 ? (1 - burst) ** 3 : 0;
     const leaving = clamp(1 - (cue.duration - age) / look.exit);
     const out = SNAP(leaving);
     const scale = look.enter / 420;
-    const sweep = SNAP(step(age, 0, look.enter));
+    // The ultimate arrives at speed and brakes hard; the other beats cut in on SNAP.
+    const sweep = (own ? EASE : SNAP)(step(age, 0, look.enter));
     const width = box?.[0] ?? 400;
     this.root.setProperties({
-      transformTranslateX: -(1 - sweep) * 1.12 * (width + left) - out * 0.4 * width,
+      transformTranslateX: -(1 - sweep) * 1.12 * (width + left) - out * 0.4 * width + kick * 12,
     });
     fade(this.root, 1 - leaving);
-    const figure = EASE(step(age, 60 * scale, 550 * scale));
+    const figure = EASE(step(age, (own ? 40 : 60) * scale, (own ? 460 : 550) * scale));
+    const swell = ult ? (own ? 0.14 : 0.08) * (1 - figure) + 0.05 * kick : 0;
     fade(this.portrait, figure).setProperties({
       transformTranslateX: -(1 - figure) * 0.14 * look.portrait,
-      transformScaleX: ult ? 1 + 0.08 * (1 - figure) : 1,
-      transformScaleY: ult ? 1 + 0.08 * (1 - figure) : 1,
+      transformScaleX: 1 + swell,
+      transformScaleY: 1 + swell,
+    });
+    // The afterimage trails the slam, then swells out behind the trainer on the release.
+    const trail = step(age, 0, 520);
+    const echo = !own ? 0 : burst >= 0 ? 0.5 * (1 - burst) : 0.45 * (1 - trail);
+    const echoScale = burst >= 0 ? 1 + 0.3 * EASE(burst) : 1.1;
+    fade(this.echo, echo).setProperties({
+      transformTranslateX: burst >= 0 ? 0 : -(1 - EASE(trail)) * 0.42 * look.portrait,
+      transformScaleX: echoScale,
+      transformScaleY: echoScale,
     });
     const plate = SNAP(step(age, 180 * scale, 400 * scale));
     this.name.plate.set({ reveal: plate });
@@ -454,13 +530,35 @@ export class GpuTrainerCutin {
     fade(this.name.label, step(age, 300 * scale, 160));
     fade(this.seat.label, step(age, 300 * scale, 160));
     const words = EASE(step(age, 260 * scale, 380 * scale));
-    fade(this.line, words).setProperties({ transformTranslateX: -(1 - words) * 16 });
-    fade(this.crest, EASE(step(age, 200 * scale, 300 * scale)));
+    // The ultimate's line lands large and settles, and jolts with the release.
+    const punch = own ? 0.16 * (1 - words) + 0.05 * kick : 0;
+    fade(this.line, words).setProperties({
+      transformTranslateX: -(1 - words) * 16,
+      transformScaleX: 1 + punch,
+      transformScaleY: 1 + punch,
+    });
+    const crestIn = step(age, 200 * scale, 380 * scale);
+    // Held, the crest breathes; on the release it kicks out and twists back.
+    const breath = own && crestIn >= 1 ? 0.04 * Math.sin((age / 1000) * Math.PI * 2.5) : 0;
+    const crestScale = (own ? 0.3 + 0.7 * POP(crestIn) : 1) + breath + 0.35 * kick;
+    fade(this.crest, EASE(step(age, 200 * scale, 300 * scale))).setProperties({
+      transformScaleX: crestScale,
+      transformScaleY: crestScale,
+      transformRotateZ: -12 * kick,
+    });
     u.reveal.value = 1;
-    u.shine.value = ult || cue.kind === "deploy" ? step(age, look.enter * 0.6, 520) : -1;
-    if (u.shine.value >= 1) u.shine.value = -1;
-    u.streak.value = ult ? age / 1000 : -1;
-    u.flash.value = ult ? 0.6 * (1 - step(age, 0, 140)) : 0;
+    const shine = ult || cue.kind === "deploy" ? step(age, look.enter * 0.6, 520) : -1;
+    u.shine.value = burst >= 0 ? EASE(burst) : shine >= 1 ? -1 : shine;
+    // Streaks race in with the band, run steady through the hold, surge on the release and exit.
+    const dt = Math.min(50, Math.max(0, now - this.last));
+    const speed = own ? 1 + 1.6 * (1 - step(age, look.enter, 300)) + 2.5 * kick + 1.5 * leaving : 1;
+    this.phase = (this.phase + (dt / 1000) * speed) % 1000;
+    this.last = now;
+    u.streak.value = ult ? this.phase : -1;
+    u.streakGain.value = own ? 0.3 + 0.3 * (1 - step(age, look.enter, 400)) + 0.35 * kick : 0.28;
+    u.ribbon.value = own ? EASE(step(age, 60, 460)) : 0;
+    u.glint.value = own ? 1 - step(age, look.enter * 0.5, 360) : 0;
+    u.burst.value = burst;
     u.opacity.value = 1;
     this.drawn = cue.id;
     // Moving parts redraw every frame; a held dialogue band is still and lets the stage rest.

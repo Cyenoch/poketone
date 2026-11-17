@@ -8,7 +8,7 @@
 
 完整读取：`src/network/{codec,delta,interpolation,owner-protocol,owner,protocol,run,session,wire}.ts`、[services/harbor/server.ts](../../services/harbor/server.ts)、`src/platform/{web,native}/direct-peer.ts`、[src/ui/gpu/multiplayer-session.ts](../../src/ui/gpu/multiplayer-session.ts)。补读完整公共 [src/platform/direct-peer.ts](../../src/platform/direct-peer.ts) 接口，以及正式调用链上的网络相关函数：[src/app/session.ts](../../src/app/session.ts) 的房间挂载/start/back/dispose、[src/run/session.ts](../../src/run/session.ts) 的 leave/onEnd/状态接线、[src/run/createRun.ts](../../src/run/createRun.ts) 的 build/start/changeZone/advance/forfeit/fail/report/dispose、快照边界、共享模拟/owner 模拟入口、combat 报告/提交和凭据存储。未将这些调用方的非网络 UI 状态纳入机器计数。
 
-契约见 [multiplayer规范](../../openspec/specs/multiplayer/spec.md)。传输协议为 8，完整世界快照为 4（新增平滑增援压力）；版本分别由 `protocol.ts` 和 `snapshot.ts` 管理，不和主进度/导出存档版本混用。以下描述当前实现，不把历史审计失败继续列作未修代码。
+契约见 [multiplayer规范](../../openspec/specs/multiplayer/spec.md)。传输协议与完整世界快照的当前版本分别由 `protocol.ts` 和 `snapshot.ts` 管理，不和主进度/导出存档版本混用。以下描述当前实现，不把历史审计失败继续列作未修代码。
 
 ## 显式状态与隐式协议的区别
 
@@ -306,6 +306,8 @@
 - **终态/异常/取消**：旧seq/revision/life丢弃；非法包fail；world paused仍接收暂停前在途事实；map重置seq但nextId沿用；每player负ID范围分隔
 - **关键不变量**：共享HP/死亡/掉落仅host提交；同一包不会重复提交；攻击ID跨恢复不复用；owner的payload不能冒充其他席位
 - **测试与缺口**：network.test 保护缺字段 UltState、弹体与范围攻击在修改世界前拒绝，合法同序号随后仍可提交。validator 使用真实玩家的进化/必杀时间线校验索引和必需字段；这是协议结构检查，不重新裁定受信任队友的碰撞真实性。
+
+F 演出按已知发送席位及其伙伴归属。缺少可显示的档位/年龄时只过滤该演出，保留同包有效动作；较旧 cast 到达时保留当前施放。房主接收同 cast 时限制剩余保护不回增，本机 owner 合并共享帧时保留自己已推进的倒计时，避免两端相位差造成双扣。`ult/ult-release` 的年龄随发送积压、重试、房主播放和转发累计，宿主据此跳过过期的切入强调、声音及停顿。
 
 <a id="n26"></a>
 

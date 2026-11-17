@@ -13,7 +13,8 @@ import { LETHAL_SAVE_MIN_HP, PLAYER_IFRAMES, SHIELD } from "./content/params/pla
  * stat scale it and the shield soaks it before HP. Both co-op and solo players use this path.
  */
 export function damagePlayer(world: World, player: Player, raw: number): boolean {
-  if (!player.alive || player.invulnerable > 0 || player.dashTime > 0) return false;
+  if (!player.alive || player.ult.protection > 0 || player.invulnerable > 0 || player.dashTime > 0)
+    return false;
   const stats = currentStats(player);
   if (blocked(player) || (stats.evasion > 0 && chance(world.rng, stats.evasion))) {
     player.invulnerable = PLAYER_IFRAMES;
