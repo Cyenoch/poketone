@@ -30,6 +30,8 @@ export class FullscreenIcon extends Content {
   setActive(active: boolean): boolean {
     const geometry = active ? this.exit : this.enter;
     if (this.mesh.geometry === geometry) return false;
+    // Context-loss cleanup traverses mounted geometry. Release this upload before detaching it.
+    this.mesh.geometry.dispose();
     this.mesh.geometry = geometry;
     return true;
   }
