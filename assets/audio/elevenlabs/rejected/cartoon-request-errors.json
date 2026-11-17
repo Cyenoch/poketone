@@ -1,0 +1,215 @@
+{
+  "reason": "Initial requests exceeded the service 450-character prompt limit; no playable output downloaded. Price metadata is not confirmation of billing.",
+  "generations": [
+    {
+      "id": "O2IkjbmttEaSpSzFGO28",
+      "model_id": "eleven_text_to_sound_v2",
+      "status": "failed",
+      "error_message": "Prompt must be at most 450 characters, got 495.",
+      "price": {
+        "credits": 1.6665,
+        "price_cents": 0.0303,
+        "cost_fiat_currency": "usd"
+      }
+    },
+    {
+      "id": "Y2pX7wtMitdAZiQzhTUV",
+      "model_id": "eleven_text_to_sound_v2",
+      "status": "failed",
+      "error_message": "Prompt must be at most 450 characters, got 495.",
+      "price": {
+        "credits": 1.6665,
+        "price_cents": 0.0303,
+        "cost_fiat_currency": "usd"
+      }
+    },
+    {
+      "id": "pkqQi3WmoBRrfReOJiva",
+      "model_id": "eleven_text_to_sound_v2",
+      "status": "failed",
+      "error_message": "Prompt must be at most 450 characters, got 495.",
+      "price": {
+        "credits": 1.6665,
+        "price_cents": 0.0303,
+        "cost_fiat_currency": "usd"
+      }
+    },
+    {
+      "id": "uIrzDeIwsreehJcopXnM",
+      "model_id": "eleven_text_to_sound_v2",
+      "status": "failed",
+      "error_message": "Prompt must be at most 450 characters, got 523.",
+      "price": {
+        "credits": 1.6665,
+        "price_cents": 0.0303,
+        "cost_fiat_currency": "usd"
+      }
+    },
+    {
+      "id": "oBclJgkBoPoyTteCtj4d",
+      "model_id": "eleven_text_to_sound_v2",
+      "status": "failed",
+      "error_message": "Prompt must be at most 450 characters, got 523.",
+      "price": {
+        "credits": 1.6665,
+        "price_cents": 0.0303,
+        "cost_fiat_currency": "usd"
+      }
+    },
+    {
+      "id": "CIY7zE6FJZJVhNRAgwnO",
+      "model_id": "eleven_text_to_sound_v2",
+      "status": "failed",
+      "error_message": "Prompt must be at most 450 characters, got 523.",
+      "price": {
+        "credits": 1.6665,
+        "price_cents": 0.0303,
+        "cost_fiat_currency": "usd"
+      }
+    },
+    {
+      "id": "VXahvdJuKjmZ89XmPmqd",
+      "model_id": "eleven_text_to_sound_v2",
+      "status": "failed",
+      "error_message": "Prompt must be at most 450 characters, got 458.",
+      "price": {
+        "credits": 1.6665,
+        "price_cents": 0.0303,
+        "cost_fiat_currency": "usd"
+      }
+    },
+    {
+      "id": "y5Qb13WA1hOqT7ClTV3D",
+      "model_id": "eleven_text_to_sound_v2",
+      "status": "failed",
+      "error_message": "Prompt must be at most 450 characters, got 458.",
+      "price": {
+        "credits": 1.6665,
+        "price_cents": 0.0303,
+        "cost_fiat_currency": "usd"
+      }
+    },
+    {
+      "id": "7Xcn88MxGQJOv11UiZaK",
+      "model_id": "eleven_text_to_sound_v2",
+      "status": "failed",
+      "error_message": "Prompt must be at most 450 characters, got 458.",
+      "price": {
+        "credits": 1.6665,
+        "price_cents": 0.0303,
+        "cost_fiat_currency": "usd"
+      }
+    },
+    {
+      "id": "E5hHUW3MZaAHMR8GkGVF",
+      "model_id": "eleven_text_to_sound_v2",
+      "status": "failed",
+      "error_message": "Prompt must be at most 450 characters, got 474.",
+      "price": {
+        "credits": 1.6665,
+        "price_cents": 0.0303,
+        "cost_fiat_currency": "usd"
+      }
+    },
+    {
+      "id": "QLoam6XwtBO3Fu7CWIy1",
+      "model_id": "eleven_text_to_sound_v2",
+      "status": "failed",
+      "error_message": "Prompt must be at most 450 characters, got 474.",
+      "price": {
+        "credits": 1.6665,
+        "price_cents": 0.0303,
+        "cost_fiat_currency": "usd"
+      }
+    },
+    {
+      "id": "8IZLaWF25IFhMbX58PxV",
+      "model_id": "eleven_text_to_sound_v2",
+      "status": "failed",
+      "error_message": "Prompt must be at most 450 characters, got 474.",
+      "price": {
+        "credits": 1.6665,
+        "price_cents": 0.0303,
+        "cost_fiat_currency": "usd"
+      }
+    }
+  ],
+  "requests": [
+    {
+      "id": "vixqhIohuVIB1oqX68Gk",
+      "label": "cast-rock-cartoon-round",
+      "template_id": "Ak3RbtQLnUYWennQTQkg",
+      "position": {
+        "x": 0.0,
+        "y": 63700.0
+      },
+      "modified_by": "user_0301ky3xsspffpg81eam48x0hd54",
+      "modified_at_utc": "2026-11-17T10:52:48.766358Z",
+      "type": "generation",
+      "model_id": "eleven_text_to_sound_v2",
+      "prompt": "A single stylized cartoon game stone toss sound: a short rounded elastic wump, playful weight and a soft rubbery low-mid punch, a tiny exaggerated chunky particle flutter, warm clear midrange body, gentle soft attack, over in a quarter second. Designed game sound, not realistic foley. No actual stone grinding, no scraping, no gravel friction, no clink, no ping, no metal, no chime, no ringing tone, no laser, no whistle, no wind hiss, no cinematic sub boom. Dry, no reverb, no music, no voice.",
+      "model_parameters": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5,
+        "loop": false
+      }
+    },
+    {
+      "id": "ILKqnPuVmvVWNkB5jy45",
+      "label": "hit-rock-cartoon-round",
+      "template_id": "Ak3RbtQLnUYWennQTQkg",
+      "position": {
+        "x": 0.0,
+        "y": 64400.0
+      },
+      "modified_by": "user_0301ky3xsspffpg81eam48x0hd54",
+      "modified_at_utc": "2026-11-17T10:52:49.381931Z",
+      "type": "generation",
+      "model_id": "eleven_text_to_sound_v2",
+      "prompt": "One stylized cartoon action game rock impact: a compact round rubbery bonk-thump with playful heavy weight and a tiny soft exaggerated rubble patter, warm low-mid body with a soft broad midrange pop, quick cushioned attack and very short decay. Clearly designed cartoon game sound, not real stones or realistic foley. No stone clack, no scraping, no gritty friction, no metallic crunch, no clink, no ping, no bell, no chime, no ringing tone, no laser, no whistle, no cinematic bass boom. Dry, no reverb, no music, no voice.",
+      "model_parameters": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5,
+        "loop": false
+      }
+    },
+    {
+      "id": "VOZYddGu7CVx69KjJl7K",
+      "label": "cast-ground-cartoon-round",
+      "template_id": "Ak3RbtQLnUYWennQTQkg",
+      "position": {
+        "x": 0.0,
+        "y": 65100.0
+      },
+      "modified_by": "user_0301ky3xsspffpg81eam48x0hd54",
+      "modified_at_utc": "2026-11-17T10:52:50.553834Z",
+      "type": "generation",
+      "model_id": "eleven_text_to_sound_v2",
+      "prompt": "A single stylized cartoon game ground bounce: a short elastic rounded bwump with a warm chunky low-mid body and a tiny playful soft flutter, cushioned punch with weight, compact and friendly for repeated action. Designed cartoon sound, not realistic soil or foley. No dirt friction, no scraping, no gravel, no gritty crunch, no metallic clink, no ping, no chime, no ringing tone, no laser, no whistle, no cinematic rumble. Dry, no reverb, no music, no voice.",
+      "model_parameters": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5,
+        "loop": false
+      }
+    },
+    {
+      "id": "mkIyHRJVpinK53sxdr9Y",
+      "label": "hit-ground-cartoon-round",
+      "template_id": "Ak3RbtQLnUYWennQTQkg",
+      "position": {
+        "x": 0.0,
+        "y": 65800.0
+      },
+      "modified_by": "user_0301ky3xsspffpg81eam48x0hd54",
+      "modified_at_utc": "2026-11-17T10:52:51.168095Z",
+      "type": "generation",
+      "model_id": "eleven_text_to_sound_v2",
+      "prompt": "A single very short stylized cartoon game ground hit: a soft rounded springy domp with a chunky warm midrange body and a tiny muted cartoon particle pop, cushioned immediate attack, weight with playful elasticity, quickly damped. Designed game sound, not realistic earth or foley. No gritty crunch, no dirt friction, no scrape, no metallic clink, no ping, no bell, no chime, no ringing tone, no laser, no whistle, no cinematic sub rumble. Dry, no reverb, no music, no voice.",
+      "model_parameters": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5,
+        "loop": false
+      }
+    }
+  ]
+}

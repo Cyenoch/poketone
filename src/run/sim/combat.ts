@@ -155,7 +155,9 @@ function settleDamage(
   if (enemy.hardened > 0) amount *= enemy.hardenDamage ?? HARDEN.damage;
   const removed = Math.min(amount, Math.max(0, enemy.hp));
   enemy.hp -= amount;
-  enemy.flash = 0.12;
+  // Hypnosis communicates control through its waves and sleep marks. Its five ticks per second
+  // must not keep whitening a crowd; an existing flash from another move still finishes normally.
+  if (hit.move !== "hypnosis") enemy.flash = 0.12;
   const knock = hit.knock * yieldTo(enemy);
   if (knock > 0) {
     const dx = enemy.x - hit.fromX;
@@ -182,6 +184,7 @@ function settleDamage(
     crit,
     weak: effectiveness < 1,
     type: hit.type,
+    move: hit.move,
     by: hit.owner.id,
     ...(confirmedContact ? { confirmedContact: true } : {}),
   });
@@ -302,7 +305,7 @@ export function killEnemy(ctx: Ctx, enemy: Enemy, killer: Player | null): void {
   if (enemy.boss) {
     // The guardian bonus is immediate; existing field drops fly to the team after the clear.
     for (const player of present(world)) earnStardust(player, STARDUST.guardian);
-    clearZone(world);
+    clearZone(world, enemy.x, enemy.z);
     world.events.push({ t: "banner", text: "守卫倒下了！", tone: "boss", kind: "clear" });
   }
 }

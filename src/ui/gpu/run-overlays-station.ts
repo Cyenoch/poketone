@@ -10,10 +10,11 @@ import { MAX_MOVE_LEVEL } from "../../run/sim/content/params/cards";
 import { forgetLock, fusionLock } from "../../run/locks";
 import { itemIcon, moveIcon } from "../../screens/runArt";
 import { StationArt, StationSurface } from "./run-station-surface";
-import { UiMotion } from "./motion";
-import { createMenuIcon } from "./icons";
+import { LIFT, SNAP, UiMotion } from "./motion";
+import { GameButton } from "./game-button";
 import { uiEaseOut } from "./focus-mark";
 import { fade, stack } from "./layer";
+import { ui } from "./tokens";
 import { CURRENCY_ICON, GpuCurrency } from "./currency";
 import type { UiStage } from "./stage";
 import { uiViewport } from "./viewport";
@@ -43,6 +44,9 @@ export class GpuStationContent {
   readonly headerCurrency: Container;
   controls: RunOverlayControl[] = [];
   private readonly motion = new UiMotion();
+  private readonly stage: UiStage;
+  private readonly buttons: GameButton[] = [];
+  private focusVisible = true;
   private readonly surfaces: StationSurface[] = [];
   private readonly arts: StationArt[] = [];
   private readonly lifts: { y: number }[] = [];
@@ -67,6 +71,7 @@ export class GpuStationContent {
   constructor(view: StationView, callbacks: StationContentCallbacks, stage: UiStage) {
     this.view = view;
     this.callbacks = callbacks;
+    this.stage = stage;
     this.purse = new GpuCurrency(stage, true);
     this.headerCurrency = this.purse.root;
     this.headerCurrency.setProperties({ marginLeft: "auto" });
@@ -177,11 +182,11 @@ export class GpuStationContent {
             flexShrink: 1,
           });
           const name = this.label(entry.name, 16),
-            level = this.text(entry.level, 13, "#536b82");
+            level = this.text(entry.level, 13, ui.muted);
           name.setProperties({ maxHeight: 23, overflow: "hidden" });
           if (!enabled) {
-            fade(name, 0.5).setProperties({ color: "#3e3e3e" });
-            fade(level, 0.5).setProperties({ color: "#686868" });
+            fade(name, 0.5).setProperties({ color: ui.muted });
+            fade(level, 0.5);
           }
           copy.add(name, level);
           panel.add(art.content, copy);
@@ -210,8 +215,11 @@ export class GpuStationContent {
               uiEaseOut,
             );
           }
-          const lift = { y: 0 };
+          // A picked tile stands 5px up; keyboard focus raises the others by the hover step.
+          const rest = on ? -LIFT.picked : 0;
+          const lift = { y: rest };
           this.lifts.push(lift);
+          panel.setProperties({ transformTranslateY: rest });
           const control: RunOverlayControl = {
             panel,
             enabled: () => true,
@@ -225,10 +233,10 @@ export class GpuStationContent {
             setFocused: (focused) => {
               this.motion.animate(
                 lift,
-                { y: focused && enabled ? -2 : 0 },
-                140,
+                { y: on ? rest : focused && enabled ? -LIFT.hover : 0 },
+                LIFT.ms,
                 () => panel.setProperties({ transformTranslateY: lift.y }),
-                uiEaseOut,
+                SNAP,
               );
             },
             setPressed: () => {},
@@ -251,6 +259,7 @@ export class GpuStationContent {
         }
       }
       const action = this.button(
+        "忘记",
         () => {
           if (!this.selectedForget) return;
           this.callbacks.send({
@@ -261,15 +270,20 @@ export class GpuStationContent {
           this.selectedForget = null;
         },
         !!selected,
-        "danger",
+        "ink",
       );
-      action.add(this.text("忘记", 16, selected ? "#a83243" : "#657b91"));
       if (selected) {
-        const name = this.label(selected.name, 16, "#a83243");
-        name.setProperties({ flexShrink: 1, minWidth: 0, maxHeight: 23, overflow: "hidden" });
+        const name = this.label(selected.name, 16, ui.white);
+        name.setProperties({
+          width: "auto",
+          flexShrink: 1,
+          minWidth: 0,
+          maxHeight: 23,
+          overflow: "hidden",
+        });
         action.add(
           name,
-          this.text(`+${selected.refund}`, 16, "#a83243"),
+          this.text(`+${selected.refund}`, 16, ui.white),
           stack(
             new Image({
               src: CURRENCY_ICON,
@@ -407,33 +421,18 @@ export class GpuStationContent {
       this.machine.add(chambers[1]!);
       this.root.add(this.machine);
       const fuse = this.button(
+        "融合",
         () => this.callbacks.send({ t: "fuse", dialog: view.id }),
         view.ready,
         "primary",
       );
-      const spark = createMenuIcon("spark");
-      spark.setProperties({ width: 24, height: 24, color: view.ready ? "#0d233f" : "#657b91" });
-      // `.game-button--wide`: the icon pinned 22px in from the left, the label centred.
-      const iconSlot = stack(
-        new Container({
-          positionType: "absolute",
-          positionLeft: 22,
-          positionTop: 0,
-          positionBottom: 0,
-          alignItems: "center",
-          justifyContent: "center",
-        }),
-        3,
-      );
-      iconSlot.add(spark);
-      fuse.add(iconSlot, this.text("融合", 16, view.ready ? "#0d233f" : "#657b91"));
       const lock = fusionLock(view.parts);
       if (lock) this.controls.at(-1)!.tip = lock;
       this.root.add(fuse);
     }
     this.applySizes();
   }
-  private text(text: string, fontSize: number, color = "#142f50"): Text {
+  private text(text: string, fontSize: number, color: string = ui.ink): Text {
     return stack(
       new Text({
         text,
@@ -448,73 +447,40 @@ export class GpuStationContent {
       3,
     );
   }
-  private label(value: string, size: number, color = "#142f50"): Text {
+  private label(value: string, size: number, color: string = ui.ink): Text {
     const node = this.text(value, size, color);
     node.setProperties({ width: "100%", flexShrink: 1 });
     this.labels.push({ node, full: value, key: "" });
     return node;
   }
-  private button(action: () => void, enabled: boolean, tone: "danger" | "primary"): Container {
-    const panel = new Container({
-      width: "100%",
-      minHeight: 50,
-      paddingX: 22,
-      paddingY: 11,
-      flexShrink: 0,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 8,
-      marginBottom: 4,
-      minWidth: 0,
-      // `.game-button`: a 2px navy (danger: red) border; a locked one keeps the grey plate's edge.
-      borderWidth: 2,
-      borderRadius: 8,
-      borderColor: enabled ? (tone === "danger" ? "#a83243" : "#142f50") : "#9fb4c6",
-    });
-    const paint = this.surface("button", null);
-    stack(paint.content, 1);
-    paint.uniforms.stationSoft.value.set(tone === "danger" ? "#fce5e5" : "#ffd45b");
-    paint.uniforms.stationTint.value.set(tone === "danger" ? "#a83243" : "#b48129");
-    paint.uniforms.stationDeep.value.set(tone === "danger" ? "#6b1a27" : "#7c5c16");
-    paint.uniforms.stationOwned.value = enabled ? 1 : 0;
-    const shadow = stack(
-      new Container({
-        positionType: "absolute",
-        positionLeft: 0,
-        positionTop: 4,
-        width: "100%",
-        height: "100%",
-        borderRadius: 8,
-        // The hard base under the plate: navy-deep (danger: #6b1a27).
-        backgroundColor: enabled ? (tone === "danger" ? "#6b1a27" : "#0d233f") : "#9fb4c6",
-      }),
-      0,
-    );
-    panel.add(shadow, paint.content);
-    const pose = { y: 0 };
-    this.lifts.push(pose);
+  /** 融合 is the slanted CTA, 忘记 an upright ink key. A locked key keeps its focus and tip; a
+   *  disabled key draws no focus, so the window rings it. */
+  private button(
+    label: string,
+    action: () => void,
+    enabled: boolean,
+    tone: "ink" | "primary",
+  ): Container {
+    const button = new GameButton(this.stage, { tone, size: "normal", label });
+    button.panel.setProperties({ width: "100%", marginBottom: 4, minWidth: 0 });
+    button.setDisabled(!enabled);
+    button.setFocusVisible(this.focusVisible);
+    this.buttons.push(button);
     this.controls.push({
-      panel,
+      panel: button.panel,
       enabled: () => true,
       locked: () => !enabled,
-      command: tone,
       action,
-      setPressed: (pressed) =>
-        this.motion.animate(
-          pose,
-          { y: pressed ? 4 : 0 },
-          pressed ? 60 : 140,
-          () => {
-            paint.content.setProperties({ transformTranslateY: pose.y });
-            for (const child of panel.children)
-              if (child !== paint.content && child !== shadow && child instanceof Component)
-                child.setProperties({ transformTranslateY: pose.y });
-          },
-          uiEaseOut,
-        ),
+      selfDrawn: enabled,
+      setFocused: (focused) => button.setFocused(focused),
+      setPointerOver: (over) => button.setHovered(over),
+      setPressed: (pressed) => button.setPressed(pressed),
     });
-    return panel;
+    return button.panel;
+  }
+  setFocusVisible(visible: boolean): void {
+    this.focusVisible = visible;
+    for (const button of this.buttons) button.setFocusVisible(visible);
   }
   resize(hostWidth: number, hostHeight: number, scale: number): void {
     this.compact = hostHeight / scale <= 480;
@@ -567,17 +533,12 @@ export class GpuStationContent {
     });
     this.machine?.setProperties({ paddingY: this.compact ? 8 : 12 });
     for (const pipe of this.pipes) pipe.setProperties({ marginBottom: this.compact ? 30 : 34 });
-    for (const control of this.controls)
-      control.panel.setProperties({
-        minHeight: Math.max(
-          this.minTarget,
-          this.tiles.some((tile) => tile.panel === control.panel) ? (this.compact ? 44 : 52) : 50,
-        ),
-      });
+    for (const button of this.buttons) button.fitTouch();
   }
   afterLayout(deltaMs: number): boolean {
     this.elapsed += deltaMs;
     let changed = this.motion.update(deltaMs);
+    for (const button of this.buttons) button.update(deltaMs);
     for (const surface of this.surfaces) surface.update(this.elapsed / 1000);
     for (const group of this.groups) {
       const width = group.size.value?.[0];
@@ -633,6 +594,8 @@ export class GpuStationContent {
     this.lifts.length = 0;
     for (const surface of this.surfaces) surface.dispose();
     this.surfaces.length = 0;
+    for (const button of this.buttons) button.dispose();
+    this.buttons.length = 0;
     for (const art of this.arts) art.dispose();
     this.arts.length = 0;
     this.controls = [];

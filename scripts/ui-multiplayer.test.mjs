@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { seatView } from "../src/ui/gpu/multiplayer-view.ts";
 import { readFileSync } from "node:fs";
+import { emptyProgress } from "../src/run/progress.ts";
 
 test("room seats keep ownership and gate departure on shared link readiness", () => {
   const player = { starter: "bulbasaur" };
@@ -140,6 +141,10 @@ test("two to four joined players can depart without filling the empty seats", ()
 });
 
 test("room keypad confirms its focused digit on gamepad but physical Enter submits the code", async () => {
+  const { installRuntime } = await import("../src/platform/runtime.ts");
+  installRuntime({ createAudioDecoder: () => ({}), activateAudio() {} });
+  const { setImageLoader } = await import("@pmndrs/uikit/dist/components/image.js");
+  setImageLoader(() => new Promise(() => {}));
   const { installResources } = await import("../src/platform/resources.ts");
   const { webResources } = await import("../src/platform/web/resources.ts");
   installResources(webResources);
@@ -158,10 +163,23 @@ test("room keypad confirms its focused digit on gamepad but physical Enter submi
   const never = () => new Promise(() => {});
   const fonts = { "Poketone UI": { 500: never, 700: never, 800: never } };
   const joined = [];
+  let created = 0;
+  const picked = [];
+  const progress = emptyProgress();
   const room = new GpuMultiplayer(
     fonts,
-    { create() {}, join: (code) => joined.push(code), start() {}, cancel() {}, close() {} },
-    { starter: "charmander", difficulty: 0, stage: "forest" },
+    {
+      create: () => created++,
+      join: (code) => joined.push(code),
+      start() {},
+      cancel() {},
+      close() {},
+      settings() {},
+      copy() {},
+      pick: (next) => picked.push(next),
+    },
+    progress,
+    { starter: "charmander", difficulty: 0, stage: "forest", trainer: "chengxi" },
   );
   const pad = {
     token: "pad:1",
@@ -181,7 +199,40 @@ test("room keypad confirms its focused digit on gamepad but physical Enter submi
     }
   };
   try {
-    // Create is the initial focus; Tab then Enter opens Join.
+    const initialFocus = room.focused;
+    room.update({
+      room: {
+        code: "123456",
+        players: [{ starter: "charmander", trainer: "chengxi" }],
+        ready: [0],
+        started: false,
+      },
+      self: 0,
+      mode: "relay",
+      starting: false,
+      canStart: false,
+      peers: {},
+      error: "",
+    });
+    const lockedTrainer = room.controls.findIndex((c) => c.tip()?.includes("5,000"));
+    assert.ok(
+      lockedTrainer >= 0 && room.active().includes(lockedTrainer),
+      "a locked silhouette remains reachable for its explanation",
+    );
+    room.focus(lockedTrainer);
+    assert.equal(room.focused, lockedTrainer);
+    room.activate(lockedTrainer);
+    assert.deepEqual(picked, [], "activating the locked tile only exposes its explanation");
+    room.choose({ trainer: "xiaqing" });
+    assert.deepEqual(picked, [], "the room cannot select a locally locked trainer");
+    progress.kills = 5000;
+    room.choose({ trainer: "xiaqing" });
+    assert.equal(picked.at(-1).trainer, "xiaqing", "the room uses the same lifetime-kill gate");
+    room.update(null);
+    room.focus(initialFocus);
+    // Enter activates the focused control outside the code entry.
+    keyboard("Enter", "Enter");
+    assert.equal(created, 1, "Enter on 创建房间 creates a room");
     keyboard("Tab", "Tab");
     keyboard("Enter", "Enter");
     keyboard("1", "Digit1");
@@ -206,6 +257,7 @@ test("room keypad confirms its focused digit on gamepad but physical Enter submi
     input.dispose();
     room.dispose();
     setGlyphInputMode({ kind: "keyboardMouse", pointer: false });
+    setImageLoader(null);
   }
 });
 
@@ -326,9 +378,13 @@ test("room choices, keypad and four seats remain reachable inside the scaled saf
               cancelled++;
             },
             close() {},
+            settings() {},
+            copy() {},
+            pick() {},
             rejoin: { code: "123456", action() {} },
           },
-          { starter: "charmander", stage: "forest", difficulty: 0 },
+          emptyProgress(),
+          { starter: "charmander", stage: "forest", difficulty: 0, trainer: "chengxi" },
         );
         try {
           const scale = fitScale(userScale, width, height, safe, room.minLayout);
@@ -339,20 +395,23 @@ test("room choices, keypad and four seats remain reachable inside the scaled saf
           const join = inside(room, joinPanel, width, height, safe);
           assert.ok(
             create.x + create.w / 2 < join.x - join.w / 2,
-            "entry choices are side by side",
+            "create and join sit side by side",
           );
-          assert.ok(Math.abs(create.w - join.w) <= 1, "entry choices have equal weight");
-          for (const b of [create, join]) assert.ok(b.w >= 44 && b.h >= 44, "entry touch targets");
+          for (const b of [create, join])
+            assert.ok(b.w >= 44 && b.h >= 44, "landing touch targets");
+          assert.ok(room.hit(join.x, join.y) < 0, "加入房间 waits for six digits");
+          for (const key of ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]) {
+            const b = inside(room, labelPanel(room, key), width, height, safe);
+            assert.ok(b.w >= 43.99 && b.h >= 43.99, `keypad touch target ${JSON.stringify(b)}`);
+            assert.ok(room.hit(b.x, b.y) >= 0, `key ${key} can be tapped`);
+          }
           if (width === 1280 && userScale === 1) {
+            // A gamepad reaches the keypad from 创建房间 and types with it.
             room.setFocusVisible(true);
             room.navigate("right");
             room.navigate("confirm");
-          } else room.activate(room.hit(join.x, join.y));
-          await settle(room);
-          for (const key of ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "加入"]) {
-            const b = inside(room, labelPanel(room, key), width, height, safe);
-            assert.ok(b.w >= 43.99 && b.h >= 43.99, `keypad touch target ${JSON.stringify(b)}`);
-            if (key !== "加入") assert.ok(room.hit(b.x, b.y) >= 0, `key ${key} can be tapped`);
+            assert.equal(room.code.length, 1, "a focused key types its digit");
+            room.physicalKey({ key: "Backspace", code: "Backspace" });
           }
           for (const key of "123456") room.physicalKey({ key, code: `Digit${key}` });
           room.physicalKey({ key: "Enter", code: "Enter" });
@@ -379,7 +438,9 @@ test("room choices, keypad and four seats remain reachable inside the scaled saf
               code: "123459",
               players: ["bulbasaur", "charmander", "squirtle", "pikachu"].map((starter) => ({
                 starter,
+                trainer: "shuoye",
               })),
+              mission: { stage: "forest", difficulty: 0 },
               started: false,
               ready: [0, 1, 2, 3],
             },

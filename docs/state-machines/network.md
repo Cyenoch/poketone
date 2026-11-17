@@ -213,7 +213,7 @@
 
 - **所有者/编码**：[src/ui/gpu/multiplayer-session.ts](../../src/ui/gpu/multiplayer-session.ts)；`session? / handedOff`、回调闭包和unmount
 - **逻辑状态**：无会话 → 窗口拥有会话 → 建新连接前取消旧会话 → onStart先handedOff → Run接管 → 窗口卸载保留连接
-- **事件、守卫与转换**：connect先cancel；构造失败更新screen error；onStart置handedOff再new MultiplayerRun/start；unmount注销/释放screen，清onChange，仅未交接才close。[src/app/session.ts](../../src/app/session.ts)回调closeRoom再start；back/应用dispose负责Run会话最终释放
+- **事件、守卫与转换**：connect先cancel；构造失败更新screen error；onStart置handedOff再new MultiplayerRun/start；unmount注销/释放screen，清onChange，仅未交接才close。[src/app/session.ts](../../src/app/session.ts)回调start离开`room`页面；back/应用dispose负责Run会话最终释放
 - **终态/异常/取消**：cancel/未交接unmount关闭会话；已交接unmount不关闭。handedOff在connect中未重置；start/new Run抛错或上层拒绝导航时无显式交接回滚
 - **关键不变量**：同时只有一个生命周期owner负责close；screen释放不能杀已交接run；“调用start”不自动证明上层已接管
 - **测试与缺口**：未见mountMultiplayer handoff专项测试；ui-multiplayer测试是screen/view而非此模块。[src/app/session.ts](../../src/app/session.ts)有transition非idle早退，交接flag先置位的失败/拒绝导航路径需专门核对，不据此宣称已经泄漏复现
@@ -422,8 +422,8 @@
 
 ## 完整调用链与跨机器切面
 
-1. **创建/加入**：[src/app/session.ts](../../src/app/session.ts) openRoom → `ui/gpu/multiplayer-session.ts` connect → N06 WS enter → N01 分配席位 → N02 room publish → N08 每host-guest建peer → N09串行协商/N10channel活性 → N08选mode并双向transport-ready → N02可start。`Room.ready`不等于地图ready。
-2. **窗口交接与首图**：host start → Harbor写started/config并广播 → `Session.message(start):289` 设置playing、客机保存ticket → N17先handedOff/new Run → `app/session.ts` closeRoom/start → `run/session.ts` createRun → `createRun.ts` host造世界或guest等initial → N18 publishMap/restore → loading(world)记录安装revision → scene/assets/GPU warm → N19 ready → resumed。UI构造/资源ready的全部内部状态未计入网络清单。
+1. **创建/加入**：[src/app/session.ts](../../src/app/session.ts) `room`页面（show("room")）→ `ui/gpu/multiplayer-session.ts` connect → N06 WS enter → N01 分配席位 → N02 room publish → N08 每host-guest建peer → N09串行协商/N10channel活性 → N08选mode并双向transport-ready → N02可start。`Room.ready`不等于地图ready。
+2. **窗口交接与首图**：host start → Harbor写started/config并广播 → `Session.message(start):289` 设置playing、客机保存ticket → N17先handedOff/new Run → `app/session.ts` start → `run/session.ts` createRun → `createRun.ts` host造世界或guest等initial → N18 publishMap/restore → loading(world)记录安装revision → scene/assets/GPU warm → N19 ready → resumed。UI构造/资源ready的全部内部状态未计入网络清单。
 3. **正常帧**：`createRun.advance:758` → host restore → submit → `run.step:382` → `stepSharedWorld`（客机动作不重复运行）→ drain共享事件 → publish N30 → guest N31重建/缓存 → N32播放 + N27本人owner.step → N29立即本机事件/可靠owner包 → N25 host验证/提交 → N24生命代次、N26 grant → N33反馈 → N34 host临时展示。OwnerSimulation由固定tick执行真实技能runner，不是旧文档中的纯移动预测。
 4. **换区**：`createRun.ts` host有transitioning才prepareZone/enterZone；guest只能安装incoming；两者重新buildScene/start；N18换新revision、N19全员ready。world.zone.phase是显式sim枚举，网络屏障仍由多字段表达。
 5. **运行中断线**：N07/平台断开或 N06 WS close → N08 更新该对端可达性 → `onPath(peer,false)` → N20 房主将该席位置 offline、输入清零，其余席位继续；客机 reconnecting。通路恢复 → 客机 hello → 房主 resumed 或该席位单独 N18 发图 → N19 ready → playing；离开则 N03 departed → depart。**revision决定该席位地图状态有效性，life决定owner生命状态有效性，sequence决定各类消息是否已处理，grantAck决定收益是否已应用。**

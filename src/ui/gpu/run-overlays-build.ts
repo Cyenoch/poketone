@@ -14,12 +14,14 @@ import type { RunOverlayControl } from "./run-overlays-control";
 import { typeColors } from "./run-theme";
 import type { UiStage } from "./stage";
 import { gameTag, typeTag } from "./tag";
+import { ui } from "./tokens";
 
-export const INK = "#142f50",
-  NAVY_DEEP = "#0d233f",
-  MUTED = "#536b82",
-  LINE = "#92b8d1",
-  YELLOW = "#ffd45b";
+/** The redesign's ink scale under the build panel's names; YELLOW is the lit row's wash. */
+export const INK = ui.ink,
+  NAVY_DEEP = ui.ink,
+  MUTED = ui.muted,
+  LINE = ui.line,
+  YELLOW = ui.mist;
 
 export type TextRole = "title" | "name" | "value" | "body" | "caption" | "figure";
 
@@ -254,6 +256,7 @@ export class GpuBattlePage {
       panel,
       enabled,
       action: () => {},
+      selfDrawn: true,
       setFocused: (focused) => {
         row.focused = focused;
         this.paint();

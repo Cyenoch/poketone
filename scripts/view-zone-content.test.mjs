@@ -64,6 +64,8 @@ test("tower loader reuses alias geometry and releases actual model resources", a
     faceZ: 1,
     cooldown: 0,
     guard: 0,
+    target: null,
+    returning: false,
   });
   const controller = new AbortController();
   const assets = await loadRunAssets(world, controller.signal);

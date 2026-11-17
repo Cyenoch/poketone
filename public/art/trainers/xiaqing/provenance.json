@@ -1,0 +1,42 @@
+{
+  "styleVersion": "trainer-cel-summer-v2",
+  "source": "assets/concepts/original-trainers/xiaqing/runtime-summer-v2.png",
+  "sourceSha256": "d32b177494cd07b78a70ff9e85d69acc9af788b2c35face4cffe6d1124d2abe2",
+  "cleanSource": "assets/concepts/original-trainers/xiaqing/runtime-summer-v2-clean.png",
+  "cleanSourceSha256": "3516026bedffb7b9f9c87e047551e7c9b197f5549581cd9375e7e971f5204b72",
+  "generation": "assets/concepts/original-trainers/runtime-summer-v2-generation.json",
+  "requestId": "xiaqing",
+  "process": "prepare.py: alpha >= 224 is opaque core; retain source alpha only within its 1px dilation, discard alpha < 16; edge RGB from nearest opaque neighbor; save clean PNG; lobby alpha bbox; authored cut-in/head crops; Lanczos resize; square bottom padding for cut-in/portrait; #142f50 silhouettes retain alpha; RGB cleared under alpha 0; lossless WebP",
+  "outputs": [
+    {
+      "file": "lobby.webp",
+      "crop": [176, 13, 965, 1507],
+      "size": [739, 1400],
+      "sha256": "cc5e31f9ba9e4b2d899cad85da64b1e913d490ac5043fa4b79ef952788aab1d1"
+    },
+    {
+      "file": "lobby-locked.webp",
+      "crop": [176, 13, 965, 1507],
+      "size": [739, 1400],
+      "sha256": "9eb2775741be5b6719ef358ee8af7005f3659c82ffeda77ed1716a031881ea34"
+    },
+    {
+      "file": "cutin.webp",
+      "crop": [0, 0, 1024, 800],
+      "size": [768, 768],
+      "sha256": "2aa06482392d4a2eb8992028101cc92aaf78bca7662847804feb7c9e3b90d5b0"
+    },
+    {
+      "file": "portrait.webp",
+      "crop": [260, 0, 680, 420],
+      "size": [256, 256],
+      "sha256": "b82a4d176f018a4537b16160171aae2372121e90ac0cf9a729abc651e8f46d59"
+    },
+    {
+      "file": "portrait-locked.webp",
+      "crop": [260, 0, 680, 420],
+      "size": [256, 256],
+      "sha256": "26305031258c8588b28971ad48480d8e202900239cb8b067e443dfdc2b2ea016"
+    }
+  ]
+}

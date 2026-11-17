@@ -1,0 +1,123 @@
+{
+  "reason": "Human rejected Geodude audio as shrill/inappropriate and explicitly requested cartoon rather than realistic foley. Original sources remain in raw; these are the previous released masters.",
+  "assets": {
+    "cast-rock": {
+      "kind": "sfx",
+      "tier": "medium",
+      "maxMs": 600,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.8,
+        "prompt_influence": 0.5
+      },
+      "node": "smmb8pzZBl8C0VkuUN18",
+      "prompt": "One heavy rough stone grinding forward into a dull chunky clunk, rounded mid-range stone friction with weight and a short gravel tail, audible on a small speaker, no hiss, no metallic ring, no bell, no pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-cast-rock-1.mp3",
+          "generationId": "EdFe9VqadR4iaRVTSIQl"
+        },
+        {
+          "file": "sfx-cast-rock-3.mp3",
+          "generationId": "YWVoEJEZ1fdi43mdJfG8"
+        }
+      ],
+      "pick": ["sfx-cast-rock-1.mp3", "sfx-cast-rock-3.mp3"],
+      "ship": "cast-rock",
+      "spend": {
+        "credits": 10.6656,
+        "date": "2026-11-17"
+      },
+      "note": "Selected 1/3: centroid 2636-2934 Hz, 1-4% above 4 kHz, tonal 44-46%; rejected the brighter 2/4. Medium feedback capped at 600 ms; rock-throw, rollout and rock-slide follow event.windup. Upper-mid texture still needs listening in the mix."
+    },
+    "hit-rock": {
+      "kind": "sfx",
+      "tier": "small",
+      "frequent": true,
+      "maxMs": 160,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "8GSIgACXsfCfycBeSsw5",
+      "prompt": "Single short heavy dull boulder impact on packed earth, one firm rounded clonk with a solid low-mid body and a muted wooden knock texture, damped immediately, audible on a small speaker, no gravel hiss, no scratch, no ring, no bell, no pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-hit-rock-10.mp3",
+          "generationId": "gbg5E9spXXJZRaNEt0gm"
+        },
+        {
+          "file": "sfx-hit-rock-12.mp3",
+          "generationId": "fKlZwzvIeftkEcEsCSxI"
+        }
+      ],
+      "pick": ["sfx-hit-rock-10.mp3", "sfx-hit-rock-12.mp3"],
+      "ship": "hit-rock",
+      "spend": {
+        "credits": 19.998,
+        "date": "2026-11-17"
+      },
+      "note": "First stone-on-stone batch rejected: all TONAL (77-97%), two also near-silent. Chalk/sandstone batch 5-8 rejected BRIGHT/HARSH (25-41% above 4 kHz). Selected boulder-clonk takes 10/12: centroid 913-2162 Hz, <1% above 4 kHz, tonal 40-55%, 5 ms attack. Small bed capped at 160 ms trims the raw 200-271 ms decay; immediate hit/contact and ultimate damage use measured hitMs. Not listened to."
+    },
+    "cast-ground": {
+      "kind": "sfx",
+      "tier": "medium",
+      "maxMs": 600,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.8,
+        "prompt_influence": 0.5
+      },
+      "node": "phBx5qb1tuoz7XS3sW9k",
+      "prompt": "One heavy compacted earth heave collapsing into a dense muffled crunch, full-bodied mid-range coarse soil friction and a short rounded thud, audible on a small speaker, no hiss, no ring, no bell, no pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-cast-ground-2.mp3",
+          "generationId": "efT5iKaTHHwIHjmka0MF"
+        },
+        {
+          "file": "sfx-cast-ground-4.mp3",
+          "generationId": "q0NfisO4icYsaZqQcmH1"
+        }
+      ],
+      "pick": ["sfx-cast-ground-2.mp3", "sfx-cast-ground-4.mp3"],
+      "ship": "cast-ground",
+      "spend": {
+        "credits": 10.6656,
+        "date": "2026-11-17"
+      },
+      "note": "Selected 2/4: centroid 504-1626 Hz, <1% above 4 kHz, tonal 33-42%, 5-10 ms attack. Medium feedback capped at 600 ms; earthquake and tectonic-rage use the existing heavy-cast windup dispatch. Not listened to."
+    },
+    "hit-ground": {
+      "kind": "sfx",
+      "tier": "small",
+      "frequent": true,
+      "maxMs": 160,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "zkHuZCONQZRCi3OE8oq5",
+      "prompt": "Single very short heavy packed-soil impact, a dense dull thwack with a muted earthy crunch, immediate rounded mid-range attack, audible on a small speaker, no sub-bass boom, no hiss, no ring, no bell, no pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-hit-ground-2.mp3",
+          "generationId": "mF0dqjwiAvfFFcd5yiUT"
+        },
+        {
+          "file": "sfx-hit-ground-3.mp3",
+          "generationId": "V4j7qhwuticsqO3swIIn"
+        }
+      ],
+      "pick": ["sfx-hit-ground-2.mp3", "sfx-hit-ground-3.mp3"],
+      "ship": "hit-ground",
+      "spend": {
+        "credits": 6.666,
+        "date": "2026-11-17"
+      },
+      "note": "Selected 2/3: centroid 759-1502 Hz, <1% above 4 kHz, tonal 9-27%, 10-20 ms attack. Rejected 1 BRIGHT and 4 SILENT. Small bed capped at 160 ms also trims take 2's 165 ms raw decay. Immediate hit/contact and crit fallback use measured hitMs. Not listened to."
+    }
+  }
+}

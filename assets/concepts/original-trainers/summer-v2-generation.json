@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "collection": "original-trainers",
+  "styleVersion": "trainer-cel-summer-v2",
+  "createdAt": "2026-11-17",
+  "tool": "magpie-image.generate_image",
+  "modelSelection": "Magpie configured default; model argument omitted",
+  "seed": "Not exposed by the generation tool",
+  "cost": "Not reported by the generation tool",
+  "scope": "Three summer character concept sheets; runtime art remains the first version",
+  "canonicalAges": { "chengxi": 18, "yewei": 18, "shuoye": 18 },
+  "styleReference": "chengxi/turnaround-summer-v2.png",
+  "styleReferenceSha256": "fdcac432cd6bf36a032fc55d76739ec2d869ec656aaef5fa27d4de4aabc3fc80",
+  "review": "All three 1536x1024 RGB PNG concept sheets decoded and visually inspected. Each contains four complete full-body views, three expressions, two accessory studies and four swatches. Youthful faces, light summer outfits and requested silhouette anchors are present. These are concept sources, not transparent runtime assets or in-engine acceptance.",
+  "promptAssembly": "Read each promptFile as UTF-8 and remove its trailing newline; the remainder is the exact submitted prompt. Reference paths are relative to this directory and were submitted as absolute paths.",
+  "requests": [
+    {
+      "id": "chengxi-summer-v2",
+      "name": "澄汐",
+      "promptFile": "chengxi/summer-v2-prompt.txt",
+      "referenceImages": ["chengxi/turnaround.png"],
+      "parameters": { "size": "1536x1024", "quality": "high", "n": 1 },
+      "output": "chengxi/turnaround-summer-v2.png",
+      "jobId": "image-38907-29",
+      "actualModel": "ash/gpt-image-2.5-sunburst",
+      "actualSize": [1536, 1024],
+      "sha256": "fdcac432cd6bf36a032fc55d76739ec2d869ec656aaef5fa27d4de4aabc3fc80",
+      "status": "generated; visually reviewed as concept",
+      "review": "Two high ponytails, coral ribbons, left compass pin and hip compass, white thigh-high stockings, sleeveless summer top and skirt are readable. Front/profile/back/three-quarter and shoes are complete; no aged facial detail.",
+      "ageClarification": "The initial request was submitted with age 22 before the user specified that all three characters are 18. The original prompt is preserved verbatim for provenance. Canonical age is now 18; this youthful result was retained after visual inspection, with no age text printed in the artwork. Future derivatives must explicitly specify age 18."
+    },
+    {
+      "id": "yewei-summer-v2",
+      "name": "夜苇",
+      "promptFile": "yewei/summer-v2-prompt.txt",
+      "referenceImages": ["chengxi/turnaround-summer-v2.png"],
+      "parameters": { "size": "1536x1024", "quality": "high", "n": 1 },
+      "output": "yewei/turnaround-summer-v2.png",
+      "jobId": "image-38907-30",
+      "actualModel": "ash/gpt-image-2.5-sunburst",
+      "actualSize": [1536, 1024],
+      "sha256": "44e222cdda29989a37f2d4d29e4f6b16fdb395268ce9a6d54592fc7156c3b316",
+      "status": "generated; visually reviewed as concept",
+      "review": "Youthful composed face, long violet-black hair, crescent clip, sleeveless summer dress, sheer black hosiery and low shoes are present. Paired amethyst earrings and curled waist-to-hip-length hair were adopted into the current written design. Front and back agree on right-hip pouch; left-profile drawing brings that pouch to the near side. Third head study has ambiguous raised-vs-neck headphone structure. Resolve those accessory details in production derivatives; the sheet is not a verified modeling turnaround."
+    },
+    {
+      "id": "shuoye-summer-v2",
+      "name": "朔野",
+      "promptFile": "shuoye/summer-v2-prompt.txt",
+      "referenceImages": ["chengxi/turnaround-summer-v2.png"],
+      "parameters": { "size": "1536x1024", "quality": "high", "n": 1 },
+      "output": "shuoye/turnaround-summer-v2.png",
+      "jobId": "image-38907-31",
+      "actualModel": "ash/gpt-image-2.5-sunburst",
+      "actualSize": [1536, 1024],
+      "sha256": "fa78af859623faffd7ca34370362788789abe3e1967e9b068353da675abed360",
+      "status": "generated; visually reviewed as concept",
+      "review": "Fresh youthful male face, silver forelock, amber sunglasses, open short-sleeve shirt, above-knee shorts and sneakers are readable. Left wrist watch and right hip pouch agree in front and rear. Four full-body views, three distinct expressions and accessory studies are complete."
+    }
+  ]
+}

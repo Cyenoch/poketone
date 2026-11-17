@@ -2,55 +2,74 @@ import type { UiKey } from "../../platform/ui-surface";
 import { isNavigationDirection, type NavigationAction } from "../../platform/input";
 import { InputGlyph } from "./input-glyph";
 import { revealInScroller } from "./scroll-reveal";
-import { idleTicked } from "./motion";
-import {
-  Component,
-  Container,
-  Image,
-  Text,
-  withOpacity,
-  type Content,
-  type FontFamilies,
-} from "@pmndrs/uikit";
+import { EASE, idleTicked, stagger } from "./motion";
+import { Component, Container, Image, Text, type FontFamilies } from "@pmndrs/uikit";
 import { Matrix4, Vector3, type WebGLRenderer } from "three";
 import { getAudio } from "../../audio/engine";
 import {
   codexEntry,
   codexSections,
+  formKey,
   type CodexBlock,
   type CodexEntry,
   type CodexRef,
 } from "../../run/codex";
 import { rarityNames } from "../../run/sim/upgrades";
-import { BoxShadow, OutlineRing, plateShadow } from "./box-shadow";
+import { starterLock } from "../../run/locks";
+import type { Progress } from "../../run/progress";
+import { lineForms, starterOrder, type StarterId } from "../../run/sim/content/lines/index";
+import { LockChip } from "./lock-chip";
 import { CodexModelStage, CodexThumbs, KEY_TURN } from "./codex-model";
-import { CodexBall, ColorTween, cardArt, createArt, ink } from "./codex-parts";
-import { gameTag, typeTag } from "./tag";
+import {
+  BallGround,
+  CodexChip,
+  CodexRow,
+  createArt,
+  typeChip,
+  typeInk,
+  type CodexPaint,
+} from "./codex-parts";
+import { slantTag } from "./tag";
 import { DialogBackdrop } from "./dialog-backdrop";
-import { DialogSurface } from "./dialog-surface";
+import { DialogFrame } from "./dialog-surface";
+import { InnerScreenFrame } from "./inner-screen";
+import type { GpuScreen } from "./app-host";
 import { cubicBezier, uiEaseOut } from "./focus-mark";
-import { HoverPattern } from "./hover-pattern";
+import { GameButton } from "./game-button";
 import { createMenuIcon } from "./icons";
 import { rarityTones } from "./run-choice-surface";
 import { fade, stack } from "./layer";
+import { segmentTray, SegmentFace } from "./segment-face";
+import { SlantPlate } from "./slant-plate";
 import { UiStage } from "./stage";
+import { HARD_SHADOW, RADIUS, RADIUS_INNER, slantOf, ui } from "./tokens";
 import { GpuTooltip } from "./tooltip";
 import { balanceLines, breakLines, type GlyphWidths } from "./line-break";
 import type { UiInsets } from "./viewport";
 
 export interface CodexOptions {
+  /** Partners not yet unlocked show as silhouettes with their lock, without their kit. */
+  progress: Progress;
   onClose(): void;
+  /** Outside a run the 图鉴 is a page on the paper ground (the shared top line), not a window. */
+  page?: { settings(): void };
 }
 
-type Region = "back" | "close" | "tab" | "entry" | "model" | "ref";
+/** Each partner form's page, by the line it belongs to. */
+const formLines = new Map<string, StarterId>(
+  starterOrder.flatMap((line) => lineForms(line).map((form) => [formKey(form.id), line] as const)),
+);
+/** What a locked partner's page keeps: its evolution chain (in silhouette). */
+const LOCKED_BLOCKS = new Set(["进化"]);
+
+type Region = "back" | "close" | "settings" | "tab" | "entry" | "model" | "ref";
 
 interface Control {
   region: Region;
   panel: Container;
-  ring: OutlineRing;
   activate(): void;
-  /** The ball pattern shown while it is hovered, focused or selected (DESIGN.md fx-hover). */
-  pattern?: HoverPattern;
+  /** Draws the control's pointer, keyboard and pick state. */
+  paint(state: CodexPaint, animate: boolean): void;
   /** Entry key (entries, refs) or section index (tabs). */
   key?: string;
   tab?: number;
@@ -65,13 +84,6 @@ interface Stop {
   detailScroll: number;
   /** The page link that was followed (its index among the page's controls), or -1. */
   link: number;
-}
-
-/** A header key (back, close): navy square, lit yellow on focus or hover, Esc badge for keyboards. */
-interface HeaderKey {
-  panel: Container;
-  icon: Content;
-  badge: Container;
 }
 
 /** A rebuilt part of the window: its root and everything it owns outside the UIKit tree. */
@@ -113,10 +125,12 @@ const LONG_PRESS_MS = 450;
 
 const REVEAL_WAIT_MS = 300;
 const fadeEase = (t: number) => cubicBezier(t, 0, 0, 0.58, 1);
-const windowShadow = { y: 12, blur: 32, color: ink.deep, alpha: 0.25 };
+/** List rows past this many come in with the list itself, not one by one. */
+const STAGGERED_ROWS = 12;
 
 /**
- * The 图鉴: category tabs in the title band, an entry list, and the selected entry's page. Every
+ * The 图鉴: a paper window with its title plate, category segments in the header, an entry list,
+ * and the selected entry's page. Every
  * page is built from `run/codex.ts`; links on a page jump to their entry and leave a trail that back
  * (the header key, Esc, Backspace) retraces. Its own UI pass owns modal
  * input like the settings window; the host draws it with `render()` so the model's offscreen pass
@@ -128,38 +142,35 @@ export class GpuCodex {
   readonly minLayout = { width: 750, height: 375 };
   private readonly sections = codexSections();
   private readonly options: CodexOptions;
-  private readonly backdrop = new DialogBackdrop();
+  /** The window's dim and drop shadow; a page has none. */
+  private readonly backdrop: DialogBackdrop | undefined;
   private readonly tooltip: GpuTooltip;
-  private readonly colors: ColorTween;
   private readonly model: CodexModelStage;
   private readonly thumbs = new CodexThumbs(() => this.stage.invalidate());
   /** Wrapped texts of the part being built. */
   private building: Wrap[] = [];
+  /** The window's frame, or the page's (one of the two). */
+  private readonly frame: DialogFrame | undefined;
+  private readonly inner: InnerScreenFrame | undefined;
+  private readonly tabTray: Container;
   private readonly panel: Container;
-  private readonly header: Container;
-  private readonly titleBox: Container;
-  private readonly tabStrip: Container;
+  private readonly body: Container;
   private readonly listPane: Container;
   private readonly detailPane: Container;
-  private readonly band = new DialogSurface("header");
   private readonly owned: { dispose(): void }[] = [];
+  /** The window's close key; on a page, its back key (which retraces the trail first). */
   private readonly close: Control;
-  private readonly closeKey: HeaderKey;
+  private readonly settings: Control | undefined;
   private readonly back: Control;
-  private readonly backKey: HeaderKey;
+  private readonly backKey: GameButton;
+  /** Esc goes back first while a trail exists: the cap moves to the back key. */
+  private readonly backBadge: Container;
+  private readonly segments: SegmentFace[] = [];
   /** Links followed since the last direct pick (a tab or a list row), oldest first. */
   private readonly trail: Stop[] = [];
   private restoring: Stop | undefined;
-  private readonly keyPress = { y: 0, scale: 1 };
-  private keyPressed!: Control;
-  private readonly tabs: (Control & {
-    ball: CodexBall;
-    label: Text;
-    shadow: BoxShadow;
-    sheen: DialogSurface;
-    pattern: HoverPattern;
-  })[] = [];
-  private entries: (Control & { ball: CodexBall })[] = [];
+  private readonly tabs: Control[] = [];
+  private entries: Control[] = [];
   private details: Control[] = [];
   private controls: Control[] = [];
   private list: Part | undefined;
@@ -188,6 +199,11 @@ export class GpuCodex {
   private readonly enterFade = { opacity: 0 };
   private readonly enterMove = { y: 14, scale: 0.98 };
   private readonly listIn = { opacity: 1, x: 0 };
+  /** The list rows' staggered entrance, one state per row. */
+  private rowsIn: { x: number; opacity: number }[] = [];
+  /** The page's name plate, unrolled from the left as the page comes in. */
+  private namePlate: SlantPlate | undefined;
+  private readonly unroll = { reveal: 1 };
   private readonly detailIn = { opacity: 1, y: 0 };
   private pending: {
     state: object;
@@ -213,96 +229,93 @@ export class GpuCodex {
   constructor(fonts: FontFamilies, options: CodexOptions) {
     this.options = options;
     const invalidate = () => this.stage.invalidate();
-    this.colors = new ColorTween(this.stage.motion, invalidate);
     this.model = new CodexModelStage(() => {
       this.paintModelNote();
       invalidate();
     });
+    const page = options.page;
     this.stage.root.setProperties({
       fontFamilies: fonts,
       flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
+      ...(page ? {} : { alignItems: "center", justifyContent: "center" }),
     });
-    this.stage.scene.add(this.backdrop.dim, this.backdrop.shadow);
-    this.panel = new Container({
-      width: "100%",
-      height: "100%",
-      maxWidth: 1240,
-      maxHeight: 820,
-      flexDirection: "column",
-      backgroundColor: ink.surface,
-      borderColor: ink.deep,
-      borderWidth: 3,
-      borderRadius: 12,
-      padding: 4,
+    if (page) {
+      this.inner = new InnerScreenFrame(this.stage, "图鉴");
+      this.owned.push(this.inner);
+      this.panel = new Container({ flexDirection: "column", flexGrow: 1, minHeight: 0 });
+      this.panel.add(this.inner.topline, this.inner.body);
+      this.backKey = this.inner.back;
+    } else {
+      this.backdrop = new DialogBackdrop();
+      this.stage.scene.add(this.backdrop.dim, this.backdrop.shadow);
+      this.frame = new DialogFrame(this.stage, "图鉴", 1240);
+      // The title leads the header row beside the tabs, lined up with the list below.
+      this.frame.seatTitle();
+      this.owned.push(this.frame);
+      this.panel = this.frame.panel;
+      this.panel.setProperties({ width: "100%", height: "100%", maxWidth: 1240, maxHeight: 820 });
+      // Back leads the header's controls, shown while a trail exists: top left, clear of the thumb.
+      this.backKey = new GameButton(this.stage, {
+        tone: "secondary",
+        size: "small",
+        square: true,
+        icon: createMenuIcon("back"),
+      });
+      this.owned.push(this.backKey);
+    }
+    this.backBadge = new Container({
+      positionType: "absolute",
+      positionRight: -4,
+      positionBottom: -6,
     });
-    this.header = new Container({
+    this.backBadge.add(new InputGlyph("cancel", "Esc"));
+    this.back = this.keyControl("back", this.backKey, () => this.goBack());
+    const tray = segmentTray();
+    this.owned.push(tray);
+    this.tabTray = tray.tray;
+    tray.tray.setProperties({ flexShrink: 1, minWidth: 0 });
+    if (this.frame) {
+      this.backKey.panel.add(stack(this.backBadge, 3));
+      this.backKey.panel.setProperties({ display: "none" });
+      this.frame.extra.add(stack(this.backKey.panel, 1), stack(tray.tray, 1));
+    }
+    for (const [index, section] of this.sections.entries()) {
+      const face = new SegmentFace(this.stage, section.name);
+      this.segments.push(face);
+      this.owned.push(face);
+      tray.tray.add(stack(face.panel, 1));
+      this.tabs.push({
+        region: "tab",
+        panel: face.panel,
+        tab: index,
+        activate: () => this.pickSection(index),
+        paint: (state) => face.paint({ ...state, checked: state.selected, locked: false }),
+      });
+    }
+    if (this.inner) {
+      this.close = this.keyControl("close", this.inner.back, () =>
+        this.trail.length ? this.goBack() : this.options.onClose(),
+      );
+      this.settings = this.keyControl("settings", this.inner.settings, () => page!.settings());
+    } else this.close = this.keyControl("close", this.frame!.close, () => this.options.onClose());
+
+    this.body = new Container({
       flexDirection: "row",
-      alignItems: "center",
-      gap: 14,
-      backgroundColor: ink.blueDeep,
-      paddingLeft: 18,
-      paddingRight: 8,
-      paddingY: 6,
-      flexShrink: 0,
+      flexGrow: 1,
+      flexShrink: 1,
+      minHeight: 0,
+      gap: 12,
+      padding: 14,
     });
-    this.owned.push(this.band);
-    this.header.add(this.band.content);
-    this.titleBox = stack(new Container({ flexShrink: 0 }), 1);
-    this.titleBox.add(
-      stack(
-        new Text({
-          text: "图鉴",
-          color: ink.deep,
-          fontSize: 22,
-          fontWeight: 800,
-          positionType: "absolute",
-          positionLeft: 0,
-          positionTop: 0,
-          transformTranslateY: 2,
-        }),
-        1,
-      ),
-      stack(new Text({ text: "图鉴", color: "#ffffff", fontSize: 22, fontWeight: 800 }), 2),
-    );
-    this.tabStrip = stack(
-      new Container({
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 4,
-        flexGrow: 1,
-        flexShrink: 1,
-        minWidth: 0,
-        paddingY: 4,
-      }),
-      1,
-    );
-    // Back leads the band, shown while a trail exists: top left, clear of the thumb's corner.
-    this.backKey = this.headerKey("back");
-    this.back = this.control("back", this.backKey.panel, 8, () => this.goBack());
-    this.backKey.panel.setProperties({ display: "none" });
-    this.header.add(this.backKey.panel, this.titleBox, this.tabStrip);
-    for (const [index, section] of this.sections.entries()) this.addTab(index, section.name);
-
-    this.closeKey = this.headerKey("close");
-    this.close = this.control("close", this.closeKey.panel, 8, () => this.options.onClose());
-    this.keyPressed = this.close;
-    this.header.add(this.closeKey.panel);
-
-    const body = new Container({ flexDirection: "row", flexGrow: 1, flexShrink: 1, minHeight: 0 });
     this.listPane = new Container({
       width: this.listWidth,
       flexShrink: 0,
       flexDirection: "column",
       overflow: "scroll",
-      backgroundColor: ink.ice,
-      borderRightWidth: 1,
-      borderColor: ink.line,
-      paddingX: 8,
-      paddingY: 8,
+      backgroundColor: ui.mist,
+      borderRadius: RADIUS,
       scrollbarWidth: 3,
-      scrollbarColor: ink.blueDeep,
+      scrollbarColor: ui.muted,
     });
     this.detailPane = new Container({
       flexGrow: 1,
@@ -310,145 +323,55 @@ export class GpuCodex {
       minWidth: 0,
       flexDirection: "column",
       overflow: "scroll",
-      paddingX: 18,
-      paddingY: 16,
       scrollbarWidth: 3,
-      scrollbarColor: ink.blueDeep,
+      scrollbarColor: ui.muted,
     });
-    body.add(this.listPane, this.detailPane);
-    this.panel.add(
-      new Container({
-        positionType: "absolute",
-        positionLeft: 0,
-        positionTop: 0,
-        width: "100%",
-        height: "100%",
-        borderWidth: 1,
-        borderColor: ink.yellow,
-        borderRadius: 9,
-      }),
-      this.header,
-      body,
-    );
+    this.body.add(this.listPane, this.detailPane);
+    if (this.inner) {
+      // On the patterned ground the page reads on its own card, as 研究所's tiles do.
+      this.detailPane.setProperties({ backgroundColor: ui.white, borderRadius: RADIUS });
+      this.inner.body.add(stack(tray.tray, 1), stack(this.body, 1));
+    } else this.panel.add(stack(this.body, 1));
     this.stage.root.add(this.panel);
     this.tooltip = new GpuTooltip(this.stage);
     this.focused = this.tabs[0]!;
-    this.showSection(0, false);
-    this.applyEnter();
-    this.animateWindow(true);
+    this.showSection(0, true);
+    // A page comes in under the scene curtain; a window rises over what it covers.
+    if (this.frame) {
+      this.applyEnter();
+      this.animateWindow(true);
+    }
   }
 
   // ── Building ──────────────────────────────────────────────────────────────
 
-  /** Registers `panel` as focusable; its index is its place in `controls`. */
-  private control(
-    region: Region,
-    panel: Container,
-    radius: number,
+  /** A header key (back, close) as a control: the button draws its own states. */
+  private keyControl(
+    region: "back" | "close" | "settings",
+    button: GameButton,
     activate: () => void,
-    extra: Partial<Control> = {},
   ): Control {
-    const ring = new OutlineRing(radius, ink.yellow);
-    ring.content.setProperties({ display: "none" });
-    // Tabs bring their own pattern; the model stage is its own picture and takes none.
-    const lit = region === "back" || region === "close" ? ink.yellow : "#ffffff";
-    const pattern =
-      region === "tab" || region === "model"
-        ? undefined
-        : new HoverPattern(this.stage.motion, () => this.stage.invalidate(), lit);
-    if (pattern) panel.add(pattern.content);
-    panel.add(stack(ring.content, 2));
-    return { region, panel, ring, activate, pattern, ...extra };
-  }
-
-  private headerKey(name: "back" | "close"): HeaderKey {
-    const panel = stack(
-      new Container({
-        width: 44,
-        height: 44,
-        flexShrink: 0,
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: 8,
-        borderWidth: 2,
-        borderColor: ink.ice,
-        backgroundColor: ink.deep,
-      }),
-      1,
-    );
-    const icon = createMenuIcon(name);
-    icon.setProperties({ color: "#ffffff" });
-    panel.add(
-      new Container({
-        positionType: "absolute",
-        positionLeft: 0,
-        positionRight: 0,
-        positionTop: 0,
-        height: 2,
-        borderTopLeftRadius: 6,
-        borderTopRightRadius: 6,
-        backgroundColor: withOpacity("#ffffff", 0.14),
-      }),
-      icon,
-    );
-    const badge = stack(
-      new Container({
-        positionType: "absolute",
-        positionRight: -6,
-        positionBottom: -6,
-        paddingX: 4,
-        paddingY: 1,
-        borderRadius: 4,
-        borderWidth: 1,
-        borderColor: ink.deep,
-        backgroundColor: ink.ice,
-      }),
-      3,
-    );
-    badge.add(new InputGlyph("cancel", "Esc"));
-    panel.add(badge);
-    return { panel, icon, badge };
-  }
-
-  private addTab(index: number, name: string): void {
-    const panel = new Container({
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      height: 40,
-      paddingX: 10,
-      borderRadius: 8,
-      borderWidth: 2,
-      borderColor: "transparent",
-      flexShrink: 0,
-    });
-    const shadow = new BoxShadow(8, []);
-    const sheen = new DialogSurface("knob");
-    const pattern = new HoverPattern(this.stage.motion, () => this.stage.invalidate(), "#0d233f");
-    const ball = new CodexBall(this.stage.motion, () => this.stage.invalidate());
-    const label = new Text({ text: name, fontSize: 15, fontWeight: 800, color: ink.ice });
-    panel.add(
-      shadow.content,
-      sheen.content,
-      pattern.content,
-      stack(ball.content, 1),
-      stack(label, 1),
-    );
-    this.owned.push(shadow, sheen, pattern, ball);
-    const tab = Object.assign(
-      this.control("tab", panel, 8, () => this.pickSection(index), { tab: index }),
-      { ball, label, shadow, sheen, pattern },
-    );
-    this.tabs.push(tab);
-    this.tabStrip.add(panel);
+    return {
+      region,
+      panel: button.panel,
+      activate,
+      paint: (state) => {
+        button.setHovered(state.hovered);
+        button.setFocused(state.focused);
+        button.setFocusVisible(state.focusVisible);
+        button.setPressed(state.pressed);
+      },
+    };
   }
 
   /** Keeps focus on the same control across a rebuild, else on the selected row. */
   private rebuildControls(): void {
     this.setPressed(null);
     this.controls.length = 0;
-    if (this.trail.length) this.controls.push(this.back);
-    this.controls.push(this.close, ...this.tabs, ...this.entries, ...this.details);
+    if (this.trail.length && this.frame) this.controls.push(this.back);
+    this.controls.push(this.close);
+    if (this.settings) this.controls.push(this.settings);
+    this.controls.push(...this.tabs, ...this.entries, ...this.details);
     this.touchTip = null;
     this.tipPress = null;
     this.hovered = null;
@@ -467,9 +390,7 @@ export class GpuCodex {
     part.root.removeFromParent();
     const components: { dispose(): void }[] = [];
     part.root.traverse((node) => {
-      if (!(node instanceof Component)) return;
-      this.colors.forget(node);
-      components.push(node);
+      if (node instanceof Component) components.push(node);
     });
     for (const component of components.reverse()) component.dispose();
     for (const owned of part.owned) owned.dispose();
@@ -495,11 +416,21 @@ export class GpuCodex {
 
   /** Back shows while a trail exists, and takes the Esc badge from close (Esc goes back first). */
   private paintTrail(): void {
+    // A page's back key is always shown and always retraces first.
+    if (!this.frame) return;
     const trail = this.trail.length > 0;
     this.backKey.panel.setProperties({ display: trail ? "flex" : "none" });
-    this.backKey.badge.setProperties({ display: trail && !this.coarse ? "flex" : "none" });
-    this.closeKey.badge.setProperties({ display: !trail && !this.coarse ? "flex" : "none" });
+    this.backBadge.setProperties({ display: trail && !this.coarse ? "flex" : "none" });
+    this.frame.escBadge.setProperties({ display: !trail && !this.coarse ? "flex" : "none" });
     if (this.controls.includes(this.back) !== trail) this.rebuildControls();
+  }
+
+  /** Imported progress: redraw the open section in place so its locks follow. */
+  update(progress: Progress): void {
+    this.options.progress = progress;
+    const key = this.selectedKey;
+    this.selectedKey = "";
+    this.showSection(this.section, false, key || undefined);
   }
 
   private selectSection(index: number, animate: boolean): void {
@@ -512,10 +443,24 @@ export class GpuCodex {
     if (this.selectedKey) this.memory.set(previous.id, this.selectedKey);
     this.section = index;
     const section = this.sections[index]!;
-    for (const tab of this.tabs) this.paintTab(tab, animate);
+    for (const row of this.rowsIn) this.stage.motion.cancel(row);
     this.disposePart(this.list);
+    // The old rows are gone: nothing paints them until the controls are rebuilt below.
+    this.controls.length = 0;
     const owned: { dispose(): void }[] = [];
-    const root = new Container({ flexDirection: "column", gap: 2, flexShrink: 0 });
+    // Clips the rows' plates (their shadow and slant reach past the row) so they never widen the
+    // pane's scroll; the padding keeps lifts, shadows and focus rings inside the clip.
+    const root = new Container({
+      flexDirection: "column",
+      gap: 6,
+      flexShrink: 0,
+      overflow: "hidden",
+      // The picked row's 5px lift plus its focus ring.
+      paddingTop: 14,
+      paddingBottom: 12,
+      paddingLeft: 8,
+      paddingRight: 14,
+    });
     this.entries = [];
     for (const group of section.groups) {
       if (section.groups.length > 1)
@@ -524,10 +469,10 @@ export class GpuCodex {
             text: group.title,
             fontSize: 12,
             fontWeight: 800,
-            color: ink.muted,
-            paddingX: 6,
-            paddingTop: 8,
-            paddingBottom: 2,
+            letterSpacing: 1,
+            color: ui.muted,
+            paddingLeft: 6,
+            paddingTop: 6,
           }),
         );
       for (const entry of group.entries) root.add(this.entryRow(entry, owned));
@@ -540,62 +485,95 @@ export class GpuCodex {
     this.selectEntry(wanted, animate);
     this.rebuildControls();
     this.applyThumbReserve();
-    this.fadeIn(root, this.listIn, "x", 12, 200, animate, []);
+    this.rowsIn = this.entries.slice(0, STAGGERED_ROWS).map(() => ({ x: 0, opacity: 1 }));
+    this.fadeIn(root, this.listIn, "x", 0, 120, animate, [], () => this.staggerRows());
+  }
+
+  /** The list's entrance: its first rows slide in from the left one after another, 45ms apart. */
+  private staggerRows(): void {
+    for (const [i, state] of this.rowsIn.entries()) {
+      const panel = this.entries[i]!.panel;
+      this.stage.motion.enter(
+        state,
+        { x: -36, opacity: 0 },
+        { x: 0, opacity: 1 },
+        380,
+        () => {
+          fade(panel, state.opacity).setProperties({ transformTranslateX: state.x });
+          this.stage.invalidate();
+        },
+        EASE,
+        stagger(i),
+      );
+    }
   }
 
   private entryRow(entry: CodexEntry, owned: { dispose(): void }[]): Container {
-    const panel = new Container({
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 10,
-      minHeight: Math.max(48, this.stage.viewport.minTarget),
-      paddingX: 8,
-      paddingY: 4,
-      borderRadius: 8,
-      borderWidth: 2,
-      borderColor: "transparent",
-      flexShrink: 0,
+    const row = new CodexRow(this.stage, entry, this.thumbs, !!this.lock(entry));
+    row.fitTouch(this.stage.viewport.minTarget);
+    owned.push(row);
+    this.entries.push({
+      region: "entry",
+      panel: row.panel,
+      key: entry.key,
+      activate: () => this.pickEntry(entry.key),
+      paint: (state, animate) => row.paint(state, animate),
     });
-    const ball = new CodexBall(this.stage.motion, () => this.stage.invalidate());
-    const art = createArt(entry, 36, this.thumbs);
-    owned.push(ball, art);
-    panel.add(
-      ball.content,
-      art.root,
-      new Text({ text: entry.name, fontSize: 15, fontWeight: 800, flexShrink: 1, minWidth: 0 }),
-    );
-    const row = Object.assign(
-      this.control("entry", panel, 8, () => this.pickEntry(entry.key), {
-        key: entry.key,
-      }),
-      { ball },
-    );
-    owned.push(row.ring, ...(row.pattern ? [row.pattern] : []));
-    this.entries.push(row);
-    return panel;
+    return row.panel;
   }
 
   private selectEntry(key: string, animate: boolean): void {
     if (key === this.selectedKey) return;
     this.selectedKey = key;
-    for (const row of this.entries) this.paintEntry(row, animate);
+    if (this.controls.length) this.paintFocus();
     const entry = codexEntry(key)!.entry;
     this.disposePart(this.detail);
     this.details = [];
     this.modelNote = undefined;
+    this.namePlate = undefined;
     const owned: { dispose(): void }[] = [];
     this.building = [];
-    const root = new Container({ flexDirection: "column", gap: 16, flexShrink: 0 });
-    root.add(this.hero(entry, owned));
-    for (const block of entry.blocks) root.add(this.block(block, entry, owned));
+    // Clipped like the list (see `showSection`), with room for the plates' shadows and lifts.
+    const root = new Container({
+      flexDirection: "column",
+      gap: this.compact ? 12 : 18,
+      flexShrink: 0,
+      overflow: "hidden",
+      paddingTop: 8,
+      paddingBottom: this.compact ? 8 : 12,
+      paddingLeft: 8,
+      paddingRight: 12,
+    });
+    const lock = this.lock(entry);
+    root.add(this.hero(entry, lock, owned));
+    for (const block of entry.blocks)
+      if (!lock || LOCKED_BLOCKS.has(block.title)) root.add(this.block(block, entry, owned));
     this.detail = { root, owned, wraps: this.building };
     this.building = [];
     this.detailPane.add(root);
     this.detailPane.scrollPosition.value = [0, 0];
-    this.model.show(entry.model);
+    // A partner not yet unlocked shows its portrait's silhouette, not its model.
+    this.model.show(lock ? undefined : entry.model);
     this.paintModelNote();
     if (this.controls.length) this.rebuildControls();
-    this.fadeIn(root, this.detailIn, "y", 8, 180, animate, this.detail.wraps);
+    const plate = this.namePlate as SlantPlate | undefined;
+    // The name plate unrolls from the left as the page shows.
+    const unroll = this.unroll;
+    this.stage.motion.cancel(unroll);
+    unroll.reveal = animate ? 0 : 1;
+    plate?.set(unroll);
+    this.fadeIn(root, this.detailIn, "y", 8, 180, animate, this.detail.wraps, () =>
+      this.stage.motion.animate(
+        unroll,
+        { reveal: 1 },
+        380,
+        () => {
+          plate?.set({ reveal: unroll.reveal });
+          this.stage.invalidate();
+        },
+        EASE,
+      ),
+    );
   }
 
   /** A text broken by `line-break.ts` at the width `width` reports (see `Wrap`). */
@@ -639,6 +617,7 @@ export class GpuCodex {
     duration: number,
     animate: boolean,
     wraps: Wrap[],
+    onStart?: () => void,
   ): void {
     this.pending = this.pending.filter((pending) => pending.state !== state);
     const apply = () => {
@@ -649,7 +628,7 @@ export class GpuCodex {
       );
       this.stage.invalidate();
     };
-    const start = () =>
+    const start = () => {
       this.stage.motion.animate(
         state,
         { opacity: 1, [axis]: 0 } as typeof state,
@@ -657,6 +636,8 @@ export class GpuCodex {
         apply,
         uiEaseOut,
       );
+      onStart?.();
+    };
     this.stage.motion.cancel(state);
     if (!animate) {
       Object.assign(state, { opacity: 1, [axis]: 0 });
@@ -672,94 +653,142 @@ export class GpuCodex {
     this.pending.push({ state, images, wraps, waited: 0, frames: 0, start });
   }
 
-  private hero(entry: CodexEntry, owned: { dispose(): void }[]): Container {
+  /**
+   * The page's head: the picture (the turnable model, or the portrait, on the ball ground; else the
+   * entry's art), then its name on the ink plate and its type and tag chips.
+   */
+  /** A partner's form whose line is not yet unlocked: what is still needed; else null. */
+  private lock(entry: CodexEntry): string | null {
+    const line = formLines.get(entry.key);
+    return line ? starterLock(this.options.progress, line) : null;
+  }
+
+  private hero(entry: CodexEntry, lock: string | null, owned: { dispose(): void }[]): Container {
+    const compact = this.compact;
+    const pokemon = !!entry.model || entry.art.kind === "portrait";
     const hero = new Container({
       flexDirection: "row",
       alignItems: "center",
-      gap: 16,
-      height: entry.model ? (this.compact ? 150 : 210) : this.compact ? 100 : 150,
-      paddingX: 14,
-      paddingY: 10,
-      borderRadius: 10,
-      borderWidth: 2,
-      borderColor: ink.deep,
+      gap: compact ? 14 : 22,
+      height: pokemon ? (compact ? 150 : 210) : compact ? 92 : 132,
       flexShrink: 0,
     });
-    const shadow = new BoxShadow(10, [windowShadow]);
-    owned.push(shadow);
-    hero.add(
-      shadow.content,
-      new Image({
-        src: cardArt(entry),
-        positionType: "absolute",
-        positionLeft: 0,
-        positionTop: 0,
-        width: "100%",
-        height: "100%",
-        objectFit: "cover",
-        keepAspectRatio: false,
-        borderRadius: 8,
-      }),
-    );
-    let picture: Container;
-    if (entry.model) {
-      const box = (picture = stack(
-        new Container({
-          width: this.compact ? 150 : 240,
-          height: "100%",
-          flexShrink: 0,
-          borderRadius: 8,
-          alignItems: "center",
-          justifyContent: "center",
-        }),
-        1,
-      ));
-      box.add(this.model.mount());
-      this.modelNote = new Text({ text: "", fontSize: 13, fontWeight: 800, color: ink.muted });
-      box.add(stack(this.modelNote, 1));
-      const control = this.control("model", box, 8, () => {});
-      owned.push(control.ring, ...(control.pattern ? [control.pattern] : []));
-      this.details.push(control);
-      hero.add(box);
+    const picture = new Container({
+      width: pokemon ? (compact ? 170 : 260) : compact ? 92 : 132,
+      height: "100%",
+      flexShrink: 0,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: RADIUS,
+      borderWidth: 2,
+      borderColor: "transparent",
+    });
+    if (pokemon) {
+      const ground = new BallGround(typeInk(entry.types[0]));
+      owned.push(ground);
+      picture.add(ground.content);
+    } else picture.setProperties({ backgroundColor: ui.mist });
+    if (entry.model && !lock) {
+      picture.add(stack(this.model.mount(), 1));
+      this.modelNote = new Text({ text: "", fontSize: 13, fontWeight: 800, color: ui.ink });
+      picture.add(stack(this.modelNote, 2));
+      // Focus outlines the stage (its arrows turn the model); it has no hover or press of its own.
+      this.details.push({
+        region: "model",
+        panel: picture,
+        activate: () => {},
+        paint: (state) =>
+          picture.setProperties({
+            borderColor: state.focused && state.focusVisible ? ui.ink : "transparent",
+          }),
+      });
     } else {
-      const art = createArt(entry, this.compact ? 72 : 112, this.thumbs);
+      const size = pokemon ? (compact ? 104 : 150) : compact ? 64 : 96;
+      const art = createArt(entry, size, this.thumbs, !!lock);
       owned.push(art);
-      hero.add((picture = stack(art.root, 1)));
+      if (pokemon) art.root.setProperties({ marginBottom: compact ? 18 : 26 });
+      picture.add(stack(art.root, 1));
     }
-    const copy = stack(
-      new Container({ flexDirection: "column", gap: 10, flexShrink: 1, minWidth: 0 }),
-      1,
-    );
-    copy.add(
-      this.wrapped(
-        entry.name,
-        { fontSize: this.compact ? 24 : 30, fontWeight: 800, color: ink.deep },
-        () => {
-          const width = hero.size.value?.[0],
-            beside = picture.size.value?.[0];
-          return width && beside ? width - 2 * 2 - 2 * 14 - beside - 16 : undefined;
-        },
-        true,
+    hero.add(picture);
+    const copy = new Container({
+      flexDirection: "column",
+      alignItems: "flex-start",
+      gap: compact ? 10 : 14,
+      flexGrow: 1,
+      flexShrink: 1,
+      minWidth: 0,
+    });
+    const nameHeight = compact ? 40 : 52;
+    const lean = slantOf(nameHeight);
+    const name = new Container({
+      minHeight: nameHeight,
+      flexShrink: 1,
+      minWidth: 0,
+      // Centred on the plate's visual centre (the box's): equal room both sides of the slant.
+      alignItems: "center",
+      justifyContent: "center",
+      paddingX: 18 + lean,
+      paddingY: 4,
+    });
+    const plate = new SlantPlate(name, { fill: ui.ink });
+    plate.set({ depth: HARD_SHADOW.offset });
+    owned.push(plate);
+    this.namePlate = plate;
+    name.add(
+      plate.content,
+      stack(
+        this.wrapped(
+          entry.name,
+          {
+            fontSize: compact ? 22 : 28,
+            fontWeight: 900,
+            letterSpacing: 1,
+            color: ui.white,
+            textAlign: "center",
+          },
+          () => {
+            const width = copy.size.value?.[0];
+            return width ? width - 36 - 2 * lean : undefined;
+          },
+          true,
+        ),
+        1,
       ),
     );
-    const tags = new Container({ flexDirection: "row", flexWrap: "wrap", gap: 6 });
-    for (const type of entry.types) tags.add(typeTag(type));
-    for (const tag of entry.tags) tags.add(gameTag(tag, { face: ink.deep, ink: ink.ice }));
-    if (entry.types.length || entry.tags.length) copy.add(tags);
+    copy.add(stack(name, 1));
+    if (lock) {
+      const chip = new LockChip();
+      chip.set(lock);
+      chip.size(nameHeight, compact);
+      copy.add(stack(chip.panel, 1));
+    }
+    const tags = new Container({ flexDirection: "row", flexWrap: "wrap", gap: 8 });
+    for (const type of entry.types) {
+      const chip = typeChip(type, compact);
+      owned.push(chip);
+      tags.add(chip.tag);
+    }
+    for (const text of entry.tags) {
+      const chip = slantTag(text, { face: ui.mist, ink: ui.ink, size: compact ? 13 : 14 });
+      owned.push(chip);
+      tags.add(chip.tag);
+    }
+    if (entry.types.length || entry.tags.length) copy.add(stack(tags, 1));
     hero.add(copy);
     return hero;
   }
 
   private block(block: CodexBlock, entry: CodexEntry, owned: { dispose(): void }[]): Container {
-    const root = new Container({ flexDirection: "column", gap: 8, flexShrink: 0 });
+    const root = new Container({ flexDirection: "column", gap: 10, flexShrink: 0 });
     // The heading keeps its width; the rule takes what is left (none on a narrow page).
     const title = new Container({ flexDirection: "row", alignItems: "center", gap: 10 });
     title.add(
       new Text({
         text: block.title,
-        fontSize: 14,
-        fontWeight: 800,
-        color: ink.blueDeep,
+        fontSize: 15,
+        fontWeight: 900,
+        letterSpacing: 1,
+        color: ui.ink,
         flexShrink: 0,
         wordBreak: "keep-all",
       }),
@@ -768,7 +797,7 @@ export class GpuCodex {
         flexGrow: 1,
         flexShrink: 1,
         minWidth: 0,
-        backgroundColor: ink.line,
+        backgroundColor: ui.line,
         borderRadius: 1,
       }),
     );
@@ -784,29 +813,37 @@ export class GpuCodex {
           minWidth: 96,
           ...(wide ? { width: "100%" } : {}),
           paddingX: 12,
-          paddingY: 7,
-          borderRadius: 6,
-          borderWidth: 1,
-          borderColor: ink.line,
-          backgroundColor: "#ffffff",
+          paddingY: 8,
+          borderRadius: RADIUS_INNER,
+          backgroundColor: ui.mist,
         });
         const label = new Text({
           text: row.label,
           fontSize: 12,
           fontWeight: 700,
-          color: ink.muted,
+          color: ui.muted,
           flexShrink: 0,
           wordBreak: "keep-all",
         });
         cell.add(
           label,
           wide
-            ? this.wrapped(row.value, { fontSize: 16, fontWeight: 800, flexShrink: 1 }, () => {
-                const width = cell.size.value?.[0],
-                  labelWidth = label.size.value?.[0];
-                return width && labelWidth ? width - 2 * 1 - 2 * 12 - labelWidth - 12 : undefined;
-              })
-            : new Text({ text: row.value, fontSize: 16, fontWeight: 800, wordBreak: "keep-all" }),
+            ? this.wrapped(
+                row.value,
+                { fontSize: 16, fontWeight: 800, color: ui.ink, flexShrink: 1 },
+                () => {
+                  const width = cell.size.value?.[0],
+                    labelWidth = label.size.value?.[0];
+                  return width && labelWidth ? width - 2 * 12 - labelWidth - 12 : undefined;
+                },
+              )
+            : new Text({
+                text: row.value,
+                fontSize: 16,
+                fontWeight: 800,
+                color: ui.ink,
+                wordBreak: "keep-all",
+              }),
         );
         body.add(cell);
       }
@@ -816,12 +853,12 @@ export class GpuCodex {
         body.add(
           this.wrapped(
             line,
-            { fontSize: 15, fontWeight: 700, lineHeight: 1.45 },
+            { fontSize: 15, fontWeight: 700, lineHeight: 1.45, color: ui.ink },
             () => body.size.value?.[0],
           ),
         );
     } else if (block.kind === "rolls") {
-      body.setProperties({ flexDirection: "column", alignItems: "flex-start" });
+      body.setProperties({ alignItems: "flex-start" });
       body.add(...this.rolls(block));
     } else for (const ref of block.refs) body.add(this.refChip(ref, entry, owned));
     root.add(body);
@@ -840,35 +877,45 @@ export class GpuCodex {
         flexShrink: 0,
         fontSize: strong ? 16 : 13,
         fontWeight: 800,
-        color: strong ? ink.deep : ink.muted,
+        color: strong ? ui.ink : ui.muted,
         wordBreak: "keep-all",
       });
     const LABEL = 76,
       VALUE = 72;
+    // Every level, whatever the card: a stat cell like the 数值 above it.
     const perLevel = new Container({
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 12,
+      flexDirection: "column",
+      alignItems: "flex-start",
+      gap: 2,
+      minWidth: 96,
       paddingX: 12,
-      paddingY: 7,
-      borderRadius: 6,
-      borderWidth: 1,
-      borderColor: ink.line,
-      backgroundColor: "#ffffff",
+      paddingY: 8,
+      borderRadius: RADIUS_INNER,
+      backgroundColor: ui.mist,
     });
-    // Every level, whatever the card: centred across both rarity columns.
-    const gain = cell(block.perLevel.value, 2 * VALUE + 12, true);
-    gain.setProperties({ textAlign: "center" });
-    perLevel.add(cell(block.perLevel.label, LABEL - 12, false), gain);
+    perLevel.add(
+      new Text({
+        text: block.perLevel.label,
+        fontSize: 12,
+        fontWeight: 700,
+        color: ui.muted,
+        wordBreak: "keep-all",
+      }),
+      new Text({
+        text: block.perLevel.value,
+        fontSize: 16,
+        fontWeight: 800,
+        color: ui.ink,
+        wordBreak: "keep-all",
+      }),
+    );
     const table = new Container({
       flexDirection: "column",
       gap: 4,
       paddingX: 12,
       paddingY: 8,
-      borderRadius: 6,
-      borderWidth: 1,
-      borderColor: ink.line,
-      backgroundColor: "#ffffff",
+      borderRadius: RADIUS_INNER,
+      backgroundColor: ui.mist,
     });
     const head = new Container({ flexDirection: "row", alignItems: "center", gap: 12 });
     head.add(cell("升级卡", LABEL - 12, false));
@@ -882,7 +929,7 @@ export class GpuCodex {
         backgroundColor: Object.values(rarityTones)[rarity]!,
       });
       chip.add(
-        new Text({ text: rarityNames[rarity]!, fontSize: 12, fontWeight: 800, color: ink.deep }),
+        new Text({ text: rarityNames[rarity]!, fontSize: 12, fontWeight: 800, color: ui.ink }),
       );
       head.add(chip);
     }
@@ -903,57 +950,32 @@ export class GpuCodex {
   private refChip(ref: CodexRef, from: CodexEntry, owned: { dispose(): void }[]): Container {
     const target = ref.key ? codexEntry(ref.key)!.entry : undefined;
     const self = target?.key === from.key;
-    const chip = new Container({
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 8,
-      minHeight: this.stage.viewport.minTarget,
-      paddingLeft: target ? 6 : 12,
-      paddingRight: 12,
-      borderRadius: 8,
-      borderWidth: 2,
-      borderColor: self ? ink.navy : ink.line,
-      backgroundColor: self ? "#fff3c9" : "#ffffff",
-      flexShrink: 0,
-    });
-    if (target) {
-      const art = createArt(target, 30, this.thumbs);
-      owned.push(art);
-      chip.add(art.root);
-    }
-    chip.add(
-      new Text({
-        text: target?.name ?? ref.label ?? "",
-        fontSize: 15,
-        fontWeight: 800,
-        wordBreak: "keep-all",
-      }),
+    const chip = new CodexChip(
+      this.stage,
+      target,
+      target?.name ?? ref.label ?? "",
+      ref.note,
+      self,
+      this.thumbs,
+      !!target && !!this.lock(target),
     );
-    if (ref.note)
-      chip.add(
-        new Text({
-          text: ref.note,
-          fontSize: 12,
-          fontWeight: 700,
-          color: ink.muted,
-          wordBreak: "keep-all",
-        }),
-      );
-    if (target && !self) {
-      const control = this.control("ref", chip, 8, () => this.jump(target.key), {
+    chip.fitTouch(this.stage.viewport.minTarget);
+    owned.push(chip);
+    if (target && !self)
+      this.details.push({
+        region: "ref",
+        panel: chip.panel,
         key: target.key,
         tip: target.summary,
+        activate: () => this.jump(target.key),
+        paint: (state, animate) => chip.paint(state, animate),
       });
-      owned.push(control.ring, ...(control.pattern ? [control.pattern] : []));
-      this.details.push(control);
-    }
-    return chip;
+    return chip.panel;
   }
 
   private paintModelNote(): void {
     this.modelNote?.setProperties({
       text: this.model.state === "error" ? "模型载入失败" : "",
-      color: ink.danger,
     });
   }
 
@@ -1026,78 +1048,22 @@ export class GpuCodex {
 
   // ── Painting ──────────────────────────────────────────────────────────────
 
-  private paintTab(tab: (typeof this.tabs)[number], animate: boolean): void {
-    const selected = tab.tab === this.section;
-    const index = this.controls.indexOf(tab);
-    const hovered = index >= 0 && index === this.hovered;
-    tab.ball.set(selected, animate);
-    this.colors.set(
-      tab.panel,
-      "backgroundColor",
-      selected ? ink.yellow : hovered ? ink.blue : "transparent",
-      animate,
-    );
-    this.colors.set(tab.panel, "borderColor", selected ? ink.deep : "transparent", animate);
-    this.colors.set(tab.label, "color", selected ? ink.deep : ink.ice, animate);
-    tab.shadow.set(selected ? plateShadow(3) : []);
-    tab.sheen.content.setProperties({ display: selected ? "flex" : "none" });
-    const focused = index >= 0 && index === this.focusIndex;
-    // The picked tab is yellow: the pattern inks gold on it, pale on the navy band otherwise.
-    tab.pattern.setSurface(selected ? ink.yellow : "#0d233f");
-    tab.pattern.setFocused(selected || hovered || (focused && this.focusVisible));
-  }
-
-  private paintEntry(row: (typeof this.entries)[number], animate: boolean): void {
-    const selected = row.key === this.selectedKey;
-    const index = this.controls.indexOf(row);
-    const hovered = index >= 0 && index === this.hovered;
-    row.ball.set(selected, animate);
-    this.colors.set(
-      row.panel,
-      "backgroundColor",
-      selected ? "#ffffff" : hovered ? ink.surface : "transparent",
-      animate,
-    );
-    this.colors.set(row.panel, "borderColor", selected ? ink.navy : "transparent", animate);
-  }
-
-  /** Every other control's pattern: lit while hovered, keyboard-focused or (a list row) picked. */
-  private paintPatterns(): void {
-    for (const [i, control] of this.controls.entries()) {
-      if (!control.pattern) continue;
-      const picked = control.region === "entry" && control.key === this.selectedKey;
-      control.pattern.setFocused(
-        picked || i === this.hovered || (i === this.focusIndex && this.focusVisible),
+  /** Draws every control: hovered, focused (a ring only from keys or a pad), pressed, picked. */
+  private paintFocus(animate = true): void {
+    for (const [i, control] of this.controls.entries())
+      control.paint(
+        {
+          selected:
+            control.region === "tab"
+              ? control.tab === this.section
+              : control.region === "entry" && control.key === this.selectedKey,
+          hovered: i === this.hovered,
+          focused: i === this.focusIndex,
+          focusVisible: this.focusVisible,
+          pressed: i === this.pressed,
+        },
+        animate,
       );
-    }
-  }
-
-  private paintKey(control: Control, key: HeaderKey, animate: boolean): void {
-    const index = this.controls.indexOf(control);
-    const lit = index >= 0 && (this.focusIndex === index || this.hovered === index);
-    this.colors.set(key.panel, "backgroundColor", lit ? ink.yellow : ink.deep, animate);
-    this.colors.set(key.panel, "borderColor", lit ? ink.deep : ink.ice, animate);
-    this.colors.set(key.icon, "color", lit ? ink.deep : "#ffffff", animate);
-  }
-
-  private paintFocus(): void {
-    for (const [i, control] of this.controls.entries()) {
-      control.ring.content.setProperties({
-        display: i === this.focusIndex && this.focusVisible ? "flex" : "none",
-      });
-      if (control.region === "ref")
-        this.colors.set(
-          control.panel,
-          "borderColor",
-          i === this.hovered || i === this.focusIndex ? ink.blue : ink.line,
-          true,
-        );
-    }
-    for (const tab of this.tabs) this.paintTab(tab, true);
-    for (const row of this.entries) this.paintEntry(row, true);
-    this.paintKey(this.close, this.closeKey, true);
-    this.paintKey(this.back, this.backKey, true);
-    this.paintPatterns();
     this.stage.invalidate();
   }
 
@@ -1109,7 +1075,7 @@ export class GpuCodex {
       transformScaleX: this.enterMove.scale,
       transformScaleY: this.enterMove.scale,
     });
-    this.backdrop.setOpacity(this.enterFade.opacity);
+    this.backdrop?.setOpacity(this.enterFade.opacity);
     this.stage.invalidate();
   };
 
@@ -1144,33 +1110,44 @@ export class GpuCodex {
   resize(width: number, height: number, scale: number, safeArea: UiInsets): void {
     this.stage.resize(width, height, scale, safeArea);
     const view = this.stage.viewport;
-    this.backdrop.resize(view.width, view.height);
-    const compact = view.height <= 480;
-    const narrow = view.width <= 720;
-    const gutter = compact ? 8 : 16;
-    this.stage.root.setProperties({
-      paddingTop: gutter + view.safeArea.top,
-      paddingRight: gutter + view.safeArea.right,
-      paddingBottom: gutter + view.safeArea.bottom,
-      paddingLeft: gutter + view.safeArea.left,
-    });
-    this.titleBox.setProperties({ display: narrow ? "none" : "flex" });
-    this.header.setProperties({ paddingLeft: narrow ? 8 : 18, paddingY: compact ? 2 : 6 });
-    this.tabStrip.setProperties({ gap: narrow ? 2 : 4 });
-    for (const tab of this.tabs)
-      tab.panel.setProperties({
-        height: view.minTarget,
-        paddingX: narrow ? 7 : 12,
-        gap: narrow ? 4 : 6,
+    this.backdrop?.resize(view.width, view.height);
+    // A short landscape screen (a phone) by its host height: the UI scale keeps its logical height
+    // near the desktop's, so that alone would not tell a phone.
+    const compact = height <= 480;
+    const narrow = view.width <= 820;
+    if (this.inner) this.resizePage(compact);
+    else {
+      const frame = this.frame!;
+      this.stage.root.setProperties({
+        paddingTop: (compact ? 10 : 18) + view.safeArea.top,
+        paddingRight: (compact ? 10 : 18) + view.safeArea.right,
+        paddingBottom: (compact ? 8 : 18) + view.safeArea.bottom,
+        paddingLeft: (compact ? 12 : 22) + view.safeArea.left,
       });
-    for (const key of [this.closeKey, this.backKey])
-      key.panel.setProperties({ width: view.minTarget, height: view.minTarget });
-    this.listWidth = view.width >= 1000 ? 300 : view.width >= 760 ? 250 : 196;
+      frame.resize(compact);
+      frame.header.setProperties({
+        gap: compact ? 8 : 12,
+        paddingLeft: compact ? 10 : 16,
+        paddingTop: compact ? 8 : 14,
+      });
+      frame.extra.setProperties({ gap: compact ? 8 : 10 });
+      frame.close.fitTouch();
+    }
+    for (const face of this.segments) {
+      face.fitTouch();
+      face.panel.setProperties({ paddingX: (narrow ? 10 : 16) + slantOf(44) / 2 });
+      face.label.setProperties({ fontSize: compact ? 15 : 16 });
+    }
+    this.backKey.fitTouch();
+    this.listWidth = view.width >= 1000 ? (compact ? 264 : 304) : view.width >= 760 ? 244 : 200;
     this.listPane.setProperties({ width: this.listWidth });
-    this.detailPane.setProperties({
-      paddingX: narrow ? 10 : 18,
-      paddingY: compact ? 10 : 16,
-    });
+    if (!this.inner)
+      this.body.setProperties({
+        gap: compact ? 10 : 14,
+        paddingX: compact ? 10 : 16,
+        paddingTop: compact ? 10 : 18,
+        paddingBottom: compact ? 10 : 16,
+      });
     if (compact !== this.compact || view.minTarget !== this.minTarget) {
       this.compact = compact;
       this.minTarget = view.minTarget;
@@ -1188,9 +1165,40 @@ export class GpuCodex {
     this.stage.invalidate();
   }
 
+  /** 研究所's page layout: the segments join the top line on a short landscape screen, else lead
+   *  the body; the body's edges line up with the top line's. */
+  private resizePage(compact: boolean): void {
+    const inner = this.inner!,
+      view = this.stage.viewport;
+    if (compact !== this.compact || !this.tabTray.parent) {
+      this.tabTray.removeFromParent();
+      this.body.removeFromParent();
+      if (compact) inner.extra.add(stack(this.tabTray, 1));
+      else inner.body.add(stack(this.tabTray, 1));
+      inner.body.add(stack(this.body, 1));
+    }
+    inner.resize(compact);
+    inner.extra.setProperties({ gap: compact ? 12 : 18 });
+    const edge = compact ? 16 : 28;
+    // In the top line it gives way to the title; above the body it keeps its height.
+    this.tabTray.setProperties({
+      alignSelf: "flex-start",
+      flexShrink: compact ? 1 : 0,
+      marginBottom: compact ? 0 : 6,
+    });
+    inner.body.setProperties({
+      gap: compact ? 0 : 10,
+      paddingLeft: Math.max(edge, view.safeArea.left),
+      paddingRight: Math.max(edge, view.safeArea.right),
+      paddingBottom: Math.max(compact ? 8 : 16, view.safeArea.bottom),
+    });
+    this.body.setProperties({ gap: compact ? 10 : 14, padding: 0 });
+    this.detailPane.setProperties({ paddingX: compact ? 12 : 18, paddingY: compact ? 10 : 16 });
+  }
+
   /** Touch: the list's end can scroll clear of the thumb in the bottom-left corner. */
   private applyThumbReserve(): void {
-    this.listPane.setProperties({ paddingBottom: this.coarse ? 72 : 8 });
+    this.listPane.setProperties({ paddingBottom: this.coarse ? 72 : 0 });
   }
 
   setCoarsePointer(coarse: boolean): void {
@@ -1218,14 +1226,16 @@ export class GpuCodex {
     this.paintFocus();
   }
 
-  /** Tab order: back (with a trail), the selected tab, the selected row, the page, then close. */
+  /** Tab order: back (with a trail), the selected tab, the selected row, the page, then close; a
+   *  page leads with its top line (back, settings) as 研究所 does. */
   private tabOrder(): number[] {
     const tab = this.tabs[this.section]!;
     const row = this.entries.find((candidate) => candidate.key === this.selectedKey);
-    const back = this.trail.length ? [this.back] : [];
-    return [...back, tab, ...(row ? [row] : []), ...this.details, this.close].map((control) =>
-      this.controls.indexOf(control),
-    );
+    const content = [tab, ...(row ? [row] : []), ...this.details];
+    const order = this.settings
+      ? [this.close, this.settings, ...content]
+      : [...(this.trail.length ? [this.back] : []), ...content, this.close];
+    return order.map((control) => this.controls.indexOf(control));
   }
 
   physicalKey(event: UiKey): boolean {
@@ -1273,7 +1283,7 @@ export class GpuCodex {
         } else if (action === "up") {
           this.focus(
             this.controls.findIndex(
-              (item) => item.region === (this.trail.length ? "back" : "close"),
+              (item) => item.region === (this.trail.length && this.frame ? "back" : "close"),
             ),
           );
         } else if (action === "down" || action === "confirm") this.focusSelectedRow();
@@ -1320,9 +1330,17 @@ export class GpuCodex {
           this.focus(this.controls.indexOf(this.tabs[0]!));
         return true;
       case "close":
-        if (action === "confirm") this.options.onClose();
-        else if (action === "left" || action === "down")
-          this.focus(this.controls.indexOf(this.tabs.at(-1)!));
+        // A page's back key leads the top line; a window's close key ends it.
+        if (action === "confirm") control.activate();
+        else if (this.settings && action === "right")
+          this.focus(this.controls.indexOf(this.settings));
+        else if (action === "down" || action === (this.settings ? "right" : "left"))
+          this.focus(this.controls.indexOf(this.settings ? this.tabs[0]! : this.tabs.at(-1)!));
+        return true;
+      case "settings":
+        if (action === "confirm") control.activate();
+        else if (action === "left") this.focus(this.controls.indexOf(this.close));
+        else if (action === "down") this.focus(this.controls.indexOf(this.tabs[0]!));
         return true;
     }
   }
@@ -1383,31 +1401,8 @@ export class GpuCodex {
   setPressed(index: number | null): void {
     const next = !this.closing && index !== null && this.controls[index] ? index : null;
     if (next === this.pressed) return;
-    const before = this.pressed !== null ? this.controls[this.pressed] : undefined;
     this.pressed = next;
-    const keys = [this.close, this.back];
-    if (before && !keys.includes(before)) before.panel.setProperties({ transformTranslateY: 0 });
-    const control = next !== null ? this.controls[next] : undefined;
-    if (control && !keys.includes(control) && control.region !== "model")
-      control.panel.setProperties({ transformTranslateY: 2 });
-    // A header key sinks and squashes; the one released springs back.
-    const down = control !== undefined && keys.includes(control);
-    if (down) this.keyPressed = control;
-    const pressed = this.keyPressed;
-    this.stage.motion.animate(
-      this.keyPress,
-      { y: down ? 3 : 0, scale: down ? 0.97 : 1 },
-      down ? 60 : 140,
-      () => {
-        pressed.panel.setProperties({
-          transformTranslateY: this.keyPress.y,
-          transformScaleY: this.keyPress.scale,
-        });
-        this.stage.invalidate();
-      },
-      uiEaseOut,
-    );
-    this.stage.invalidate();
+    this.paintFocus();
   }
 
   /** Every press, before `MenuInput`: long-press tips, model turning and which pane a drag scrolls. */
@@ -1475,20 +1470,10 @@ export class GpuCodex {
     if (this.closing) this.exitRemaining = Math.max(0, this.exitRemaining - deltaMs);
     const matrix = this.panel.globalMatrix.value,
       size = this.panel.size.value;
-    if (matrix && size) this.backdrop.updatePanel(matrix, size[0], size[1]);
-    // The band drifts under 7 px/s: 15 redraws a second step it under 0.5 px, where a redraw
-    // every frame would keep the whole window drawing at full rate while nothing else moves. The
-    // band (15Hz), the model (30Hz) and the lit patterns (15Hz) all step on the page's idle clock,
-    // so they never interleave into extra frames. Each asks for its frame by invalidating.
-    this.band.update(deltaMs);
+    if (matrix && size) this.backdrop?.updatePanel(matrix, size[0], size[1]);
+    this.inner?.update();
+    // The model turns on the page's 30Hz idle clock, so it never interleaves into extra frames.
     const tick = idleTicked(30);
-    const bandDue = idleTicked(15);
-    for (const control of this.controls)
-      if (control.region !== "tab") control.pattern?.update(deltaMs);
-    for (const tab of this.tabs) {
-      tab.pattern.update(deltaMs);
-      tab.sheen.update(deltaMs);
-    }
     this.pending = this.pending.filter((pending) => {
       pending.waited += deltaMs;
       pending.frames++;
@@ -1531,12 +1516,10 @@ export class GpuCodex {
     }
     if (this.detail && this.layWraps(this.detail.wraps)) this.stage.invalidate();
     this.thumbs.update();
-    // Every idle loop on the page (this window's model and band, its patterns, the menu's behind it)
-    // asks for its step the same way, an invalidate, so all land on the same frame.
     // The model stays dirty until the window draws it (`render`): ask for that frame once.
     const modelDue = this.model.update(deltaMs, tick) && !this.modelAsked;
     if (modelDue) this.modelAsked = true;
-    if (modelDue || bandDue) this.stage.invalidate();
+    if (modelDue) this.stage.invalidate();
   }
 
   /** Scrolls the focused control's pane so the control is fully in view. */
@@ -1569,18 +1552,112 @@ export class GpuCodex {
   }
 
   dispose(): void {
+    this.stage.motion.cancel(this.unroll);
     this.tooltip.dispose();
     this.disposePart(this.detail);
     this.disposePart(this.list);
     for (const owned of this.owned) owned.dispose();
-    for (const tab of this.tabs) tab.ring.dispose();
-    for (const key of [this.close, this.back]) {
-      key.ring.dispose();
-      key.pattern?.dispose();
-    }
     this.model.dispose();
     this.thumbs.dispose();
-    this.backdrop.dispose();
+    this.backdrop?.dispose();
     this.stage.dispose();
+  }
+}
+
+/** The pointer the page's codex follows: the host's screen input owns one press at a time. */
+const PAGE_POINTER = 0;
+
+/**
+ * The 图鉴 outside a run: a full page the host shows like 研究所 (curtain in and out), with the
+ * same tabs, list and pages as the in-run window.
+ */
+export class GpuCodexPage implements GpuScreen {
+  readonly codex: GpuCodex;
+
+  constructor(
+    fonts: FontFamilies,
+    progress: Progress,
+    callbacks: { back(): void; settings(): void },
+  ) {
+    this.codex = new GpuCodex(fonts, {
+      progress,
+      onClose: () => {
+        getAudio().sfx("ui-back");
+        callbacks.back();
+      },
+      page: {
+        settings: () => {
+          getAudio().sfx("ui-confirm");
+          callbacks.settings();
+        },
+      },
+    });
+  }
+
+  get stage(): UiStage {
+    return this.codex.stage;
+  }
+  update(progress: Progress): void {
+    this.codex.update(progress);
+  }
+  get minLayout(): { width: number; height: number } {
+    return this.codex.minLayout;
+  }
+  navigate(action: NavigationAction): boolean {
+    return this.codex.navigate(action);
+  }
+  physicalKey(event: UiKey): boolean {
+    return this.codex.physicalKey(event);
+  }
+  resize(width: number, height: number, scale: number, insets: UiInsets): void {
+    this.codex.resize(width, height, scale, insets);
+  }
+  afterLayout(deltaMs: number): void {
+    this.codex.afterLayout(deltaMs);
+  }
+  setFocusVisible(visible: boolean): void {
+    this.codex.setFocusVisible(visible);
+  }
+  setCoarsePointer(coarse: boolean): void {
+    this.codex.setCoarsePointer(coarse);
+  }
+  hit(x: number, y: number): number {
+    return this.codex.hit(x, y);
+  }
+  hover(index: number | null): void {
+    this.codex.hover(index);
+  }
+  focus(index: number): void {
+    this.codex.focus(index);
+  }
+  activate(index: number): void {
+    this.codex.activate(index);
+  }
+  scroll(delta: number): void {
+    this.codex.scroll(delta);
+  }
+  setPressed(index: number | null): void {
+    this.codex.setPressed(index);
+  }
+  pointerDown(x: number, y: number, touch: boolean): void {
+    this.codex.pointerDown(PAGE_POINTER, x, y, touch);
+  }
+  pointerMove(x: number, y: number): void {
+    this.codex.pointerMove(PAGE_POINTER, x, y);
+  }
+  pointerUp(touch: boolean): boolean {
+    return this.codex.pointerUp(PAGE_POINTER, touch);
+  }
+  turnModel(delta: number): void {
+    this.codex.turnModel(delta);
+  }
+  render(renderer: WebGLRenderer): void {
+    this.codex.render(renderer);
+  }
+  releaseUploads(): void {
+    this.codex.releaseUploads();
+  }
+  dispose(): void {
+    this.codex.dispose();
   }
 }

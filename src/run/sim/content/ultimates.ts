@@ -389,6 +389,85 @@ const ultimatesTable = {
       },
     ]),
   },
+  "psychic-field": {
+    id: "psychic-field",
+    type: "psychic",
+    names: ["念波震爆", "精神领域", "万象念界"],
+    tiers: [0, 1, 2].map((tier): Pulse[] => [
+      {
+        at: 0,
+        kind: "ring",
+        look: "ring",
+        radius: 3.4 + tier * 0.6,
+        mul: 0.6,
+        pull: 2,
+        status: "sleep",
+        chance: 0.7,
+      },
+      {
+        at: 0.5,
+        kind: "lines",
+        look: "roots",
+        count: 4 + tier * 2,
+        length: 7 + tier * 2,
+        radius: 0.5,
+        mul: 1.4,
+        knock: 2,
+      },
+      ...(tier >= 1
+        ? [
+            {
+              at: 0.9,
+              kind: "strike",
+              look: "meteor",
+              count: 3,
+              radius: 1.5,
+              range: 8,
+              mul: 1.6,
+              toughest: true,
+            } satisfies Pulse,
+          ]
+        : []),
+      ...(tier === 2
+        ? [
+            {
+              at: 1.3,
+              kind: "ring",
+              look: "blast",
+              radius: 4.5,
+              mul: 2.2,
+              knock: 5,
+            } satisfies Pulse,
+          ]
+        : []),
+    ]),
+  },
+  "rockslide-quake": {
+    id: "rockslide-quake",
+    type: "rock",
+    names: ["落岩冲击", "岩崩地震", "山崩地裂"],
+    tiers: [0, 1, 2].map((tier): Pulse[] => [
+      { at: 0, kind: "ring", look: "ring", radius: 2.8, mul: 1, knock: 3 },
+      ...every(0.3, 0.9 + tier * 0.3, 0.3, (at) => ({
+        at,
+        kind: "strike",
+        look: "meteor",
+        count: 2 + tier,
+        radius: 1.6,
+        range: 8,
+        mul: 1.1,
+        knock: 2,
+      })),
+      {
+        at: 1.2 + tier * 0.3,
+        kind: "ring",
+        look: "blast",
+        radius: 3.5 + tier * 0.5,
+        mul: 2,
+        knock: 6,
+      },
+    ]),
+  },
 } as const satisfies Record<string, UltimateDef<string>>;
 
 export type UltimateId = keyof typeof ultimatesTable;

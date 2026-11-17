@@ -3,9 +3,9 @@ import { restoreWorld, snapshotWorld, type WorldSnapshot } from "../run/sim/snap
 import type { Command } from "../run/sim/state/commands";
 import type { RunEvent } from "../run/sim/state/events";
 import { TICK, type World } from "../run/sim/state/world";
-import { isFrozen, stepSharedWorld, type RunConfig } from "../run/sim/world";
+import { isFrozen, stepSharedWorld } from "../run/sim/world";
 import { departPlayer } from "../run/sim/team";
-import { peerCommand, record } from "./protocol";
+import { peerCommand, record, type MultiplayerConfig } from "./protocol";
 import type { MultiplayerSession } from "./session";
 import {
   OwnerSimulation,
@@ -172,6 +172,8 @@ export class MultiplayerRun {
   private revision = 0;
   private loadedRevision = 0;
   private readyRevision = 0;
+  /** `loading` owns the host's local resource/presentation barrier as well as guest transfers. */
+  private localReady = true;
   private revisions = new WeakMap<World, number>();
   /** Host: a zone change waits for every reachable guest. Guest: loading or waiting to resume. */
   suspended = false;
@@ -184,8 +186,8 @@ export class MultiplayerRun {
   onPacket: () => void = () => {};
 
   readonly session: MultiplayerSession;
-  readonly config: Omit<RunConfig, "seed">;
-  constructor(session: MultiplayerSession, config: Omit<RunConfig, "seed">) {
+  readonly config: MultiplayerConfig;
+  constructor(session: MultiplayerSession, config: MultiplayerConfig) {
     this.session = session;
     this.config = config;
     this.player = session.state.self;
@@ -486,7 +488,7 @@ export class MultiplayerRun {
   }
   /** A zone change resumes once no reachable guest is still loading it. */
   private settleZone() {
-    if (!this.suspended || !this.host) return;
+    if (!this.suspended || !this.host || !this.localReady) return;
     for (const guest of this.guests.values()) if (guest.phase === "loading") return;
     this.suspended = false;
     for (const [id, guest] of this.guests)
@@ -520,6 +522,7 @@ export class MultiplayerRun {
   /** Call when a transferred world is installed, before asynchronously warming its scene. */
   loading(world: World) {
     this.loadedRevision = this.revisions.get(world) ?? this.revision;
+    if (this.host) this.localReady = false;
     if (!this.host) this.world = world;
   }
   private enqueue(command: Command, player: number) {
@@ -792,6 +795,8 @@ export class MultiplayerRun {
       this.session.send({ t: "ready", revision: this.readyRevision });
       return;
     }
+    this.localReady = true;
+    this.settleZone();
     if (!this.suspended) return;
     await new Promise<void>((resolve, reject) => {
       this.readyResolve = resolve;

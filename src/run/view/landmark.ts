@@ -1,4 +1,5 @@
-// The same summon/fight/exit contract, with stage-owned set pieces and sparse vertical light.
+// The guardian's altar: lit while it can summon, quiet during the fight and after the fall (the exit
+// opens where the guardian fell, exitPortal.ts). Stage-owned set pieces and sparse vertical light.
 import {
   AdditiveBlending,
   Color,
@@ -18,7 +19,6 @@ import { lambertCopy } from "./materials";
 import { inject, patchShader } from "./patchShader";
 import type { StageTheme } from "./stageThemes";
 import type { WindUniforms } from "./environment/wind";
-const EXIT = new Color("#dddcca");
 export interface LandmarkView {
   root: Group;
   update(world: World, elapsed: number): void;
@@ -95,19 +95,15 @@ export function createLandmark(
   return {
     root,
     update(current, elapsed) {
-      const cleared = current.zone.phase !== "active",
-        fighting = !cleared && current.bossId !== null,
-        color = cleared ? EXIT : summon,
+      const quiet = current.zone.phase !== "active" || current.bossId !== null,
         pulse = 0.5 + 0.5 * Math.sin(elapsed * 2.4);
-      for (const material of [ringMaterial, columnMaterial, coreMaterial])
-        material.color.copy(color);
-      ringMaterial.opacity = fighting ? 0.09 : 0.22 + 0.1 * pulse;
-      column.visible = !fighting;
+      ringMaterial.opacity = quiet ? 0.09 : 0.22 + 0.1 * pulse;
+      column.visible = !quiet;
       columnMaterial.opacity = 0.055 + 0.025 * pulse;
-      coreMaterial.opacity = fighting ? 0.08 : 0.45 + 0.2 * pulse;
+      coreMaterial.opacity = quiet ? 0.08 : 0.45 + 0.2 * pulse;
       if (look.emissiveBody) {
-        bodyMaterial.emissive.copy(color);
-        bodyMaterial.emissiveIntensity = fighting ? 0.025 : 0.28 + 0.08 * pulse;
+        bodyMaterial.emissive.copy(summon);
+        bodyMaterial.emissiveIntensity = quiet ? 0.025 : 0.28 + 0.08 * pulse;
       }
     },
     dispose() {

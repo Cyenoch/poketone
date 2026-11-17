@@ -11,6 +11,27 @@
   },
   "backdrop.webp": {
     "asset": "public/art/lobby/backdrop.webp",
+    "source": "public/art/lobby/source/backdrop-coastal-overlook.png",
+    "generator": "Magpie Image / ash/gpt-image-2.5-sunburst; requested 16:9, quality high, opaque, n=1; returned 1672x941 PNG",
+    "generationId": "image-38907-21",
+    "createdAt": "2026-11-17",
+    "references": [
+      "public/art/lobby/source/backdrop-previous.webp (previous released backdrop, preserved unchanged)",
+      "public/art/lobby/podium.webp (perspective, light and material reference only; not painted into the background)"
+    ],
+    "promptFile": "public/art/lobby/source/backdrop-prompt.txt",
+    "purpose": "New coastal overlook for the nine-starter lobby. Open foreground meadow for the live GLB and separate stone podium, connected coastal village and curved route in the exposed central band, subdued terrain behind the decision column. No UI or hero baked into the image.",
+    "layout": "Centred cover-fit. Source crop at 1280x800: x 4.98–95.02%, full height; at 844x390: full width, y 8.95–91.05%. Foreground clearing x 12–44%; Center/Mart/Lapras clustered around the centre; sky kept quiet above controls.",
+    "transform": "cwebp -q 90 -m 6 public/art/lobby/source/backdrop-coastal-overlook.png -o public/art/lobby/backdrop.webp; no crop or upscale",
+    "sourceSha256": "793762c7b061e80bca3bf72ae4a4370ccb99d0b08bf860d09e211f98c048fb6c",
+    "assetSha256": "dd77854c9d4679ec10736b78058789f995c93eced08e3ddef3afed516f334e56",
+    "bytes": 137566,
+    "rights": "Generated for a noncommercial Pokémon fan project; character designs belong to their rights holders; no endorsed affiliation. Only existing generated project art used as reference."
+  },
+  "source/backdrop-previous.webp": {
+    "asset": "public/art/lobby/source/backdrop-previous.webp",
+    "assetSha256": "d7f3f9a900b8540f348fcf25fcf809eed05f72f04532a293707d07e5ebdabfeb",
+    "status": "Previous released backdrop, preserved as the new generation's reference; original generation provenance follows.",
     "generator": "Magpie Image / openrouter/google/gemini-nano-banana-2.1, 16:9 (1376x768), n=2, take 1",
     "generationId": "not reported (the call returned the files directly)",
     "createdAt": "2026-11-06",

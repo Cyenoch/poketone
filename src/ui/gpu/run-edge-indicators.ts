@@ -9,6 +9,7 @@ import { createMenuIcon } from "./icons";
 import { fade, stack } from "./layer";
 import { gameTag } from "./tag";
 import type { UiStage } from "./stage";
+import { ui } from "./tokens";
 
 interface Rect {
   left: number;
@@ -29,7 +30,7 @@ interface Marker {
   y: number;
   form: string;
 }
-const INK = "#0d233f";
+const INK = ui.ink;
 /** hp-low red (DESIGN.md): a downed teammate keeps the seat colour and adds this alarm. */
 const DOWN = "#e0475a";
 

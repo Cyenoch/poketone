@@ -1,0 +1,13 @@
+{
+  "createdAt": "2026-11-17",
+  "assets": ["psychic", "rock", "ground"],
+  "generator": "Magpie generate_image, ash/gpt-image-2.5-sunburst",
+  "generationRecords": "assets/icons/source/psychic-rock-generation.json",
+  "generationId": "image-38907-14",
+  "source": "assets/icons/source/crests-psychic-rock-ground.png",
+  "grid": [2, 2],
+  "cells": ["psychic", "rock", "ground", null],
+  "output": "public/art/icons/crests/<cell>.webp",
+  "processing": "assets/icons/prepare-psychic-rock.py: composite onto #f5f1e8, slice full cells, border flood-fill tolerance 38, trim, 8% square padding, Lanczos to 128x128, WebP q88. Spare gray star unused.",
+  "rights": "Generated for a noncommercial Pokémon fan project; not licensed as standalone open art."
+}

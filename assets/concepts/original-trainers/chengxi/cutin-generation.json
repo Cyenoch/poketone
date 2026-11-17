@@ -1,0 +1,12 @@
+{
+  "tool": "magpie-image.generate_image",
+  "actualModel": "ash/gpt-image-2.5-sunburst",
+  "jobId": "image-38907-26",
+  "promptTemplate": "../cutin-prompt.txt",
+  "promptAssembly": "Trim the template's trailing newline, then append two newline characters and characterBrief.",
+  "characterBrief": "Character: Chengxi, the woman in teal short waterproof cape and cream high-collar shirt, navy shorts, coral whistle, dark indigo short hair with the short side ponytail on HER RIGHT tied with a coral cord, warm brown freckled skin and amber eyes. Keep her round tide dial on HER LEFT hip and companion capsules on HER RIGHT hip. Energetic bright grin.",
+  "referenceImages": ["turnaround.png"],
+  "parameters": { "size": "1024x1024", "quality": "high", "background": "transparent", "n": 1 },
+  "output": "cutin-source.png",
+  "seed": null
+}

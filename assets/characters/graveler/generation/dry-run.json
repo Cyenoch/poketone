@@ -1,0 +1,45 @@
+{
+  "dry_run": true,
+  "valid": true,
+  "input": "/Users/jgbingzi/workspace/sp/poketone/assets/characters/graveler/generation/split/v-front.png /Users/jgbingzi/workspace/sp/poketone/assets/characters/graveler/generation/split/v-left.png /Users/jgbingzi/workspace/sp/poketone/assets/characters/graveler/generation/split/v-back.png /Users/jgbingzi/workspace/sp/poketone/assets/characters/graveler/generation/split/v-right.png",
+  "model": "v3.1-20260211",
+  "model_reason": "explicit --model",
+  "steps": [
+    {
+      "name": "multiview-to-model",
+      "endpoint": "/v3/generation/multiview-to-model",
+      "task_type": "multiview_to_model",
+      "payload": {
+        "inputs": [
+          {
+            "front": "<upload:/Users/jgbingzi/workspace/sp/poketone/assets/characters/graveler/generation/split/v-front.png>"
+          },
+          {
+            "left": "<upload:/Users/jgbingzi/workspace/sp/poketone/assets/characters/graveler/generation/split/v-left.png>"
+          },
+          {
+            "back": "<upload:/Users/jgbingzi/workspace/sp/poketone/assets/characters/graveler/generation/split/v-back.png>"
+          },
+          {
+            "right": "<upload:/Users/jgbingzi/workspace/sp/poketone/assets/characters/graveler/generation/split/v-right.png>"
+          }
+        ],
+        "smart_low_poly": true,
+        "face_limit": 1000,
+        "model": "v3.1-20260211"
+      }
+    }
+  ],
+  "pending_uploads": [
+    "/Users/jgbingzi/workspace/sp/poketone/assets/characters/graveler/generation/split/v-front.png",
+    "/Users/jgbingzi/workspace/sp/poketone/assets/characters/graveler/generation/split/v-left.png",
+    "/Users/jgbingzi/workspace/sp/poketone/assets/characters/graveler/generation/split/v-back.png",
+    "/Users/jgbingzi/workspace/sp/poketone/assets/characters/graveler/generation/split/v-right.png"
+  ],
+  "deliverables": ["GLB"],
+  "candidates": 1,
+  "warnings": [],
+  "errors": [],
+  "generation_credits_estimate": 40,
+  "cost_notes": ["estimated generation cost: 40 credits (official list price)"]
+}

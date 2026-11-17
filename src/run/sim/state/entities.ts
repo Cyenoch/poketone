@@ -412,6 +412,10 @@ export interface Partner {
   cooldown: number;
   /** Seconds until it can guard its owner again (`GUARD`). */
   guard: number;
+  /** Enemy id it is fighting; kept until it stops qualifying or a clearly nearer one appears. */
+  target: number | null;
+  /** Past `PARTNER.roam` from its owner: following back until within `PARTNER.rejoin`. */
+  returning: boolean;
 }
 
 export interface Obstacle {

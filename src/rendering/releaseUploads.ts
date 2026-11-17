@@ -2,9 +2,9 @@ import {
   BufferGeometry,
   LightShadow,
   Material,
-  ShaderMaterial,
   SkinnedMesh,
   Texture,
+  type IUniform,
   type Object3D,
 } from "three";
 
@@ -38,8 +38,11 @@ export function releaseUploads(root: Object3D): void {
     if (released.has(material)) return;
     release(material);
     for (const value of Object.values(material)) if (value instanceof Texture) release(value);
-    if (material instanceof ShaderMaterial) {
-      for (const uniform of Object.values(material.uniforms)) {
+    // ShaderMaterial's uniforms, and those of built-in materials that carry their own for
+    // onBeforeCompile (the UI's UiShaderMaterial, a MeshBasicMaterial).
+    const { uniforms } = material as Material & { uniforms?: Record<string, IUniform> };
+    if (uniforms) {
+      for (const uniform of Object.values(uniforms)) {
         if (uniform.value instanceof Texture) release(uniform.value);
       }
     }

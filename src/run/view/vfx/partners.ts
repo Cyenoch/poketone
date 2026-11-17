@@ -45,7 +45,10 @@ const mote = sprite({
 });
 const spark = sprite({ shape: Shape.spark, life: 0.3, from: white, accent: gold.yellow, add: 1 });
 
-/** The ally ring under each partner: the player's warm yellow, so it reads as on your side. */
+/**
+ * The ally ring under each partner: a faint cream, so it reads as on your side without the warm
+ * yellow that marks the player themself (outline, foot ring, x-ray).
+ */
 export function partnerMarker(
   fx: Fx,
   partner: Partner,
@@ -54,10 +57,13 @@ export function partnerMarker(
   radius: number,
 ): void {
   fx.decals
-    .put(Decal.telegraph, x, z, radius * 1.35, 0, partner.id * 0.618)
-    .tint(gold.yellow, 0.8, white, 0.3)
+    .put(Decal.telegraph, x, z, radius * 1.2, 0, partner.id * 0.618)
+    .tint(wind.cream, 0.35, white, 0)
     .args(1);
 }
+
+/** Partners' hits are support: about half the player's own effect strength. */
+const QUIET = 0.5;
 
 export function partnerAttack(
   fx: Fx,
@@ -73,8 +79,8 @@ export function partnerAttack(
   const y = fx.ground.heightAt(tx, tz) + 0.6;
   switch (style) {
     case "tackle":
-      fx.decals.stamp(Decal.ring, tx, tz, 0.9, 0.3, color, 0.9, white, 0.6, 0.25, 0.3);
-      spray(fx, spark, tx, y, tz, 4, 4, 2, 0.12);
+      fx.decals.stamp(Decal.ring, tx, tz, 0.7, 0.3, color, 0.9 * QUIET, white, 0.3, 0.25, 0.3);
+      spray(fx, spark, tx, y, tz, 2, 4, 2, 0.12);
       break;
     case "shot":
       fx.echoes.add(
@@ -88,15 +94,16 @@ export function partnerAttack(
         0,
         [tx, y, tz],
       );
-      fx.decals.stamp(Decal.ring, tx, tz, 0.7, 0.25, color, 0.8, white, 0.5, 0.25, 0.3);
+      fx.decals.stamp(Decal.ring, tx, tz, 0.55, 0.25, color, 0.8 * QUIET, white, 0.25, 0.25, 0.3);
       break;
     case "cloud":
-      fx.decals.stamp(Decal.ring, x, z, reach, 0.5, gold.yellow, 0.8, white, 0.5, 0.15, 0.2);
-      spray(fx, mote, x, fx.ground.heightAt(x, z) + 0.4, z, 14, reach * 1.6, 0.6, 0.35);
+      // The cloud's area is real (it paralyses), so its ring keeps its reach, just quieter.
+      fx.decals.stamp(Decal.ring, x, z, reach, 0.5, color, 0.8 * QUIET, white, 0.25, 0.15, 0.2);
+      spray(fx, mote, x, fx.ground.heightAt(x, z) + 0.4, z, 7, reach * 1.6, 0.6, 0.35);
       break;
     case "pulse":
-      fx.decals.stamp(Decal.ring, x, z, reach, 0.3, color, 0.9, white, 0.5, 0.15, 0.3);
-      spray(fx, spark, x, fx.ground.heightAt(x, z) + 0.4, z, 12, reach * 1.8, 0.5, 0.13);
+      fx.decals.stamp(Decal.ring, x, z, reach, 0.3, color, 0.9 * QUIET, white, 0.25, 0.15, 0.3);
+      spray(fx, spark, x, fx.ground.heightAt(x, z) + 0.4, z, 6, reach * 1.8, 0.5, 0.13);
       break;
   }
 }

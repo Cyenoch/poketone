@@ -284,11 +284,11 @@ function* stationVisit(world, player, seen) {
   [player.x, player.z] = [player.px, player.pz] = home;
 }
 
-/** Steps the player onto the zone's landmark (the guardian's altar, then the exit). */
+/** Steps the player onto the zone's landmark (the guardian's altar), or the exit once it has fallen. */
 function toLandmark(world, player) {
-  const pad = world.map.pads.find((p) => p.tag === "landmark");
-  player.x = player.px = pad.x;
-  player.z = player.pz = pad.z;
+  const spot = world.zone.exit ?? world.map.pads.find((p) => p.tag === "landmark");
+  player.x = player.px = spot.x;
+  player.z = player.pz = spot.z;
 }
 
 /** Seconds the full run's guardian fights before the script fells it (a scripted bot cannot aim at it). */
@@ -348,7 +348,15 @@ const CASES = [
       const difficulty = (i + s) % 3;
       // Durable enemies and adaptive supply move the loot path; keep evolution/capture in real runs.
       const seed =
-        s === 1 && starter === "squirtle" ? 41 : s === 0 && starter === "gastly" ? 11 : baseSeed;
+        starter === "abra"
+          ? difficulty === 2
+            ? 7
+            : 5
+          : s === 1 && starter === "squirtle"
+            ? 41
+            : s === 0 && starter === "gastly"
+              ? 11
+              : baseSeed;
       const name = `solo/${starter}/d${difficulty}/s${seed}`;
       const full = name === FULL_RUN;
       return {
@@ -360,11 +368,19 @@ const CASES = [
         ticks: STAGE_TICKS * 3,
         script: campaign,
         ...(full ? { ticks: 6 * 2 * STAGE_TICKS, script: campaign } : {}),
-        ...(["solo/squirtle/d2/s61", "solo/squirtle/d0/s41", "solo/pikachu/d0/s61"].includes(name)
+        ...([
+          "solo/squirtle/d2/s61",
+          "solo/squirtle/d0/s41",
+          "solo/pikachu/d0/s61",
+          "solo/abra/d1/s5",
+        ].includes(name)
           ? { ticks: 6 * 2 * STAGE_TICKS }
           : {}),
         covers: [
           full ? "evolve:2" : "evolve:1",
+          ...(starter === "geodude" || (starter === "abra" && difficulty === 2)
+            ? ["evolve:2"]
+            : []),
           "ult",
           "dash",
           "guardian",

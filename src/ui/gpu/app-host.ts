@@ -1,7 +1,13 @@
 import { setGlyphInputMode } from "./input-glyph";
 import { advanceIdleClock } from "./motion";
 import { setImageLoader } from "@pmndrs/uikit";
-import { SRGBColorSpace, WebGLRenderTarget, type Material, type Texture } from "three";
+import {
+  SRGBColorSpace,
+  WebGLRenderTarget,
+  type Material,
+  type Texture,
+  type WebGLRenderer,
+} from "three";
 import { bindImages, type ImageStore } from "../../prepare/images";
 import type { FontFamilies } from "@pmndrs/uikit";
 import type { RunHandle } from "../../run/createRun";
@@ -10,17 +16,20 @@ import type { GpuRunOverlays } from "./run-overlays";
 import { getAudio, UI_SOUNDS } from "../../audio/engine";
 import type { Settings } from "../../settings";
 import { uiFonts } from "./fonts";
+import type { CueGlyphs } from "./trainer-cutin";
 import type { GpuCodex } from "./codex";
 import { MenuInput, type MenuInputTarget } from "./menu-input";
 import { SettingsDialog } from "./settings-dialog";
 import { setUiPixelRatio, UiStage } from "./stage";
 import type { AppRenderer } from "../../rendering/app-renderer";
-import { fitScale, type UiInsets } from "./viewport";
+import { autoScale, fitScale, type UiInsets } from "./viewport";
 import { GpuShell } from "./app-shell";
+import { GpuLauncher } from "./launcher";
+import type { Preparation } from "../../prepare/preparation";
 import { GpuLobby } from "./lobby";
 import { playableStages } from "../../lobbyPick";
 import { GpuLab } from "./lab";
-import { emptyProgress } from "../../run/progress";
+import { emptyProgress, type Progress } from "../../run/progress";
 import { starterOrder } from "../../run/sim/content/lines/index";
 import { GpuToast } from "./toast";
 import type { UiSurface, UiPointer, UiKey } from "../../platform/ui-surface";
@@ -35,6 +44,8 @@ import {
 } from "../../platform/input";
 
 const INSTALL_HINT = "添加到主屏幕，隐藏浏览器栏";
+/** How long the launcher waits for the opening run's part once the first screen is in (ms). */
+export const LAUNCH_GRACE_MS = 2500;
 
 export interface GpuAppCallbacks {
   openSettings(): void;
@@ -54,8 +65,14 @@ export interface GpuAppState {
   canSave: boolean;
   busy: boolean;
   transition: SceneTransitionPhase;
+  /** The page coming on, shown on the curtain. */
+  transitionTitle: string;
+  /** How far the page coming on has loaded (0–1), shown under its title; null: no bar. */
+  transitionProgress: number | null;
   /** A new `id` shows the message again, even when the text repeats. */
   notification: { id: number; message: string } | null;
+  /** The 图鉴 shows partners not yet unlocked as silhouettes. */
+  progress: Progress;
 }
 /** A full screen (大厅, 研究所, the save window): the host draws it, routes input to it and keeps it sized. */
 export interface GpuScreen extends MenuInputTarget {
@@ -87,6 +104,10 @@ export interface GpuScreen extends MenuInputTarget {
   setCovered?(covered: boolean): void;
   /** Until the first screen's text has arrived only its backdrop shows (the boot screen). */
   setRevealed?(revealed: boolean): void;
+  /** Draws the screen when it has offscreen passes of its own (the 图鉴 page's model). */
+  render?(renderer: WebGLRenderer): void;
+  /** A pad's right stick turns a focused model (the 图鉴 page). */
+  turnModel?(delta: number): void;
 }
 export interface GpuAppHost {
   readonly inputMode: InputMode;
@@ -97,8 +118,11 @@ export interface GpuAppHost {
     screens: readonly GpuScreen[];
     lobby: GpuLobby | undefined;
     run: { hud: GpuRunHud; overlays: GpuRunOverlays } | undefined;
+    launcher: GpuLauncher | undefined;
   };
   readonly fonts: FontFamilies;
+  /** Font pages for strings a surface sets after its own preparation (a run's trainer lines). */
+  readonly glyphs: CueGlyphs;
   /** The coastal art the screens paint, one upload for all of them. */
   readonly backdrop: Texture;
   /** Shows `screen` over any screen already shown (the save window over 研究所) until the
@@ -112,8 +136,15 @@ export interface GpuAppHost {
   /** Settles once the first screen (the lobby) is revealed with its text and images: what loads
    *  only for later (the lobby's run prefetch, the menu music) starts then, off the first screen's link. */
   readonly revealed: Promise<void>;
+  /** The launcher also waits for `part` (the run the lobby opens on), shown in its bar: until it
+   *  settles, or for {@link LAUNCH_GRACE_MS} once the first screen is in. `partner` (a form id) is
+   *  that run's partner, its silhouette behind the launcher. */
+  hold(part: Preparation<unknown>, partner: string): void;
+  /** Settles once the launcher's needs are in and the lobby can draw in this context: the launcher
+   *  then splits away by itself over the lobby, which is revealed once it has gone. */
+  readonly launched: Promise<void>;
   registerRun(hud: GpuRunHud, overlays: GpuRunOverlays, controller: RunHandle | null): () => void;
-  /** Opens the 图鉴 over whatever is shown (the lobby, or a paused run's window). */
+  /** Opens the 图鉴 window over a paused run's window (outside a run it is a page of its own). */
   openCodex(): void;
   update(state: GpuAppState): void;
   dispose(): void;
@@ -157,6 +188,23 @@ export async function createGpuAppHost(
   // Over everything: the scene transition and the portrait notice; under the windows: the toast.
   platform.present?.(false, false, 40);
   const shell = new GpuShell(fonts.families);
+  // Under the shell from the first frame until its exit has finished; it blocks input as the shell
+  // does.
+  let launcher: GpuLauncher | undefined = new GpuLauncher(fonts.families);
+  const blocking = () => shell.blocking || !!launcher;
+  /** The wordmark waits for its page in the current context (a font failure fails the host). */
+  const showWordmark = () => {
+    const shown = launcher;
+    shown?.showWordmark(false);
+    if (shown)
+      fonts.ready(shown.stage, true).then(
+        () => {
+          if (launcher === shown) shown.showWordmark(true);
+        },
+        () => {},
+      );
+  };
+  showWordmark();
   // The 添加到主屏幕 hint is the host's own toast: shown once the lobby is up in landscape, until
   // it is closed, times out or a notification takes its place.
   let hint: "due" | "shown" | "done" = "done";
@@ -247,7 +295,7 @@ export async function createGpuAppHost(
   };
   // A surface still compiling its programs is not drawn yet, so it cannot take input either.
   const activeTarget = () => {
-    if (shell.blocking) return undefined;
+    if (blocking()) return undefined;
     // A closing settings window is only an exit animation (the save window may already be over it).
     const target =
       (closing ? undefined : dialog) ??
@@ -292,7 +340,7 @@ export async function createGpuAppHost(
   // The toast takes its own presses; it is not modal, so the surface under it keeps its input. It
   // lies under every window, so a window takes the presses over it.
   const toastInput = new MenuInput({
-    hit: (x, y) => (dialog || codex || shell.blocking || screen?.modal ? -1 : toast.hit(x, y)),
+    hit: (x, y) => (dialog || codex || blocking() || screen?.modal ? -1 : toast.hit(x, y)),
     hover: (index) => toast.setHovered(index),
     focus: () => {},
     activate: (index) => toast.activate(index),
@@ -332,9 +380,9 @@ export async function createGpuAppHost(
     insets: UiInsets,
   ) => fitScale(state?.settings.uiScale ?? 1, width, height, insets, target.minLayout);
   const syncCanvas = () => {
-    const owns = !!(dialog || codex || runLayer || screen) || shell.blocking;
+    const owns = !!(dialog || codex || runLayer || screen) || blocking();
     const visible = !failed && (owns || toast.visible);
-    platform.present?.(visible, visible && owns, shell.blocking ? 1000 : dialog || codex ? 80 : 40);
+    platform.present?.(visible, visible && owns, blocking() ? 1000 : dialog || codex ? 80 : 40);
   };
   const safeArea = (): UiInsets => platform.display.insets;
   const resize = () => {
@@ -357,8 +405,11 @@ export async function createGpuAppHost(
     codex?.resize(width, height, screenScale(codex, width, height, insets), insets);
     for (const shown of screens)
       shown.resize(width, height, screenScale(shown, width, height, insets), insets);
-    shell.resize(width, height, state.settings.uiScale, insets);
-    toast.resize(width, height, state.settings.uiScale, insets);
+    // No minimum layout of their own: the user's scale grown with the screen like every surface's.
+    const chrome = state.settings.uiScale * autoScale(width, height, insets);
+    shell.resize(width, height, chrome, insets);
+    launcher?.resize(width, height, chrome, insets);
+    toast.resize(width, height, chrome, insets);
     runScale = screenScale(runLayout, width, height, insets);
     runLayer?.hud.resize(width, height, runScale, insets);
     runLayer?.overlays.resize(width, height, runScale, insets);
@@ -416,8 +467,8 @@ export async function createGpuAppHost(
     dialog.resize(platform.display.width, platform.display.height, insets);
     forceDraw = true;
   };
-  // From the lobby, or over a paused run's window (the run waits under it and takes input back).
-  const codexHome = () => !!screen || runLayer?.overlays.codexHome != null;
+  // Over a paused run's window (the run waits under it and takes input back).
+  const codexHome = () => runLayer?.overlays.codexHome != null;
   const openCodex = () => {
     if (!state || state.busy || !codexHome() || dialog || codex || codexLoading) return;
     cancelInput();
@@ -438,6 +489,7 @@ export async function createGpuAppHost(
         codexLoading = false;
         if (!stillHome() || !state || state.busy || dialog) return;
         const opened = new GpuCodex(fonts.families, {
+          progress: state.progress,
           onClose: () => {
             getAudio().sfx("ui-back");
             cancelInput();
@@ -480,7 +532,7 @@ export async function createGpuAppHost(
     if (!state || failed || event.button !== 0 || contextLost || state.busy) return false;
     platform.focus();
     const { x, y } = event;
-    if (shell.blocking) return true;
+    if (blocking()) return true;
     syncInputOwner();
     if (toastInput.down(event.id, x, y)) {
       capture(event.id);
@@ -645,7 +697,7 @@ export async function createGpuAppHost(
     syncInputOwner();
     if (!actions.observeKey(event.code, event.repeat)) return true;
     if (!["Shift", "Control", "Alt", "Meta"].includes(event.key)) showFocus(true);
-    if (event.code === "F8" && !state.busy && !contextLost && !shell.blocking) {
+    if (event.code === "F8" && !state.busy && !contextLost && !blocking()) {
       if (!event.repeat)
         callbacks.changeSettings({ ...state.settings, devMode: !state.settings.devMode });
       return true;
@@ -654,7 +706,7 @@ export async function createGpuAppHost(
     if (
       state.busy ||
       contextLost ||
-      shell.blocking ||
+      blocking() ||
       (action !== undefined && toastNavigation(action))
     )
       return true;
@@ -736,6 +788,7 @@ export async function createGpuAppHost(
     // Release while the old context is lost, before Three replaces its upload managers.
     // Traversal includes hidden stages and still-mounted exit animations; it never detaches UI.
     shell.releaseUploads();
+    launcher?.stage.releaseUploads();
     toast.stage.releaseUploads();
     dialog?.stage.releaseUploads();
     codex?.releaseUploads();
@@ -761,6 +814,8 @@ export async function createGpuAppHost(
     lastSize = "";
     resize();
     shell.stage.invalidate();
+    launcher?.stage.invalidate();
+    showWordmark();
     toast.stage.invalidate();
     dialog?.stage.invalidate();
     codex?.stage.invalidate();
@@ -913,7 +968,10 @@ export async function createGpuAppHost(
       const warm = new GpuLobby(
         fonts.families,
         texture,
-        { progress, pick: { starter, difficulty: 0, stage: playableStages[0]! } },
+        {
+          progress,
+          pick: { starter, difficulty: 0, stage: playableStages[0]!, trainer: "chengxi" },
+        },
         {
           start() {},
           pick() {},
@@ -977,6 +1035,60 @@ export async function createGpuAppHost(
   let firstScreenReady = false;
   let reveal = () => {};
   const revealed = new Promise<void>((resolve) => (reveal = resolve));
+  let launch = () => {};
+  const launched = new Promise<void>((resolve) => (launch = resolve));
+  /** The launcher's needs are in: it leaves once the first screen can draw in this context. */
+  let launchDue = false;
+  let part: Preparation<unknown> | undefined;
+  let soundsIn = false;
+  // Their failure fails the first-screen gate below.
+  uiSounds.result.then(
+    () => (soundsIn = true),
+    () => {},
+  );
+  /**
+   * The launcher's load (0–1): one unit per need, a font page one per 256 KiB of it. What a page
+   * or image asks for later grows the total; the bar never goes back (ProgressBar) and is full
+   * only when every need is in.
+   */
+  const launchProgress = (first: UiStage): number => {
+    let done = soundsIn ? 1 : 0;
+    let total = 1;
+    for (const key of fonts.pagesOf(first)) {
+      const page = fonts.registry.pages.get(key);
+      const units = Math.max(1, Math.ceil((page?.bytes ?? 0) / 262_144));
+      total += units;
+      if (page?.state === "decoded" && page.uploadedIn === app.generation) done += units;
+    }
+    for (const entry of images.entries.values()) {
+      total += 1;
+      if (entry.uploadedIn === app.generation) done += 1;
+    }
+    if (part) {
+      const { network, cpu } = part.progress();
+      total += network.total + cpu.total;
+      // Only a finished part is whole: one cancelled or failed counts the work it did.
+      done += part.state === "ready" ? network.total + cpu.total : network.done + cpu.done;
+    }
+    return done >= total ? 1 : Math.min(done / total, 0.97);
+  };
+  const disposeLauncher = () => {
+    if (!launcher) return;
+    fonts.release(launcher.stage);
+    launcher.dispose();
+    launcher = undefined;
+  };
+  /** The launcher's exit has finished: the lobby, already entering beneath it, is revealed. */
+  const dropLauncher = () => {
+    disposeLauncher();
+    reveal();
+    hint = "due";
+    showHint();
+    fonts.prefetch();
+    warmSurfaces();
+    syncCanvas();
+    forceDraw = true;
+  };
   fail = (error: Error) => {
     if (failed || destroyed) return;
     failed = true;
@@ -993,7 +1105,7 @@ export async function createGpuAppHost(
     failed ||
     contextLost ||
     !state ||
-    (!dialog && !codex && !runLayer && !screen && !shell.blocking && !toast.visible);
+    (!dialog && !codex && !runLayer && !screen && !blocking() && !toast.visible);
   /** Advances every surface; true when the UI picture changed. */
   const advance = (frameMs: number): boolean => {
     const deltaMs = Math.min(frameMs, MAX_FRAME_MS);
@@ -1006,7 +1118,8 @@ export async function createGpuAppHost(
         // screen above) holds still: its own idle loop asks for no frames. The window's redraws
         // still draw it, as it stands.
         const dimmed = i < screens.length - 1 || !!codex || (!!dialog && !closing && !shown.modal);
-        shown.setCovered?.(shell.blocking || dimmed);
+        // Under a leaving launcher the lobby draws and enters (its input still waits).
+        shown.setCovered?.(shell.blocking || (!!launcher && !launcher.exiting) || dimmed);
         const screenDelta = compiling.has(shown.stage) || dimmed ? 0 : deltaMs;
         const changed = shown.stage.update(screenDelta);
         if (!dimmed) screenChanged = changed || screenChanged;
@@ -1084,6 +1197,23 @@ export async function createGpuAppHost(
       if (toastShown !== toast.visible) syncCanvas();
       // A dismissed or expired toast hands the keyboard back to the surface it came from.
       if (toastOwner && !toast.keyed) leaveToast();
+      if (launcher) {
+        const first = screens[0];
+        if (first) launcher.bar.set(launchProgress(first.stage));
+        // It leaves only over a lobby prepared in this context (a loss clears both marks).
+        if (
+          launchDue &&
+          !launcher.exiting &&
+          first &&
+          prepared.has(first) &&
+          !compiling.has(first.stage)
+        ) {
+          launcher.exit();
+          launch();
+        }
+        shellChanged = launcher.update(deltaMs) || shellChanged;
+        if (launcher.gone) dropLauncher();
+      }
       shell.update(deltaMs);
       shellChanged = shell.stage.update(deltaMs) || shellChanged;
       const dialogDelta = dialog && compiling.has(dialog.stage) ? 0 : deltaMs;
@@ -1121,7 +1251,9 @@ export async function createGpuAppHost(
       // A modal screen (the save window) is a window: over the toast and the settings window.
       const drawScreens = (modal: boolean) => {
         for (const shown of screens)
-          if (!!shown.modal === modal && !compiling.has(shown.stage)) shown.stage.render(renderer);
+          if (!!shown.modal === modal && !compiling.has(shown.stage))
+            if (shown.render) shown.render(renderer);
+            else shown.stage.render(renderer);
       };
       drawScreens(false);
       for (const layer of [runLayer?.hud.stage, runLayer?.overlays.stage])
@@ -1130,6 +1262,7 @@ export async function createGpuAppHost(
       if (codex && !compiling.has(codex.stage)) codex.render(renderer);
       if (dialog && !compiling.has(dialog.stage)) dialog.stage.render(renderer);
       drawScreens(true);
+      launcher?.stage.render(renderer);
       if (shell.blocking) shell.stage.render(renderer);
       // A program none of these draws had linked before: attribute it to the stages just drawn.
       if ((renderer.info.programs ?? []).some((program) => !seenPrograms.has(program))) {
@@ -1141,6 +1274,7 @@ export async function createGpuAppHost(
           toast.stage,
           codex?.stage,
           dialog?.stage,
+          launcher?.stage,
           shell.stage,
         ])
           if (stage) retainPrograms(stage);
@@ -1151,16 +1285,23 @@ export async function createGpuAppHost(
         // other core pages are fetched after it, ahead of the surfaces that draw them.
         prefetched = true;
         void Promise.all([fonts.ready(first.stage, true), images.uploaded(), uiSounds.result]).then(
-          () => {
+          async () => {
             if (destroyed || failed) return;
             firstScreenReady = true;
-            reveal();
-            hint = "due";
-            showHint();
+            // Under the launcher: it compiles and lays out now, and enters once uncovered.
             for (const shown of screens) shown.setRevealed?.(true);
             forceDraw = true;
-            fonts.prefetch();
-            warmSurfaces();
+            // The run part gets the link now; its failure is the lobby prefetch's to report.
+            part?.setLane("interactive");
+            let grace: ReturnType<typeof setTimeout> | undefined;
+            await Promise.race([
+              part?.settled,
+              new Promise((resolve) => (grace = setTimeout(resolve, LAUNCH_GRACE_MS))),
+            ]);
+            clearTimeout(grace);
+            if (destroyed || failed) return;
+            launchDue = true;
+            forceDraw = true;
           },
           (error: unknown) => fail(error instanceof Error ? error : new Error(String(error))),
         );
@@ -1173,7 +1314,7 @@ export async function createGpuAppHost(
   let inputOwner: unknown;
   let inputRevision = -1;
   const owner = () => {
-    if (!platform.inputFocused || idle() || state?.busy || shell.blocking) return null;
+    if (!platform.inputFocused || idle() || state?.busy || blocking()) return null;
     const target = activeTarget();
     return target === runLayer?.overlays && runLayer?.overlays.choiceOpen
       ? runLayer.controller
@@ -1239,8 +1380,9 @@ export async function createGpuAppHost(
       const ui = activeTarget();
       if (!ui) return;
       if (frame.scroll) ui.scroll(frame.scroll * inputDelta * 0.6);
-      if (frame.navigationTurn && ui === codex)
-        codex.turnModel(frame.navigationTurn * inputDelta * 0.0024);
+      const turn = frame.navigationTurn * inputDelta * 0.0024;
+      if (turn && ui === codex) codex.turnModel(turn);
+      else if (turn && ui === screen) screen.turnModel?.(turn);
       for (const action of frame.actions) {
         if (isNavigationAction(action)) {
           if (!toastNavigation(action)) ui.navigate(action);
@@ -1264,8 +1406,10 @@ export async function createGpuAppHost(
       screens,
       lobby: screens.find((shown) => shown instanceof GpuLobby),
       run: runLayer,
+      launcher,
     }),
     fonts: fonts.families,
+    glyphs: fonts,
     backdrop: texture,
     openCodex,
     registerScreen(next) {
@@ -1323,7 +1467,7 @@ export async function createGpuAppHost(
       const previousState = state;
       const openingDialog = next.settingsOpen && !dialog;
       state = { ...next, settings: { ...next.settings } };
-      shell.setTransition(next.transition);
+      shell.setTransition(next.transition, next.transitionTitle, next.transitionProgress);
       const note = next.notification;
       if (!note) {
         if (hint !== "shown") toast.setMessage(null);
@@ -1357,6 +1501,11 @@ export async function createGpuAppHost(
       if (openingDialog || (runLayer && !next.busy && previousState?.busy)) platform.focus();
     },
     revealed,
+    launched,
+    hold(next, partner) {
+      part = next;
+      launcher?.setPartner(partner);
+    },
     nextScreenReady() {
       if (destroyed || failed) return Promise.resolve();
       return new Promise<void>((resolve) => screenWaiters.push(resolve));
@@ -1376,6 +1525,7 @@ export async function createGpuAppHost(
       dialog?.dispose();
       codex?.dispose();
       shell.dispose();
+      disposeLauncher();
       toast.dispose();
       texture.dispose();
       retention.dispose();

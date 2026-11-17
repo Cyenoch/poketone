@@ -10,7 +10,7 @@ import {
 import { difficulties, type Difficulty } from "./sim/content/difficulties";
 import { formDefs, starters, type StarterId } from "./sim/content/lines/index";
 import type { ItemId } from "./sim/content/items";
-import type { StageId } from "./sim/content/stages/index";
+import { stageDefs, type StageId } from "./sim/content/stages/index";
 import type { LabBonuses } from "./sim/state/entities";
 import type { Loadout } from "./sim/world";
 import { formatTime } from "./labels";
@@ -19,9 +19,12 @@ import { GpuRunOverlays, type RunOverlayState } from "../ui/gpu/run-overlays";
 import type { FontFamilies } from "@pmndrs/uikit";
 import type { AppRenderer } from "../rendering/app-renderer";
 import { getAudio } from "../audio/engine";
+import type { TrainerId } from "../trainers";
+import type { CueGlyphs } from "../ui/gpu/trainer-cutin";
 
 export interface RunUiHost {
   readonly fonts: FontFamilies;
+  readonly glyphs: CueGlyphs;
   registerRun(hud: GpuRunHud, overlays: GpuRunOverlays, controller: RunHandle): () => void;
   openCodex(): void;
 }
@@ -30,6 +33,7 @@ export interface RunSessionOptions {
   multiplayer?: MultiplayerRun;
   stage: StageId;
   starter: StarterId;
+  trainer: TrainerId;
   difficulty: Difficulty;
   lab: LabBonuses;
   loadout: Loadout;
@@ -46,6 +50,13 @@ export interface RunSessionOptions {
   /** Back to the lobby; `note` as for `onRetry`. */
   onLobby: (note: string | null) => void;
   onSettings: () => void;
+  /** While the run loads (its start, a zone, teammates), the map it enters and how far the load
+   *  is (0–1), for the app curtain to show; null once it can be played or a window must show. */
+  onCover: (cover: RunCover | null) => void;
+}
+export interface RunCover {
+  title: string;
+  progress: number;
 }
 
 const noticePriority = { info: 0, reward: 1, danger: 2 };
@@ -57,6 +68,12 @@ export function createRunSession(options: RunSessionOptions) {
   let snap: RunSnapshot | null = null;
   let status: "loading" | "ready" | "error" = "loading";
   let zoneLoading = false;
+  /** The map the current load enters: the run's own (unknown to a rejoin until its world comes),
+   *  then each zone change's destination. */
+  let coverStage: StageId | null = options.multiplayer?.session.restored ? null : stage;
+  let loadProgress = 0;
+  let covered = false;
+  let deploying = false;
   let error = "";
   let paused = false;
   let quitting = false;
@@ -101,13 +118,7 @@ export function createRunSession(options: RunSessionOptions) {
       overlay = { kind: "result", ...result, backpackSize: backpack?.size ?? null, theme };
     else if (options.multiplayer?.reconnecting) overlay = { kind: "reconnecting", theme };
     else if (status === "loading" || zoneLoading || options.multiplayer?.suspended)
-      overlay = {
-        kind: "loading",
-        starter,
-        stage,
-        zone: zoneLoading && snap ? { number: snap.zone.index + 2, count: snap.zone.count } : null,
-        theme,
-      };
+      overlay = { kind: "loading", starter, theme };
     else if (pending && (!options.multiplayer || (!stats && !paused && !mapOpen)))
       overlay = {
         kind: "choice",
@@ -141,8 +152,10 @@ export function createRunSession(options: RunSessionOptions) {
       };
     else if (snap?.dialog) overlay = { kind: "station", view: snap.dialog, theme };
     overlays.update(overlay);
+    covered = overlay?.kind === "loading";
+    reportCover();
     hud.setChoiceOpen(overlays.choiceOpen);
-    const blocked = modalActive || overlays.isModal || mapOpen;
+    const blocked = modalActive || overlays.isModal || mapOpen || deploying;
     hud.update({
       snapshot: snap,
       theme,
@@ -150,6 +163,11 @@ export function createRunSession(options: RunSessionOptions) {
       blocked,
       notice: overlay || blocked ? null : notice,
     });
+  }
+  function reportCover() {
+    const map = zoneLoading ? coverStage : (snap?.stage ?? coverStage);
+    const title = map ? stageDefs[map].name : "";
+    options.onCover(covered ? { title, progress: loadProgress } : null);
   }
   function setPaused(value: boolean) {
     paused = value;
@@ -186,21 +204,26 @@ export function createRunSession(options: RunSessionOptions) {
     run.setPaused(true);
     refresh();
   }
-  const hud = new GpuRunHud(gpuHost.fonts, starter, {
-    pause() {
-      getAudio().sfx("ui-confirm");
-      quitting = false;
-      setPaused(true);
+  const hud = new GpuRunHud(
+    gpuHost.fonts,
+    starter,
+    {
+      pause() {
+        getAudio().sfx("ui-confirm");
+        quitting = false;
+        setPaused(true);
+      },
+      stats: () => run.action("stats"),
+      dash: () => run.send({ t: "dash" }),
+      ultimate: () => run.send({ t: "ult" }),
+      interact() {
+        getAudio().sfx("ui-confirm");
+        run.send({ t: "interact" });
+      },
+      turn: (direction) => run.setTurn(direction),
     },
-    stats: () => run.action("stats"),
-    dash: () => run.send({ t: "dash" }),
-    ultimate: () => run.send({ t: "ult" }),
-    interact() {
-      getAudio().sfx("ui-confirm");
-      run.send({ t: "interact" });
-    },
-    turn: (direction) => run.setTurn(direction),
-  });
+    gpuHost.glyphs,
+  );
   const overlays = new GpuRunOverlays(gpuHost.fonts, {
     send: (command) => run.send(command),
     resume: () => setPaused(false),
@@ -246,13 +269,27 @@ export function createRunSession(options: RunSessionOptions) {
   run = createRun(
     app,
     hud,
-    { stage, starter, difficulty, lab, loadout, sound, devMode, multiplayer: options.multiplayer },
+    {
+      stage,
+      starter,
+      trainer: options.trainer,
+      difficulty,
+      lab,
+      loadout,
+      sound,
+      devMode,
+      multiplayer: options.multiplayer,
+    },
     {
       inputBlocked: () => modalActive || overlays.isModal,
       onReady() {
         if (!options.onStarted()) throw new Error("背包保存失败。");
         status = "ready";
         run.setSound(sound);
+        refresh();
+      },
+      onDeployment(active) {
+        deploying = active;
         refresh();
       },
       onError(cause) {
@@ -297,12 +334,25 @@ export function createRunSession(options: RunSessionOptions) {
         mapOpen = open;
         refresh();
       },
-      onZoneLoading(loading) {
-        if (loading) clearNotice();
+      onZoneLoading(loading, next) {
+        if (loading) {
+          clearNotice();
+          coverStage = next ?? coverStage;
+          loadProgress = 0;
+        }
         zoneLoading = loading;
         refresh();
       },
+      onLoadStage(value) {
+        coverStage = value;
+        if (covered) reportCover();
+      },
+      onLoadProgress(fraction) {
+        loadProgress = fraction;
+        if (covered) reportCover();
+      },
       onEnd(end) {
+        hud.trainers.clear();
         clearNotice();
         result = { result: end, note: null, saved: false };
         saveResult();

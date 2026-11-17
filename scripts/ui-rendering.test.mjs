@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { Mesh, PlaneGeometry, Scene, Texture } from "three";
+import { releaseUploads } from "../src/rendering/releaseUploads.ts";
 import { FRAME_BUDGET_MS, policyFor, WorldResolution } from "../src/rendering/world-resolution.ts";
+import { UiShaderMaterial } from "../src/ui/gpu/ui-shader.ts";
 
 const B = FRAME_BUDGET_MS;
 const desktop = { initial: 1.5, min: 1, max: 2 };
@@ -132,4 +135,19 @@ test("GPU results that arrive while the world is frozen change nothing, before o
   for (let i = 0; i < 80; i++) drs.gpu(B * 2, lastFrame - i * B);
   play(drs, clock, 600, { gpu: B * 0.5 });
   assert.equal(drs.ratio, 1.5, "results from before the pause never land in a later window");
+});
+
+test("releasing uploads frees textures held in a UI shader's uniforms (context loss leaves no stale handle)", () => {
+  const card = new Texture();
+  let disposed = 0;
+  card.addEventListener("dispose", () => disposed++);
+  const material = new UiShaderMaterial("release-probe", {
+    uniforms: { card: { value: card } },
+    vertexShader: "",
+    fragmentShader: "",
+  });
+  const scene = new Scene();
+  scene.add(new Mesh(new PlaneGeometry(1, 1), material));
+  releaseUploads(scene);
+  assert.equal(disposed, 1);
 });

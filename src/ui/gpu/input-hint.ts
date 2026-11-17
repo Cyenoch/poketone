@@ -2,8 +2,9 @@ import { InputGlyph } from "./input-glyph";
 import { Component, Container, Text } from "@pmndrs/uikit";
 import { BufferGeometry, Float32BufferAttribute, Mesh, MeshBasicMaterial } from "three";
 import type { UiStage } from "./stage";
+import { slantOf, ui } from "./tokens";
 
-/** Keyboard hint uses measured content width, with the original slanted dark backing. */
+/** Keyboard hint uses measured content width, on an ink backing whose left edge leans −14°. */
 export class InputHint {
   readonly content = new Container({
     positionType: "absolute",
@@ -16,12 +17,12 @@ export class InputHint {
     paddingRight: 30,
     paddingY: 12,
     minHeight: 51,
-    color: "#d8effb",
+    color: ui.mist,
     fontSize: 13,
   });
   private readonly geometry = new BufferGeometry();
   private readonly material = new MeshBasicMaterial({
-    color: "#0d233f",
+    color: ui.ink,
     transparent: true,
     depthTest: false,
     depthWrite: false,
@@ -38,19 +39,10 @@ export class InputHint {
       ["↑↓", "选择"],
       ["Enter", "确认"],
     ]) {
-      const badge = new Container({
-        height: 21,
-        minWidth: 21,
-        paddingX: 5,
-        borderRadius: 3,
-        backgroundColor: "#173f70",
-        borderColor: "#92b8d1",
-        borderWidth: 1.5,
-        alignItems: "center",
-        justifyContent: "center",
-      });
-      badge.add(new InputGlyph(key === "Enter" ? "confirm" : "down", key!));
-      this.content.add(badge, new Text({ text: label, whiteSpace: "pre" }));
+      this.content.add(
+        new InputGlyph(key === "Enter" ? "confirm" : "down", key!),
+        new Text({ text: label, whiteSpace: "pre" }),
+      );
     }
     parent.add(this.content);
     this.backing.renderOrder = -5;
@@ -94,7 +86,7 @@ export class InputHint {
       this.geometry.setAttribute(
         "position",
         new Float32BufferAttribute(
-          [x + 22, y, 0, x, -y, 0, -x, y, 0, -x, y, 0, x, -y, 0, -x, -y, 0],
+          [x + slantOf(height), y, 0, x, -y, 0, -x, y, 0, -x, y, 0, x, -y, 0, -x, -y, 0],
           3,
         ),
       );

@@ -16,6 +16,11 @@ if (!process.argv.includes("--run-session-fixture")) {
       "notice-lifecycle",
       "hidden run notices expire and waiting or terminal states retain no backlog",
     ],
+    ["curtain", "the loading curtain names the map each load enters and shows its real progress"],
+    [
+      "codex-page",
+      "outside a run the 图鉴 is a page under the curtain, and back returns focus to its lobby key",
+    ],
   ])
     test(contract, () => {
       const child = spawnSync(
@@ -30,11 +35,21 @@ if (!process.argv.includes("--run-session-fixture")) {
   const root = process.cwd();
   const at = (p) => `${root}/${p}`;
   const noop = () => {};
-  let lobby, hud, overlays, controller, hostCallbacks;
-  let failHostDuringCreation = false;
+  let lobby, hud, overlays, controller, hostCallbacks, hostState, room;
+  let codexPage;
+  const screens = [];
+  let codexWindows = 0;
+  let failHostDuringCreation = false,
+    failRunOnCreate = false;
+  const hostStates = [];
   const audio = { music: { play: noop }, sfx: noop, setEnabled: noop, onError: () => noop };
   await mock.module(at("src/audio/engine.ts"), () => ({ getAudio: () => audio }));
-  await mock.module(at("src/run/prefetch.ts"), () => ({ depart: noop, open: noop, select: noop }));
+  await mock.module(at("src/run/prefetch.ts"), () => ({
+    depart: noop,
+    launch: () => ({ cancel: noop }),
+    open: noop,
+    select: noop,
+  }));
   class Lobby {
     constructor(fonts, backdrop, state, callbacks) {
       this.state = state;
@@ -45,7 +60,12 @@ if (!process.argv.includes("--run-session-fixture")) {
       this.state = state;
     }
     attachScene() {}
-    focusStart() {}
+    focusStart() {
+      this.focused = "start";
+    }
+    focusCodex() {
+      this.focused = "codex";
+    }
     dispose() {}
   }
   class Lab {
@@ -53,6 +73,7 @@ if (!process.argv.includes("--run-session-fixture")) {
     dispose() {}
   }
   class Hud {
+    trainers = { clear: noop };
     constructor() {
       hud = this;
       this.updates = 0;
@@ -79,6 +100,16 @@ if (!process.argv.includes("--run-session-fixture")) {
   }
   await mock.module(at("src/ui/gpu/lobby.ts"), () => ({ GpuLobby: Lobby }));
   await mock.module(at("src/ui/gpu/lab.ts"), () => ({ GpuLab: Lab }));
+  await mock.module(at("src/ui/gpu/codex.ts"), () => ({
+    GpuCodexPage: class {
+      constructor(fonts, progress, callbacks) {
+        this.progress = progress;
+        this.callbacks = callbacks;
+        codexPage = this;
+      }
+      dispose() {}
+    },
+  }));
   await mock.module(at("src/ui/gpu/lobby-scene.ts"), () => ({
     LobbyScene: class {
       dispose() {}
@@ -86,7 +117,12 @@ if (!process.argv.includes("--run-session-fixture")) {
   }));
   await mock.module(at("src/ui/gpu/run-dev-readout.ts"), () => ({ GpuDevReadout: class {} }));
   await mock.module(at("src/ui/gpu/save-dialog.ts"), () => ({ GpuSaveDialog: class {} }));
-  await mock.module(at("src/ui/gpu/multiplayer-session.ts"), () => ({ mountMultiplayer: noop }));
+  await mock.module(at("src/ui/gpu/multiplayer-session.ts"), () => ({
+    mountMultiplayer: (...args) => {
+      room = args[4];
+      return noop;
+    },
+  }));
   await mock.module(at("src/ui/gpu/run-hud.ts"), () => ({ GpuRunHud: Hud }));
   await mock.module(at("src/ui/gpu/run-overlays.ts"), () => ({ GpuRunOverlays: Overlays }));
   await mock.module(at("src/ui/gpu/app-host.ts"), () => ({
@@ -97,12 +133,17 @@ if (!process.argv.includes("--run-session-fixture")) {
         fonts: {},
         backdrop: {},
         revealed: new Promise(() => {}),
-        update: noop,
-        registerScreen: () => noop,
+        launched: new Promise(() => {}),
+        hold: noop,
+        update: (state) => hostStates.push((hostState = state)),
+        registerScreen(shown) {
+          screens.push(shown);
+          return () => screens.splice(screens.indexOf(shown), 1);
+        },
         registerRun: () => noop,
         nextScreenReady: () => Promise.resolve(),
         sampleInput: noop,
-        openCodex: noop,
+        openCodex: () => codexWindows++,
         dispose: noop,
       };
     },
@@ -130,6 +171,7 @@ if (!process.argv.includes("--run-session-fixture")) {
         difficulty: config.difficulty,
         players: [{ starter: config.starter }],
       });
+      if (failRunOnCreate) callbacks.onError(new Error("injected load failure"));
       controller = {
         config,
         callbacks,
@@ -209,15 +251,28 @@ if (!process.argv.includes("--run-session-fixture")) {
         await new Promise((r) => setTimeout(r, 10));
       assert.equal(session.state().busy, false);
     };
+    // A run navigation holds its curtain until the run has loaded: wait for the new run only.
+    const next = async (before) => {
+      for (let i = 0; i < 80 && controller === before; i++)
+        await new Promise((r) => setTimeout(r, 10));
+      assert.notEqual(controller, before);
+    };
     return {
       session,
       errors,
       idle,
+      next,
       writes,
       fail: () => (failNext = true),
       disk: () => disk,
       start: async () => {
+        const before = controller;
         lobby.callbacks.start(lobby.state.pick);
+        await next(before);
+      },
+      /** The run loads; its curtain opens. */
+      activate: async () => {
+        controller.activate();
         await idle();
       },
     };
@@ -229,7 +284,7 @@ if (!process.argv.includes("--run-session-fixture")) {
       try {
         await t.start();
         const first = controller;
-        first.activate();
+        await t.activate();
         t.fail();
         if (intent === "natural") first.callbacks.onEnd(first.result);
         else overlays.callbacks[intent === "retry" ? "restart" : "quit"]();
@@ -242,16 +297,17 @@ if (!process.argv.includes("--run-session-fixture")) {
         assert.equal(overlays.state.kind, "save-error");
         assert.equal(t.disk().stardust, 0);
         overlays.callbacks.retry();
-        await t.idle();
+        if (intent === "lobby") await t.idle();
+        else if (intent === "retry") await t.next(first);
         assert.equal(t.disk().runs, 1);
         assert.equal(t.disk().stardust, 123);
         if (intent === "natural") {
           assert.equal(overlays.state.kind, "result");
           overlays.callbacks.retry();
-          await t.idle();
+          await t.next(first);
         } else if (intent === "lobby") await t.start();
         assert.notEqual(controller, first);
-        controller.activate();
+        await t.activate();
         controller.result = endedResult(7);
         overlays.callbacks.quit();
         await t.idle();
@@ -261,6 +317,91 @@ if (!process.argv.includes("--run-session-fixture")) {
         t.session.dispose();
       }
     }
+  } else if (which === "curtain") {
+    const { stageDefs } = await import(at("src/run/sim/content/stages/index.ts"));
+    const { nextField } = await import(at("src/run/sim/content/campaign.ts"));
+    const settle = () => new Promise((r) => setTimeout(r, 0));
+    /** Every curtain the host drew since `from`, until it opened: one map and one progress. */
+    const drawn = (from) => {
+      const shown = hostStates.slice(from).filter((state) => state.transition !== "idle");
+      return new Set(shown.map((state) => `${state.transitionTitle}:${state.transitionProgress}`));
+    };
+    const t = await setup(emptyProgress());
+    try {
+      await t.start();
+      const first = controller.config.stage,
+        next = nextField(controller.world).stage;
+      assert.equal(hostState.transition, "covering");
+      assert.equal(hostState.transitionTitle, stageDefs[first].name);
+      controller.callbacks.onLoadProgress(0.4);
+      await settle();
+      assert.equal(hostState.transitionProgress, 0.4);
+      let from = hostStates.length;
+      await t.activate();
+      assert.equal(hostState.transition, "idle");
+      // The ended load keeps its map and bar on the curtain while it opens.
+      assert.deepEqual(drawn(from), new Set([`${stageDefs[first].name}:0.4`]));
+      controller.callbacks.onZoneLoading(true, next);
+      await settle();
+      assert.equal(hostState.transition, "covering");
+      assert.equal(hostState.transitionTitle, stageDefs[next].name);
+      assert.equal(hostState.transitionProgress, 0);
+      controller.callbacks.onLoadProgress(1);
+      await settle();
+      from = hostStates.length;
+      controller.callbacks.onZoneLoading(false);
+      await t.idle();
+      assert.equal(hostState.transition, "idle");
+      assert.deepEqual(drawn(from), new Set([`${stageDefs[next].name}:1`]));
+    } finally {
+      t.session.dispose();
+    }
+    // A load that fails before it reports any cover still opens the curtain onto its error.
+    const failed = await setup(emptyProgress());
+    try {
+      failRunOnCreate = true;
+      const before = controller;
+      lobby.callbacks.start(lobby.state.pick);
+      await failed.next(before);
+      failRunOnCreate = false;
+      await failed.idle();
+      assert.equal(overlays.state.kind, "error");
+    } finally {
+      failRunOnCreate = false;
+      failed.session.dispose();
+    }
+    // A rejoin names the map its world enters, not the room's first one.
+    const rejoin = await setup(emptyProgress());
+    try {
+      lobby.callbacks.multiplayer();
+      await rejoin.idle();
+      const pick = lobby.state.pick;
+      const before = controller;
+      room.start({
+        config: {
+          stage: pick.stage,
+          difficulty: pick.difficulty,
+          players: [{ starter: pick.starter, trainer: pick.trainer }],
+        },
+        player: 0,
+        session: { restored: true },
+        suspended: false,
+        reconnecting: false,
+        dispose: noop,
+      });
+      await rejoin.next(before);
+      await settle();
+      const later = nextField(controller.world).stage;
+      assert.notEqual(later, pick.stage);
+      assert.equal(hostState.transition, "covering");
+      assert.notEqual(hostState.transitionTitle, stageDefs[pick.stage].name);
+      controller.callbacks.onLoadStage(later);
+      await settle();
+      assert.equal(hostState.transitionTitle, stageDefs[later].name);
+      await rejoin.activate();
+    } finally {
+      rejoin.session.dispose();
+    }
   } else if (which === "backpack") {
     const t = await setup({ ...emptyProgress(), backpack: ["hp-up"] });
     try {
@@ -268,20 +409,20 @@ if (!process.argv.includes("--run-session-fixture")) {
       const first = controller;
       assert.deepEqual(first.config.loadout.backpack, ["hp-up"]);
       t.fail();
-      first.activate();
+      await t.activate();
       assert.equal(overlays.state.kind, "error");
       first.frame();
       assert.equal(first.world.tick, 0);
       assert.deepEqual(t.disk().backpack, ["hp-up"]);
       overlays.callbacks.retry();
-      await t.idle();
-      assert.notEqual(controller, first);
-      controller.activate();
+      await t.next(first);
+      await t.activate();
       assert.deepEqual(t.disk().backpack, []);
       controller.frame();
       assert.ok(controller.world.tick > 0);
+      const second = controller;
       overlays.callbacks.restart();
-      await t.idle();
+      await t.next(second);
       assert.deepEqual(controller.config.loadout.backpack, []);
     } finally {
       t.session.dispose();
@@ -332,7 +473,7 @@ if (!process.argv.includes("--run-session-fixture")) {
       await Promise.resolve();
     };
     const mount = () => {
-      const multiplayer = {};
+      const multiplayer = { session: { restored: false } };
       const session = createRunSession({
         multiplayer,
         stage: "forest",
@@ -351,6 +492,7 @@ if (!process.argv.includes("--run-session-fixture")) {
         onRetry: noop,
         onLobby: noop,
         onSettings: noop,
+        onCover: noop,
       });
       const callbacks = controller.callbacks;
       const snap = {
@@ -511,6 +653,26 @@ if (!process.argv.includes("--run-session-fixture")) {
       globalThis.setTimeout = realSetTimeout;
       globalThis.clearTimeout = realClearTimeout;
       performance.now = realNow;
+    }
+  } else if (which === "codex-page") {
+    const progress = { ...emptyProgress(), research: 42 };
+    const t = await setup(progress);
+    try {
+      lobby.callbacks.codex();
+      await t.idle();
+      for (let i = 0; i < 80 && !screens.includes(codexPage); i++)
+        await new Promise((r) => setTimeout(r, 10));
+      assert.equal(t.session.state().screen, "codex");
+      assert.deepEqual(screens, [codexPage], "the page replaces the lobby, not a window over it");
+      assert.equal(codexWindows, 0);
+      assert.equal(codexPage.progress.research, 42, "locked partners read the player's progress");
+      codexPage.callbacks.back();
+      await t.idle();
+      assert.equal(t.session.state().screen, "lobby");
+      assert.deepEqual(screens, [lobby]);
+      assert.equal(lobby.focused, "codex");
+    } finally {
+      t.session.dispose();
     }
   } else throw new Error(`Unknown fixture ${which}`);
 }

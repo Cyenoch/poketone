@@ -31,8 +31,22 @@ export function uiViewport(
 
 export type UiViewport = ReturnType<typeof uiViewport>;
 
+/** The screen the UI is drawn for at 100%: larger safe areas grow it by the smaller ratio. */
+export const UI_REFERENCE = { width: 1280, height: 800 } as const;
+
+/** The automatic factor a large screen gives the UI (≥ 1; phones and 1280×800 stay at 1). */
+export function autoScale(width: number, height: number, insets: UiInsets): number {
+  return Math.max(
+    1,
+    Math.min(
+      (width - insets.left - insets.right) / UI_REFERENCE.width,
+      (height - insets.top - insets.bottom) / UI_REFERENCE.height,
+    ),
+  );
+}
+
 /**
- * DESIGN.md › 界面缩放下限: a surface's scale is the user's, held back so `minLayout` (its content's
+ * DESIGN.md › 界面缩放下限: a surface's scale is the user's times the screen's `autoScale`, held back so `minLayout` (its content's
  * smallest logical size) still fits the safe area it lays out in, never under the settings' minimum.
  * Host sizes are CSS / logical window pixels.
  */
@@ -52,5 +66,8 @@ export function fitScale(
   // A fitted scale is an arbitrary ratio; taken down to a multiple of 1/64 it stays exact in
   // binary, so layout on its pixel grid adds up (an inexact grid let Yoga's float rounding push a
   // text box a device pixel past its parent, which turned the parent scrollable).
-  return Math.max(uiScaleRange.min, user <= fit ? user : Math.floor(fit * 64) / 64);
+  const auto = autoScale(width, height, insets);
+  // At the reference size and below the user's scale stays exact; above it, the grown scale on the grid.
+  const want = auto > 1 ? Math.max(user, Math.floor(user * auto * 64) / 64) : user;
+  return Math.max(uiScaleRange.min, want <= fit ? want : Math.floor(fit * 64) / 64);
 }

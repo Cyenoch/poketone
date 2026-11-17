@@ -16,8 +16,9 @@ import { images } from "../prepare/images";
  * Lanes: S and the selected line download in the background; the recent line drops to `keep`
  * (finished work stays, nothing new starts). Selecting the recent line again swaps them back.
  *
- * Nothing starts before `open`, called once the lobby is revealed: until then the first screen's
- * fonts and images have the link to themselves (a pick before that is only remembered).
+ * Nothing but the launcher's share (`launch`) starts before `open`, called once the launcher's
+ * needs are in: until then the first screen and that share have the link to themselves (a pick
+ * before that is only remembered).
  */
 
 /** The run's sounds decoded and its music downloaded (a track decodes when played: the first
@@ -140,6 +141,25 @@ export function state(starter: StarterId): {
     bytes: network.bytes,
     bytesTotal: network.bytesTotal,
   };
+}
+
+/**
+ * The launcher's share of the opening pick's run: what its 出发 waits for except the music (the
+ * stage's shared set, the line, the run's sounds), at the background lane until the first screen
+ * is in. The lobby's holds take the same keys over once it opens, before this is cancelled.
+ */
+export function launch({
+  starter,
+  stage,
+}: {
+  starter: StarterId;
+  stage: StageId;
+}): Preparation<StarterId> {
+  return createPreparation({
+    revision: starter,
+    lane: "background",
+    needs: [...runSharedNeeds(stage), ...lineNeeds(starter), runAudio()[0]!],
+  });
 }
 
 /**

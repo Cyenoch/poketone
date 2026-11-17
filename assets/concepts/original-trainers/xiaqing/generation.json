@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "xiaqing",
+  "name": "夏晴",
+  "age": 18,
+  "styleVersion": "trainer-cel-summer-v2",
+  "tool": "magpie-image.generate_image",
+  "modelSelection": "Magpie configured default; model argument omitted",
+  "seed": null,
+  "cost": "Not reported by tool",
+  "promptAssembly": "Read promptFile and trim its trailing newline for the exact submitted prompt. Paths are relative to this directory.",
+  "currentConcept": "turnaround-summer-v3.png",
+  "runtimeGeneration": "../runtime-summer-v2-generation.json",
+  "requests": [
+    {
+      "jobId": "image-38907-35",
+      "actualModel": "ash/gpt-image-2.5-sunburst",
+      "promptFile": "concept-v2-prompt.txt",
+      "referenceImages": ["../chengxi/turnaround-summer-v2.png"],
+      "parameters": { "size": "1536x1024", "quality": "high", "n": 1 },
+      "output": "turnaround-summer-v2.png",
+      "actualSize": [1536, 1024],
+      "sha256": "33900da597bcb42b7e8184c95f5a258ed5ce85e1cfaf6e5ef8c7d8f8efeb88b4",
+      "status": "preserved original; superseded by user-requested bolder summer tailoring"
+    },
+    {
+      "jobId": "image-38907-36",
+      "actualModel": "ash/gpt-image-2.5-sunburst",
+      "promptFile": "concept-v3-edit-prompt.txt",
+      "referenceImages": ["turnaround-summer-v2.png"],
+      "parameters": { "size": "1536x1024", "quality": "high", "n": 1 },
+      "output": "turnaround-summer-v3.png",
+      "actualSize": [1536, 1024],
+      "sha256": "f35f30595dff9b35ff2a5679af5376166bf08625370f47d4c99e9a9214eb7b5f",
+      "status": "current concept; visually inspected",
+      "review": "Four complete views and three expressions retained. Thin straps, lower sweetheart neckline, bare midriff and shorter fitted shorts follow the updated request, with opaque coverage of private areas in every view. Right side ponytail/daisy and left bracelet/pouch agree between front and back. Neutral concept poses; youthful adult face."
+    }
+  ]
+}

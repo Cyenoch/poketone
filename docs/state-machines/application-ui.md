@@ -1,6 +1,6 @@
 # 应用与 GPU UI 状态机
 
-本清单按生命周期边界拆出 **84 项机器/共用模式**（不是84个独立类或进程）；每项附owner、编码字段、逻辑状态、转换、取消/终态、不变量和测试/风险。
+本清单按生命周期边界拆出 **83 项机器/共用模式**（不是83个独立类或进程）；每项附owner、编码字段、逻辑状态、转换、取消/终态、不变量和测试/风险。
 
 基线与整体范围见 [总清单](../STATE-MACHINES.md)。本页状态机研究只读源码，没有在该阶段执行测试或正式GPU页面。
 
@@ -30,23 +30,23 @@
 
 - **Owner**：[src/app/session.ts:63–90,227–253,254–350,352–367](../../src/app/session.ts#L63)。
 - **编码**：`route/screen/run/unmount/devBadge/network/runPick/pick/disposed/reopenRoom`，SceneTransition 回调。
-- **逻辑状态**：大厅拥有 screen+LobbyScene；研究所拥有 screen；对局拥有 run；过场中旧 owner 保留到 commit；最终 disposed。
-- **事件 / guards / 转换**：`start` 仅 idle 且 starter 解锁；`show` 先 dispose run/devBadge、调用旧 unmount，才建新页面并 register；单人 retry 再 start；多人 retry 置 reopenRoom、back，下一大厅重开房间。
+- **逻辑状态**：大厅拥有 screen+LobbyScene；研究所拥有 screen；图鉴页在 commit 后异步 import，完成且 route 仍为 codex、尚无 unmount 时才建页并 register（云幕 hold 在 nextScreenReady 上）；对局拥有 run；过场中旧 owner 保留到 commit；最终 disposed。
+- **事件 / guards / 转换**：`start` 仅 idle 且 starter 解锁；`show` 先 dispose run/devBadge、调用旧 unmount，才建新页面并 register；单人 retry 再 start；多人 retry 置 reopenRoom、back，下一大厅重开房间。图鉴页 import 失败则通知并导航回大厅；从图鉴页回大厅时焦点落在大厅的图鉴键（其余来路落在出发）。
 - **取消 / 终态**：dispose 按 transition→room→save→run→network→screen→host→input→audio-listener 清理；back 先 dispose network 再导航。
 - **不变量**：页面 owner 与 host 注册配对；screen 不应与 run 同时成为当前业务页面；仅当前 run 的 onFinish 修改进度。
-- **测试 / 风险**：[ui-run-session.test.mjs](../../scripts/ui-run-session.test.mjs) 覆盖共享 app/run 会话的保存与 fatal 接线，替换了绘制等依赖。**#4** 凭据异常已由网络边界转 warning；**#2/#3** 新的终局交付与离房保留由 [网络分册](network.md) 和主线程最终审阅收束。不把任意 cleanup 抛错都概括为已处理。
+- **测试 / 风险**：[ui-run-session.test.mjs](../../scripts/ui-run-session.test.mjs) 覆盖共享 app/run 会话的保存与 fatal 接线，以及局外图鉴为页面（替换大厅、读取进度、返回焦点）的 codex-page 夹具，替换了绘制等依赖。**#4** 凭据异常已由网络边界转 warning；**#2/#3** 新的终局交付与离房保留由 [网络分册](network.md) 和主线程最终审阅收束。不把任意 cleanup 抛错都概括为已处理。
 
 <a id="ui-app-transition"></a>
 
-### UI-APP-TRANSITION — 遮罩导航与页面就绪屏障
+### UI-APP-TRANSITION — 遮罩导航、原地加载遮罩与页面就绪屏障
 
-- **Owner**：[src/ui/scene-transition.ts:7–53](../../src/ui/scene-transition.ts#L7)；接线 [src/app/session.ts:82–90](../../src/app/session.ts#L82)。
-- **编码**：`phase/#timer/#disposed/#commit/#hold/#changed`；两个 `runtime.nextFrame()`；下一 screen readiness Promise。
-- **逻辑状态**：idle → covering/计时 → 等两帧 → commit/等待资源 → revealing → idle；disposed 为吸收态。
-- **事件 / guards / 转换**：navigate 仅 idle；260ms 后 swap，两帧确保画出遮罩；先取得 hold 再 commit；非 run 等 nextScreenReady，run 不等该屏障；reveal 340ms 后 idle。
-- **取消 / 终态**：dispose 清 timer；每次 await 后检查 disposed。没有取消底层 hold，只阻止提交后续 phase。
-- **不变量**：一次只接受一个导航；旧页清理不得早于遮罩完成；揭幕不得早于目标就绪。
-- **测试 / 风险**：未找到直接 SceneTransition 测试。`void swap()` 没有 rejection handler，commit/hold 抛错可使 phase 留 covering；这是静态待验证路径，不声称本次复现。
+- **Owner**：[src/ui/scene-transition.ts](../../src/ui/scene-transition.ts)；接线 [src/app/session.ts](../../src/app/session.ts)（`coverRun/runLoaded/curtain/runModal`）；幕布标题与进度条画在 [src/ui/gpu/app-shell.ts](../../src/ui/gpu/app-shell.ts)（`setTransition(phase,title,progress)`）。
+- **编码**：`phase/destination/#timer/#disposed/#loading/#holding/#generation/#coverStart`；两个 `runtime.nextFrame()`；hold Promise（非 run 为下一 screen readiness，run 为 `runLoaded`）；app 侧 `runCover/coverQueued`。
+- **逻辑状态**：idle → covering（导航或原地 cover）→ 导航：等两帧 → hold+commit → holding → revealing → idle；原地 cover：covering 直到 uncover → revealing → idle；disposed 为吸收态。
+- **事件 / guards / 转换**：navigate 在 idle、原地 cover 中或 holding 中都接受（离开加载中的目的地），每次导航 `#generation++`，被取代的 swap 在下一个 await 后停下；cover 在导航 covering 中忽略；uncover 只对已在 covering 的原地 cover 生效，且等幕布完全合上后才 reveal（不半合就开）。run 导航的 hold 等对局报告“可玩”（`onCover(null)`）才 resolve；对局内的加载（换区、等队友）走 cover/uncover。`coverRun` 把同一轮内的 cover 变化合并到一个微任务，同轮开合不闪；去重不吞掉 hold 中的 null 上报（首个上报即为 null 时也开幕）。幕布标题：对局加载用 run 上报的目的地图名与真实加载进度（0–1，只增不减），run 尚未上报时用 `runPick.stage` 的图名（重返的联机局为空）、进度 0；加载结束（runCover 变 null）后幕布保留最后一次上报直到打开；非 run 导航接管时用其 SCREEN_TITLES、无进度条。
+- **取消 / 终态**：dispose 清 timer；每次 await 后检查 disposed 与 generation。没有取消底层 hold，只阻止过期 swap 提交后续 phase。
+- **不变量**：一次只有一个导航生效；旧页清理不得早于遮罩完成；揭幕不得早于目标就绪；对局在 `transition.phase !== "idle"` 时收到 `modalActive`（`runModal()`），所以出场演出和输入都在幕布完全打开后才开始。
+- **测试 / 风险**：[ui-run-session.test.mjs](../../scripts/ui-run-session.test.mjs) `curtain` 夹具：开局标题、真实进度、换区标题取下一张图、加载完回 idle、加载结束到打开期间标题与进度不变、首个上报为 null 仍开幕、重返用世界所在地图；其余 run 夹具经 `next/activate` 走 hold。`void swap()` 仍没有 rejection handler，commit/hold 抛错可使 phase 留 covering（静态待验证）。联机客机若在 changeZone 前已 suspended，幕布会短暂显示旧图名直到 `onZoneLoading(true)`。揭幕途中再 cover 时幕片从右侧重新合上（先露出一瞬画面），未修。
 
 <a id="ui-app-progress"></a>
 
@@ -82,7 +82,7 @@
 - **事件 / guards / 转换**：已有 saveWindow 或 route=run 拒绝打开；locked 以空文本+错误打开；closed 调 saveWindow，清引用后 unregister/dispose。
 - **取消 / 终态**：app dispose 主动调用 saveWindow；后续异步文本操作由 dialog 的 disposed/closing 屏蔽。
 - **不变量**：只有一个存档窗口；由 app 拥有 dispose，host 只负责栈/绘制。
-- **测试 / 风险**：[ui-save-dialog.test.mjs](../../scripts/ui-save-dialog.test.mjs) 测内部编辑，不测 app 单例与设置交叉退场；既有审计 **#11** 在此交接暴露。
+- **测试 / 风险**：[ui-save-dialog.test.mjs](../../scripts/ui-save-dialog.test.mjs) 测窗口内导入导出，不测 app 单例与设置交叉退场；既有审计 **#11** 在此交接暴露。
 
 <a id="ui-app-reveal-work"></a>
 
@@ -98,27 +98,27 @@
 
 <a id="ui-room-ownership"></a>
 
-### UI-ROOM-OWNERSHIP — 联机窗口连接、重返凭据及向对局移交
+### UI-ROOM-OWNERSHIP — 联机页面连接、重返凭据及向对局移交
 
-- **Owner**：[src/ui/gpu/multiplayer-session.ts:14–85](../../src/ui/gpu/multiplayer-session.ts#L14)；[src/app/session.ts:193–225](../../src/app/session.ts#L193)。
+- **Owner**：[src/ui/gpu/multiplayer-session.ts:14–85](../../src/ui/gpu/multiplayer-session.ts#L14)；[src/app/session.ts](../../src/app/session.ts) 的 `room` 页面（`show("room")`）。
 - **编码**：`session/handedOff/ticket/room`；`onChange/onTicket/onWarning/onStart`、register/unregister。
 - **逻辑状态**：未连接 → connecting → 房间更新 → handedOff（run 接管）；取消/关窗 → 关闭连接；创建异常 → error view。
-- **事件 / guards / 转换**：loadRejoin 读取失败记录并通知，继续无凭据的窗口；connect 先 cancel 旧 session；onStart 先置 handedOff 再构造 MultiplayerRun 并 start；移交触发父层 closeRoom，但卸载不会 close 已移交连接；重返仅 ticket.url 匹配。网络 session 的凭据写入/清除异常通过 onWarning 报告。
+- **事件 / guards / 转换**：loadRejoin 读取失败记录并通知，继续无凭据的页面；connect 先 cancel 旧 session；onStart 先置 handedOff 再构造 MultiplayerRun 并 start；移交后父层离开 `room` 页面，卸载不会 close 已移交连接；房间内本人训练师/伙伴与房主难度经 pick 回调写回大厅偏好并发 setup/mission；重返仅 ticket.url 匹配。网络 session 的凭据写入/清除异常通过 onWarning 报告。
 - **取消 / 终态**：取消清 onChange、close、清引用；screen 卸载后只在 !handedOff 时 close。
 - **不变量**：连接在窗口与 run 之间只有一个 owner；窗口卸载不得杀死刚接管的 run；旧连接事件不得更新新窗口。
 - **测试 / 风险**：[ui-multiplayer.test.mjs](../../scripts/ui-multiplayer.test.mjs) 主要 view/keypad；**#4** 新增 [network-storage.test.mjs](../../scripts/network-storage.test.mjs) 定位凭据故障隔离，完整网络交付由主线程收尾。connect 的 catch 仍将创建失败统一成“连接中断”。
 
 <a id="ui-run-boot"></a>
 
-### UI-RUN-BOOT — 单局会话加载、快照和失效
+### UI-RUN-BOOT — 单局会话加载、幕布上报、快照和失效
 
-- **Owner**：[src/run/session.ts:46–75,207–230,255–262,274–295](../../src/run/session.ts#L46)。
-- **编码**：`run/snap/status/error/zoneLoading/disposed/refreshQueued`、multiplayer connection callback、unregister。
-- **逻辑状态**：loading → ready；loading/ready → error；ready↔zoneLoading；联机 suspended/reconnecting 为并行输入；dispose。
-- **事件 / guards / 转换**：createRun onReady 先调用 onStarted；返回 false 则抛出背包保存失败，进入 error；成功后才设置 ready、sound、恢复暂停，返回 createRun 激活世界。onError 记录消息；onSnapshot 更新 snap；连接/地图载入变化 refresh。
+- **Owner**：[src/run/session.ts](../../src/run/session.ts)；加载步骤 [src/run/createRun.ts](../../src/run/createRun.ts)（`build/start/changeZone`）。
+- **编码**：`run/snap/status/error/zoneLoading/coverStage/loadProgress/covered/deploying/disposed/refreshQueued`、multiplayer connection callback、unregister、`onCover`。
+- **逻辑状态**：loading → ready；loading/ready → error；ready↔zoneLoading；联机 suspended/reconnecting 为并行输入；dispose。loading、zoneLoading、联机 suspended 三者合成 overlay `loading`，它不画任何东西，只持有输入并让 session 上报幕布。
+- **事件 / guards / 转换**：overlay 为 loading 时 `onCover({title, progress})`，否则 `onCover(null)`；标题是本次加载进入的地图：开局为 run 的 stage（重返的 guest 在 `onLoadStage` 给出世界所在地图前不显示标题），换区为 `onZoneLoading(true, next)` 给出的目的地（createRun 取 `incoming?.stage ?? nextField(world)?.stage`）。createRun 的 `onLoadProgress` 报真实步骤：世界 0.05、资源 0.05–0.6、场景 0.7、小地图 0.75、编译 0.85、上传 0.85–0.97、音效 1；换区从 0 重新开始。onReady 先调用 onStarted，返回 false 抛背包保存失败进入 error（error 窗口不是 loading，幕布打开显示它）；成功后 ready。开局先 `network.ready()` 等齐队友，再出场，联机只有一次合幕 → 开幕；出场（deployment）由 createRun 的 `inputBlocked` 门控，幕布未 idle 前不开始，训练家切入的时钟从第一帧可见的出场画面起算。
 - **取消 / 终态**：dispose 断 connection callback，unregister，清 banner timers，dispose run/overlays/hud；微任务检查 disposed。
-- **不变量**：run 创建后才注册 HUD/overlay/controller；HUD 的 snapshot/theme 与最近快照一致；背包提交成功前没有世界 advance 注册；host fatal 由应用 owner dispose，区别于本局 error 窗口。
-- **测试 / 风险**：[ui-run-session.test.mjs](../../scripts/ui-run-session.test.mjs) 有背包拒绝/重试与 host fatal 会话夹具；createRun 激活顺序仍需主线程最终审阅，不以替代依赖夹具称正式 Web/native 验收。
+- **不变量**：run 创建后才注册 HUD/overlay/controller；幕布标题来自当前加载的目的地而非开局参数；进度只来自真实加载步骤；背包提交成功前没有世界 advance 注册；host fatal 由应用 owner dispose，区别于本局 error 窗口。
+- **测试 / 风险**：[ui-run-session.test.mjs](../../scripts/ui-run-session.test.mjs)（背包拒绝/重试、host fatal、`curtain`）；[ui-run-activation.test.mjs](../../scripts/ui-run-activation.test.mjs) `zone-destination` 用真实 createRun 断言换区上报下一张图，并断言切入在门控期间不开始；`curtain` 另覆盖加载结束后幕布保留最后标题/进度、首个上报为 null 时仍开幕、重返显示世界所在地图。等慢队友、加载失败路径未做浏览器实测。
 
 <a id="ui-run-overlay-select"></a>
 
@@ -256,15 +256,15 @@
 
 <a id="ui-host-codex"></a>
 
-### UI-HOST-CODEX — 图鉴异步 import、打开与退场
+### UI-HOST-CODEX — 对局内图鉴窗口的异步 import、打开与退场
 
 - **Owner**：[src/ui/gpu/app-host.ts:188–189,423–460,1043–1061](../../src/ui/gpu/app-host.ts#L188)。
 - **编码**：`codexLoading/codex/state.busy/dialog/screen/runLayer/destroyed/failed`、捕获的 `homeScreen/homeRun/homeWindow` 与 stillHome、overlays.codexHome revision、import Promise、opened 闭包、exitFinished。
 - **逻辑状态**：未加载 → 加载模块 → 显示/准备 → 关闭动画 → dispose；加载失败通知并可重试。
-- **事件 / guards / 转换**：打开拒绝 busy/dialog/已开/正在加载/无 home；home 为当前 screen 或非退出确认的暂停窗 codexHome revision。捕获 screen/runLayer/homeWindow，成功后 stillHome 校验三者及宿主存活，再检查 busy/dialog 并创建 codex、notifyModal；close 请求只 closeWindow，帧驱动释放。
+- **事件 / guards / 转换**：打开拒绝 busy/dialog/已开/正在加载/无 home；home 只有非退出确认的暂停窗 codexHome revision（局外图鉴是 UI-APP-ROUTE 的页面，不经此窗口）。捕获 screen/runLayer/homeWindow，成功后 stillHome 校验三者及宿主存活，再检查 busy/dialog 并创建 codex、notifyModal；close 请求只 closeWindow，帧驱动释放。
 - **取消 / 终态**：模块加载不取消；成败回调均检查 stillHome，旧页面结果不打开图鉴也不通知新页面。暂停关闭立即使 codexHome=null，退场绘制仍 isModal 不代表请求有效；重开暂停的新 revision 也不能接旧请求。图鉴窗口退出取消输入/字体 hold/dispose。
 - **不变量**：异步完成必须仍属于发起页面；同一时间最多一个 codex 实例。
-- **测试 / 风险**：**#10** 已补来源身份与暂停 revision 检查；[ui-host.test.mjs](../../scripts/ui-host.test.mjs) 有切研究所、进入/替换对局、关闭暂停后 import 完成的夹具；[ui-codex.test.mjs](../../scripts/ui-codex.test.mjs) 仍仅为内容表测试。本次未执行正式页面切换。
+- **测试 / 风险**：**#10** 已补来源身份与暂停 revision 检查；[ui-host.test.mjs](../../scripts/ui-host.test.mjs) 有替换对局、关闭暂停后 import 完成的夹具；[ui-codex.test.mjs](../../scripts/ui-codex.test.mjs) 仍仅为内容表测试。本次未执行正式页面切换。
 
 <a id="ui-host-target"></a>
 
@@ -534,51 +534,39 @@
 
 <a id="ui-save-life"></a>
 
-### UI-SAVE-LIFE — 存档入退场与原生输入表面覆盖
+### UI-SAVE-LIFE — 存档入退场
 
-- **Owner**：[src/ui/gpu/save-dialog.ts:57–63,164–173,309–374,434–475,736–777,838–850](../../src/ui/gpu/save-dialog.ts#L57)。
-- **编码**：`disposed/closing/elapsed/settled/closeElapsed/covered/keyboardOpen/fieldFocused/input.overlay/placed`。
-- **逻辑状态**：entering（field隐藏）→220ms settled→原生field可见；covered/GPU键盘/closing时隐藏并blur；closing220ms→closed回调卸载。
-- **事件 / guards / 转换**：showField谓词 `settled&&!closing&&!covered&&!keyboardOpen`；输入focus选全文；Tab leave交回canvas；setCovered同步blur；布局定位原生bounds。
-- **取消 / 终态**：requestClose幂等；disposed取消buffer订阅、input及GPU资源；closed由父销毁，因此重复afterLayout依赖父及时unregister。
-- **不变量**：native field不得穿过遮罩/弹窗/退出动画；UI隐藏不等同buffer销毁；GPU键盘与native editor不能同时占焦点。
-- **测试 / 风险**：[ui-save-dialog.test.mjs:98,123,145](../../scripts/ui-save-dialog.test.mjs#L98)；未完整覆盖covered/context-loss与异步panel交叉。
+- **Owner**：[src/ui/gpu/save-dialog.ts:38–75,146–163,202–208,357–383](../../src/ui/gpu/save-dialog.ts#L38)。
+- **编码**：`disposed/closing/closeElapsed`、opacity/fade 动画对象。
+- **逻辑状态**：entering（140/220ms 淡入）→ open → closing（220ms 退场）→ closed 回调，由父卸载。
+- **事件 / guards / 转换**：关闭键、Esc/手柄东、遮罩完整按放都走 requestClose；导入成功也走同一退场。
+- **取消 / 终态**：requestClose 幂等；closing 后 hit 返回 -1；dispose 释放遮罩、按键与 frame。closed 由父销毁，因此重复 afterLayout 依赖父及时 unregister。
+- **不变量**：窗口不持有平台文本编辑表面，没有原生输入层需要随遮挡/退场隐藏。
+- **测试 / 风险**：[ui-save-dialog.test.mjs](../../scripts/ui-save-dialog.test.mjs)（关闭与导入后退场）；context-loss 期间退场未单独覆盖。
 
 <a id="ui-save-io"></a>
 
-### UI-SAVE-IO — 导入/复制/文件面板异步操作锁
+### UI-SAVE-IO — 剪贴板/文件导入导出的异步操作锁
 
-- **Owner**：[src/ui/gpu/save-dialog.ts:58,385–396,408–431,514–562](../../src/ui/gpu/save-dialog.ts#L58)。
-- **编码**：`pending/disposed/closing/error/initial/buffer.text/order`、TextServices Promise。
-- **逻辑状态**：idle（copy/load可用性派生）→pending（只允许close）→成功/取消→idle；失败显示error；load成功→closing。
-- **事件 / guards / 转换**：初始相同文本不允许load；pending锁按钮；copy/open/save await完成只在未dispose&&!closing时通知/换文本；load同步调用父decode+save，成功才关闭；copy失败选全文便于手动复制。
-- **取消 / 终态**：关窗不取消系统panel Promise，只丢弃晚到结果；finally清pending，disposed不paint。
-- **不变量**：一次只一普通I/O；失败不提交导入；关闭以后文件结果不得覆盖buffer或发成功通知。
-- **测试 / 风险**：[ui-save-dialog.test.mjs:98,123](../../scripts/ui-save-dialog.test.mjs#L98)、[ui-save-import.test.mjs:40](../../scripts/ui-save-import.test.mjs#L40)；pending只限制控件，native field的可编辑性取决于TextServices，openFile期间编辑晚到被覆盖的顺序需验证。
-
-<a id="ui-save-keyboard"></a>
-
-### UI-SAVE-KEYBOARD — GPU键盘与带revision的异步粘贴
-
-- **Owner**：[src/ui/gpu/save-dialog.ts:75–78,455–512,680–702](../../src/ui/gpu/save-dialog.ts#L75)；[src/ui/gpu/text-keyboard.ts:5–37](../../src/ui/gpu/text-keyboard.ts#L5)。
-- **编码**：`keyboardOpen/lowercase/order/baseCount/focused`、键值数组；捕获 `buffer.revision`。
-- **逻辑状态**：native/普通field → gamepad虚拟键盘；大/小写；等待paste→提交或revision失效；完成/Cancel返回普通窗口。
-- **事件 / guards / 转换**：well被gamepad激活开键盘；splice controls并聚焦第一key；Cancel先关键盘；paste await后要求未disposed、未closing、revision未变；Aa/Page切case。
-- **取消 / 终态**：键盘关闭blur/focusCanvas；dispose所有键；异步paste不能取消下载但可以丢弃。
-- **不变量**：GPU与native编辑同一buffer；晚到paste不得用旧选区覆盖新编辑；关闭keyboard本身不改变buffer revision。
-- **测试 / 风险**：[ui-save-dialog.test.mjs:123](../../scripts/ui-save-dialog.test.mjs#L123)覆盖共享buffer/单次import；未见paste revision乱序与关闭键盘期间paste完成测试。
+- **Owner**：[src/ui/gpu/save-dialog.ts:181–187,212–255](../../src/ui/gpu/save-dialog.ts#L181)。
+- **编码**：`pending/disposed/closing/error/code`、TextServices Promise。
+- **逻辑状态**：idle（code 为空时导出两键禁用）→ pending（只允许关闭）→ 成功/取消 → idle；失败显示带步骤的 error；导入成功 → closing。
+- **事件 / guards / 转换**：复制/保存文件写 `code`，成功才 toast 并清 error；粘贴/打开文件读到文本后同步调用父 load（decode 先于 storage.save），成功才关闭；读到 null（取消）不变；错误前缀区分 复制/导出/粘贴/打开/导入。
+- **取消 / 终态**：关窗不取消剪贴板或系统 panel Promise，只丢弃晚到结果；finally 清 pending，disposed 不 paint。
+- **不变量**：一次只一项 I/O；失败不提交导入；关闭以后读到的文本不得导入，也不发成功通知。
+- **测试 / 风险**：[ui-save-dialog.test.mjs](../../scripts/ui-save-dialog.test.mjs)、[ui-save-import.test.mjs:40](../../scripts/ui-save-import.test.mjs#L40)；iOS Safari 等浏览器的剪贴板读取权限与原生 SDL 剪贴板只在平台层/冒烟中覆盖。
 
 <a id="ui-text-buffer"></a>
 
 ### UI-TEXT-BUFFER — 文本、选区锚点、revision与拖动选择
 
-- **Owner**：[src/ui/text-buffer.ts:2–78](../../src/ui/text-buffer.ts#L2)；[src/ui/gpu/save-dialog.ts:56,705–734,779–832](../../src/ui/gpu/save-dialog.ts#L56)。
+- **Owner**：[src/ui/text-buffer.ts:2–78](../../src/ui/text-buffer.ts#L2)（平台文本服务使用；存档窗口不再持有 buffer）。
 - **编码**：`text/anchor/cursor/revision/listeners`；dragAnchor、selectionLayout/selectionState/previewRevision。
 - **逻辑状态**：collapsed/forward-selection/backward-selection；mouse selection armed/dragging/released；编辑产生新revision；GPU selection渲染待布局→同步。
 - **事件 / guards / 转换**：set夹UTF16偏移且同值不通知；move不extend先折叠选区；adjacent避surrogate；replace/delete；GPU命中glyph定index、drag拉选区，revision变更使caret滚入视口。
 - **取消 / 终态**：pointerUp清dragAnchor并消费点击；订阅返回unsubscribe；buffer本身无dispose，随dialog回收。
 - **不变量**：UTF16偏移与平台一致；所有编辑路径同一revision；GPU selection不得成为另一个文本源。
-- **测试 / 风险**：[ui-text-buffer.test.mjs:5](../../scripts/ui-text-buffer.test.mjs#L5)、[ui-save-dialog.test.mjs:145](../../scripts/ui-save-dialog.test.mjs#L145)；[native-text.test.mjs:76,106](../../scripts/native-text.test.mjs#L76)是平台边界关联。IME和剪贴板服务内部未在此盘点。
+- **测试 / 风险**：[ui-text-buffer.test.mjs:5](../../scripts/ui-text-buffer.test.mjs#L5)；[native-text.test.mjs:76,106](../../scripts/native-text.test.mjs#L76)是平台边界关联。IME和剪贴板服务内部未在此盘点。
 
 <a id="ui-codex-data"></a>
 
@@ -818,18 +806,6 @@
 - **取消 / 终态**：父frame销毁持有header/details；content.dispose释放row动画/rings/root；旧open row不再可见。
 - **不变量**：只开一项detail；hover临时覆盖focus，hover离开恢复focus；未稳定定位不能先闪在旧位置。
 - **测试 / 风险**：[stats.test.mjs](../../scripts/stats.test.mjs)是数值来源契约；未找到此GPU detail显露状态测试。普通tooltip与detail是两个独立机制，不能混写。
-
-<a id="ui-loading-tips"></a>
-
-### UI-LOADING-TIPS — 载入文案轮播与内容复用
-
-- **Owner**：[src/ui/gpu/run-overlays-loading.ts:177–183,291–341](../../src/ui/gpu/run-overlays-loading.ts#L177)；`run-overlays.ts:458–462`。
-- **编码**：`elapsed/firstTip/lastTip/tipAt/viewportKey`，map/zone标题；内容对象保留。
-- **逻辑状态**：首条提示→每3200ms下一条→240ms入场；同loading换区只换标题；被host编译hold时delta=0。
-- **事件 / guards / 转换**：update推进轮播、avatar/gauge；show仅更新地图/区数，重用对象保留时钟。
-- **取消 / 终态**：overlay离loading立即clear/dispose；没有自己的加载成功判定。
-- **不变量**：假进度动画不宣告资源ready；真实资源门槛由run/host控制。
-- **测试 / 风险**：无直接loading-tip测试；网络 `suspended` 与 `reconnecting` 区分在run session，不能由此外观类推网络状态。
 
 <a id="ui-overlay-warm"></a>
 
@@ -1089,7 +1065,7 @@ R＝生命周期行为段深入读取；S＝全文件字段/方法/异步/清理
 | [src/ui/gpu/run-hud.ts](../../src/ui/gpu/run-hud.ts)                                   | 1690 | R        | UI-HUD-STATE/HOLD/HP/XP/FEEDBACK、UI-RUN-BANNERS                 |
 | [src/ui/gpu/run-overlays-control.ts](../../src/ui/gpu/run-overlays-control.ts)         |   26 | S        | control接口类型，无独立状态机                                    |
 | [src/ui/gpu/run-overlays-icons.ts](../../src/ui/gpu/run-overlays-icons.ts)             |  386 | S        | UI-GPU-PARTS：图标构造/abort释放，路径未逐点读                   |
-| [src/ui/gpu/run-overlays-loading.ts](../../src/ui/gpu/run-overlays-loading.ts)         |  341 | R        | UI-LOADING-TIPS、UI-CONTROL-VISUAL                               |
+| [src/ui/gpu/run-overlays-loading.ts](../../src/ui/gpu/run-overlays-loading.ts)         |   13 | R        | UI-RUN-BOOT：loading 只持有输入，画面由应用幕布承担              |
 | [src/ui/gpu/run-overlays-result.ts](../../src/ui/gpu/run-overlays-result.ts)           |  495 | R        | UI-RESULT-BAG                                                    |
 | [src/ui/gpu/run-overlays-samples.ts](../../src/ui/gpu/run-overlays-samples.ts)         |  101 | S        | 预热样本数据，无自主状态，见UI-OVERLAY-WARM                      |
 | [src/ui/gpu/run-overlays-station.ts](../../src/ui/gpu/run-overlays-station.ts)         |  666 | R        | UI-STATION-FORGET/FUSE                                           |
@@ -1098,7 +1074,7 @@ R＝生命周期行为段深入读取；S＝全文件字段/方法/异步/清理
 | [src/ui/gpu/run-overlays-surface.ts](../../src/ui/gpu/run-overlays-surface.ts)         |  190 | S        | UI-GPU-PARTS：附着/尺寸更新/手动或abort释放；视觉公式未逐行读    |
 | [src/ui/gpu/run-overlays.ts](../../src/ui/gpu/run-overlays.ts)                         | 1743 | R        | UI-OVERLAY-TREE/RETIRED/INPUT/WARM                               |
 | [src/ui/gpu/run-station-surface.ts](../../src/ui/gpu/run-station-surface.ts)           |  204 | S        | UI-GPU-PARTS：附着/尺寸更新/手动或abort释放；视觉公式未逐行读    |
-| [src/ui/gpu/save-dialog.ts](../../src/ui/gpu/save-dialog.ts)                           |  851 | R        | UI-SAVE-*、UI-TEXT-BUFFER                                        |
+| [src/ui/gpu/save-dialog.ts](../../src/ui/gpu/save-dialog.ts)                           |  384 | R        | UI-SAVE-*                                                        |
 | [src/ui/gpu/screen-parts.ts](../../src/ui/gpu/screen-parts.ts)                         |  460 | S        | UI-GPU-PARTS：附着/尺寸更新/手动或abort释放；视觉公式未逐行读    |
 | [src/ui/gpu/scroll-fade.ts](../../src/ui/gpu/scroll-fade.ts)                           |   85 | S        | UI-GPU-PARTS：附着/尺寸更新/手动或abort释放；视觉公式未逐行读    |
 | [src/ui/gpu/scroll-reveal.ts](../../src/ui/gpu/scroll-reveal.ts)                       |   32 | R        | scroll命令helper，无自主计时/owner，状态归screen                 |
@@ -1110,7 +1086,6 @@ R＝生命周期行为段深入读取；S＝全文件字段/方法/异步/清理
 | [src/ui/gpu/station-art.ts](../../src/ui/gpu/station-art.ts)                           |   32 | S        | UI-GPU-PARTS：附着/尺寸更新/手动或abort释放；视觉公式未逐行读    |
 | [src/ui/gpu/tag.ts](../../src/ui/gpu/tag.ts)                                           |  135 | S        | UI-GPU-PARTS：附着/尺寸更新/手动或abort释放；视觉公式未逐行读    |
 | [src/ui/gpu/text-fit.ts](../../src/ui/gpu/text-fit.ts)                                 |   45 | S        | 截断/换行helper，无自主生命周期                                  |
-| [src/ui/gpu/text-keyboard.ts](../../src/ui/gpu/text-keyboard.ts)                       |   37 | R        | UI-SAVE-KEYBOARD                                                 |
 | [src/ui/gpu/toast-surface.ts](../../src/ui/gpu/toast-surface.ts)                       |  111 | S        | UI-GPU-PARTS：附着/尺寸更新/手动或abort释放；视觉公式未逐行读    |
 | [src/ui/gpu/toast.ts](../../src/ui/gpu/toast.ts)                                       |  357 | R        | UI-TOAST                                                         |
 | [src/ui/gpu/tooltip.ts](../../src/ui/gpu/tooltip.ts)                                   |  260 | R        | UI-TIP                                                           |

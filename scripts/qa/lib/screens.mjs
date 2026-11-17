@@ -12,6 +12,8 @@ const OV = "window.__poketoneUi.run?.overlays";
 const HUD = "window.__poketoneUi.run?.hud";
 const LAB = `${UI}.screens.find((s) => typeof s.showSection === "function")`;
 const TOP = `${UI}.screens.at(-1)`;
+/** The lobby's 图鉴: a page (the in-run window is `${UI}.codex`). */
+const CODEX = `${UI}.screens.find((s) => s.constructor.name === "GpuCodexPage")?.codex`;
 const LOBBY = `${UI}.lobby`;
 const LS = `${LOBBY}.stage`;
 const lobbyControl = (kind) => `${LOBBY}.controls.find((c) => c.kind === ${JSON.stringify(kind)})`;
@@ -192,7 +194,7 @@ export async function walk(ctx) {
   }
 
   if (want("codex")) {
-    const C = `${UI}.codex`;
+    const C = CODEX;
     const opened = await step(v, "codex", async () => {
       await press(page, config, LS, "图鉴");
       await until(page, `!!${C}`, "图鉴", 30_000);
@@ -275,7 +277,7 @@ const centre = (page, panelExpr, stageExpr) =>
 
 /** 图鉴 back trail: follow a link to another tab, go back, the tab, row and both scrolls come back. */
 async function codexBack(page, config, v) {
-  const C = `${UI}.codex`;
+  const C = CODEX;
   const state = () =>
     page.evaluate(`(() => { const c = ${C}; return { section: c.section, key: c.selectedKey, trail: c.trail.length,
       list: +c.listPane.scrollPosition.value[1].toFixed(1), detail: +c.detailPane.scrollPosition.value[1].toFixed(1) }; })()`);
@@ -318,7 +320,7 @@ async function codexBack(page, config, v) {
 
 /** Keyboard walk down the 图鉴 list: each focused row's ring must show whole once scrolled to. */
 async function codexFocusWalk(page, v) {
-  const C = `${UI}.codex`;
+  const C = CODEX;
   await keys(page, "Tab");
   const clipped = [];
   let count = 0;
@@ -374,40 +376,6 @@ async function runScreens(page, config, v, want) {
         extra: () => page.evaluate(probe.hudCentring),
       }),
     );
-
-  if (want("hud"))
-    await step(v, "hud-team", async () => {
-      // Three teammates under the vitals: one hurt, one low, one down.
-      await page.evaluate(() => {
-        const w = window.__poketoneWorld,
-          me = w.players[0];
-        [0.8, 0.2, 0].forEach((share, i) => {
-          const mate = structuredClone(me);
-          // No moves: they fire nothing, so nothing of theirs outlives them in the world.
-          Object.assign(mate, {
-            id: i + 1,
-            x: me.x + 3 + i,
-            level: 4 + i * 5,
-            moves: [],
-            items: [],
-          });
-          mate.alive = share > 0;
-          mate.hp = share * me.hp;
-          w.players.push(mate);
-        });
-      });
-      await sleep(400);
-      await v.visit("hud-team", {
-        stage: `${HUD}.stage`,
-        owner: HUD,
-        stageName: "hud",
-        settle: 800,
-      });
-      await page.evaluate(() => {
-        for (const mate of window.__poketoneWorld.players.slice(1)) mate.departed = true;
-      });
-      await sleep(300);
-    });
 
   if (want("stats"))
     await step(v, "stats", async () => {
@@ -490,17 +458,69 @@ async function runScreens(page, config, v, want) {
         const w = window.__poketoneWorld,
           pl = w.players[0],
           s = w.stations.find((x) => x.kind === "hypno");
+        // Inside the reach (station radius + body + 0.5) for the smallest body (0.36).
         const a = Math.atan2(pl.z - s.z, pl.x - s.x),
-          r = s.radius + 0.9;
+          r = s.radius + 0.7;
         pl.x = pl.px = s.x + Math.cos(a) * r;
         pl.z = pl.pz = s.z + Math.sin(a) * r;
       });
       await sleep(900);
-      await keys(page, "KeyR");
+      // On touch, the prompt opens the station and the close key shuts it. Earlier steps press keys,
+      // and the first tap after a key press only switches back to touch: a tap on the player first.
+      if (config.touch) {
+        await pointAt(page, config, [config.width / 2, config.height / 2]);
+        await sleep(300);
+        await pointAt(
+          page,
+          config,
+          await centre(
+            page,
+            `${HUD}.controls.find((c) => c.action === "interact").panel`,
+            `${HUD}.stage`,
+          ),
+        );
+      } else await keys(page, "KeyR");
       await until(page, kind("station"), "station window");
       await v.visit("station", { ...ov, idleKey: "station" });
-      await keys(page, "Escape");
+      if (config.touch) await pointAt(page, config, await closeKey(page));
+      else await keys(page, "Escape");
       await until(page, `!${OV}.isModal`, "station closed");
+    });
+
+  if (want("hud"))
+    // After the solo windows: teammates in the world make it shared, so cards and stations
+    // no longer freeze it (as in co-op).
+    await step(v, "hud-team", async () => {
+      // Three teammates under the vitals: one hurt, one low, one down.
+      await page.evaluate(() => {
+        const w = window.__poketoneWorld,
+          me = w.players[0];
+        [0.8, 0.2, 0].forEach((share, i) => {
+          const mate = structuredClone(me);
+          // No moves: they fire nothing, so nothing of theirs outlives them in the world.
+          Object.assign(mate, {
+            id: i + 1,
+            x: me.x + 3 + i,
+            level: 4 + i * 5,
+            moves: [],
+            items: [],
+          });
+          mate.alive = share > 0;
+          mate.hp = share * me.hp;
+          w.players.push(mate);
+        });
+      });
+      await sleep(400);
+      await v.visit("hud-team", {
+        stage: `${HUD}.stage`,
+        owner: HUD,
+        stageName: "hud",
+        settle: 800,
+      });
+      await page.evaluate(() => {
+        for (const mate of window.__poketoneWorld.players.slice(1)) mate.departed = true;
+      });
+      await sleep(300);
     });
 
   if (want("result"))

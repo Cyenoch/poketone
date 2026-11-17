@@ -1,0 +1,30 @@
+{
+  "task_id": "ffeb8e34-2082-4286-bb71-ad8ac7ee4483",
+  "type": "text_to_model",
+  "status": "success",
+  "input": {
+    "pbr": true,
+    "prompt": "kadabra/generation/split/v-front.png kadabra/generation/split/v-back.png kadabra/generation/split/v-right.png",
+    "texture": true,
+    "export_uv": true,
+    "face_limit": 1500,
+    "model_version": "v3.1-20260211",
+    "smart_low_poly": true,
+    "geometry_quality": "standard",
+    "texture_alignment": "geometry"
+  },
+  "output_fields": [
+    "model_url",
+    "rendered_image_url",
+    "generated_image_url"
+  ],
+  "credits_consumed": 30,
+  "created_at": "2026-11-17T10:07:40.348973Z",
+  "completed_at": "2026-11-17T10:10:25.520569Z",
+  "files": [
+    "model.glb",
+    "rendered_image.webp",
+    "generated_image.jpeg",
+    "preview.png"
+  ]
+}

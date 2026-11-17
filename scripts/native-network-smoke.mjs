@@ -148,8 +148,8 @@ try {
         "Native peer did not select direct.",
       );
       await page.waitForFunction(() => globalThis.networkTest.session.state.mode === "direct");
-      if (nativeHost) nativeSession.start("forest", 0);
-      else await page.evaluate(() => globalThis.networkTest.session.start("forest", 0));
+      if (nativeHost) nativeSession.start();
+      else await page.evaluate(() => globalThis.networkTest.session.start());
       await until(() => !!ready, "Native run did not start.");
       await ready;
       await page.waitForFunction(() => globalThis.networkTest.ready);

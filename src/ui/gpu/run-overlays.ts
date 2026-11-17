@@ -16,28 +16,18 @@ import { GpuStationContent } from "./run-overlays-station";
 import { GpuResultContent } from "./run-overlays-result";
 import { GpuRunLoading } from "./run-overlays-loading";
 import type { RunOverlayControl } from "./run-overlays-control";
-import { Component, Container, Image, Text, withOpacity, type FontFamilies } from "@pmndrs/uikit";
-import {
-  Matrix4,
-  Vector3,
-  Mesh,
-  MeshBasicMaterial,
-  PlaneGeometry,
-  Color,
-  SRGBColorSpace,
-} from "three";
+import { Component, Container, Text, type Content, type FontFamilies } from "@pmndrs/uikit";
+import { Matrix4, Vector3, Mesh, MeshBasicMaterial, PlaneGeometry } from "three";
 import type { RunResult, StationView } from "../../run/createRun";
 import type { LocalCommand } from "../../run/createRun";
 import type { FormId, StarterId } from "../../run/sim/content/lines/index";
-import type { StageId } from "../../run/sim/content/stages/index";
 import type { ItemId } from "../../run/sim/content/items";
 import type { ElementType } from "../../run/sim/content/elements";
 import { stationNames } from "../../run/sim/content/stations";
 import type { PlayerSheet } from "../../run/createRun";
 import { UiStage } from "./stage";
-import { fade, inheritedOpacity, stack } from "./layer";
-import { BoxShadow, OutlineRing, plateShadow } from "./box-shadow";
-import { OutlinedText } from "./outlined-text";
+import { fade, stack } from "./layer";
+import { OutlineRing } from "./box-shadow";
 import { GpuTooltip } from "./tooltip";
 
 const easeIn = (t: number) => cubicBezier(t, 0.42, 0, 1, 1);
@@ -45,32 +35,26 @@ const easeIn = (t: number) => cubicBezier(t, 0.42, 0, 1, 1);
 const LONG_PRESS_MS = 450;
 import { uiEaseOut, cubicBezier } from "./focus-mark";
 import { createMenuIcon } from "./icons";
-import { DialogBackdrop } from "./dialog-backdrop";
-import { RunHeaderSurface, RunButtonSurface } from "./run-overlays-surface";
+import { WindowSurface } from "./run-overlays-surface";
+import { GameButton } from "./game-button";
+import { SlantPlate } from "./slant-plate";
+import { SNAP } from "./motion";
+import { RADIUS_INNER, slantOf, ui } from "./tokens";
 import { GpuChoiceContent, type ChoiceState } from "./run-choice-content";
 import { ChoiceArt } from "./run-choice-surface";
 import { themeColors } from "./run-theme";
 import { createRunCommandIcon } from "./run-overlays-icons";
-import { HoverPattern } from "./hover-pattern";
 import { createStationArt } from "./station-art";
-import { FocusMark } from "./focus-mark";
 import type { UiInsets } from "./viewport";
 import { GpuStatsContent } from "./run-overlays-stats-panel";
 import { gridStep } from "./grid-nav";
-import { gameTag } from "./tag";
 import { runWindowSamples } from "./run-overlays-samples";
 import { images } from "../../prepare/images";
 
 export type RunOverlayState =
   | null
   | ({ theme: ElementType } & (
-      | {
-          kind: "loading";
-          starter: StarterId;
-          stage: StageId;
-          /** The zone being entered (1-based) of `count`; null at the run's start. */
-          zone: { number: number; count: number } | null;
-        }
+      | { kind: "loading"; starter: StarterId }
       | { kind: "error"; message: string }
       | { kind: "save-error"; message: string }
       | { kind: "reconnecting" }
@@ -126,9 +110,11 @@ interface ControlSet {
   readonly controls: RunOverlayControl[];
   /** The close key's index, -1 when the window has none. */
   closeIndex: number;
-  closeRelight: (() => void) | null;
+  /** The window's slanted keys (stepped and shown focus with it) and drawn parts. */
+  readonly buttons: GameButton[];
+  readonly parts: { dispose(): void }[];
 }
-const noControls = (): ControlSet => ({ controls: [], closeIndex: -1, closeRelight: null });
+const noControls = (): ControlSet => ({ controls: [], closeIndex: -1, buttons: [], parts: [] });
 
 export class GpuRunOverlays {
   readonly stage = new UiStage();
@@ -139,17 +125,16 @@ export class GpuRunOverlays {
   private touchTip: number | null = null;
   private tipPress: { index: number; at: number; x: number; y: number; fired: boolean } | null =
     null;
-  private readonly backdrop = new DialogBackdrop();
   private readonly dimGeometry = new PlaneGeometry(1, 1);
   private readonly dimMaterial = new MeshBasicMaterial({
-    color: "#0d233f",
+    color: ui.ink,
     transparent: true,
     opacity: 0,
     depthTest: false,
     depthWrite: false,
   });
   private readonly dimMesh = new Mesh(this.dimGeometry, this.dimMaterial);
-  private readonly leavingWindows: { remaining: number; tick(): void; dispose(): void }[] = [];
+  private readonly leavingWindows: { remaining: number; dispose(): void }[] = [];
   private visibleKind: NonNullable<RunOverlayState>["kind"] | null = null;
   private readonly callbacks: RunOverlayCallbacks;
   private readonly fonts: FontFamilies;
@@ -163,7 +148,11 @@ export class GpuRunOverlays {
   private scrollFades: ScrollFade[] = [];
   private header: Container | null = null;
   private headerCopy: Container | null = null;
-  private titleTexts: OutlinedText[] = [];
+  private titlePlate: Container | null = null;
+  private titleText: Text | null = null;
+  /** The title plate unrolls from the left as its window opens. */
+  private titleReveal: { value: number } | null = null;
+  private titleSlant: SlantPlate | null = null;
   /** The window's control set: built with the window, dropped with it, never carried over. */
   private window: ControlSet = noControls();
   private get controls(): RunOverlayControl[] {
@@ -193,35 +182,8 @@ export class GpuRunOverlays {
     | GpuStatsContent
     | null = null;
   private readonly cardArt = new ChoiceArt(() => this.stage.invalidate());
-  private headerSurface: RunHeaderSurface | null = null;
   /** The station window's title icon on its plate (`station-art.ts`). */
   private stationArt: ReturnType<typeof createStationArt> | null = null;
-  private readonly buttonPaints = new Map<
-    RunOverlayControl,
-    {
-      fill: string;
-      border: string;
-      ink: string;
-      label: Text;
-      glyph?: ReturnType<typeof createMenuIcon>;
-      focused: boolean | null;
-      values: {
-        fr: number;
-        fg: number;
-        fb: number;
-        br: number;
-        bg: number;
-        bb: number;
-        ir: number;
-        ig: number;
-        ib: number;
-      };
-    }
-  >();
-  private readonly plateSurfaces = new Map<RunOverlayControl, RunButtonSurface>();
-  /** The current close key's drop shadow and focus tween state (disposed with its frame). */
-  private closeKeyParts: { shadow: BoxShadow; lit: { value: number } } | null = null;
-  private readonly plateShadows = new Map<RunOverlayControl, { shadow: BoxShadow; base: string }>();
   private readonly fade = { opacity: 0 };
   private readonly entrance = { y: 0, scale: 0.95 };
   private readonly point = new Vector3();
@@ -243,10 +205,8 @@ export class GpuRunOverlays {
       justifyContent: "center",
       alignItems: "center",
     });
-    this.backdrop.dim.visible = false;
     this.dimMesh.renderOrder = -2;
-    this.stage.scene.add(this.dimMesh, this.backdrop.shadow);
-    this.backdrop.setOpacity(0);
+    this.stage.scene.add(this.dimMesh);
     this.tooltip = new GpuTooltip(this.stage);
   }
   get isModal(): boolean {
@@ -277,7 +237,6 @@ export class GpuRunOverlays {
         this.fade.opacity = 0;
         this.clearFrame();
         this.signature = "";
-        this.backdrop.setOpacity(0);
         this.dimMaterial.opacity = 0;
         return;
       }
@@ -344,11 +303,12 @@ export class GpuRunOverlays {
       this.entrance.scale = state.kind === "choice" ? 1 : 0.95;
       this.applyTransition();
       this.animate(true);
+      this.unrollTitle();
     } else this.applyTransition();
     this.stage.invalidate();
   }
 
-  private text(text: string, fontSize = 16, color = "#142f50"): Text {
+  private text(text: string, fontSize = 16, color: string = ui.ink): Text {
     return stack(
       new Text({
         text,
@@ -362,74 +322,55 @@ export class GpuRunOverlays {
       1,
     );
   }
-  /** RunPause.tsx: the form as a deep Tag, difficulty and time as light ones. */
-  private tag(text: string, deep = false): Container {
-    return gameTag(
-      text,
-      deep
-        ? { face: "#0d233f", ink: "#ffffff" }
-        : { face: "#ffffff", ink: "#0d233f", ring: { color: "#142f50", width: 1.5 } },
-    );
+  /** An upright badge (the pause header's form and run facts). */
+  private chip(text: string, face: string, ink: string): Container {
+    const chip = new Container({
+      height: 25,
+      paddingX: 9,
+      alignItems: "center",
+      flexShrink: 0,
+      borderRadius: RADIUS_INNER,
+      backgroundColor: face,
+    });
+    chip.add(this.text(text, 13, ink));
+    return chip;
   }
+  /** A window command drawing its own hover, focus and press: the primary is the slanted CTA, the
+   *  rest stand upright. */
   private button(
     label: string,
     action: () => void,
     options: {
       enabled?: () => boolean;
-      tone?: "primary" | "danger";
+      tone?: "primary" | "secondary" | "ink";
+      size?: "small" | "normal";
       width?: number | "100%";
-      height?: number;
+      icon?: Content;
+      square?: boolean;
     } = {},
   ): Container {
     const enabled = options.enabled ?? (() => true);
-    const panel = new Container({
-      minHeight: options.height ?? 50,
-      width: options.width,
-      maxWidth: "100%",
-      minWidth: 0,
-      paddingX: 18,
-      paddingY: 10,
-      flexShrink: 0,
-      alignItems: "center",
-      justifyContent: "center",
-      flexDirection: "row",
-      gap: 10,
-      borderWidth: 2,
-      borderColor: options.tone === "danger" ? "#a83243" : "#142f50",
-      borderRadius: 8,
-      backgroundColor: !enabled()
-        ? "#d0dfeb"
-        : options.tone === "primary"
-          ? "#ffd45b"
-          : options.tone === "danger"
-            ? "#fce5e5"
-            : "#e9f4fb",
+    const look = {
+      size: options.size ?? "normal",
+      label: label || undefined,
+      icon: options.icon,
+      square: options.square,
+    } as const;
+    const button = new GameButton(this.stage, { ...look, tone: options.tone ?? "secondary" });
+    button.panel.setProperties({ width: options.width, maxWidth: "100%" });
+    button.setFocusVisible(this.focusVisible);
+    button.setDisabled(!enabled());
+    this.window.buttons.push(button);
+    this.controls.push({
+      panel: button.panel,
+      enabled,
+      action,
+      selfDrawn: true,
+      setFocused: (focused) => button.setFocused(focused),
+      setPointerOver: (over) => button.setHovered(over),
+      setPressed: (pressed) => button.setPressed(pressed),
     });
-    const ink = !enabled() ? "#657b91" : options.tone === "danger" ? "#a83243" : "#142f50";
-    const labelText = this.text(label, 16, ink);
-    panel.add(labelText);
-    const control: RunOverlayControl = { panel, enabled, action };
-    this.controls.push(control);
-    const fill = !enabled()
-      ? "#d0dfeb"
-      : options.tone === "primary"
-        ? "#ffd45b"
-        : options.tone === "danger"
-          ? "#fce5e5"
-          : "#e9f4fb";
-    const border = options.tone === "danger" ? "#a83243" : "#142f50";
-    const f = new Color(fill).convertLinearToSRGB(),
-      d = new Color(border).convertLinearToSRGB(),
-      k = new Color(ink).convertLinearToSRGB();
-    this.buttonPaints.set(control, {
-      fill,
-      border,
-      ink,
-      label: labelText,
-      focused: null,
-      values: { fr: f.r, fg: f.g, fb: f.b, br: d.r, bg: d.g, bb: d.b, ir: k.r, ig: k.g, ib: k.b },
-    });
-    return panel;
+    return button.panel;
   }
   /** Counts window builds; the host compiles a new window's programs before its first draw. */
   revision = 0;
@@ -458,8 +399,7 @@ export class GpuRunOverlays {
     this.revision++;
     this.visibleKind = state.kind;
     if (state.kind === "loading") {
-      if (this.content instanceof GpuRunLoading) this.content.show(state.stage, state.zone);
-      else this.content = new GpuRunLoading(state, this.stage);
+      if (!(this.content instanceof GpuRunLoading)) this.content = new GpuRunLoading();
       this.stage.root.add(this.content.root);
       return;
     }
@@ -485,11 +425,10 @@ export class GpuRunOverlays {
       if (this.content.root.parent !== this.stage.root) this.stage.root.add(this.content.root);
       this.controls.push(...this.content.controls);
       // Cards draw their own outline in their surface (with the banish dashes); buttons get the ring.
-      for (const control of this.controls) if (control.card === undefined) this.ring(control);
+      for (const control of this.controls) if (!control.selfDrawn) this.ring(control);
       return;
     }
     const colors = themeColors(state.theme);
-    const theme = [colors.theme, colors.deep, colors.light, colors.soft] as const;
     const frame = (this.frame = new Container({
       width:
         state.kind === "stats"
@@ -497,49 +436,18 @@ export class GpuRunOverlays {
           : state.kind === "station"
             ? 560
             : state.kind === "pause"
-              ? 360
+              ? 380
               : state.kind === "result"
-                ? 520
+                ? 540
                 : 420,
       maxWidth: "100%",
       maxHeight: "100%",
       minHeight: 0,
       flexDirection: "column",
-      // The header-to-body space is the body's own top padding (see below).
-      padding: 5,
-      paddingBottom: 0,
-      borderWidth: 3,
-      borderColor: "#0d233f",
-      borderRadius: 12,
-      backgroundColor: "#e9f4fb",
     }));
-    // stats-panel.css: the plain surface with a 1px yellow inner line; run modals add the card art.
-    if (state.kind !== "stats") {
-      const art = fade(
-        new Image({
-          src: `/art/cards/${state.theme}.webp`,
-          positionType: "absolute",
-          positionLeft: 0,
-          positionTop: 0,
-          width: "100%",
-          height: "100%",
-        }),
-        0.16,
-      );
-      frame.add(art);
-    }
-    frame.add(
-      new Container({
-        positionType: "absolute",
-        positionLeft: 0,
-        positionTop: 0,
-        width: "100%",
-        height: "100%",
-        borderWidth: 1,
-        borderColor: state.kind === "stats" ? "#ffd45b" : theme[2],
-        borderRadius: 9,
-      }),
-    );
+    const surface = new WindowSurface(frame);
+    this.window.parts.push(surface);
+    frame.add(surface.content);
     const title =
       state.kind === "pause"
         ? state.quitting
@@ -572,136 +480,146 @@ export class GpuRunOverlays {
         minHeight: 64,
         flexDirection: "row",
         alignItems: "center",
-        gap: 12,
-        paddingX: 16,
-        paddingY: 8,
+        gap: 10,
+        paddingLeft: 14,
+        paddingRight: 12,
+        paddingTop: 12,
+        paddingBottom: 4,
         flexShrink: 0,
         justifyContent: "flex-start",
-        backgroundColor: theme[0],
-        borderRadius: 6,
       }));
     if (!stats) {
-      const headerCopy = (this.headerCopy = stack(
-        new Container({ flexGrow: 1, minWidth: 0, flexDirection: "column", gap: 4 }),
-        1,
-      ));
-      const titleSize = state.kind === "result" ? 28 : 22;
-      // `.run-modal h2`: white, -webkit-text-stroke 4px navy-deep.
-      const titleText = new OutlinedText(
-        { text: title, fontSize: titleSize, fontWeight: 800, color: "#ffffff", minWidth: 0 },
-        { width: 4, color: "#0d233f" },
-      );
-      const titleLayer = titleText.root;
-      this.titleTexts.push(titleText);
-      const titleLine = new Container({
+      const headerCopy = (this.headerCopy = new Container({
+        flexGrow: 1,
+        minWidth: 0,
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: 8,
+      }));
+      // The title on a slanted plate: the type's deep colour under its card face, the result's
+      // outcome colour (cleared green, fallen ink).
+      const plateFill =
+        state.kind === "result"
+          ? state.result.outcome === "victory"
+            ? ui.success
+            : ui.ink
+          : colors.deep;
+      const titlePlate = (this.titlePlate = new Container({
         flexDirection: "row",
         alignItems: "center",
         gap: 8,
         minWidth: 0,
+        flexShrink: 1,
+        height: 44,
+        // Symmetric: the title sits on the parallelogram's centre.
+        paddingX: 18 + slantOf(44) / 2,
+      }));
+      const plate = new SlantPlate(titlePlate, {
+        fill: plateFill,
+        stripe: state.kind === "result" ? undefined : { color: colors.theme, width: 8 },
+        card:
+          state.kind === "result"
+            ? undefined
+            : { type: state.theme, loaded: () => this.stage.invalidate() },
       });
+      this.titleReveal = { value: 1 };
+      this.titleSlant = plate;
+      this.window.parts.push(plate);
+      titlePlate.add(plate.content);
       if (state.kind === "station") {
-        this.stationArt = createStationArt(state.view.kind, 34);
-        titleLine.add(this.stationArt.root);
+        this.stationArt = createStationArt(state.view.kind, 30);
+        titlePlate.add(stack(this.stationArt.root, 1));
       }
-      titleLine.add(titleLayer);
-      headerCopy.add(titleLine);
-      const meta = new Container({ flexDirection: "row", flexWrap: "wrap", gap: 4 });
-      if (state.kind === "pause") {
-        meta.add(this.tag(state.form, true));
-        for (const part of state.meta) meta.add(this.tag(part));
-      }
-      headerCopy.add(meta);
-      const band =
-        state.kind === "result"
-          ? state.result.outcome === "victory"
-            ? ["#3a9a6e", "#287a58"]
-            : ["#c94a5b", "#a83243"]
-          : theme;
-      this.headerSurface = new RunHeaderSurface(state.theme, band[0]!, band[1]!, true);
-      header.add(this.headerSurface.content, headerCopy);
-      const crest = fade(
-        new Image({
-          src: `/art/icons/crests/${state.theme}.webp`,
-          width: 92,
-          height: 92,
-          positionType: "absolute",
-          positionRight: -10,
-          positionTop: -14,
-          transformRotateZ: 14,
+      const titleText = stack(
+        new Text({
+          text: title,
+          fontSize: 22,
+          fontWeight: 900,
+          letterSpacing: 1,
+          color: ui.white,
+          minWidth: 0,
+          whiteSpace: "pre",
         }),
-        0.28,
+        1,
       );
-      header.add(crest);
+      this.titleText = titleText;
+      titlePlate.add(titleText);
+      headerCopy.add(titlePlate);
+      if (state.kind === "pause") {
+        const meta = new Container({
+          flexDirection: "row",
+          flexWrap: "wrap",
+          gap: 6,
+          paddingLeft: 4,
+        });
+        meta.add(
+          this.chip(state.form, ui.ink, ui.white),
+          ...state.meta.map((part) => this.chip(part, ui.mist, ui.ink)),
+        );
+        headerCopy.add(meta);
+      }
+      header.add(headerCopy);
     }
     if (["pause", "stats", "station", "error", "reconnecting"].includes(state.kind)) {
       this.window.closeIndex = this.controls.length;
       header.add(this.closeKey());
     }
-    frame.add(header);
+    frame.add(stack(header, 1));
     const body = (this.body = new Container({
       minHeight: 0,
       flexShrink: 1,
       overflow: "scroll",
       scrollbarWidth: 3,
-      scrollbarColor: theme[1],
+      scrollbarColor: ui.line,
       flexDirection: "column",
       gap: 12,
-      // The space around the controls belongs to the scroll box, as in the original scrolling
-      // modal: plate shadows and the 3+3px focus outline (clipped to this box) draw into it
-      // instead of being cut at the first or last control.
-      paddingTop: 14,
+      // The space around the controls belongs to the scroll box: plate shadows and the focus ring
+      // (clipped to this box) draw into it instead of being cut at the first or last control.
+      paddingTop: 12,
       paddingX: 18,
       paddingBottom: 18,
     }));
-    // stats-panel.css: 8px under the header and around the groups; its focus ring is inset.
     if (stats) body.setProperties({ paddingTop: 8, paddingX: 8, paddingBottom: 8 });
     // A body that scrolls fades into the window face at an edge with more beyond it. The fades lie
     // in a box the body's size that does not scroll.
     const scrollBox = new Container({ minHeight: 0, flexShrink: 1, flexDirection: "column" });
-    this.scrollFades = [new ScrollFade("top", "#e9f4fb"), new ScrollFade("bottom", "#e9f4fb")];
+    this.scrollFades = [new ScrollFade("top", ui.paper), new ScrollFade("bottom", ui.paper)];
     scrollBox.add(body, ...this.scrollFades.map((f) => stack(f.content, 30)));
-    frame.add(scrollBox);
+    frame.add(stack(scrollBox, 1));
     this.stage.root.add(frame);
     if (state.kind === "pause" && state.quitting) {
       body.add(
-        this.button("返回大厅", this.callbacks.quit, { tone: "danger", width: "100%" }),
+        this.button("返回大厅", this.callbacks.quit, { tone: "ink", width: "100%" }),
         this.button("取消", this.callbacks.cancelQuit, { width: "100%" }),
       );
     } else if (state.kind === "pause") {
       body.add(
         this.button("继续", this.callbacks.resume, { tone: "primary", width: "100%" }),
-        this.button("图鉴", this.callbacks.openCodex, { width: "100%" }),
-        this.button("设置", this.callbacks.openSettings, { width: "100%" }),
+        this.button("图鉴", this.callbacks.openCodex, {
+          width: "100%",
+          icon: createMenuIcon("cube"),
+        }),
+        this.button("设置", this.callbacks.openSettings, {
+          width: "100%",
+          icon: createMenuIcon("settings"),
+        }),
       );
       // A shared run goes on for the team; only a solo run restarts from here.
       if (!state.shared)
-        body.add(this.button("重新开始", this.callbacks.restart, { width: "100%" }));
-      const forfeit = this.button("放弃冒险", this.callbacks.askQuit, {
-        tone: "danger",
-        width: "100%",
-        height: 44,
-      });
-      body.add(forfeit);
-      const glyphs = [
-        createRunCommandIcon("play"),
-        createMenuIcon("cube"),
-        createMenuIcon("settings"),
-        ...(state.shared ? [] : [createRunCommandIcon("reset")]),
-        createMenuIcon("close"),
-      ];
-      glyphs.forEach((glyph, i) => {
-        glyph.setProperties({
-          positionType: "absolute",
-          positionLeft: 22,
-          positionTop: "50%",
-          transformTranslateY: -12,
-          width: 24,
-          height: 24,
-          color: i === glyphs.length - 1 ? "#a83243" : "#142f50",
-        });
-        this.controls[i + 1]!.panel.add(glyph);
-        this.buttonPaints.get(this.controls[i + 1]!)!.glyph = glyph;
-      });
+        body.add(
+          this.button("重新开始", this.callbacks.restart, {
+            width: "100%",
+            icon: createRunCommandIcon("reset"),
+          }),
+        );
+      body.add(
+        this.button("放弃冒险", this.callbacks.askQuit, {
+          tone: "ink",
+          width: "100%",
+          size: "small",
+          icon: createMenuIcon("close"),
+        }),
+      );
     } else if (state.kind === "reconnecting") {
       body.add(this.button("返回", this.callbacks.exit));
     } else if (state.kind === "error") {
@@ -723,6 +641,7 @@ export class GpuRunOverlays {
           this.stage,
         );
       else this.content.update(state.view);
+      this.content.setFocusVisible(this.focusVisible);
       body.add(this.content.root);
       header.add(this.content.headerCurrency);
       const close = this.controls[this.closeIndex]?.panel;
@@ -745,6 +664,7 @@ export class GpuRunOverlays {
           this.stage,
         );
       else this.content.update(state);
+      this.content.setFocusVisible(this.focusVisible);
       body.add(this.content.root);
       header.add(this.content.headerCurrency);
       this.controls.push(...this.content.controls);
@@ -754,152 +674,54 @@ export class GpuRunOverlays {
       stats.setFocusVisible(this.focusVisible);
       this.controls.push(...stats.controls);
     }
+    this.fullscreenIcon = new FullscreenIcon();
+    this.fullscreenIcon.setActive(this.fullscreenActive);
     const fullscreen = this.button("", () => this.toggleFullscreen?.(), {
-      width: 44,
-      height: 44,
+      size: "small",
+      square: true,
+      icon: this.fullscreenIcon,
     });
     this.controls.at(-1)!.enabled = () => !!this.toggleFullscreen;
     this.fullscreenPanel = fullscreen;
-    fullscreen.setProperties({
-      display: this.toggleFullscreen ? "flex" : "none",
-      paddingX: 8,
-      paddingY: 8,
-    });
-    this.fullscreenIcon = new FullscreenIcon();
-    this.fullscreenIcon.setActive(this.fullscreenActive);
-    const fullscreenIcon = stack(this.fullscreenIcon, 3);
-    fullscreenIcon.setProperties({ width: 24, height: 24, color: "#142f50" });
-    fullscreen.add(fullscreenIcon);
-    this.buttonPaints.get(this.controls.at(-1)!)!.glyph = fullscreenIcon;
+    fullscreen.setProperties({ display: this.toggleFullscreen ? "flex" : "none" });
     header.add(stack(fullscreen, 30));
-    for (const [i, control] of this.controls.entries()) {
-      if (control.panel === this.fullscreenPanel) {
-        this.ring(control);
-        continue;
-      }
-      if (state.kind === "pause" && i !== this.closeIndex) {
-        const base = i === 4 ? "#6b1a27" : "#0d233f";
-        const shadow = new BoxShadow(8, plateShadow(3, base));
-        control.panel.add(shadow.content);
-        this.plateShadows.set(control, { shadow, base });
-        const plate = new RunButtonSurface();
-        control.panel.add(plate.content);
-        this.plateSurfaces.set(control, plate);
-      }
-      if (!stats?.controls.includes(control)) this.ring(control);
-      // Every control shows the ball pattern while hovered or focused (DESIGN.md fx-hover), inked
-      // for the face it lies on when lit; a content that draws its own keeps it.
-      if (!control.pattern) {
-        const lit =
-          i === this.closeIndex || control.command === "primary"
-            ? "#ffd45b"
-            : state.kind === "pause"
-              ? "#0d233f"
-              : "#e9f4fb";
-        const pattern = new HoverPattern(this.stage.motion, () => this.stage.invalidate(), lit);
-        control.pattern = pattern;
-        // Over a station plate (its paint sits at 1), under its label and icon (3).
-        control.panel.add(control.command ? stack(pattern.content, 2) : pattern.content);
-      }
-      if (
-        (i !== this.closeIndex && state.kind === "pause") ||
-        control.command ||
-        (state.kind === "result" && i >= this.controls.length - 3)
-      ) {
-        const cursor = new FocusMark(this.stage.motion, () => this.stage.invalidate());
-        cursor.mesh.renderOrder = 30;
-        this.stage.scene.add(cursor.mesh);
-        control.cursor = cursor;
-      }
-    }
+    for (const control of this.controls) if (!control.selfDrawn) this.ring(control);
   }
 
-  /** `.game-button:focus-visible` outline (3px yellow, 3px out), drawn in the control's own layer and
-   *  clipped like it; the scroll body keeps room for it (paddingTop 14, sides 18). Hidden until focused. */
+  /** A content control that draws no focus of its own: an ink ring 3px out, shown on keyboard focus. */
   private ring(control: RunOverlayControl): void {
-    const ring = new OutlineRing(8, "#ffd45b");
+    const ring = new OutlineRing(8, ui.ink);
     ring.content.setProperties({ display: "none" });
     control.panel.add(stack(ring.content, 2));
     control.outline = ring;
   }
 
-  /** ui.css `.game-close`: a square navy key on the band, yellow while focused, with its Esc badge
-   *  (`Tag` badge, ice tone) on the lower-right rim; the badge hides for coarse pointers. */
+  /** The close key: a square ink key with its Esc badge on the lower-right rim (hidden for touch). */
   private closeKey(): Container {
-    // Minimums: the touch rule may raise them (see settings-dialog's close key).
-    const close = stack(
-      new Container({
-        minWidth: 44,
-        minHeight: 44,
-        flexShrink: 0,
-        alignItems: "center",
-        justifyContent: "center",
-        borderWidth: 2,
-        borderRadius: 8,
-      }),
-      30,
-    );
-    const shadow = new BoxShadow(8, [{ y: 2, blur: 0, color: "#000000", alpha: 0.35 }]);
-    const lit = { value: 0 };
-    this.closeKeyParts = { shadow, lit };
-    const icon = stack(createMenuIcon("close"), 1);
-    icon.setProperties({ width: 20, height: 20 });
-    const badge = stack(
-      new Container({
-        positionType: "absolute",
-        positionRight: -6,
-        positionBottom: -6,
-        height: 16,
-        minWidth: 16,
-        paddingX: 4,
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: 4,
-        borderWidth: 1.5,
-        borderColor: "#0d233f",
-        backgroundColor: "#d8effb",
-        display: this.coarse ? "none" : "flex",
-      }),
-      3,
-    );
-    badge.add(stack(new InputGlyph("cancel", "Esc"), 1));
-    close.add(shadow.content, icon, badge);
-    // background-color, border-color and color transition 120ms (ease) between rest and focus.
-    const paint = () => {
-      const mix = (a: string, b: string) => new Color(a).lerp(new Color(b), lit.value);
-      close.setProperties({
-        backgroundColor: mix("#0d233f", "#ffd45b"),
-        borderColor: withOpacity(mix("#d8effb", "#0d233f"), 0.55 + 0.45 * lit.value),
-      });
-      icon.setProperties({ color: mix("#ffffff", "#0d233f") });
-      this.stage.invalidate();
-    };
-    paint();
-    // `.game-close`: yellow on :hover or :focus-visible; focus a pointer gave does not light it.
-    const state = { focused: false, over: false };
-    const relight = () =>
-      this.stage.motion.animate(
-        lit,
-        { value: state.over || (state.focused && this.focusVisible) ? 1 : 0 },
-        120,
-        paint,
-        (t) => cubicBezier(t, 0.25, 0.1, 0.25, 1),
-      );
-    this.window.closeRelight = relight;
-    this.controls.push({
-      panel: close,
-      enabled: () => true,
-      action: () => this.closeAction(),
-      setFocused: (focused) => {
-        state.focused = focused;
-        relight();
-      },
-      setPointerOver: (over) => {
-        state.over = over;
-        relight();
-      },
+    const icon = createMenuIcon("close");
+    const panel = this.button("", () => this.closeAction(), {
+      tone: "ink",
+      size: "small",
+      square: true,
+      icon,
     });
-    return close;
+    icon.setProperties({ width: 20, height: 20 });
+    if (!this.coarse) {
+      const badge = stack(
+        new Container({
+          positionType: "absolute",
+          positionRight: 2,
+          positionBottom: -6,
+          alignItems: "center",
+          justifyContent: "center",
+        }),
+        3,
+      );
+      badge.add(new InputGlyph("cancel", "Esc"));
+      panel.add(badge);
+    }
+    // The close key only hovers: a pointer over it does not move the window's focus.
+    return stack(panel, 30);
   }
 
   private rebuild(): void {
@@ -938,6 +760,24 @@ export class GpuRunOverlays {
     else if (state.kind === "station") this.callbacks.send({ t: "leave", dialog: state.view.id });
     else if (state.kind === "error" || state.kind === "reconnecting") this.callbacks.exit();
   }
+  /** The name plate's entrance: a slanted unroll from the left, 0.4s SNAP. */
+  private unrollTitle(): void {
+    const reveal = this.titleReveal,
+      plate = this.titleSlant;
+    if (!reveal || !plate) return;
+    this.stage.motion.enter(
+      reveal,
+      { value: 0 },
+      { value: 1 },
+      400,
+      () => {
+        plate.set({ reveal: reveal.value });
+        this.stage.invalidate();
+      },
+      SNAP,
+      60,
+    );
+  }
   private applyTransition = (): void => {
     if (this.frame) fade(this.frame, this.fade.opacity);
     this.frame?.setProperties({
@@ -946,7 +786,6 @@ export class GpuRunOverlays {
       transformScaleY: this.entrance.scale,
     });
     if (this.content instanceof GpuRunLoading) fade(this.content.root, this.fade.opacity);
-    this.backdrop.setOpacity(this.content instanceof GpuRunLoading ? 0 : this.fade.opacity);
     this.dimMaterial.opacity = this.dimOpacity();
     if (!this.userScrolled) this.needsReveal = true;
     this.stage.invalidate();
@@ -1010,10 +849,12 @@ export class GpuRunOverlays {
       paddingTop: edgeY ? Math.max(edgeY, v.safeArea.top) : 0,
       paddingBottom: edgeY ? Math.max(edgeY, v.safeArea.bottom) : 0,
     });
-    this.backdrop.resize(v.width, v.height);
     this.dimMesh.scale.set(v.width, v.height, 1);
     if (this.state?.kind === "pause") {
-      this.frame?.setProperties({ width: compact ? 440 : 360 });
+      // Five keys in one column outgrow any landscape phone (844×390 at its 80% stage is ~490
+      // tall): short landscape lays them out two to a row under a one-line header.
+      const compact = v.width > v.height && v.height < 560;
+      this.frame?.setProperties({ width: compact ? 520 : 380 });
       this.headerCopy?.setProperties({
         flexDirection: compact ? "row" : "column",
         flexWrap: compact ? "wrap" : "no-wrap",
@@ -1022,13 +863,14 @@ export class GpuRunOverlays {
       this.body?.setProperties({
         flexDirection: compact ? "row" : "column",
         flexWrap: compact ? "wrap" : "no-wrap",
-        gap: 8,
+        gap: compact ? 10 : 12,
+        paddingX: compact ? 16 : 22,
       });
       const apart = !compact && !this.state.quitting;
       this.controls.forEach((c, i) => {
         if (i !== this.closeIndex && c.panel !== this.fullscreenPanel)
           c.panel.setProperties({
-            width: compact ? "48%" : "100%",
+            width: compact ? "46%" : "100%",
             flexGrow: compact ? 1 : 0,
             // The danger action stands apart at the end of the list.
             marginTop: apart && i === this.controls.length - 2 ? 8 : 0,
@@ -1042,11 +884,12 @@ export class GpuRunOverlays {
     if (this.content instanceof GpuChoiceContent) this.content.resize();
     if (this.content instanceof GpuStatsContent) {
       this.content.resize(compact);
-      this.frame?.setProperties({ borderWidth: compact ? 2 : 3 });
       this.body?.setProperties({ paddingTop: compact ? 4 : 8, paddingX: compact ? 4 : 8 });
       this.body?.setProperties({ paddingBottom: compact ? 4 : 8 });
-    } else this.header?.setProperties({ paddingY: compact ? 4 : 8 });
+    } else this.header?.setProperties({ paddingTop: compact ? 8 : 12 });
+    for (const button of this.window.buttons) button.fitTouch();
     for (const c of this.controls) {
+      if (c.selfDrawn) continue;
       if (
         (this.content instanceof GpuStationContent ||
           this.content instanceof GpuResultContent ||
@@ -1057,10 +900,12 @@ export class GpuRunOverlays {
         continue;
       c.panel.setProperties({ minHeight: v.minTarget, minWidth: v.minTarget });
     }
-    for (const text of this.titleTexts)
-      text.set({
-        fontSize: this.state?.kind === "result" ? (compact ? 20 : 28) : compact ? 18 : 22,
-      });
+    const result = this.state?.kind === "result";
+    this.titleText?.setProperties({ fontSize: result ? (compact ? 20 : 26) : compact ? 18 : 22 });
+    this.titlePlate?.setProperties({
+      height: compact ? 38 : result ? 50 : 44,
+      paddingX: 18 + slantOf(compact ? 38 : result ? 50 : 44) / 2,
+    });
     this.needsReveal = true;
     this.stage.invalidate();
   }
@@ -1083,37 +928,6 @@ export class GpuRunOverlays {
         display: i === index && this.focusVisible ? "flex" : "none",
       });
       c.setFocused?.(i === index);
-      const paint =
-        this.state?.kind === "pause" && i !== this.closeIndex
-          ? this.buttonPaints.get(c)
-          : undefined;
-      if (paint && paint.focused !== (i === index)) {
-        paint.focused = i === index;
-        const f = new Color(paint.focused ? "#ffd45b" : paint.fill).convertLinearToSRGB();
-        const b = new Color(paint.focused ? "#142f50" : paint.border).convertLinearToSRGB();
-        const k = new Color(paint.focused ? "#0d233f" : paint.ink).convertLinearToSRGB();
-        const values = paint.values;
-        this.stage.motion.animate(
-          values,
-          { fr: f.r, fg: f.g, fb: f.b, br: b.r, bg: b.g, bb: b.b, ir: k.r, ig: k.g, ib: k.b },
-          120,
-          () => {
-            const ink = new Color().setRGB(values.ir, values.ig, values.ib, SRGBColorSpace);
-            c.panel.setProperties({
-              backgroundColor: new Color().setRGB(values.fr, values.fg, values.fb, SRGBColorSpace),
-              borderColor: new Color().setRGB(values.br, values.bg, values.bb, SRGBColorSpace),
-            });
-            paint.label.setProperties({ color: ink });
-            paint.glyph?.setProperties({ color: ink });
-            this.stage.invalidate();
-          },
-          (t) => t,
-        );
-      }
-      // `:not([aria-disabled="true"])`: a locked command keeps its focus ring only.
-      const lit = i === index && !c.locked?.();
-      c.pattern?.setFocused((lit || i === this.hovered || !!c.selected?.()) && !c.locked?.());
-      c.cursor?.setFocused(lit);
     }
     this.needsReveal = true;
     this.reveal();
@@ -1127,9 +941,14 @@ export class GpuRunOverlays {
       c.outline?.content.setProperties({
         display: i === this.selected && visible ? "flex" : "none",
       });
-    if (this.content instanceof GpuChoiceContent || this.content instanceof GpuStatsContent)
+    if (
+      this.content instanceof GpuChoiceContent ||
+      this.content instanceof GpuStatsContent ||
+      this.content instanceof GpuStationContent ||
+      this.content instanceof GpuResultContent
+    )
       this.content.setFocusVisible(visible);
-    this.window.closeRelight?.();
+    for (const button of this.window.buttons) button.setFocusVisible(visible);
     this.stage.invalidate();
   }
   /**
@@ -1179,12 +998,7 @@ export class GpuRunOverlays {
     )
       this.focus(index);
     this.hovered = index;
-    for (const [i, c] of this.controls.entries()) {
-      c.pattern?.setFocused(
-        (i === index || i === this.selected || !!c.selected?.()) && !c.locked?.(),
-      );
-      c.setPointerOver?.(i === index);
-    }
+    for (const [i, c] of this.controls.entries()) c.setPointerOver?.(i === index);
   }
   setPressed(index: number | null): void {
     const next =
@@ -1199,7 +1013,6 @@ export class GpuRunOverlays {
     this.pressedIndex = next;
     this.controls.forEach((c, i) => {
       const pressed = i === next;
-      this.plateSurfaces.get(c)?.setPressed(pressed);
       if (c.setPressed) {
         c.setPressed(pressed);
         return;
@@ -1222,10 +1035,6 @@ export class GpuRunOverlays {
         target,
         pressed ? 60 : 140,
         () => {
-          const plate = this.plateShadows.get(c);
-          plate?.shadow.set(
-            plateShadow(3 - values.shift, plate.base, 0.24 * (1 - values.shift / 3)),
-          );
           c.panel.setProperties({
             transformScaleX: values.x,
             transformScaleY: values.y,
@@ -1445,7 +1254,6 @@ export class GpuRunOverlays {
     for (let i = this.leavingWindows.length - 1; i >= 0; i--) {
       const window = this.leavingWindows[i]!;
       window.remaining -= deltaMs;
-      window.tick();
       if (window.remaining <= 0) {
         window.dispose();
         this.leavingWindows.splice(i, 1);
@@ -1456,12 +1264,10 @@ export class GpuRunOverlays {
       if (this.exitLeft === 0) {
         this.clearFrame();
         this.signature = "";
-        this.backdrop.setOpacity(0);
         this.dimMaterial.opacity = 0;
       }
     }
-    this.headerSurface?.update();
-    for (const plate of this.plateSurfaces.values()) plate.update();
+    for (const button of this.window.buttons) button.update(deltaMs);
     for (const f of this.scrollFades) if (this.body && f.update(this.body)) this.stage.invalidate();
     if (this.content instanceof GpuChoiceContent) {
       this.content.afterLayout(deltaMs);
@@ -1471,32 +1277,6 @@ export class GpuRunOverlays {
     if (this.content instanceof GpuStationContent && this.content.afterLayout(deltaMs))
       this.stage.invalidate();
     if (this.content instanceof GpuStatsContent && this.frame) this.content.afterLayout(this.frame);
-    for (const control of this.controls) {
-      control.pattern?.update(deltaMs);
-      const matrix = control.panel.globalMatrix.value,
-        size = control.panel.size.value;
-      if (control.cursor && matrix && size) {
-        control.cursor.setParentOpacity(inheritedOpacity(control.panel));
-        control.cursor.mesh.position.set(
-          matrix.elements[12]! - size[0] / 2,
-          matrix.elements[13]!,
-          0.1,
-        );
-        const bm = this.body?.globalMatrix.value,
-          bs = this.body?.size.value;
-        control.cursor.mesh.visible =
-          control.panel.isVisible.value &&
-          !control.panel.isClipped.value &&
-          !!bm &&
-          !!bs &&
-          matrix.elements[13]! <= bm.elements[13]! + bs[1] / 2 &&
-          matrix.elements[13]! >= bm.elements[13]! - bs[1] / 2;
-      }
-    }
-    const m = this.frame?.globalMatrix.value,
-      size = this.frame?.size.value;
-    if (m && size && this.visibleKind !== "choice") this.backdrop.updatePanel(m, size[0], size[1]);
-    else this.backdrop.shadow.visible = false;
     const layout = [
       this.body?.size.value,
       this.body?.maxScrollPosition.value,
@@ -1517,10 +1297,6 @@ export class GpuRunOverlays {
       this.reveal();
       this.needsReveal = false;
     }
-    if (this.content instanceof GpuRunLoading) {
-      this.content.update(deltaMs);
-      this.stage.invalidate();
-    }
   }
 
   private retireFrame(): void {
@@ -1536,28 +1312,16 @@ export class GpuRunOverlays {
         height: size[1],
       });
     const controls = this.controls;
-    for (const c of controls) {
-      c.cursor?.setFocused(false);
-      c.pattern?.setFocused(false);
-    }
     const content = this.content;
-    const surface = this.headerSurface;
     const stationArt = this.stationArt;
     this.stationArt = null;
-    const closeKey = this.closeKeyParts;
-    if (closeKey) this.stage.motion.cancel(closeKey.lit);
-    const plates = [...this.plateSurfaces.values()];
-    const shadows = [...this.plateShadows.values()];
-    const presses = [
-      ...this.pressMotion.values(),
-      ...[...this.buttonPaints.values()].map((p) => p.values),
-    ];
+    const window = this.window;
+    if (this.titleReveal) this.stage.motion.cancel(this.titleReveal);
+    const presses = [...this.pressMotion.values()];
     const opacity = { alpha: this.fade.opacity, y: this.entrance.y, scale: this.entrance.scale };
-    const shadow = new DialogBackdrop();
-    this.stage.scene.add(shadow.shadow);
     const density = 0.45;
     const material = new MeshBasicMaterial({
-      color: "#0d233f",
+      color: ui.ink,
       transparent: true,
       opacity: density * opacity.alpha,
       depthTest: false,
@@ -1574,7 +1338,6 @@ export class GpuRunOverlays {
         transformScaleY: opacity.scale,
       });
       material.opacity = density * opacity.alpha;
-      shadow.setOpacity(opacity.alpha);
       this.stage.invalidate();
     };
     // ui-out: 160ms ease-in to opacity 0 / scale .96, from wherever the window was.
@@ -1592,20 +1355,10 @@ export class GpuRunOverlays {
     );
     this.leavingWindows.push({
       remaining: 160,
-      tick: () => {
-        surface?.update();
-        for (const plate of plates) plate.update();
-        const fm = frame.globalMatrix.value,
-          fs = frame.size.value;
-        if (fm && fs) shadow.updatePanel(fm, fs[0], fs[1]);
-        for (const c of controls) c.cursor?.setParentOpacity(inheritedOpacity(c.panel));
-      },
       dispose: () => {
         this.stage.motion.cancel(leave);
         for (const press of presses) this.stage.motion.cancel(press);
         for (const c of controls) {
-          c.pattern?.dispose();
-          c.cursor?.dispose();
           c.outline?.content.removeFromParent();
           c.outline?.dispose();
         }
@@ -1615,18 +1368,15 @@ export class GpuRunOverlays {
             content.headerCurrency.removeFromParent();
           content.dispose();
         }
-        surface?.dispose();
         stationArt?.dispose();
-        closeKey?.shadow.dispose();
-        for (const plate of plates) plate.dispose();
-        for (const { shadow } of shadows) shadow.dispose();
+        for (const button of window.buttons) button.dispose();
+        for (const part of window.parts) part.dispose();
         frame.removeFromParent();
         const parts: { dispose(): void }[] = [];
         frame.traverse((o) => {
           if (o instanceof Component) parts.push(o);
         });
         for (const part of parts.reverse()) part.dispose();
-        shadow.dispose();
         dim.removeFromParent();
         material.dispose();
       },
@@ -1635,15 +1385,12 @@ export class GpuRunOverlays {
     this.body = null;
     this.header = null;
     this.headerCopy = null;
-    this.titleTexts = [];
+    this.titlePlate = null;
+    this.titleText = null;
+    this.titleReveal = null;
     this.window = noControls();
     this.fullscreenPanel = undefined;
     this.content = null;
-    this.headerSurface = null;
-    this.closeKeyParts = null;
-    this.plateSurfaces.clear();
-    this.plateShadows.clear();
-    this.buttonPaints.clear();
     this.pressMotion.clear();
     this.pressedIndex = null;
     apply();
@@ -1655,8 +1402,6 @@ export class GpuRunOverlays {
     // The choice's root is its own frame; its content disposes it.
     const ownFrame = this.frame !== null && this.frame !== this.content?.root;
     this.pressedIndex = null;
-    for (const paint of this.buttonPaints.values()) this.stage.motion.cancel(paint.values);
-    this.buttonPaints.clear();
     for (const [control, motion] of this.pressMotion) {
       this.stage.motion.cancel(motion);
       control.panel.setProperties({
@@ -1667,13 +1412,9 @@ export class GpuRunOverlays {
     }
     this.pressMotion.clear();
     for (const c of this.controls) {
-      c.pattern?.dispose();
-      c.cursor?.dispose();
       c.outline?.content.removeFromParent();
       c.outline?.dispose();
       c.outline = undefined;
-      c.pattern = undefined;
-      c.cursor = undefined;
     }
     if (this.content) {
       if (!(preserveContent && this.content instanceof GpuChoiceContent))
@@ -1685,20 +1426,12 @@ export class GpuRunOverlays {
         this.content = null;
       }
     }
-    for (const plate of this.plateSurfaces.values()) plate.dispose();
-    for (const { shadow } of this.plateShadows.values()) shadow.dispose();
-    this.plateSurfaces.clear();
-    this.plateShadows.clear();
-    this.headerSurface?.dispose();
-    this.headerSurface = null;
     for (const f of this.scrollFades.splice(0)) f.dispose();
     this.stationArt?.dispose();
     this.stationArt = null;
-    if (this.closeKeyParts) {
-      this.stage.motion.cancel(this.closeKeyParts.lit);
-      this.closeKeyParts.shadow.dispose();
-      this.closeKeyParts = null;
-    }
+    if (this.titleReveal) this.stage.motion.cancel(this.titleReveal);
+    for (const button of this.window.buttons) button.dispose();
+    for (const part of this.window.parts) part.dispose();
     this.window = noControls();
     this.fullscreenPanel = undefined;
     if (this.frame && ownFrame) {
@@ -1713,7 +1446,9 @@ export class GpuRunOverlays {
     this.body = null;
     this.header = null;
     this.headerCopy = null;
-    this.titleTexts = [];
+    this.titlePlate = null;
+    this.titleText = null;
+    this.titleReveal = null;
   }
   /** Context lost: free GPU copies, including card art no mounted card holds right now. */
   releaseUploads(): void {
@@ -1756,7 +1491,6 @@ export class GpuRunOverlays {
     this.clearFrame();
     for (const window of this.leavingWindows) window.dispose();
     this.leavingWindows.length = 0;
-    this.backdrop.dispose();
     this.dimMesh.removeFromParent();
     this.dimGeometry.dispose();
     this.dimMaterial.dispose();

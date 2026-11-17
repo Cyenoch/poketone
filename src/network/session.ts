@@ -1,13 +1,17 @@
 import { pack, unpack } from "./wire";
 import {
   PROTOCOL_VERSION,
+  knownMission,
+  knownStarter,
   type ClientMessage,
+  type Mission,
   type PlayerSetup,
+  type MultiplayerConfig,
   type Room,
   type RoomErrorCode,
   type ServerMessage,
 } from "./protocol";
-import type { RunConfig } from "../run/sim/world";
+import { isTrainerId } from "../trainers";
 import type { DirectPeer, DirectPeerFactory, IceServer, PeerSignal } from "../platform/direct-peer";
 
 declare const __GAME_BUILD__: string;
@@ -48,6 +52,8 @@ export interface MultiplayerSessionOptions {
   directPeer: DirectPeerFactory;
   signal: AbortSignal;
   rejoin?: RejoinTicket;
+  /** Creating a room: its first mission (Harbor's default when absent). */
+  mission?: Mission;
 }
 
 interface Link {
@@ -65,6 +71,11 @@ interface Link {
   reachable: boolean;
 }
 
+/** Every seat's partner and trainer are ones this build knows. */
+function knownPlayers(players: readonly PlayerSetup[]) {
+  return players.every((player) => knownStarter(player.starter) && isTrainerId(player.trainer));
+}
+
 /** Sent over Harbor before the first direct packet, so direct data never overtakes relayed data. */
 const SWITCH = "D";
 
@@ -80,7 +91,7 @@ export class MultiplayerSession {
     peers: {},
   };
   onChange: () => void = () => {};
-  onStart: (config: Omit<RunConfig, "seed">) => void = () => {};
+  onStart: (config: MultiplayerConfig) => void = () => {};
   onFailure: (error: Error) => void = () => {};
   onTicket: (ticket: RejoinTicket | null) => void = () => {};
   onWarning: (error: Error) => void = (error) => console.error(error);
@@ -121,7 +132,14 @@ export class MultiplayerSession {
     this.restored = Boolean(options.rejoin);
     this.rejoin = options.rejoin;
     this.url = url;
-    this.entry = { t: "enter", version: PROTOCOL_VERSION, build: __GAME_BUILD__, code, player };
+    this.entry = {
+      t: "enter",
+      version: PROTOCOL_VERSION,
+      build: __GAME_BUILD__,
+      code,
+      player,
+      ...(!code && options.mission ? { mission: options.mission } : {}),
+    };
     this.open();
     this.heartbeat = setInterval(() => {
       if (this.closed) return;
@@ -302,6 +320,8 @@ export class MultiplayerSession {
         else this.deliver(unpack(message.data), 0);
         break;
       case "room": {
+        if (!knownPlayers(message.room.players) || !knownMission(message.room.mission))
+          throw new Error("房间选择无效。");
         clearTimeout(this.connectTimer);
         this.token = message.token;
         this.iceServers = message.iceServers;
@@ -360,6 +380,8 @@ export class MultiplayerSession {
       }
       case "start":
         if (this.playing) break;
+        if (!knownPlayers(message.config.players) || !knownMission(message.config))
+          throw new Error("对局选择无效。");
         this.state.starting = false;
         this.playing = true;
         for (const link of this.links.values()) {
@@ -535,11 +557,29 @@ export class MultiplayerSession {
       if (this.receiver === receiver) this.receiver = undefined;
     };
   }
-  start(stage: RunConfig["stage"], difficulty: RunConfig["difficulty"]) {
+  start() {
     if (!this.state.canStart) return;
     this.state.starting = true;
-    this.signal({ t: "start", stage, difficulty });
+    this.signal({ t: "start" });
     this.changed();
+  }
+  /** Before the start only; Harbor's next room carries the change to every seat. */
+  setup(starter: PlayerSetup["starter"], trainer: PlayerSetup["trainer"]) {
+    if (this.inLobby()) this.signal({ t: "setup", starter, trainer });
+  }
+  /** Host only, before the start. */
+  mission(mission: Mission) {
+    if (this.inLobby() && this.state.self === 0) this.signal({ t: "mission", ...mission });
+  }
+  private inLobby() {
+    return (
+      !this.closed &&
+      !this.playing &&
+      !this.state.starting &&
+      !this.state.error &&
+      !!this.state.room &&
+      this.socketOpen()
+    );
   }
   /** Seats this session can currently exchange data with. */
   isReachable(id: number): boolean {

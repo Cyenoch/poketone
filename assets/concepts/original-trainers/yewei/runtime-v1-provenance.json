@@ -1,0 +1,30 @@
+{
+  "source": "assets/concepts/original-trainers/yewei/cutin-source.png",
+  "sourceSha256": "bd345f527b22f07603611f5f2305e81b0b4c3e849127fdccb239abd43866bc60",
+  "generation": "assets/concepts/original-trainers/yewei/cutin-generation.json",
+  "process": "prepare.py: preserve source alpha, remove alpha < 8 speckles, fixed head crop, Lanczos resize, transparent padding, lossless WebP",
+  "outputs": [
+    {
+      "file": "cutin.webp",
+      "crop": [67, 33, 1224, 1231],
+      "size": [768, 768],
+      "sha256": "dc3a41b65365d29face8c71d6da6df6ae095ffb33c11aa530e3d3e68ce3c25b4"
+    },
+    {
+      "file": "portrait.webp",
+      "crop": [326, 0, 915, 689],
+      "size": [256, 256],
+      "sha256": "a5e057f39eae9e36d932ba6c23a2938cbe0a45e71e823558d60a47bec5c85678"
+    },
+    {
+      "file": "lobby.webp",
+      "source": "assets/concepts/original-trainers/yewei/lobby-source.png",
+      "sourceSha256": "e03b1e7b00231f41ae79807c5f5e8719ed369b14622fa24d7f5abd16117693cb",
+      "generation": "assets/concepts/original-trainers/yewei/lobby-generation.json",
+      "process": "alpha < 8 -> 0, alpha >= 248 -> 255, alpha bbox crop, Lanczos resize to long side <= 1400, clear RGB under alpha 0, lossless WebP",
+      "crop": [146, 28, 886, 1509],
+      "size": [700, 1400],
+      "sha256": "f2e08558bc3d23c2804827be1eda24b7ce77aa15798c4630ca9e23ad5999a046"
+    }
+  ]
+}

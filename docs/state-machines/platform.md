@@ -61,7 +61,7 @@
 - **所有者/编码**：[TextBuffer](../../src/ui/text-buffer.ts#L2) 的 `text/anchor/cursor/revision` 与订阅集合。
 - **状态/转换**：折叠光标 ↔ 正向/反向选区；输入替换选区后折叠；左右移动、Home/End、shift扩选、delete/backspace 更新修订并通知。
 - **守卫/终态**：set 将偏移限定在文本内，无变化不发布；左右移动跨完整 surrogate pair。卸载通过取消订阅结束观察；buffer本身没有 disposed 状态。
-- **不变量**：UTF-16偏移、选择方向、GPU键盘和平台编辑器共享一份权威文本；不可用第二份显示文本反向覆盖选区。
+- **不变量**：UTF-16偏移、选择方向、平台编辑器只认一份权威文本；不可用第二份显示文本反向覆盖选区。
 - **证据**：[ui-text-buffer.test](../../scripts/ui-text-buffer.test.mjs)；这不等于支持所有 Unicode 字形或复杂字素导航。
 
 ## PL-09 平台编辑器焦点
@@ -70,7 +70,7 @@
 - **状态/转换**：创建但未聚焦 → 编辑中 → blur/交还窗口；native 聚焦另一 editor 先通知旧 owner 失焦。Tab/Esc交还给窗口，已提交文本进入 buffer；clipboard错误回传当前editor。
 - **守卫/终态**：旧 editor 的 blur/dispose 不能清掉新 active；Web通过 field身份判断 selectionchange，dispose移除节点/订阅；native service dispose同时关闭文件服务。
 - **不变量**：文字服务拥有输入/剪贴板，业务导入验证属于存档窗口；渲染文字和系统编辑表面边界不能混为“全DOM”。
-- **证据**：[native-text.test](../../scripts/native-text.test.mjs)、[ui-save-dialog.test](../../scripts/ui-save-dialog.test.mjs)；没有本次真实IME验收。
+- **证据**：[native-text.test](../../scripts/native-text.test.mjs)；没有本次真实IME验收。
 
 ## PL-10 文件选择、异步回调与销毁
 

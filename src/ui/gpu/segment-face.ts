@@ -1,23 +1,19 @@
-import { Container, Text, withOpacity } from "@pmndrs/uikit";
+import { Container, Text } from "@pmndrs/uikit";
 import { Color } from "three";
-import { BoxShadow, OutlineRing } from "./box-shadow";
-import { CodexBall } from "./codex-parts";
-import { HoverPattern } from "./hover-pattern";
-import { fade, stack } from "./layer";
-import { RunButtonSurface } from "./run-overlays-surface";
-import { HatchFill } from "./screen-parts";
+import { stack } from "./layer";
+import { SNAP } from "./motion";
+import { SlantPlate } from "./slant-plate";
 import type { UiStage } from "./stage";
+import { HARD_SHADOW, RADIUS_INNER, slantOf, ui } from "./tokens";
 
-const NAVY_DEEP = "#0d233f",
-  ICE = "#d8effb",
-  TRAY = "#173f70",
-  YELLOW = "#ffd45b";
+const REST_INK = ui.line,
+  LOCKED_INK = "#5a5e68";
 
 /**
- * ui/SegmentedControl.tsx `.game-segments__face`: a Poké Ball and a label in the navy tray. The
- * picked option is a raised yellow plate that fades in over 120ms as the last one fades out; a
- * mouse lights the others blue-deep; an unavailable one is muted and hatched; `:focus-visible`
- * rings it yellow 2px out. At least 44px tall at every size.
+ * One option of a segmented choice, on the ink tray (`segmentTray`): the picked option is a white
+ * slanted block (same −14°, radius 4) that fades in over 200ms (SNAP) as the last one fades out; a
+ * mouse lights the others faintly; an unavailable one is dimmed; keyboard focus rings it in ink.
+ * At least 44px tall at every size.
  */
 export class SegmentFace {
   readonly panel = new Container({
@@ -26,54 +22,25 @@ export class SegmentFace {
     justifyContent: "center",
     gap: 8,
     minHeight: 44,
-    paddingY: 4,
-    paddingX: 16,
-    borderWidth: 2,
-    borderRadius: 8,
-    borderColor: "transparent",
+    paddingX: 16 + slantOf(44) / 2,
     flexShrink: 0,
   });
   readonly label: Text;
-  // The picked look on its own layer over the border box, so it can cross-fade.
-  private readonly plate = new Container({
-    positionType: "absolute",
-    positionLeft: -2,
-    positionTop: -2,
-    positionRight: -2,
-    positionBottom: -2,
-    borderWidth: 2,
-    borderRadius: 8,
-    borderColor: NAVY_DEEP,
-    backgroundColor: YELLOW,
-  });
-  private readonly sheen = new RunButtonSurface();
-  private readonly pattern: HoverPattern;
-  private readonly ring = new OutlineRing(8, YELLOW, 3, 2);
-  private readonly hatch = new HatchFill();
-  private readonly shadow = new BoxShadow(8, [{ y: 2, blur: 0, color: "#000000", alpha: 0.45 }]);
-  private readonly ball: CodexBall;
+  private readonly plate: SlantPlate;
   private readonly stage: UiStage;
-  private readonly lit = { value: 0 };
-  private litTarget = -1;
-  private ink = ICE;
-  private readonly picked = new Color(NAVY_DEEP);
+  private readonly lit = { face: 0, ink: 0 };
+  private target = "";
+  private ink: string = REST_INK;
 
   constructor(stage: UiStage, text: string) {
     this.stage = stage;
-    this.pattern = new HoverPattern(stage.motion, () => stage.invalidate(), TRAY);
-    this.ball = new CodexBall(stage.motion, () => stage.invalidate());
+    this.plate = new SlantPlate(this.panel, { fill: ui.white }, RADIUS_INNER);
+    this.plate.set({ depth: 0, face: 0 });
     this.label = stack(
-      new Text({ text, fontSize: 16, fontWeight: 800, color: ICE, lineHeight: 1.2 }),
+      new Text({ text, fontSize: 16, fontWeight: 800, color: REST_INK, lineHeight: 1.2 }),
       1,
     );
-    this.ring.content.setProperties({ display: "none" });
-    this.hatch.content.setProperties({ display: "none" });
-    this.plate.add(this.sheen.content);
-    fade(this.plate, 0);
-    fade(this.shadow.content, 0);
-    this.panel.add(this.shadow.content, this.plate, this.hatch.content);
-    this.panel.add(this.pattern.content, stack(this.ball.content, 2), this.label);
-    this.panel.add(stack(this.ring.content, 3));
+    this.panel.add(this.plate.content, this.label);
   }
 
   paint(state: {
@@ -85,58 +52,53 @@ export class SegmentFace {
     pressed: boolean;
   }): void {
     const { checked, locked, hovered, focused, focusVisible, pressed } = state;
-    this.ring.content.setProperties({ display: focused && focusVisible ? "flex" : "none" });
-    this.ball.set(checked, true);
-    this.pattern.setSurface(checked ? YELLOW : TRAY);
-    // Lit while picked, hovered or keyboard-focused (fx-hover); gold on the picked yellow plate.
-    this.pattern.setFocused((checked || hovered || (focused && focusVisible)) && !locked);
+    this.plate.set({ focus: focused && focusVisible ? 1 : 0 });
     const hover = hovered && !checked && !locked;
-    const press = pressed && !locked;
-    this.panel.setProperties({
-      backgroundColor: hover ? TRAY : undefined,
-      borderColor: hover ? withOpacity(ICE, 0.35) : "transparent",
-      transformScaleX: press ? 0.97 : 1,
-      transformScaleY: press ? 0.97 : 1,
-      transformTranslateY: press ? 1 : 0,
-    });
-    this.ink = locked ? "#7d93a8" : hover ? "#ffffff" : ICE;
-    this.hatch.content.setProperties({ display: locked && !checked ? "flex" : "none" });
-    const target = checked ? 1 : 0;
-    if (target === this.litTarget) return this.applyLit();
-    // The first paint lands on the state; later picks fade.
-    const duration = this.litTarget < 0 ? 0 : 120;
-    this.litTarget = target;
-    this.stage.motion.animate(this.lit, { value: target }, duration, () => this.applyLit());
+    this.panel.setProperties({ transformTranslateY: pressed && !locked ? 1 : 0 });
+    this.ink = locked ? LOCKED_INK : hover ? ui.white : REST_INK;
+    const face = checked ? 1 : hover ? 0.14 : 0;
+    const key = `${face}${this.ink}`;
+    if (key === this.target) return;
+    // The first paint lands on the state; later changes fade.
+    const duration = this.target === "" ? 0 : 200;
+    this.target = key;
+    this.stage.motion.animate(this.lit, { face, ink: checked ? 1 : 0 }, duration, this.apply, SNAP);
   }
 
-  private applyLit(): void {
-    const t = this.lit.value;
-    fade(this.plate, t);
-    fade(this.shadow.content, t);
+  private readonly apply = (): void => {
+    this.plate.set({ face: this.lit.face });
     // UIKit compares colours by reference: a new one per change.
-    this.label.setProperties({ color: new Color(this.ink).lerp(this.picked, t) });
+    this.label.setProperties({ color: new Color(this.ink).lerp(new Color(ui.ink), this.lit.ink) });
     this.stage.invalidate();
-  }
+  };
 
-  /** Call after layout. */
   /** Touch rule: at least 44 host px tall at the stage's current scale (a minimum only). */
   fitTouch(): void {
     this.panel.setProperties({ minHeight: Math.max(44, this.stage.viewport.minTarget) });
   }
 
-  update(deltaMs: number): void {
-    this.sheen.update();
-    this.hatch.update();
-    this.pattern.update(deltaMs);
-  }
+  /** Kept for the control loop's contract; the face has no running motion of its own. */
+  update(_deltaMs: number): void {}
 
   dispose(): void {
     this.stage.motion.cancel(this.lit);
-    this.sheen.dispose();
-    this.hatch.dispose();
-    this.shadow.dispose();
-    this.ring.dispose();
-    this.pattern.dispose();
-    this.ball.dispose();
+    this.plate.dispose();
   }
+}
+
+/** The ink tray segments sit in: a slanted ink plate with the hard shadow, 5px inside, 3px apart. */
+export function segmentTray(): { tray: Container; dispose(): void } {
+  const tray = new Container({
+    flexDirection: "row",
+    alignItems: "stretch",
+    padding: 5,
+    // Horizontal room that leaves the same 5px gap across the slanted ends.
+    paddingX: 6.5,
+    gap: 3,
+    flexShrink: 0,
+  });
+  const plate = new SlantPlate(tray, { fill: ui.ink });
+  plate.set({ depth: HARD_SHADOW.offset });
+  tray.add(plate.content);
+  return { tray, dispose: () => plate.dispose() };
 }

@@ -1,17 +1,17 @@
 import { type NavigationAction } from "../../platform/input";
-import { Container, Text, withOpacity, type FontFamilies } from "@pmndrs/uikit";
+import { Container, Text, type FontFamilies } from "@pmndrs/uikit";
 import { Matrix4, Vector3 } from "three";
 import { UiStage } from "./stage";
-import { cubicBezier, uiEaseOut } from "./focus-mark";
+import { GameButton } from "./game-button";
 import { createMenuIcon } from "./icons";
-import { ToastSurface } from "./toast-surface";
+import { SlantPlate } from "./slant-plate";
 import type { UiInsets } from "./viewport";
 import { fade, stack } from "./layer";
-import { OutlineRing } from "./box-shadow";
+import { EASE } from "./motion";
+import { HARD_SHADOW, ui } from "./tokens";
 
-const closeBorder = withOpacity("#d8effb", 0.55);
-/** A notice: chevron, a wide ribbon at the bottom. A hint (the share key it names): beside the
- *  screen's primary actions, on the left at mid height, so it covers none of them. */
+/** A notice: chevron, a small upright ink plate at the bottom centre. A hint (the share key it names):
+ *  beside the screen's primary actions, on the left at mid height, so it covers none of them. */
 export type ToastKind = "notice" | "hint";
 
 /** Host-independent notification overlay. Host routes hover/focus separately from pointer presses. */
@@ -19,17 +19,12 @@ export class GpuToast {
   readonly stage = new UiStage();
   private readonly ribbon: Container;
   private readonly messageText: Text;
-  private readonly textShadow: Text;
-  private readonly close: Container;
-  private readonly closeIcon = createMenuIcon("close");
+  private readonly close: GameButton;
   private readonly marks = { notice: createMenuIcon("chevron"), hint: createMenuIcon("upload") };
   private kind: ToastKind = "notice";
-  private readonly focusRing = new OutlineRing(8, "#ffd45b");
-  private readonly surface = new ToastSurface("ribbon");
-  private readonly medallion = new ToastSurface("medallion");
+  private readonly plate: SlantPlate;
   private readonly fade = { opacity: 0 };
   private readonly transform = { y: 16, scale: 0.92 };
-  private readonly press = { y: 0, x: 1, sy: 1 };
   private readonly point = new Vector3();
   private readonly inverse = new Matrix4();
   private message: string | null = null;
@@ -55,80 +50,44 @@ export class GpuToast {
     });
     this.ribbon = fade(
       new Container({
-        width: 820,
-        maxWidth: "100%",
-        minHeight: 72,
+        maxWidth: 640,
+        minHeight: 56,
         flexDirection: "row",
         alignItems: "center",
-        paddingTop: 10,
-        paddingBottom: 10,
-        paddingLeft: 22,
-        paddingRight: 30,
-        gap: 14,
-        color: "#ffffff",
-        fontWeight: 700,
+        paddingY: 6,
+        paddingLeft: 16,
+        paddingRight: 6,
+        gap: 12,
         display: "none",
       }),
       0,
     );
-    this.ribbon.add(this.surface.content);
-    const mark = stack(
-      new Container({
-        width: 38,
-        height: 38,
-        flexShrink: 0,
-        alignItems: "center",
-        justifyContent: "center",
-      }),
-      1,
-    );
-    mark.add(this.medallion.content);
+    this.plate = new SlantPlate(this.ribbon, { fill: ui.ink, upright: true });
+    this.plate.set({ depth: HARD_SHADOW.offset });
+    this.ribbon.add(this.plate.content);
     for (const icon of Object.values(this.marks)) {
-      stack(icon, 2).setProperties({ color: "#0d233f" });
-      mark.add(icon);
+      icon.setProperties({ width: 20, height: 20, color: ui.white });
+      this.ribbon.add(stack(icon, 1));
     }
     this.marks.hint.setProperties({ display: "none" });
-    const copy = stack(new Container({ flexGrow: 1, flexShrink: 1, minWidth: 0 }), 1);
-    this.textShadow = new Text({
-      text: "",
-      color: "#0d233f",
-      fontSize: 18,
-      fontWeight: 700,
-      positionType: "absolute",
-      positionLeft: 0,
-      positionTop: 0,
-      width: "100%",
-      height: "100%",
-      transformTranslateY: 2,
-    });
     this.messageText = stack(
       new Text({
         text: "",
-        color: "#ffffff",
-        fontSize: 18,
+        color: ui.white,
+        fontSize: 16,
         fontWeight: 700,
+        flexShrink: 1,
+        minWidth: 0,
       }),
       1,
     );
-    copy.add(this.textShadow, this.messageText);
-    this.close = stack(
-      new Container({
-        width: 44,
-        height: 44,
-        flexShrink: 0,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#0d233f",
-        borderColor: closeBorder,
-        borderWidth: 2,
-        borderRadius: 8,
-      }),
-      1,
-    );
-    this.closeIcon.setProperties({ width: 18, height: 18, color: "#ffffff" });
-    this.focusRing.content.setProperties({ display: "none" });
-    this.close.add(this.closeIcon, stack(this.focusRing.content, 2));
-    this.ribbon.add(mark, copy, this.close);
+    this.close = new GameButton(this.stage, {
+      tone: "secondary",
+      size: "small",
+      square: true,
+      icon: createMenuIcon("close"),
+    });
+    this.ribbon.add(this.messageText, stack(this.close.panel, 1));
     this.stage.root.add(this.ribbon);
   }
 
@@ -146,7 +105,6 @@ export class GpuToast {
     this.dismissed = false;
     if (message !== null) {
       this.messageText.setProperties({ text: message });
-      this.textShadow.setProperties({ text: message });
       this.kind = kind;
       for (const [name, icon] of Object.entries(this.marks))
         icon.setProperties({ display: name === kind ? "flex" : "none" });
@@ -155,8 +113,7 @@ export class GpuToast {
         alignItems: hint ? "flex-start" : "center",
         justifyContent: hint ? "center" : "flex-end",
       });
-      this.ribbon.setProperties({ width: hint ? "auto" : 820, maxWidth: hint ? "50%" : "100%" });
-      this.ribbon.setProperties({ display: "flex" });
+      this.ribbon.setProperties({ maxWidth: hint ? "50%" : 640, display: "flex" });
       this.exiting = 0;
       if (!wasVisible) this.animateVisibility(true);
     } else {
@@ -180,7 +137,7 @@ export class GpuToast {
         fade(this.ribbon, this.fade.opacity);
         this.stage.invalidate();
       },
-      (t) => cubicBezier(t, 0, 0, 0.58, 1),
+      EASE,
     );
     this.stage.motion.animate(
       this.transform,
@@ -193,7 +150,7 @@ export class GpuToast {
         });
         this.stage.invalidate();
       },
-      uiEaseOut,
+      EASE,
     );
   }
 
@@ -209,24 +166,16 @@ export class GpuToast {
       paddingTop: 16 + v.safeArea.top,
       paddingBottom: Math.max(22, v.safeArea.bottom),
     });
-    this.ribbon.setProperties({
-      minHeight: narrow ? 64 : compact ? 56 : 72,
-      paddingLeft: narrow ? 18 : 22,
-      paddingRight: narrow ? 22 : 30,
-      paddingY: narrow ? 8 : compact ? 4 : 10,
-      gap: narrow ? 8 : 14,
-    });
-    this.close.setProperties({ minWidth: v.minTarget, minHeight: v.minTarget });
-    const fontSize = Math.max(16, Math.min(19, 14.4 + v.width * 0.003));
-    this.messageText.setProperties({ fontSize });
-    this.textShadow.setProperties({ fontSize });
+    this.ribbon.setProperties({ paddingY: compact ? 4 : 6, gap: narrow ? 8 : 12 });
+    this.close.fitTouch();
+    this.messageText.setProperties({ fontSize: narrow || compact ? 15 : 16 });
     this.stage.invalidate();
   }
 
   /** Index 0 is the close key; index 1 is the ribbon's hover area and never activates. */
   hit(x: number, y: number): number {
     if (this.message === null) return -1;
-    return this.contains(this.close, x, y) ? 0 : this.contains(this.ribbon, x, y) ? 1 : -1;
+    return this.contains(this.close.panel, x, y) ? 0 : this.contains(this.ribbon, x, y) ? 1 : -1;
   }
 
   private contains(panel: Container, x: number, y: number): boolean {
@@ -261,43 +210,19 @@ export class GpuToast {
     this.paintClose();
   }
 
+  /** The close key holds the keyboard only, so its focus is always shown. */
   private paintClose(): void {
-    const highlighted = this.focused || this.closeHovered;
-    this.close.setProperties({
-      backgroundColor: highlighted ? "#ffd45b" : "#0d233f",
-      borderColor: highlighted ? "#0d233f" : closeBorder,
-    });
-    this.closeIcon.setProperties({ color: highlighted ? "#0d233f" : "#ffffff" });
-    this.focusRing.content.setProperties({ display: this.focused ? "flex" : "none" });
-    this.stage.invalidate();
+    this.close.setHovered(this.closeHovered);
+    this.close.setFocused(this.focused);
+    this.close.setFocusVisible(this.focused);
+    this.close.setPressed(this.pressed);
   }
 
   setPressed(index: number | null): void {
     const next = this.message !== null && index === 0;
     if (this.pressed === next) return;
     this.pressed = next;
-    this.applyPressed();
-  }
-
-  private applyPressed(): void {
-    this.stage.motion.animate(
-      this.press,
-      {
-        y: this.pressed ? 2 : 0,
-        x: this.pressed ? 1.012 : 1,
-        sy: this.pressed ? 0.96 : 1,
-      },
-      this.pressed ? 60 : 140,
-      () => {
-        this.close.setProperties({
-          transformTranslateY: this.press.y,
-          transformScaleX: this.press.x,
-          transformScaleY: this.press.sy,
-        });
-        this.stage.invalidate();
-      },
-      uiEaseOut,
-    );
+    this.paintClose();
   }
 
   activate(index: number): void {
@@ -320,9 +245,6 @@ export class GpuToast {
   }
 
   afterLayout(deltaMs: number): void {
-    const size = this.ribbon.size.value;
-    if (size) this.surface.resize(size[0], size[1]);
-    this.medallion.resize(38, 38);
     if (this.exiting > 0) {
       this.exiting = Math.max(0, this.exiting - deltaMs);
       if (this.exiting === 0) {
@@ -349,9 +271,8 @@ export class GpuToast {
   }
 
   dispose(): void {
-    this.surface.dispose();
-    this.medallion.dispose();
-    this.focusRing.dispose();
+    this.close.dispose();
+    this.plate.dispose();
     this.stage.dispose();
   }
 }

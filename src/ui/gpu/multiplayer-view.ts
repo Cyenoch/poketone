@@ -1,6 +1,7 @@
 import type { SessionState } from "../../network/session";
 import type { RoomErrorCode } from "../../network/protocol";
 import type { StarterId } from "../../run/sim/content/lines";
+import type { TrainerId } from "../../trainers";
 
 const errors: Record<RoomErrorCode, string> = {
   "no-room": "房间不存在",
@@ -12,6 +13,7 @@ const errors: Record<RoomErrorCode, string> = {
 export interface SeatView {
   label: string;
   starter: StarterId | null;
+  trainer: TrainerId | null;
   self: boolean;
   chip: string;
   pending: boolean;
@@ -26,6 +28,7 @@ export function seatView(state: SessionState) {
   const seats: SeatView[] = [0, 1, 2, 3].map((slot) => ({
     label: `P${slot + 1}`,
     starter: state.room?.players[slot]?.starter ?? null,
+    trainer: state.room?.players[slot]?.trainer ?? null,
     self: state.self === slot && slot < count,
     chip:
       slot === 0

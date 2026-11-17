@@ -1,0 +1,14 @@
+{
+  "createdAt": "2026-11-17",
+  "assets": ["abra", "kadabra", "alakazam", "geodude", "graveler", "golem"],
+  "generator": "Local Pillow derivation from preserved character multiview front drawings; no new portrait generation.",
+  "source": "assets/icons/source/portraits-psychic-rock/<asset>.png",
+  "sourceOrigin": "assets/characters/<asset>/generation/split/v-front.png (front cell of generation/sheet.jpg)",
+  "sourceManifest": "assets/icons/source/portraits-psychic-rock/provenance.json",
+  "output": "public/art/portraits/<asset>.webp",
+  "processing": "assets/icons/prepare-psychic-rock.py: border flood-fill from white at tolerance 38 using slice-sheet.py; alpha trim and 8% square padding; work at 960x960, add #142f50 silhouette outline with MaxFilter(13), remove white matte fringe with MinFilter(7), recolor source pixels whose maximum RGB channel is below 75 to #142f50, composite and Lanczos to 320x320, WebP q90.",
+  "poseEdit": "Geodude's existing front drawing is recomposed with each arm rotated upward by 45 degrees and its masked boulder body enlarged 1.5x. This keeps both complete fists and a larger readable face at 28–48px. Crop, mask and placement coordinates are preserved in prepare-psychic-rock.py; the source is unchanged.",
+  "selection": "Two portrait-sheet requests image-38907-11 and image-38907-19 failed with image-service safety rejections and produced no image. Original requests are preserved in assets/icons/source/psychic-rock-generation.json. These portraits reuse the separately completed front drawings. They are not presented as outputs of the failed requests.",
+  "purpose": "Shared player portraits, lobby roster and codex form art.",
+  "rights": "Derived Pokémon fan artwork; Pokémon designs and trademarks belong to Nintendo, Game Freak, Creatures and The Pokémon Company. Noncommercial fan project; not licensed as standalone open art."
+}

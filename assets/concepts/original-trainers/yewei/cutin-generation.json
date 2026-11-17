@@ -1,0 +1,12 @@
+{
+  "tool": "magpie-image.generate_image",
+  "actualModel": "ash/gpt-image-2.5-sunburst",
+  "jobId": "image-38907-27",
+  "promptTemplate": "../cutin-prompt.txt",
+  "promptAssembly": "Trim the template's trailing newline, then append two newline characters and characterBrief.",
+  "characterBrief": "Character: Yewei, the adult woman with muted lavender chin-length blunt bob and two sage hair clips on HER LEFT, pale olive skin and grey-green eyes, mulberry sleeveless long waistcoat over sage shirt, cream short cowl and round headphones around neck. Keep recorder bag on HER RIGHT hip and capsules on HER LEFT. Quiet decisive expression, subtle assured smile rather than shouting.",
+  "referenceImages": ["turnaround.png"],
+  "parameters": { "size": "1024x1024", "quality": "high", "background": "transparent", "n": 1 },
+  "output": "cutin-source.png",
+  "seed": null
+}

@@ -1,0 +1,30 @@
+{
+  "task_id": "b8405e5e-c1e2-49a6-befc-dc9edcb8e07c",
+  "type": "text_to_model",
+  "status": "success",
+  "input": {
+    "pbr": true,
+    "prompt": "golem/generation/split/v-front.png golem/generation/split/v-left.png golem/generation/split/v-back.png golem/generation/split/v-right.png",
+    "texture": true,
+    "export_uv": true,
+    "face_limit": 1500,
+    "model_version": "v3.1-20260211",
+    "smart_low_poly": true,
+    "geometry_quality": "standard",
+    "texture_alignment": "geometry"
+  },
+  "output_fields": [
+    "model_url",
+    "rendered_image_url",
+    "generated_image_url"
+  ],
+  "credits_consumed": 30,
+  "created_at": "2026-11-17T10:07:40.344900Z",
+  "completed_at": "2026-11-17T10:10:15.878593Z",
+  "files": [
+    "model.glb",
+    "rendered_image.webp",
+    "generated_image.jpeg",
+    "preview.png"
+  ]
+}

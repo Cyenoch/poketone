@@ -8,6 +8,7 @@ import { startHarbor } from "../services/harbor/server.ts";
 import { MultiplayerSession } from "../src/network/session.ts";
 import { MultiplayerRun } from "../src/network/run.ts";
 import { nativeAppStorage } from "../src/platform/native/app-storage.ts";
+import { emptyProgress } from "../src/run/progress.ts";
 
 // Only drawing is replaced: the window lifecycle, storage, sessions and Harbor are real.
 mock.module(new URL("../src/ui/gpu/multiplayer.ts", import.meta.url).pathname, () => ({
@@ -44,7 +45,12 @@ test("凭据读取、开局写入和关闭删除的真实 I/O 失败会通知，
       throw new Error("Use Harbor relay.");
     },
   };
-  const host = new MultiplayerSession(url, "", { starter: "charmander" }, connection);
+  const host = new MultiplayerSession(
+    url,
+    "",
+    { starter: "charmander", trainer: "chengxi" },
+    connection,
+  );
   let screen, guest, hostRun, unmount;
   const notifications = [];
   const logged = [];
@@ -67,11 +73,16 @@ test("凭据读取、开局写入和关闭删除的真实 I/O 失败会通知，
         },
       },
       url,
-      { starter: "squirtle", stage: "forest", difficulty: 0 },
-      { starter: "squirtle" },
-      () => {},
-      (run) => {
-        guest = run;
+      emptyProgress(),
+      { starter: "squirtle", stage: "forest", difficulty: 0, trainer: "yewei" },
+      {
+        close() {},
+        settings() {},
+        copy() {},
+        pick() {},
+        start(run) {
+          guest = run;
+        },
       },
       storage,
       connection,
@@ -82,7 +93,7 @@ test("凭据读取、开局写入和关闭删除的真实 I/O 失败会通知，
     assert.match(notifications[0], /读取失败/);
     screen.actions.join(host.state.room.code);
     await until(() => host.state.canStart);
-    host.start("forest", 0);
+    host.start();
     await until(() => guest && hostRun);
     assert.match(notifications[1], /保存失败/);
     assert.equal(guest.session.state.error, "");

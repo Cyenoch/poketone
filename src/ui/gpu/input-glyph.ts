@@ -1,4 +1,5 @@
 import { Container, Text } from "@pmndrs/uikit";
+import { ui } from "./tokens";
 import { bindings, type InputAction, type InputMode, type PadButton } from "../../platform/input";
 
 let mode: InputMode = { kind: "keyboardMouse", pointer: false };
@@ -19,7 +20,7 @@ export class InputGlyph extends Container {
   private readonly label = new Text({
     fontSize: 11,
     fontWeight: 800,
-    color: "#0d233f",
+    color: ui.ink,
     whiteSpace: "pre",
   });
   private readonly shape = new Container({ width: 13, height: 13, positionType: "relative" });
@@ -31,9 +32,9 @@ export class InputGlyph extends Container {
       minWidth: 16,
       paddingX: 4,
       borderRadius: 4,
-      backgroundColor: "#d8effb",
+      backgroundColor: ui.white,
       borderWidth: 1,
-      borderColor: "#0d233f",
+      borderColor: ui.line,
       alignItems: "center",
       justifyContent: "center",
       flexShrink: 0,
@@ -93,7 +94,7 @@ export class InputGlyph extends Container {
           width: 4,
           height: 4,
           borderRadius: 2,
-          backgroundColor: i === face ? "#0d233f" : "#92b8d1",
+          backgroundColor: i === face ? ui.ink : ui.line,
         });
     } else if (face === 0) {
       for (const angle of [-45, 45])
@@ -102,7 +103,7 @@ export class InputGlyph extends Container {
           positionTop: 0,
           width: 2,
           height: 13,
-          backgroundColor: "#0d233f",
+          backgroundColor: ui.ink,
           transformRotateZ: angle,
         });
     } else if (face === 3) {
@@ -115,16 +116,16 @@ export class InputGlyph extends Container {
           positionTop: 0,
           width: 2,
           height: 12,
-          backgroundColor: "#0d233f",
+          backgroundColor: ui.ink,
           transformRotateZ: angle,
         });
-      part({ positionLeft: 0, positionTop: 11, width: 13, height: 2, backgroundColor: "#0d233f" });
+      part({ positionLeft: 0, positionTop: 11, width: 13, height: 2, backgroundColor: ui.ink });
     } else
       part({
         width: 13,
         height: 13,
         borderWidth: 2,
-        borderColor: "#0d233f",
+        borderColor: ui.ink,
         borderRadius: face === 1 ? 7 : 0,
       });
   }

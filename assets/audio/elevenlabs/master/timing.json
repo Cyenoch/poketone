@@ -84,6 +84,16 @@
     "hitMs": 0,
     "peakMs": 15
   },
+  "cast-ground-1.flac": {
+    "lenMs": 90,
+    "hitMs": 15,
+    "peakMs": 40
+  },
+  "cast-ground-2.flac": {
+    "lenMs": 185,
+    "hitMs": 0,
+    "peakMs": 5
+  },
   "cast-poison-1.flac": {
     "lenMs": 481,
     "hitMs": 60,
@@ -93,6 +103,26 @@
     "lenMs": 471,
     "hitMs": 75,
     "peakMs": 110
+  },
+  "cast-psychic-1.flac": {
+    "lenMs": 541,
+    "hitMs": 195,
+    "peakMs": 251
+  },
+  "cast-psychic-2.flac": {
+    "lenMs": 576,
+    "hitMs": 205,
+    "peakMs": 296
+  },
+  "cast-rock-1.flac": {
+    "lenMs": 240,
+    "hitMs": 5,
+    "peakMs": 10
+  },
+  "cast-rock-2.flac": {
+    "lenMs": 240,
+    "hitMs": 0,
+    "peakMs": 5
   },
   "cast-water-1.flac": {
     "lenMs": 486,
@@ -269,6 +299,16 @@
     "hitMs": 50,
     "peakMs": 65
   },
+  "hit-ground-1.flac": {
+    "lenMs": 160,
+    "hitMs": 10,
+    "peakMs": 15
+  },
+  "hit-ground-2.flac": {
+    "lenMs": 135,
+    "hitMs": 40,
+    "peakMs": 75
+  },
   "hit-poison-1.flac": {
     "lenMs": 160,
     "hitMs": 0,
@@ -283,6 +323,26 @@
     "lenMs": 160,
     "hitMs": 0,
     "peakMs": 0
+  },
+  "hit-psychic-1.flac": {
+    "lenMs": 85,
+    "hitMs": 15,
+    "peakMs": 20
+  },
+  "hit-psychic-2.flac": {
+    "lenMs": 65,
+    "hitMs": 20,
+    "peakMs": 20
+  },
+  "hit-rock-1.flac": {
+    "lenMs": 160,
+    "hitMs": 0,
+    "peakMs": 5
+  },
+  "hit-rock-2.flac": {
+    "lenMs": 160,
+    "hitMs": 5,
+    "peakMs": 10
   },
   "hit-water-1.flac": {
     "lenMs": 160,

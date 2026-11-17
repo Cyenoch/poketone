@@ -1,0 +1,30 @@
+{
+  "styleVersion": "trainer-cel-summer-v2",
+  "source": "assets/concepts/original-trainers/shuoye/runtime-summer-v2.png",
+  "sourceSha256": "cc9388b10b3c1ce8bb2d7bdcdb56788cde6bc0f38e71f289954192acc2843088",
+  "cleanSource": "assets/concepts/original-trainers/shuoye/runtime-summer-v2-clean.png",
+  "cleanSourceSha256": "1197a5613494d357d26de652a6c8cb4502a739cedb14815341f0bda39d082460",
+  "generation": "assets/concepts/original-trainers/runtime-summer-v2-generation.json",
+  "requestId": "shuoye",
+  "process": "prepare.py: alpha >= 224 is opaque core; retain source alpha only within its 1px dilation, discard alpha < 16; edge RGB from nearest opaque neighbor; save clean PNG; lobby alpha bbox; authored cut-in/head crops; Lanczos resize; square bottom padding for cut-in/portrait; #142f50 silhouettes retain alpha; RGB cleared under alpha 0; lossless WebP",
+  "outputs": [
+    {
+      "file": "lobby.webp",
+      "crop": [134, 11, 938, 1504],
+      "size": [754, 1400],
+      "sha256": "36417f368745704f78d05f7152041e5b5a50bc861d9df6d6667a583d12b2a3cc"
+    },
+    {
+      "file": "cutin.webp",
+      "crop": [100, 0, 960, 750],
+      "size": [768, 768],
+      "sha256": "086381a304798aa639c5b1f102f2986f6cb102366577cd62709d9038f1f9ae4a"
+    },
+    {
+      "file": "portrait.webp",
+      "crop": [235, 0, 655, 420],
+      "size": [256, 256],
+      "sha256": "45c938d18696eb70476755ebdbe487ce433914340522b24aa068ed140b3716b7"
+    }
+  ]
+}

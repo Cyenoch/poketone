@@ -1,7 +1,5 @@
 import type { Container } from "@pmndrs/uikit";
-import type { HoverPattern } from "./hover-pattern";
 import type { OutlineRing } from "./box-shadow";
-import type { FocusMark } from "./focus-mark";
 
 export interface RunOverlayControl {
   panel: Container;
@@ -17,10 +15,7 @@ export interface RunOverlayControl {
   /** A `Tooltip` line: why it is locked, or what it is. */
   tip?: string;
   card?: number;
-  /** A command-list `.game-button` (a station's action): focus shows the Poké Ball cursor and the
-   *  ball pattern, tinted gold on a primary plate. */
-  command?: "primary" | "danger";
+  /** Draws its own hover, focus and press (a slanted key or card): the window adds no ring. */
+  selfDrawn?: boolean;
   outline?: OutlineRing;
-  pattern?: HoverPattern;
-  cursor?: FocusMark;
 }

@@ -13,7 +13,7 @@ export const CAPTURE_CHANCE = { alpha: 0.6, elite: 0.4 } as const;
 
 /**
  * 护主: a swarm touch that lands on the owner calls its nearest ready partner that can get to the owner
- * (within `PARTNER.leash`; a walker needs a walkable line), which shields the owner from every hit for
+ * (within `PARTNER.range`; a walker needs a walkable line), which shields the owner from every hit for
  * `shield` seconds; then it rests `every` seconds. The next touch after the shield calls the next ready
  * partner, so a party covers a long catch in turns. It only pays when more hits would have followed, so
  * it breaks the catches of a player who gets cornered and does little for one who is rarely touched.
@@ -28,19 +28,32 @@ export const PARTNER = {
   /** Follow spot behind the owner, and the half-angle the slots fan out by. */
   follow: 1.8,
   spread: 0.9,
-  /** Only enemies this close to the owner draw a partner off its follow spot. */
-  leash: 7,
+  /**
+   * Combat range around the owner: only enemies this close to the owner are fought, the one nearest
+   * the owner first. Inside it a partner moves freely to reach its target.
+   */
+  range: 7,
+  /**
+   * A partner farther than `roam` from its owner stops fighting and follows until it is back within
+   * `rejoin`; the gap between the two keeps it from flicking between fighting and following at one
+   * distance. Nothing holds a partner inside a range by force.
+   */
+  roam: 9,
+  rejoin: 4,
+  /** A partner keeps its target until another enemy is this much closer to the owner. */
+  retarget: 1.5,
+  /** Nearest-to-owner candidates checked for a line before giving up on this tick. */
+  candidates: 3,
   /** Farther than this from the owner (left behind a cliff, outrun by a dash), it rejoins at once. */
   regroup: 14,
   /** Stop within this distance of the follow spot. */
   followStop: 0.3,
   /** Aim height as a share of the scaled species height, with CHEST as its minimum. */
   eyeHeight: 0.7,
-  /** Nearest shot candidates to inspect before excluding the guardian. */
-  shotCandidates: 2,
   /** Stop chasing at these shares of the attack reach. */
   tackleStop: 0.5,
   areaStop: 0.6,
+  shotStop: 0.85,
   tackleKnock: 2,
   shotKnock: 0.8,
   /** Pulse line-of-sight height above the ground. */

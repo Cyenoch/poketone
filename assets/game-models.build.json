@@ -2118,5 +2118,83 @@
       "run"
     ],
     "bytes": 373164
+  },
+  "player-abra": {
+    "name": "player-abra",
+    "source": "characters/abra/blender/model.glb",
+    "output": "public/models/abra.glb",
+    "trianglesBefore": 2268,
+    "trianglesAfter": 2268,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 342488
+  },
+  "player-kadabra": {
+    "name": "player-kadabra",
+    "source": "characters/kadabra/blender/model.glb",
+    "output": "public/models/kadabra.glb",
+    "trianglesBefore": 2489,
+    "trianglesAfter": 2489,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 390324
+  },
+  "player-alakazam": {
+    "name": "player-alakazam",
+    "source": "characters/alakazam/blender/model.glb",
+    "output": "public/models/alakazam.glb",
+    "trianglesBefore": 2239,
+    "trianglesAfter": 2239,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 368640
+  },
+  "player-geodude": {
+    "name": "player-geodude",
+    "source": "characters/geodude/blender/model.glb",
+    "output": "public/models/geodude.glb",
+    "trianglesBefore": 2462,
+    "trianglesAfter": 2462,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 264048
+  },
+  "player-graveler": {
+    "name": "player-graveler",
+    "source": "characters/graveler/blender/model.glb",
+    "output": "public/models/graveler.glb",
+    "trianglesBefore": 1956,
+    "trianglesAfter": 1956,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 302644
+  },
+  "player-golem": {
+    "name": "player-golem",
+    "source": "characters/golem/blender/model.glb",
+    "output": "public/models/golem.glb",
+    "trianglesBefore": 2190,
+    "trianglesAfter": 2190,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 373044
   }
 }

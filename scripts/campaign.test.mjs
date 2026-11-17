@@ -29,14 +29,15 @@ const config = {
   players: [{ starter: "charmander" }, { starter: "squirtle" }],
 };
 
-function standAtExit(world) {
-  const pad = landmarkOf(world);
-  Object.assign(world.players[0], { x: pad.x, z: pad.z, inputX: 0, inputZ: 0, vx: 0, vz: 0 });
+/** On the landmark while the zone is active, on the exit the guardian opened once it has fallen. */
+function standAtMarker(world) {
+  const spot = world.zone.exit ?? landmarkOf(world);
+  Object.assign(world.players[0], { x: spot.x, z: spot.z, inputX: 0, inputZ: 0, vx: 0, vz: 0 });
 }
 
 /** Use the real lethal-hit path so repeated hits must not duplicate the guardian's reward. */
 function defeatGuardian(world) {
-  standAtExit(world);
+  standAtMarker(world);
   stepWorld(world, [
     { t: "interact", player: 0 },
     { t: "interact", player: 0 },
@@ -178,7 +179,7 @@ test("six single-field maps advance through early guardian exits, preserving bui
     visited.push(world.stage);
     assert.equal(world.stage, stage);
     assert.equal(stageDefs[stage].zones.length, 1, `${stage} is one complete field`);
-    assert.deepEqual(world.zone, { index: 0, tick: 0, phase: "active" });
+    assert.deepEqual(world.zone, { index: 0, tick: 0, phase: "active", exit: null });
     assert.equal(world.outcome, "playing");
     assert.throws(() => prepareZone(world), /还没有离开/);
 
@@ -210,7 +211,7 @@ test("six single-field maps advance through early guardian exits, preserving bui
       magnet: true,
     });
     const xp = world.pickups.filter((p) => p.kind === "xp").reduce((sum, p) => sum + p.value, 0);
-    standAtExit(world);
+    standAtMarker(world);
     stepWorld(world, [
       { t: "interact", player: 0 },
       { t: "interact", player: 0 },
@@ -295,7 +296,7 @@ test("a solo exit waits for earned choices before preparing the next map", () =>
   defeatGuardian(world);
   collectRemainingPickups(world);
   assert.ok(world.players[0].pending.length > 0);
-  standAtExit(world);
+  standAtMarker(world);
   stepWorld(world, [{ t: "interact", player: 0 }]);
   assert.equal(world.zone.phase, "cleared");
   assert.throws(() => prepareZone(world), /还没有离开/);
@@ -304,7 +305,7 @@ test("a solo exit waits for earned choices before preparing the next map", () =>
     stepWorld(world, [{ t: "pick", player: 0, card: card.id, index: 0 }]);
   }
   assert.equal(world.players[0].pending.length, 0);
-  standAtExit(world);
+  standAtMarker(world);
   stepWorld(world, [{ t: "interact", player: 0 }]);
   assert.equal(world.zone.phase, "transitioning");
   enterZone(world, prepareZone(world));
@@ -395,7 +396,7 @@ test("encoded network maps carry the six-field campaign through current-map read
     assert.ok(remotes[0].players[1].x > guestX, `${stage}: the guest's owned movement resumes`);
     assert.equal(packets.filter(({ packet }) => packet.t === "terminal").length, 0);
     defeatGuardian(world);
-    standAtExit(world);
+    standAtMarker(world);
     stepWorld(world, [{ t: "interact", player: 0 }]);
     if (stage !== "tower") {
       assert.equal(world.zone.phase, "transitioning");

@@ -3,6 +3,7 @@ import { Box3, Mesh, MeshBasicMaterial, Path, Vector3 } from "three";
 import { SVGLoader } from "three/addons/loaders/SVGLoader.js";
 import type { StatKey } from "../../run/sim/stats";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { ui } from "./tokens";
 
 /** The original pause and choice command SVG paths, tessellated as ordinary GPU geometry. */
 export function createRunCommandIcon(name: "play" | "chart" | "reset"): Content {
@@ -25,14 +26,14 @@ export function createRunCommandIcon(name: "play" | "chart" | "reset"): Content 
 }
 
 function strokeGlyph(paths: Path[], width: number): Content {
-  const style = SVGLoader.getStrokeStyle(width, "#142f50", "round", "round");
+  const style = SVGLoader.getStrokeStyle(width, ui.ink, "round", "round");
   const parts = paths.map((p) => SVGLoader.pointsToStroke(p.getPoints(24), style)!);
   const geometry = mergeGeometries(parts)!;
   for (const part of parts) part.dispose();
   geometry.translate(-12, -12, 0);
   geometry.boundingBox = new Box3(new Vector3(-12, -12, 0), new Vector3(12, 12, 0));
   const material = new MeshBasicMaterial({
-    color: "#142f50",
+    color: ui.ink,
     transparent: true,
     depthTest: false,
     depthWrite: false,

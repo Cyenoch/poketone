@@ -1,7 +1,9 @@
+import { HARD_SHADOW, RADIUS, ui } from "./tokens";
 import { UiShaderMaterial } from "./ui-shader";
 import { Color, Matrix4, Mesh, PlaneGeometry, Vector2, Vector3 } from "three";
 
-/** Full-window radial dimming and the dialog's bounded shadow, below UIKit's UI pass. */
+/** Full-window ink vignette and the dialog's hard shadow (offset right and down), below UIKit's UI
+ *  pass. */
 export class DialogBackdrop {
   readonly dim: Mesh;
   readonly shadow: Mesh;
@@ -10,7 +12,7 @@ export class DialogBackdrop {
   private readonly dimMaterial = new UiShaderMaterial("dialog-dim", {
     uniforms: {
       size: { value: new Vector2(1, 1) },
-      ink: { value: new Color("#0d233f") },
+      ink: { value: new Color(ui.ink) },
       alpha: { value: 0 },
     },
     vertexShader: `
@@ -25,17 +27,16 @@ export class DialogBackdrop {
       uniform vec3 ink;
       uniform float alpha;
       void main() {
-        vec2 point=vec2(vUv.x,1.-vUv.y)*size;
-        float radius=length(size*vec2(.5,.55));
-        float t=clamp(length(point-size*vec2(.5,.45))/(radius*.8),0.,1.);
-        gl_FragColor=vec4(ink,mix(.42,.78,t)*alpha);
+        // Ink vignette: 62% at the centre, 80% at the corners, so the screen below reads as behind.
+        vec2 q=(vUv-.5)*size/max(size.x,size.y)*2.;
+        gl_FragColor=vec4(ink,mix(.62,.8,smoothstep(.15,1.,length(q)))*alpha);
         #include <colorspace_fragment>
       }`,
   });
   private readonly shadowMaterial = new UiShaderMaterial("dialog-shadow", {
     uniforms: {
       panelSize: { value: new Vector2(1, 1) },
-      ink: { value: new Color("#0d233f") },
+      ink: { value: new Color(ui.ink) },
       alpha: { value: 0 },
     },
     vertexShader: `
@@ -49,23 +50,12 @@ export class DialogBackdrop {
       uniform vec2 panelSize;
       uniform vec3 ink;
       uniform float alpha;
-      float roundedDistance(vec2 p) {
-        vec2 q=abs(p)-(panelSize*.5-vec2(12.));
-        return length(max(q,0.))+min(max(q.x,q.y),0.)-12.;
-      }
-      float erfApprox(float x) {
-        float t=1./(1.+.3275911*abs(x));
-        return sign(x)*(1.-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t
-          -.284496736)*t+.254829592)*t*exp(-x*x));
-      }
       void main() {
-        vec2 p=(vec2(vUv.x,1.-vUv.y)-.5)*(panelSize+vec2(252.));
-        // CSS 70px blur corresponds to sigma=35. The rounded-distance approximation
-        // matches straight edges; corner convolution is checked separately in visual QA.
-        float soft=.4*.5*(1.-erfApprox(roundedDistance(p-vec2(0.,20.))/49.497475));
-        float d=roundedDistance(p-vec2(0.,5.));
+        vec2 p=(vec2(vUv.x,1.-vUv.y)-.5)*(panelSize+vec2(252.))-vec2(${HARD_SHADOW.offset + 1}.);
+        vec2 q=abs(p)-(panelSize*.5-vec2(${RADIUS}.));
+        float d=length(max(q,0.))+min(max(q.x,q.y),0.)-${RADIUS}.;
         float hard=1.-smoothstep(-.5*fwidth(d),.5*fwidth(d),d);
-        gl_FragColor=vec4(ink,(hard+soft*(1.-hard))*alpha);
+        gl_FragColor=vec4(vec3(0.),hard*${HARD_SHADOW.alpha}*alpha);
         #include <colorspace_fragment>
       }`,
   });

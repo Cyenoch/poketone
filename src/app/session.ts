@@ -1,6 +1,7 @@
 import { getAudio } from "../audio/engine";
 import type { AppRenderer } from "../rendering/app-renderer";
-import { createRunSession } from "../run/session";
+import { createRunSession, type RunCover } from "../run/session";
+import { stageDefs } from "../run/sim/content/stages/index";
 import {
   recordRun,
   setBackpack,
@@ -14,7 +15,7 @@ import { labBonuses } from "../run/lab";
 import { runUnlocks } from "../run/unlocks";
 import { starters } from "../run/sim/content/lines/index";
 import { validPick, type LobbyPick } from "../lobbyPick";
-import { depart, open as openPrefetch, select } from "../run/prefetch";
+import { depart, launch, open as openPrefetch, select } from "../run/prefetch";
 import { encodeSave, decodeSave } from "../run/save";
 import { GpuSaveDialog } from "../ui/gpu/save-dialog";
 import type { Settings } from "../settings";
@@ -24,14 +25,27 @@ import { GpuDevReadout } from "../ui/gpu/run-dev-readout";
 import { GpuLobby } from "../ui/gpu/lobby";
 import { LobbyScene } from "../ui/gpu/lobby-scene";
 import { GpuLab } from "../ui/gpu/lab";
+import type { GpuCodexPage } from "../ui/gpu/codex";
 import { mountMultiplayer } from "../ui/gpu/multiplayer-session";
-import { SceneTransition, type SceneTransitionPhase } from "../ui/scene-transition";
+import {
+  SCENE_TRANSITION_TIMING,
+  SceneTransition,
+  type SceneTransitionPhase,
+} from "../ui/scene-transition";
 import type { AppStorage } from "../platform/app-storage";
 import type { UiSurface } from "../platform/ui-surface";
 import { ActionInput } from "../platform/input";
 import type { DirectPeerFactory } from "../platform/direct-peer";
 
-export type AppScreen = "lobby" | "lab" | "run";
+export type AppScreen = "lobby" | "lab" | "codex" | "room" | "run";
+/** The page name the curtain shows on its way to each screen. */
+const SCREEN_TITLES: Record<AppScreen, string> = {
+  lobby: "大厅",
+  lab: "研究所",
+  codex: "图鉴",
+  room: "联机",
+  run: "出发",
+};
 export interface AppState {
   screen: AppScreen;
   transition: SceneTransitionPhase;
@@ -62,10 +76,9 @@ export async function createAppSession(
   const audio = getAudio();
   let host: GpuAppHost | undefined;
   let run: ReturnType<typeof createRunSession> | undefined;
-  let screen: GpuLobby | GpuLab | undefined;
+  let screen: GpuLobby | GpuLab | GpuCodexPage | undefined;
   let devBadge: GpuDevReadout | undefined;
   let unmount: (() => void) | undefined;
-  let room: (() => void) | undefined;
   let saveWindow: (() => void) | undefined;
   let network: MultiplayerRun | undefined;
   let pick = validPick(progressLoad.progress, initial.pick);
@@ -74,18 +87,27 @@ export async function createAppSession(
   let disposed = false;
   let failure: Error | undefined;
   let revealed = false;
+  /** The launcher's share of the opening run, until the lobby's holds take it over. */
+  let launching: { cancel(): void } | undefined;
   let modalActive = false;
   let settingsOpen = false;
-  let reopenRoom = false;
   let notification: { id: number; message: string } | null = null;
   let noteId = 0;
   let quietUntil = 0;
+  /** The run's load under the curtain (its start, a zone, teammates), as it last reported it. */
+  let runCover: RunCover | null = null;
+  let coverQueued = false;
+  /** Opens the curtain on a run that has loaded (pending while the run navigation holds). */
+  let runLoaded: (() => void) | undefined;
   const transition = new SceneTransition(
     (destination) => show(destination as AppScreen),
-    (destination) => (destination === "run" ? null : host!.nextScreenReady()),
+    (destination) =>
+      destination === "run"
+        ? new Promise<void>((done) => (runLoaded = done))
+        : host!.nextScreenReady(),
     (phase) => {
       if (phase === "covering" && performance.now() >= quietUntil)
-        audio.sfx("ui-transition", { keyMs: 293 });
+        audio.sfx("ui-transition", { keyMs: SCENE_TRANSITION_TIMING.cover });
       sync();
     },
   );
@@ -98,18 +120,66 @@ export async function createAppSession(
       settings,
     };
   }
+  /** The run's input waits for the curtain: its opening plays only once the curtain is open. */
+  const runModal = () => modalActive || settingsOpen || transition.phase !== "idle";
+  /** Coalesced to a microtask: a cover that ends in the same turn (a step's barrier) never flashes. */
+  function coverRun(cover: RunCover | null) {
+    const same = cover?.title === runCover?.title && cover?.progress === runCover?.progress;
+    // A held run navigation opens on any uncovered report, its first one included.
+    if (same && (cover || !runLoaded)) return;
+    runCover = cover;
+    if (coverQueued) return;
+    coverQueued = true;
+    queueMicrotask(() => {
+      coverQueued = false;
+      if (disposed || !run) return;
+      if (!runCover && runLoaded) {
+        const done = runLoaded;
+        runLoaded = undefined;
+        done();
+      } else if (!runLoaded) {
+        if (runCover) transition.cover();
+        else transition.uncover();
+      }
+      sync();
+    });
+  }
+  /** The curtain names the page coming on; for a run, the map it enters, with its load's progress. */
+  function curtain(): { title: string; progress: number | null } {
+    const destination = transition.destination as AppScreen | null;
+    if (destination && destination !== "run")
+      return { title: SCREEN_TITLES[destination], progress: null };
+    if (runCover) return runCover;
+    // A rejoin's map is known only once its world arrives.
+    if (destination === "run")
+      return { title: network?.session.restored ? "" : stageDefs[runPick.stage].name, progress: 0 };
+    return { title: "", progress: null };
+  }
+  /** What the curtain last showed: it keeps it while opening, and a run's last report after its
+   *  load ends until then. */
+  let shown: { title: string; progress: number | null } = { title: "", progress: null };
+  let runShown = false;
   function sync() {
     if (disposed) return;
+    if (transition.phase === "idle") runShown = false;
+    const runEnded = runShown && !runCover && (transition.destination ?? "run") === "run";
+    if (transition.phase !== "revealing" && !runEnded) {
+      shown = curtain();
+      runShown = shown === runCover;
+    }
     host?.update({
       settingsOpen,
       settings,
-      canSave: route !== "run",
+      canSave: route !== "run" && route !== "room",
       busy: transition.phase !== "idle",
       transition: transition.phase,
+      transitionTitle: shown.title,
+      transitionProgress: shown.progress,
       notification,
+      progress: progressLoad.progress,
     });
     run?.update({
-      modalActive: modalActive || settingsOpen,
+      modalActive: runModal(),
       sound: settings.sound,
       devMode: settings.devMode,
     });
@@ -133,7 +203,8 @@ export async function createAppSession(
   function refreshScreen() {
     pick = validPick(progressLoad.progress, pick);
     if (screen instanceof GpuLab) screen.update(progressLoad.progress);
-    else screen?.update({ progress: progressLoad.progress, pick });
+    else if (screen instanceof GpuLobby) screen.update({ progress: progressLoad.progress, pick });
+    else screen?.update(progressLoad.progress);
   }
   /** Disk/browser refusal or locked data leaves the in-memory progress untouched too. */
   function change(label: string, apply: (progress: Progress) => Progress): boolean {
@@ -146,6 +217,7 @@ export async function createAppSession(
       storage.saveProgress(progress);
       progressLoad = { status: "ready", progress };
       refreshScreen();
+      sync();
       return true;
     } catch (error) {
       console.error(`${label}失败`, error);
@@ -191,40 +263,15 @@ export async function createAppSession(
     settingsOpen = true;
     sync();
   }
-  function closeRoom() {
-    room?.();
-    room = undefined;
-  }
-  function openRoom() {
-    if (room) return;
-    const progress = progressLoad.progress;
-    room = mountMultiplayer(
-      host!,
-      options.harbor,
-      pick,
-      {
-        starter: pick.starter,
-        lab: labBonuses(progress.lab),
-        archive: progress.archive,
-        backpack: progress.backpack,
-      },
-      closeRoom,
-      (multiplayer) => {
-        closeRoom();
-        const self = multiplayer.config.players[multiplayer.player]!;
-        start(
-          {
-            stage: multiplayer.config.stage,
-            difficulty: multiplayer.config.difficulty,
-            starter: self.starter,
-          },
-          multiplayer,
-        );
-      },
-      storage,
-      { directPeer: options.directPeer, signal },
-      notify,
-    );
+  /** The player's own choice, from the lobby or the room page. */
+  function choose(next: LobbyPick) {
+    pick = next;
+    try {
+      storage.savePick(next);
+    } catch (error) {
+      notify((error as Error).message);
+    }
+    select(next);
   }
   function start(next: LobbyPick, multiplayer?: MultiplayerRun) {
     if (transition.phase !== "idle") return;
@@ -246,11 +293,13 @@ export async function createAppSession(
   function show(destination: AppScreen) {
     run?.dispose();
     run = undefined;
+    runCover = null;
     devBadge?.dispose();
     devBadge = undefined;
     unmount?.();
     unmount = undefined;
     screen = undefined;
+    const from = route;
     route = destination;
     const progress = progressLoad.progress;
     if (destination === "run") {
@@ -269,7 +318,7 @@ export async function createAppSession(
             : null,
         app,
         gpuHost: host!,
-        modalActive,
+        modalActive: runModal(),
         sound: settings.sound,
         devMode: settings.devMode,
         onStarted() {
@@ -286,8 +335,10 @@ export async function createAppSession(
         },
         onRetry(note) {
           if (network) {
-            reopenRoom = true;
-            back(note);
+            network.dispose();
+            network = undefined;
+            if (note) notify(note);
+            transition.navigate("room");
           } else {
             if (note) notify(note);
             start(runPick);
@@ -295,6 +346,7 @@ export async function createAppSession(
         },
         onLobby: back,
         onSettings: openSettings,
+        onCover: coverRun,
       });
     } else if (destination === "lobby") {
       pick = validPick(progress, pick);
@@ -304,20 +356,12 @@ export async function createAppSession(
         host!.backdrop,
         { progress, pick },
         {
-          pick(next) {
-            pick = next;
-            try {
-              storage.savePick(next);
-            } catch (error) {
-              notify((error as Error).message);
-            }
-            select(next);
-          },
+          pick: choose,
           start,
           lab: () => transition.navigate("lab"),
-          codex: () => host!.openCodex(),
+          codex: () => transition.navigate("codex"),
           settings: openSettings,
-          multiplayer: openRoom,
+          multiplayer: () => transition.navigate("room"),
           openLink: (url) => surface.openUrl(url),
         },
       );
@@ -325,17 +369,52 @@ export async function createAppSession(
       lobby.attachScene(scene);
       const unregister = host!.registerScreen(lobby);
       screen = lobby;
-      lobby.focusStart();
+      // Back from the 图鉴 page, focus returns to the key that opened it.
+      if (from === "codex") lobby.focusCodex();
+      else lobby.focusStart();
       unmount = () => {
         unregister();
         scene.dispose();
         lobby.dispose();
       };
       if (revealed) audio.music.play("menu");
-      if (reopenRoom) {
-        reopenRoom = false;
-        openRoom();
-      }
+    } else if (destination === "room") {
+      pick = validPick(progress, pick);
+      unmount = mountMultiplayer(
+        host!,
+        options.harbor,
+        progress,
+        pick,
+        {
+          close: () => transition.navigate("lobby"),
+          settings: openSettings,
+          pick: choose,
+          copy(code) {
+            void Promise.resolve()
+              .then(() => surface.text.writeClipboard(code))
+              .then(
+                () => notify("房间码已复制"),
+                (error: Error) => notify(`复制失败：${error.message}`),
+              );
+          },
+          start(multiplayer) {
+            const self = multiplayer.config.players[multiplayer.player]!;
+            start(
+              {
+                stage: multiplayer.config.stage,
+                difficulty: multiplayer.config.difficulty,
+                starter: self.starter,
+                trainer: self.trainer,
+              },
+              multiplayer,
+            );
+          },
+        },
+        storage,
+        { directPeer: options.directPeer, signal },
+        notify,
+      );
+      if (revealed) audio.music.play("menu");
     } else if (destination === "lab") {
       const lab = new GpuLab(host!.fonts, host!.backdrop, progress, {
         buy: (id) => change("购买", (current) => buyLab(current, id)),
@@ -350,6 +429,32 @@ export async function createAppSession(
         lab.dispose();
       };
       if (revealed) audio.music.play("menu");
+    } else if (destination === "codex") {
+      // The 图鉴 and its content tables load on first use, under the curtain (it holds on the
+      // page being ready); a missing chunk returns to the lobby and the next try downloads again.
+      void import("../ui/gpu/codex").then(
+        ({ GpuCodexPage }) => {
+          if (disposed || route !== "codex" || unmount) return;
+          const codex = new GpuCodexPage(host!.fonts, progressLoad.progress, {
+            back: () => transition.navigate("lobby"),
+            settings: openSettings,
+          });
+          const unregister = host!.registerScreen(codex);
+          screen = codex;
+          unmount = () => {
+            unregister();
+            codex.dispose();
+          };
+          sync();
+        },
+        (error: unknown) => {
+          if (disposed || route !== "codex") return;
+          console.error("图鉴载入失败", error);
+          notify("图鉴载入失败，请检查网络后再试。");
+          transition.navigate("lobby");
+        },
+      );
+      if (revealed) audio.music.play("menu");
     }
     sync();
   }
@@ -357,8 +462,8 @@ export async function createAppSession(
   function dispose() {
     if (disposed) return;
     disposed = true;
+    launching?.cancel();
     transition.dispose();
-    closeRoom();
     saveWindow?.();
     run?.dispose();
     network?.dispose(network.host);
@@ -419,10 +524,19 @@ export async function createAppSession(
     audio.setEnabled(settings.sound);
     sync();
     show("lobby");
+    // The launcher waits for the opening pick's run too; the lobby's holds take it over before it goes.
+    const opening = launch(pick);
+    launching = opening;
+    host.hold(opening, starters[pick.starter].stages[0].form.id);
+    void host.launched.then(() => {
+      if (disposed) return;
+      openPrefetch(notify);
+      opening.cancel();
+      launching = undefined;
+    });
     void host.revealed.then(() => {
       if (disposed) return;
       revealed = true;
-      openPrefetch(notify);
       if (route !== "run") audio.music.play("menu");
     });
   } catch (error) {

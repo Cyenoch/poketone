@@ -11,11 +11,13 @@ import {
   type AnimationAction,
   type Group,
   type Material,
+  type Object3D,
 } from "three";
 import { formModels, type PlayerModel } from "./assets";
 import { shadeUnderClouds } from "./environment/clouds";
 import type { WindUniforms } from "./environment/wind";
 import { creatureLook, lambertCopy, ownShadowDepth } from "./materials";
+import { addOutlineNormals, selfOutlineMaterial } from "./outline";
 import { createSpineFollow } from "./spine";
 import { createTailSpring, type TailSpring } from "./tail";
 
@@ -32,6 +34,8 @@ export interface PlayerRig {
   lift: { run: number; idle: number };
   /** Tail secondary motion or a long body's path follow, posed after the mixer; null without either. */
   tail: TailSpring | null;
+  /** The body bone whose ground track a dragging form leaves (`FormModel.trail`); null for other trails. */
+  drag: Object3D | null;
   /** Lowest foot/toe surface in avatar space after mixing; excludes shells and procedural tails. */
   footFloor(): number;
   /** Takes the model off the avatar and frees what the rig made (the caller owns the model). */
@@ -42,8 +46,19 @@ function pickClip(names: string[], wanted: string[]): string | undefined {
   return names.find((name) => wanted.some((w) => name.toLowerCase().includes(w)));
 }
 
-export function mountRig(avatar: Group, player: PlayerModel, wind: WindUniforms): PlayerRig {
+/**
+ * `self` marks the local player's rig, the only model with an outline: a warm-yellow silhouette
+ * drawn after every effect (outline.ts).
+ */
+export function mountRig(
+  avatar: Group,
+  player: PlayerModel,
+  wind: WindUniforms,
+  self: boolean,
+): PlayerRig {
   const made: Material[] = [];
+  const outlineInk = self ? selfOutlineMaterial() : null;
+  if (outlineInk) made.push(outlineInk);
   // X-ray silhouette: drawn only where terrain or props hide the player.
   const silhouette = new MeshBasicMaterial({
     color: "#ffd45b",
@@ -82,6 +97,16 @@ export function mountRig(avatar: Group, player: PlayerModel, wind: WindUniforms)
     ghost.renderOrder = 5;
     mesh.parent?.add(ghost);
     ghosts.push(ghost);
+    if (outlineInk) {
+      addOutlineNormals(mesh.geometry);
+      const outline = new SkinnedMesh(mesh.geometry, outlineInk);
+      outline.bind(mesh.skeleton, mesh.bindMatrix);
+      outline.frustumCulled = false;
+      // After the effect layers (vfx.ts) and health bars, before the seat rings and beacons.
+      outline.renderOrder = 50;
+      mesh.parent?.add(outline);
+      ghosts.push(outline);
+    }
   }
   avatar.add(player.holder);
   player.holder.updateWorldMatrix(true, true);
@@ -112,7 +137,12 @@ export function mountRig(avatar: Group, player: PlayerModel, wind: WindUniforms)
       );
     return mixer.clipAction(clip).setLoop(LoopRepeat, Infinity);
   };
-  const { runClipSpeed: clipSpeed, runCycles, lift, spine } = formModels[player.form];
+  const { runClipSpeed: clipSpeed, runCycles, lift, spine, trail } = formModels[player.form];
+  let drag: Object3D | null = null;
+  if (typeof trail === "object") {
+    drag = player.model.root.getObjectByName(trail.drag) ?? null;
+    if (!drag) throw new Error(`${player.form} 没有拖痕骨 ${trail.drag}。`);
+  }
   const run = action("run");
   const idle = action("idle");
   run.play();
@@ -130,6 +160,7 @@ export function mountRig(avatar: Group, player: PlayerModel, wind: WindUniforms)
     runCycles,
     lift,
     tail,
+    drag,
     footFloor() {
       avatar.updateWorldMatrix(true, false);
       player.holder.updateMatrixWorld(true);

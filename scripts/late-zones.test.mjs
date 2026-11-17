@@ -31,7 +31,7 @@ import { damageEnemy } from "../src/run/sim/combat.ts";
 import { ZONE_GUARDIAN } from "../src/run/sim/content/params/late-zones.ts";
 import { furyStep } from "../src/run/sim/bosses/fury.ts";
 import { playerStats } from "../src/run/sim/stats.ts";
-import { interactAtLandmark } from "../src/run/sim/zones.ts";
+import { interactInZone } from "../src/run/sim/zones.ts";
 import * as currentZone from "../src/run/sim/currentZone.ts";
 import { forest } from "../src/run/sim/content/stages/forest.ts";
 import { desert } from "../src/run/sim/content/stages/desert.ts";
@@ -198,13 +198,13 @@ test("guardian catalogue keeps 13 distinct brains and complete rosters; every ma
     const early = createWorld(config);
     const pad = currentZone.landmarkOf(early);
     Object.assign(early.players[0], { x: pad.x, z: pad.z });
-    assert.equal(interactAtLandmark(early, early.players[0]), true);
+    assert.equal(interactInZone(early, early.players[0]), true);
     assert.ok(
       early.enemies.some((e) => e.id === early.bossId && e.boss),
       stage.id,
     );
     const id = early.bossId;
-    assert.equal(interactAtLandmark(early, early.players[0]), false);
+    assert.equal(interactInZone(early, early.players[0]), false);
     assert.equal(early.bossId, id, `${stage.id}: an early summon is unique`);
   }
 });

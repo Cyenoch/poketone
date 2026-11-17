@@ -16,6 +16,7 @@ import { archetypes } from "./sim/archetypes/index";
 import { playerStats, statBreakdown, type StatBreakdown } from "./sim/stats";
 import { TICK, type World } from "./sim/state/world";
 import { stageDefs } from "./sim/content/stages/index";
+import { nextField } from "./sim/content/campaign";
 import type { Command } from "./sim/state/commands";
 import type {
   LabBonuses,
@@ -28,11 +29,14 @@ import type { RunEvent } from "./sim/state/events";
 import { itemSlots, moveSlots } from "./sim/upgrades";
 import { fusionStatus, type FusionPart } from "./sim/fusion";
 import { rescueTarget } from "./sim/rescue";
+import { trainers, type TrainerId } from "../trainers";
+import { deployCall, ultimateCall, type TrainerCue } from "./trainer-cues";
+import { DEPLOYMENT_MS } from "./view/deployment";
 import { COOP } from "./sim/content/params/coop";
 import { DASH_COOLDOWN } from "./sim/content/params/player";
 import { forgetRefund, stationHere } from "./sim/stations";
 import { zoneDef, zoneTime } from "./sim/currentZone";
-import { canLeave, enterZone, landmarkAction, prepareZone } from "./sim/zones";
+import { canLeave, enterZone, zoneAction, prepareZone } from "./sim/zones";
 import { cardShown, createWorldFromSeeds, isFrozen, stepWorld, type Loadout } from "./sim/world";
 import { bindModelStore, loadRunAssets, type RunAssets } from "./view/assets";
 import { afterFrame, drive, type Steps } from "../prepare/steps";
@@ -138,22 +142,22 @@ export interface RunSnapshot {
   team: TeamMate[];
 }
 
-/** A station's prompt, or the zone landmark's: summon its guardian, or leave once it has fallen. */
+/** A station's prompt, the landmark's summon, or the exit the fallen guardian opened. */
 export type InteractPrompt = StationKind | "summon" | "leave" | "choices" | "rescue";
 
 function interactPrompt(world: World, player: World["players"][number]): InteractPrompt | null {
   if (!player.alive || player.dialog) return null;
   if (player.rescue || rescueTarget(world, player)) return "rescue";
   if (world.players.length > 1) {
-    const landmark = landmarkAction(world, player);
-    if (landmark && (landmark !== "leave" || canLeave(world))) return landmark;
+    const action = zoneAction(world, player);
+    if (action && (action !== "leave" || canLeave(world))) return action;
     if (player.pending.length > 0) return "choices";
   }
+  // The same order as the interact command (sim/world.ts): the landmark or exit, then a station.
+  const action = zoneAction(world, player);
+  if (action === "summon" || (action === "leave" && canLeave(world))) return action;
   const station = stationHere(world, player);
-  if (station) return station.kind;
-  const action = landmarkAction(world, player);
-  // Leaving waits for every card and dialog; until then the exit shows no prompt.
-  return action === "leave" && !canLeave(world) ? null : action;
+  return station ? station.kind : null;
 }
 
 /** What an open station dialog shows; refunds already include the stardust-gain stat. */
@@ -210,6 +214,7 @@ export interface RunCallbacks {
   inputBlocked(): boolean;
   /** Commits local start data before the prepared world can advance; refusal must throw. */
   onReady(): void;
+  onDeployment(active: boolean): void;
   onError(error: Error): void;
   onSnapshot(snapshot: RunSnapshot): void;
   onBanner(text: string, tone: "info" | "danger" | "reward", ageMs: number): void;
@@ -217,8 +222,13 @@ export interface RunCallbacks {
   onPauseRequest(mode: "toggle" | "pause"): void;
   onStatsRequest(): void;
   onMapChange(open: boolean): void;
-  /** The next zone readies (true) under the loading cover, then is ready to play (false). */
-  onZoneLoading(loading: boolean): void;
+  /** The next zone readies (true, with the map it enters) under the loading cover, then is ready
+   *  to play (false). */
+  onZoneLoading(loading: boolean, stage?: StageId): void;
+  /** How far the current load (the run's or a zone's) is, 0–1, from its real steps. */
+  onLoadProgress?(fraction: number): void;
+  /** The map the run's load enters, once its world exists (a rejoin's may be past the room's). */
+  onLoadStage?(stage: StageId): void;
   onEnd(result: RunResult): void;
 }
 
@@ -276,6 +286,9 @@ const HIT_SOUND: Partial<Record<ElementType, SfxName>> = {
   poison: "hit-poison",
   dragon: "hit-dragon",
   fighting: "hit-fighting",
+  psychic: "hit-psychic",
+  rock: "hit-rock",
+  ground: "hit-ground",
 };
 const CAST_SOUND: Partial<Record<ElementType, SfxName>> = {
   fire: "cast-fire",
@@ -288,6 +301,9 @@ const CAST_SOUND: Partial<Record<ElementType, SfxName>> = {
   // Hurricane is the only flying cast: a gust, like the dragon's.
   flying: "cast-dragon",
   fighting: "cast-fighting",
+  psychic: "cast-psychic",
+  rock: "cast-rock",
+  ground: "cast-ground",
 };
 
 /** A move's slot reading: waiting for a target is ready (its 0.2 s retry is not a cooldown). */
@@ -371,6 +387,7 @@ export function createRun(
     /** The initial map; formal lobby starts the six-map route at forest. */
     stage: StageId;
     starter: StarterId;
+    trainer: TrainerId;
     difficulty: Difficulty;
     lab: LabBonuses;
     loadout: Loadout;
@@ -505,6 +522,25 @@ export function createRun(
   let started = false;
   /** The next zone's field and pictures are being readied: no tick runs until they are. */
   let changingZone = false;
+  let committed = false;
+  let deploymentDone = Boolean(network?.session.restored);
+  let deployment: { elapsed: number; done: () => void; cue?: TrainerCue } | undefined;
+  let nextDialogue = 45;
+  let dialogueIndex = 0;
+  const trainerFor = (player: PlayerId): TrainerId =>
+    network ? network.config.players[player]!.trainer : config.trainer;
+  /** The cue fields that name who speaks: their trainer, partner type and seat. */
+  const speaker = (player: PlayerId) => ({
+    trainer: trainerFor(player),
+    type: formOf(world.players[player]!).types[0]!,
+    local: player === PLAYER,
+    seat: network ? player : null,
+  });
+  function speak(text: string, ageMs = 0): void {
+    if (world.time < nextDialogue || menuPaused || mapOpen || callbacks.inputBlocked()) return;
+    if (hud.trainers.show({ kind: "dialogue", text, ...speaker(PLAYER) }, ageMs))
+      nextDialogue = world.time + 35;
+  }
 
   /** Screen-space input (x right, z down) rotated into world space by the camera yaw. */
   function moveInput(): [number, number] {
@@ -548,6 +584,9 @@ export function createRun(
   function fail(error: Error) {
     if (disposed || failed) return;
     failed = true;
+    deployment?.done();
+    deployment = undefined;
+    hud.trainers.clear();
     cancelInput();
     queue.length = 0;
     if (network && !network.session.state.error) network.session.fail(error);
@@ -636,6 +675,17 @@ export function createRun(
       (e) => (e.t === "death" && e.elite) || (e.t === "capture" && e.player === PLAYER),
     );
     const evolving = events.some((e) => e.t === "evolve" && e.player === PLAYER);
+    // These impacts already include a cartoon crumble; a generic kill pop would double the hit.
+    const stoneHits = new Set(
+      events.flatMap((e) =>
+        (e.t === "hit" || e.t === "contact") && (e.type === "rock" || e.type === "ground")
+          ? [`${e.x},${e.z}`]
+          : [],
+      ),
+    );
+    const hasRockContact = events.some(
+      (e) => ((e.t === "hit" && !e.confirmedContact) || e.t === "contact") && e.type === "rock",
+    );
     const tell = loudestTell(events);
     if (tell) audio.sfx(tell);
     const dangers = new Map<keyof typeof dangerLabels, { text: string; ageMs: number }>();
@@ -660,6 +710,7 @@ export function createRun(
               break;
             case "clear":
               notify(event, event.text, "reward");
+              speak(trainers[trainerFor(PLAYER)].clear, network?.eventAgeMs(event) ?? 0);
               break;
             case "alpha":
             case "elite-wave":
@@ -693,9 +744,11 @@ export function createRun(
           if (event.confirmedContact) break;
           {
             const hit = HIT_SOUND[event.type] ?? "hit";
-            audio.sfx(event.crit ? "crit" : hit, {
+            const stone = event.type === "rock" || event.type === "ground";
+            audio.sfx(event.crit && !stone ? "crit" : hit, {
               pitch: event.weak ? 0.8 : 1,
-              fallback: event.crit ? hit : undefined,
+              gainDb: stone && event.crit ? 1.5 : 0,
+              fallback: event.crit && !stone ? hit : undefined,
             });
           }
           break;
@@ -708,6 +761,17 @@ export function createRun(
         }
         case "contact":
           audio.sfx(HIT_SOUND[event.type] ?? "hit");
+          break;
+        case "projectile-feedback":
+          // Misses still thud. A confirmed hit supplies its own weak/crit weight instead; the
+          // family cooldown merges the other landings in the volley.
+          if (
+            event.move === "rock-throw" &&
+            event.ended &&
+            !hasRockContact &&
+            (event.reason === "burst" || event.reason === "terrain")
+          )
+            audio.sfx("hit-rock");
           break;
         case "status-built":
           if (event.status === "freeze") audio.sfx("freeze");
@@ -732,7 +796,7 @@ export function createRun(
             audio.sfx("elite-kill");
             const guardian = event.species === zoneDef(world).guardian.species;
             hitStop(guardian ? 0.35 : 0.09, guardian ? 0.15 : 0.05);
-          } else {
+          } else if (!stoneHits.has(`${event.x},${event.z}`)) {
             audio.sfx("kill");
           }
           break;
@@ -763,8 +827,20 @@ export function createRun(
           // The light column opens after the 0.3 s freeze, about 90 ms into its life.
           audio.sfx("evolve", { keyMs: 390 });
           notify(event, evolveBanner(world.players[PLAYER]!.starter, event.stage), "reward");
+          speak(trainers[trainerFor(PLAYER)].evolve, network?.eventAgeMs(event) ?? 0);
           break;
         case "ult":
+          hud.trainers.show(
+            {
+              kind: "ultimate",
+              text:
+                event.player === PLAYER
+                  ? trainers[trainerFor(event.player)].ultimate
+                  : ultimateCall(event.line, event.stage),
+              ...speaker(event.player),
+            },
+            network?.eventAgeMs(event) ?? 0,
+          );
           if (event.player !== PLAYER) break;
           hitStop(0.12, 0.1);
           audio.sfx("ult");
@@ -790,6 +866,7 @@ export function createRun(
             "reward",
           );
           audio.sfx("revive");
+          speak(trainers[trainerFor(PLAYER)].revive, network?.eventAgeMs(event) ?? 0);
           hitStop(0.3, 0.1);
           break;
         case "down": {
@@ -865,6 +942,24 @@ export function createRun(
   function advance(deltaMs: number): boolean {
     advancedAt = performance.now();
     if (disposed || failed || !view || changingZone) return false;
+    if (deployment) {
+      if (callbacks.inputBlocked()) return false;
+      // The cut-in's clock starts with the first frame the player can see, not under the cover.
+      if (deployment.cue) hud.trainers.show(deployment.cue);
+      deployment.cue = undefined;
+      deployment.elapsed = Math.min(DEPLOYMENT_MS, deployment.elapsed + Math.min(deltaMs, 100));
+      view.setDeployment(deployment.elapsed);
+      view.frame(1, 0, [], yaw);
+      if (deployment.elapsed >= DEPLOYMENT_MS) {
+        const done = deployment.done;
+        deployment = undefined;
+        deploymentDone = true;
+        view.setDeployment(null);
+        done();
+      }
+      return true;
+    }
+    if (!started) return canvasStale;
     if (network?.host) network.restoreHost(world);
     if (network?.suspended) {
       cancelInput();
@@ -922,6 +1017,11 @@ export function createRun(
     if (network?.host) events.push(...network.takeEvents());
     runLog?.observe(world, events);
     drain(events);
+    if (!isFrozen(world) && world.outcome === "playing" && world.time >= nextDialogue) {
+      const lines = trainers[trainerFor(PLAYER)].lines;
+      speak(lines[dialogueIndex++ % lines.length]!);
+      nextDialogue = world.time + 55;
+    }
     network?.publish(
       world,
       sharedEvents,
@@ -1082,13 +1182,15 @@ export function createRun(
               () => crypto.getRandomValues(new Uint32Array(1))[0]!,
             );
       if (disposed) return;
+      callbacks.onLoadStage?.(world.stage);
+      callbacks.onLoadProgress?.(0.05);
       network?.loading(world);
       if (network?.host) network.publishMap(world);
       // Dev-only handle for browser checks (fast-forward to the boss, force outcomes). Stripped from builds.
       // The run log stays on the window after the run, for an export from the result screen.
       if (import.meta.env.DEV)
         Object.assign(window, { __poketoneWorld: world, __poketoneRunLog: runLog });
-      const loaded = await loadRunAssets(world, abort.signal);
+      const loaded = await loadRunAssets(world, abort.signal, assetProgress);
       if (disposed) return loaded.dispose();
       assets = loaded;
       healthBars = createHealthBars();
@@ -1104,6 +1206,11 @@ export function createRun(
    * Everything drawn from the world's current map: the run view, its boundary wall, the minimap and
    * compass, the dev overlay. False when the run was disposed on the way.
    */
+  /** Asset files are the load's first 60%; view, map, warm and uploads the rest. */
+  function assetProgress(settled: number, total: number): void {
+    if (!disposed) callbacks.onLoadProgress?.(0.05 + (0.55 * settled) / total);
+  }
+
   async function buildScene(loaded: RunAssets): Promise<boolean> {
     const built = await drive(
       createRunView(world, loaded, PLAYER, app.surface.display.coarsePointer),
@@ -1114,6 +1221,7 @@ export function createRun(
       return false;
     }
     view = built;
+    callbacks.onLoadProgress?.(0.7);
     boundary = createBoundaryWall(world.map.terrain);
     view.scene.add(boundary.mesh, grade.vignette, healthBars!.mesh);
     const base = await drive(bakeMap(world), { live: () => !disposed });
@@ -1122,6 +1230,7 @@ export function createRun(
       return false;
     }
     minimap = createMinimap(hud.stage, hud.mapSlot, world, PLAYER, base);
+    callbacks.onLoadProgress?.(0.75);
     compass = createCompassBar(hud.stage, hud.compassSlot, world, PLAYER);
     const viewport = hud.stage.viewport;
     resizeUi(viewport.width * viewport.scale, viewport.height * viewport.scale, viewport.scale, {
@@ -1154,7 +1263,9 @@ export function createRun(
   async function changeZone(incoming?: World): Promise<void> {
     if (changingZone) return;
     changingZone = true;
-    callbacks.onZoneLoading(true);
+    hud.trainers.clear();
+    callbacks.onZoneLoading(true, incoming?.stage ?? nextField(world)?.stage ?? world.stage);
+    callbacks.onLoadProgress?.(0);
     try {
       await afterFrame();
       if (disposed) return;
@@ -1168,11 +1279,12 @@ export function createRun(
         Object.assign(world, incoming);
       } else {
         enterZone(world, next!);
+        network?.loading(world);
         if (network?.host) network.publishMap(world);
       }
       if (world.stage !== previousStage) {
         assets?.dispose();
-        assets = await loadRunAssets(world, abort.signal);
+        assets = await loadRunAssets(world, abort.signal, assetProgress);
         if (disposed) return assets.dispose();
       }
       if (!(await buildScene(assets!))) return;
@@ -1206,6 +1318,7 @@ export function createRun(
       applyWorldOutput(view.scene);
       await app.inWorldTarget(() => renderer.compileAsync(view!.scene, view!.camera));
       if (disposed) return;
+      callbacks.onLoadProgress?.(0.85);
       if (app.generation !== generation || !app.available) return void start();
       // First uploads one texture a step, so the warm draw is not also every upload at once.
       // A dispose stops them; a loss stops them too, and the restore starts the warm over.
@@ -1213,9 +1326,37 @@ export function createRun(
       app.inWorldTarget(() => draw(renderer));
       view.warmSet(false);
       app.retainWorldPrograms(view.scene);
-      if (!changingZone) await Promise.all([runSounds.result, runTrack.result]);
+      if (!changingZone) await Promise.all([runSounds.result, runTrack.result, hud.trainers.ready]);
       if (!current()) return void start();
+      callbacks.onLoadProgress?.(1);
+      if (!changingZone && !committed) {
+        callbacks.onReady();
+        committed = true;
+        if (disposed || failed) return;
+        callbacks.onSnapshot(snapshot(world, PLAYER));
+        releaseWorld = app.setWorld({ advance, draw });
+      }
+      // Teammates are waited for before the deployment, so the cover lifts once, onto it.
       await network?.ready();
+      if (!current()) return void start();
+      if (!changingZone && !deploymentDone) {
+        const cue = {
+          kind: "deploy" as const,
+          text: deployCall(formOf(world.players[PLAYER]!).name),
+          ...speaker(PLAYER),
+        };
+        // The line's glyphs are resident before the clock starts: it never opens with a gap.
+        await hud.trainers.prepare(cue);
+        if (!current()) return void start();
+        callbacks.onDeployment(true);
+        view.setDeployment(0);
+        view.frame(1, 0, [], yaw);
+        await new Promise<void>((done) => {
+          deployment = { elapsed: 0, done, cue };
+        });
+        if (disposed || failed) return;
+        callbacks.onDeployment(false);
+      }
       if (!current()) return void start();
       // Ready means audible: the run's sounds and its track decoded (asked for at the run's start).
       if (changingZone) {
@@ -1223,12 +1364,10 @@ export function createRun(
         changingZone = false;
         accumulator = 0;
         canvasStale = true;
+        callbacks.onLoadProgress?.(1);
         callbacks.onZoneLoading(false);
         return;
       }
-      callbacks.onReady();
-      if (!current()) return;
-      releaseWorld = app.setWorld({ advance, draw });
       started = true;
       audio.music.play("run");
       runTrack.release();
@@ -1259,8 +1398,9 @@ export function createRun(
         for (const uniform of Object.values(uniforms ?? {})) collect(uniform.value);
       }
     });
-    for (const texture of textures) {
+    for (const [i, texture] of textures.entries()) {
       renderer.initTexture(texture);
+      callbacks.onLoadProgress?.(0.85 + (0.12 * (i + 1)) / textures.length);
       yield;
     }
   }
@@ -1360,6 +1500,9 @@ export function createRun(
     dispose() {
       if (disposed) return;
       disposed = true;
+      deployment?.done();
+      deployment = undefined;
+      hud.trainers.clear();
       if (import.meta.env.DEV) Reflect.deleteProperty(window, "__poketoneWorld");
       abort.abort();
       if (network && network.onError === fail) {

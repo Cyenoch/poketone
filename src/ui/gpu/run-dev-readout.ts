@@ -1,5 +1,6 @@
 import { Container, Text, withOpacity } from "@pmndrs/uikit";
 import { stack } from "./layer";
+import { ui } from "./tokens";
 
 /**
  * `.run-dev-panel` (developer mode): the frame, sim and world readout on a dark plate under the
@@ -12,7 +13,7 @@ export class GpuDevReadout {
       paddingY: 8,
       paddingX: 12,
       borderRadius: 6,
-      backgroundColor: withOpacity("#0d233f", 0.32),
+      backgroundColor: withOpacity(ui.ink, 0.32),
     }),
     5,
   );
@@ -21,7 +22,7 @@ export class GpuDevReadout {
     fontSize: 12,
     fontWeight: 700,
     lineHeight: 1.45,
-    color: "#d8effb",
+    color: ui.mist,
     whiteSpace: "pre",
   });
 

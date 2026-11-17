@@ -1,7 +1,4 @@
-import { Component, Container, Content, Image, Text, withOpacity } from "@pmndrs/uikit";
-import { Box3, Color, Mesh, MeshBasicMaterial, Path, PlaneGeometry, Vector2, Vector3 } from "three";
-import { SVGLoader } from "three/addons/loaders/SVGLoader.js";
-import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { Component, Container, Image, Text } from "@pmndrs/uikit";
 import type { RunOverlayControl } from "./run-overlays-control";
 import type { RunResult } from "../../run/createRun";
 import { starters } from "../../run/sim/content/lines/index";
@@ -12,9 +9,11 @@ import { formatTime } from "../../run/labels";
 import { itemIcon, moveIcon } from "../../screens/runArt";
 import type { UiStage } from "./stage";
 import { wrapLines } from "./text-fit";
-import { uiEaseOut } from "./focus-mark";
-import { HoverPattern } from "./hover-pattern";
 import { fade, stack } from "./layer";
+import { GameButton } from "./game-button";
+import { createMenuIcon } from "./icons";
+import { EASE, stagger } from "./motion";
+import { RADIUS_INNER, ui } from "./tokens";
 import { GpuCurrency } from "./currency";
 import { softOf } from "./run-choice-surface";
 
@@ -28,125 +27,6 @@ export interface ResultContentCallbacks {
   retry(): void;
   exit(): void;
   invalidate(): void;
-}
-
-/** Raised action faces retain the authored sheen, bevel and hard base. */
-class ResultSkin {
-  readonly content: Content;
-  private readonly geometry = new PlaneGeometry(1, 1);
-  private readonly material = new MeshBasicMaterial({
-    transparent: true,
-    depthTest: false,
-    depthWrite: false,
-  });
-  readonly press = { value: 0 };
-  readonly hover = { value: 0 };
-  private readonly size = { value: new Vector2(1, 1) };
-  constructor(primary: boolean) {
-    this.content = new Content({
-      positionType: "absolute",
-      positionLeft: 0,
-      positionTop: 0,
-      width: "100%",
-      height: "100%",
-      keepAspectRatio: false,
-      depthTest: false,
-    });
-    this.material.customProgramCacheKey = () => `run-result-plate-${primary}`;
-    this.material.onBeforeCompile = (shader) => {
-      Object.assign(shader.uniforms, {
-        resultSize: this.size,
-        resultPress: this.press,
-        resultHover: this.hover,
-        resultFace: { value: new Color(primary ? "#ffd45b" : "#e9f4fb") },
-      });
-      shader.vertexShader = "varying vec2 resultUv;\n" + shader.vertexShader;
-      shader.vertexShader = shader.vertexShader.replace(
-        "#include <uv_vertex>",
-        "#include <uv_vertex>\nresultUv=uv;",
-      );
-      shader.fragmentShader =
-        `varying vec2 resultUv;uniform vec2 resultSize;uniform float resultPress,resultHover;uniform vec3 resultFace;
-        float rounded(vec2 p,vec2 size,float radius){vec2 q=abs(p-size*.5)-(size*.5-vec2(radius));return length(max(q,0.))+min(max(q.x,q.y),0.)-radius;}\n` +
-        shader.fragmentShader;
-      const plate = `
-        vec2 p=vec2(resultUv.x,1.-resultUv.y)*resultSize;
-        vec2 faceSize=vec2(resultSize.x,resultSize.y-3.);
-        float depth=3.*(1.-resultPress)+resultHover;
-        float base=1.-smoothstep(-aa,aa,rounded(p-vec2(0.,depth),faceSize,8.));
-        float face=1.-smoothstep(-aa,aa,rounded(p,faceSize,8.));
-        float inner=1.-smoothstep(-aa,aa,rounded(p-vec2(2.),faceSize-vec2(4.),6.));
-        vec3 ink=resultFace;
-        float sheen=.48*(1.-clamp((p.y-2.)/(faceSize.y*.52),0.,1.))*(1.-resultPress);
-        ink=mix(ink,vec3(1.),max(sheen,(1.-step(4.,p.y))*.62*(1.-resultPress)));
-        ink*=1.-step(faceSize.y-4.,p.y)*.12;
-        ink=mix(vec3(.006995,.028426,.08022),ink,inner);
-        diffuseColor=vec4(mix(vec3(.004025,.016807,.049707),ink,face),max(base,face)*opacity);
-      `;
-      shader.fragmentShader = shader.fragmentShader.replace(
-        "#include <color_fragment>",
-        `#include <color_fragment>\nfloat aa=.5*max(fwidth(resultUv.x*resultSize.x),fwidth(resultUv.y*resultSize.y));\n${plate}`,
-      );
-    };
-    const mesh = new Mesh(this.geometry, this.material);
-    mesh.onBeforeRender = () => {
-      const size = this.content.size.value;
-      if (size) this.size.value.set(size[0], size[1]);
-    };
-    this.content.add(mesh);
-    this.content.notifyAncestorsChanged();
-  }
-  dispose(): void {
-    this.geometry.dispose();
-    this.material.dispose();
-  }
-}
-
-function actionIcon(kind: "retry" | "exit"): Content {
-  const paths =
-    kind === "retry"
-      ? [
-          new Path().absarc(12, 12, 8, -2.8966, 2.64, false),
-          new Path().moveTo(4, 4).lineTo(4, 10).lineTo(10, 10),
-        ]
-      : [
-          new Path().moveTo(20, 12).lineTo(4, 12),
-          new Path().moveTo(10, 6).lineTo(4, 12).lineTo(10, 18),
-        ];
-  const parts = paths.map((path) =>
-    SVGLoader.pointsToStroke(
-      path.getPoints(40),
-      SVGLoader.getStrokeStyle(2.5, "#142f50", "round", "round"),
-    )!,
-  );
-  const geometry = mergeGeometries(parts)!;
-  for (const part of parts) part.dispose();
-  geometry.translate(-12, -12, 0);
-  geometry.boundingBox = new Box3(new Vector3(-12, -12, 0), new Vector3(12, 12, 0));
-  const material = new MeshBasicMaterial({
-    color: "#142f50",
-    transparent: true,
-    depthTest: false,
-    depthWrite: false,
-  });
-  const mesh = new Mesh(geometry, material);
-  mesh.scale.y = -1;
-  const content = stack(
-    new Content({
-      width: 24,
-      height: 24,
-      flexShrink: 0,
-      depthTest: false,
-    }),
-    2,
-  );
-  content.add(mesh);
-  content.notifyAncestorsChanged();
-  content.abortSignal.addEventListener("abort", () => {
-    geometry.dispose();
-    material.dispose();
-  });
-  return content;
 }
 
 export class GpuResultContent {
@@ -167,9 +47,11 @@ export class GpuResultContent {
   private rows: Container[] = [];
   private meta: Text | null = null;
   private noteText: { node: Text; full: string } | null = null;
-  private actionPanels: Container[] = [];
-  private resources: { dispose(): void }[] = [];
-  private animations: { update(deltaMs: number): void; dispose(): void }[] = [];
+  private buttons: GameButton[] = [];
+  private focusVisible = true;
+  /** The result whose rows already came in: a rebuild (a kept item) does not replay it. */
+  private entered: RunResult | null = null;
+  private readonly entrances: { x: number; a: number }[] = [];
 
   constructor(state: ResultContentState, callbacks: ResultContentCallbacks, stage: UiStage) {
     this.state = state;
@@ -199,8 +81,8 @@ export class GpuResultContent {
     this.meta = this.text(
       `${starters[r.starter].stages[0].form.name} · ${difficulties[r.difficulty].name} · ${formatTime(r.time)} · Lv.${r.level} · 击倒 ${r.kills}`,
       13,
-      "#536b82",
-      600,
+      ui.muted,
+      700,
     );
     this.root.add(this.meta);
     const rewards = new Container({
@@ -233,9 +115,9 @@ export class GpuResultContent {
           minHeight: Math.max(40, this.stage.viewport.minTarget),
           flexShrink: 0,
           borderWidth: 2,
-          borderColor: "#0d233f",
-          borderRadius: 8,
-          backgroundColor: "#e9f4fb",
+          borderColor: ui.ink,
+          borderRadius: RADIUS_INNER,
+          backgroundColor: ui.white,
           alignItems: "center",
           justifyContent: "center",
         });
@@ -266,8 +148,8 @@ export class GpuResultContent {
         gap: 12,
         paddingX: 12,
         paddingY: 8,
-        borderRadius: 6,
-        backgroundColor: withOpacity("#ffffff", 0.7),
+        borderRadius: RADIUS_INNER,
+        backgroundColor: ui.mist,
         overflow: "hidden",
       });
       row.add(
@@ -296,7 +178,7 @@ export class GpuResultContent {
       label.add(
         this.image(moveIcon(move.id), 24),
         name,
-        this.text(`Lv.${move.level}`, 13, "#536b82", 600),
+        this.text(`Lv.${move.level}`, 13, ui.muted, 700),
       );
       const amount = this.text(Math.round(move.damage).toLocaleString("zh-CN"), 16);
       stack(amount, 1).setProperties({ textAlign: "right" });
@@ -309,8 +191,8 @@ export class GpuResultContent {
       const note = new Container({
         paddingX: 12,
         paddingY: 8,
-        borderRadius: 6,
-        backgroundColor: "#ffd45b",
+        borderRadius: RADIUS_INNER,
+        backgroundColor: ui.mist,
         width: "100%",
       });
       // A sentence of Chinese has no spaces to wrap at: broken to its width in `afterLayout`.
@@ -328,11 +210,47 @@ export class GpuResultContent {
       paddingBottom: 3,
     });
     actions.add(
-      this.button("再来一局", "retry", () => this.callbacks.retry(), true),
-      this.button("返回大厅", "exit", () => this.callbacks.exit(), false),
+      this.button("再来一局", () => this.callbacks.retry(), true),
+      this.button("返回大厅", () => this.callbacks.exit(), false),
     );
     this.root.add(actions);
     this.viewportKey = "";
+    if (this.entered !== r) {
+      this.entered = r;
+      this.enter();
+    }
+  }
+  /** A restrained celebration: the result's lines come in from the left one after another. */
+  private enter(): void {
+    for (const e of this.entrances) this.stage.motion.cancel(e);
+    this.entrances.length = 0;
+    // The actions stay put: 再来一局 is ready from the first frame.
+    const lines = this.root.children
+      .filter((c): c is Component => c instanceof Component)
+      .slice(0, -1);
+    const items = lines.flatMap((line) =>
+      line === this.rows[0]?.parentContainer.value ? this.rows : [line],
+    );
+    items.forEach((item, i) => {
+      const e = { x: -60, a: 0 };
+      this.entrances.push(e);
+      this.stage.motion.enter(
+        e,
+        { x: -60, a: 0 },
+        { x: 0, a: 1 },
+        380,
+        () => {
+          fade(item, e.a).setProperties({ transformTranslateX: e.x });
+          this.stage.invalidate();
+        },
+        EASE,
+        stagger(i, 45, 120),
+      );
+    });
+  }
+  setFocusVisible(visible: boolean): void {
+    this.focusVisible = visible;
+    for (const button of this.buttons) button.setFocusVisible(visible);
   }
   private toggle(id: ItemId): void {
     const next = this.kept.includes(id)
@@ -349,11 +267,12 @@ export class GpuResultContent {
       const on = this.kept.includes(id),
         enabled = on || this.kept.length < this.state.backpackSize!;
       fade(panel, enabled ? 1 : 0.45).setProperties({
-        backgroundColor: on ? "#ffd45b" : "#e9f4fb",
+        backgroundColor: on ? ui.ink : ui.white,
+        borderColor: on ? ui.ink : ui.line,
       });
     }
   }
-  private text(text: string, fontSize = 16, color = "#142f50", fontWeight = 800): Text {
+  private text(text: string, fontSize = 16, color: string = ui.ink, fontWeight = 800): Text {
     return new Text({
       text,
       fontSize,
@@ -367,81 +286,30 @@ export class GpuResultContent {
   private image(src: string, size: number) {
     return stack(new Image({ src, width: size, height: size, flexShrink: 0 }), 1);
   }
-  private button(
-    label: string,
-    kind: "retry" | "exit",
-    action: () => void,
-    primary: boolean,
-  ): Container {
-    const panel = new Container({
-      flexGrow: 1,
-      flexBasis: 0,
-      minWidth: 120,
-      minHeight: 50,
-      paddingX: 22,
-      paddingY: 11,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 12,
+  private button(label: string, action: () => void, primary: boolean): Container {
+    // 再来一局 is the slanted CTA; 返回大厅 stands upright.
+    const button = new GameButton(this.stage, {
+      tone: primary ? "primary" : "secondary",
+      size: "normal",
+      label,
+      icon: primary ? undefined : createMenuIcon("back"),
     });
-    const skin = new ResultSkin(primary);
-    skin.content.setProperties({ positionBottom: -3, height: undefined });
-    this.resources.push(skin);
-    panel.add(skin.content);
-    const pattern = new HoverPattern(this.stage.motion, () => this.stage.invalidate(), "#ffd45b");
-    panel.add(pattern.content);
-    const ink = this.text(label);
-    stack(ink, 2);
-    panel.add(actionIcon(kind), ink);
-    const hover = { value: 0 },
-      press = { value: 0 };
-    let focused = false,
-      pressed = false;
-    const apply = () => {
-      skin.press.value = press.value;
-      skin.hover.value = hover.value;
-      panel.setProperties({
-        transformTranslateY: 3 * press.value - hover.value,
-        transformScaleX: 1 + 0.012 * press.value,
-        transformScaleY: 1 - 0.03 * press.value,
-      });
-      this.stage.invalidate();
-    };
+    button.panel.setProperties({ flexGrow: 1, flexBasis: 0, minWidth: 140 });
+    button.setFocusVisible(this.focusVisible);
+    this.buttons.push(button);
     this.controls.push({
-      panel,
+      panel: button.panel,
       enabled: () => true,
       action,
-      // The window lights, drifts and disposes it with every other control's.
-      pattern,
-      setFocused: (next) => {
-        if (focused === next) return;
-        focused = next;
-        this.stage.motion.animate(hover, { value: next ? 1 : 0 }, 140, apply, uiEaseOut);
-      },
-      setPressed: (next) => {
-        if (pressed === next) return;
-        pressed = next;
-        this.stage.motion.animate(
-          press,
-          { value: next ? 1 : 0 },
-          next ? 60 : 140,
-          apply,
-          uiEaseOut,
-        );
-      },
+      selfDrawn: true,
+      setFocused: (focused) => button.setFocused(focused),
+      setPointerOver: (over) => button.setHovered(over),
+      setPressed: (pressed) => button.setPressed(pressed),
     });
-    this.actionPanels.push(panel);
-    this.animations.push({
-      update: () => {},
-      dispose: () => {
-        for (const state of [hover, press]) this.stage.motion.cancel(state);
-      },
-    });
-    return panel;
+    return button.panel;
   }
   afterLayout(deltaMs: number): void {
-    for (const animation of this.animations) animation.update(deltaMs);
+    for (const button of this.buttons) button.update(deltaMs);
     if (this.noteText) {
       const lines = wrapLines(this.noteText.node, this.noteText.full);
       if (lines !== undefined && lines !== this.noteText.node.properties.value.text)
@@ -454,25 +322,20 @@ export class GpuResultContent {
     const compact = v.height <= 480 && v.width > v.height;
     this.root.setProperties({ gap: compact ? 8 : 12 });
     for (const row of this.rows) row.setProperties({ paddingY: compact ? 4 : 8 });
-    for (const panel of this.actionPanels)
-      panel.setProperties({
-        minHeight: Math.max(v.minTarget, compact ? 44 : 50),
-        paddingY: compact ? 8 : 11,
-      });
+    for (const button of this.buttons) button.fitTouch();
     for (const tile of this.tiles)
       tile.panel.setProperties({ minWidth: v.minTarget, minHeight: v.minTarget });
     this.stage.invalidate();
   }
   private clear(): void {
-    for (const animation of this.animations) animation.dispose();
-    this.animations = [];
-    for (const resource of this.resources) resource.dispose();
-    this.resources = [];
+    for (const e of this.entrances) this.stage.motion.cancel(e);
+    this.entrances.length = 0;
+    for (const button of this.buttons) button.dispose();
+    this.buttons = [];
     const parts: { dispose(): void }[] = [];
     this.controls = [];
     this.tiles.length = 0;
     this.rows = [];
-    this.actionPanels = [];
     this.meta = null;
     this.noteText = null;
     this.bagLabel = null;
@@ -488,6 +351,7 @@ export class GpuResultContent {
     this.root.removeFromParent();
     this.headerCurrency.removeFromParent();
     this.purse.dispose();
+    for (const e of this.entrances) this.stage.motion.cancel(e);
     this.clear();
     this.root.dispose();
     this.headerCurrency.dispose();

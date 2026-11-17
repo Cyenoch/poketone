@@ -29,6 +29,7 @@ export const Decal = {
   /** Enemy lane; p2 = half-width in world units. Fills along as t → 1. */
   danger: 5,
   swirl: 6,
+  /** Fractures: p2 = 1 for solid earth with a lit lip, 0 for hot electric cracks. */
   cracks: 7,
   /** The 大 of Fire Blast; p2 = 1 while burning, 0 for the scorch it leaves. */
   blast: 8,
@@ -163,7 +164,7 @@ vec4 swirl(vec2 q, float t, float seed) {
   return over(layer(vB.rgb, rim * t, vB.a), c);
 }
 
-vec4 cracks(vec2 q, float t, float seed) {
+vec4 cracks(vec2 q, float t, float seed, float earth) {
   float r = length(q);
   float ang = atan(q.y, q.x) * 1.1141 + seed * 6.0;
   float jag = (noise2(vec2(r * 7.0, seed * 17.0 + floor(ang))) - 0.5) * 0.7;
@@ -171,6 +172,12 @@ vec4 cracks(vec2 q, float t, float seed) {
   float reach = 0.55 + 0.45 * hash12(vec2(floor(ang + jag), seed));
   float crack = smoothstep(0.05, 0.015, line) * smoothstep(reach, reach - 0.2, r) * smoothstep(0.08, 0.18, r);
   float fade = 1.0 - smoothstep(0.55, 1.0, t);
+  if (earth > 0.5) {
+    float span = smoothstep(reach, reach - 0.15, r) * smoothstep(0.05, 0.15, r);
+    float lip = smoothstep(0.12, 0.055, line) * span;
+    float split = smoothstep(0.055, 0.025, line) * span;
+    return over(layer(vB.rgb, split * fade, 0.0), layer(vA.rgb, lip * fade, 0.0));
+  }
   vec4 c = layer(vec3(0.13, 0.12, 0.16), (crack * 0.8 + smoothstep(0.55, 0.0, r) * 0.25) * fade, 0.0);
   return over(layer(vA.rgb, crack * (1.0 - smoothstep(0.0, 0.3, t)), 1.0), c);
 }
@@ -262,7 +269,7 @@ void main() {
   else if (shape < 4.5) c = telegraph(q, t);
   else if (shape < 5.5) c = danger(vL, t, vP.z, radius);
   else if (shape < 6.5) c = swirl(q, t, seed);
-  else if (shape < 7.5) c = cracks(q, t, seed);
+  else if (shape < 7.5) c = cracks(q, t, seed, vP.z);
   else if (shape < 8.5) c = blast(q, t, vP.z, seed);
   else if (shape < 9.5) c = strip(vL, vP.z, radius, vP.w, seed);
   else if (shape < 10.5) c = ripple(q, t);

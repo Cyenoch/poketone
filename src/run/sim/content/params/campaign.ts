@@ -3,6 +3,10 @@ import type { StageId } from "../stages/index";
 /** Seconds per field; one continuous field per map, including the tower. */
 export const FIELD_SECONDS = { outdoor: 600, tower: 600 } as const;
 
+/** Reach of the exit a fallen guardian opens, and the rings searched for walkable ground around its fall. */
+export const EXIT_RADIUS = 2.4;
+export const EXIT_SEARCH = { rings: 12, step: 1 } as const;
+
 /** HP-clock floors keep new-map bodies near the preceding field's late-game durability. */
 export const CAMPAIGN_HP_CLOCK: Record<StageId, number> = {
   forest: 0,

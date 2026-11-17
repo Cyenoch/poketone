@@ -7,6 +7,7 @@ import { formDefs, starters } from "../src/run/sim/content/lines/index.ts";
 import { moves } from "../src/run/sim/content/moves.ts";
 import { stationNames } from "../src/run/sim/content/stations.ts";
 import { itemIcon, moveIcon, stationIcon } from "../src/screens/runArt.ts";
+import { cardFaces } from "../src/ui/gpu/run-choice-surface.ts";
 
 const missing = (paths) => paths.filter((path) => !existsSync(`public${path}`));
 
@@ -25,4 +26,15 @@ test("every move, form portrait and starter ultimate has its art file", () => {
     missing(Object.keys(starters).map((starter) => `/art/icons/ultimates/${starter}.webp`)),
     [],
   );
+});
+
+test("every registered card face and playable form type has its art file", () => {
+  for (const move of Object.values(moves))
+    assert.ok(cardFaces.has(move.type), `card face: ${move.type}`);
+  assert.deepEqual(
+    missing([...cardFaces, "item", "train"].map((type) => `/art/cards/${type}.webp`)),
+    [],
+  );
+  const formTypes = new Set(Object.values(formDefs).flatMap((form) => form.types));
+  assert.deepEqual(missing([...formTypes].map((type) => `/art/icons/crests/${type}.webp`)), []);
 });

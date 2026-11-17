@@ -1,0 +1,30 @@
+{
+  "task_id": "a4df3da0-74f8-4eaa-a96e-6e6883c804d8",
+  "type": "text_to_model",
+  "status": "success",
+  "input": {
+    "pbr": true,
+    "prompt": "alakazam/generation/split/v-front.png alakazam/generation/split/v-left.png alakazam/generation/split/v-back.png alakazam/generation/split/v-right.png",
+    "texture": true,
+    "export_uv": true,
+    "face_limit": 1500,
+    "model_version": "v3.1-20260211",
+    "smart_low_poly": true,
+    "geometry_quality": "standard",
+    "texture_alignment": "geometry"
+  },
+  "output_fields": [
+    "model_url",
+    "rendered_image_url",
+    "generated_image_url"
+  ],
+  "credits_consumed": 30,
+  "created_at": "2026-11-17T10:07:40.341737Z",
+  "completed_at": "2026-11-17T10:10:30.978188Z",
+  "files": [
+    "model.glb",
+    "rendered_image.webp",
+    "generated_image.jpeg",
+    "preview.png"
+  ]
+}

@@ -249,10 +249,10 @@ export function createCompassBar(
           pin(`chest:${pickup.id}`, bearing(pickup.x - px, pickup.z - pz), "chest");
       const boss = value.enemies.find((enemy) => enemy.boss);
       if (boss) pin("boss", bearing(boss.x - px, boss.z - pz), "boss");
-      // The zone's landmark: where the guardian is summoned, then the exit.
+      // The landmark where the guardian is summoned, then the exit it opened where it fell.
       else {
-        const landmark = landmarkOf(value);
-        pin("landmark", bearing(landmark.x - px, landmark.z - pz), "landmark");
+        const spot = (value.zone.phase === "cleared" && value.zone.exit) || landmarkOf(value);
+        pin("landmark", bearing(spot.x - px, spot.z - pz), "landmark");
       }
     }
     for (const key of sides.keys()) if (!seen.has(key)) sides.delete(key);

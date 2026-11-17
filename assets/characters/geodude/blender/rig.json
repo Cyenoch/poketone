@@ -1,0 +1,10 @@
+{
+  "form": "geodude",
+  "bones": 5,
+  "vertices": 3369,
+  "triangles": 2462,
+  "runSeconds": 1.0,
+  "runCycles": 1,
+  "plantedSpeedPerHeight": 2.6,
+  "credits": 0
+}

@@ -1,0 +1,22 @@
+{
+  "tool": "magpie-image.generate_image",
+  "actualModel": "ash/gpt-image-2.5-sunburst",
+  "jobId": null,
+  "jobIdNote": "Generated before this record was written; the job id was not kept. Model, prompt, references and parameters are as reported by the run that produced it.",
+  "promptNote": "Hand-written precursor of ../lobby-prompt.txt with the outfit spelled out inline; an earlier longer wording (lunge / legs apart / capture ball / weight on the front leg) was refused by the safety system, so the pose is described plainly.",
+  "prompt": "Full-body game character illustration of the same adventurer shown in the attached turnaround sheet, drawn in exactly the same clean cel-shaded cartoon style. One character only. The whole figure is visible from hair to boots with empty margin around it. Three-quarter front view facing slightly to the viewer's right, standing in an energetic confident pose: her right hand raised near the shoulder holding a small red-and-white ball toy, her other arm reaching forward toward the viewer's right with an open hand, as in the attached waist-up reference. Same outfit as the sheet: teal short cape over a cream high-collar shirt, navy knee-length cargo shorts, coral socks, navy boots with cream soles, coral whistle on a cord, round dial on her left hip, two capsules on her right hip, backpack straps. Dark indigo short hair with a small side ponytail tied with a coral cord, warm brown freckled skin, amber eyes, cheerful determined smile. Deep navy outlines, flat matte colours with two or three cel-shade tones. Transparent background, no scenery, no floor, no shadow, no text.",
+  "referenceImages": ["turnaround.png", "cutin-source.png"],
+  "parameters": {
+    "size": "1024x1536",
+    "quality": "high",
+    "background": "transparent",
+    "n": 1
+  },
+  "output": "lobby-source.png",
+  "originalOutput": "scratchpad img/chengxi-full.png (copied unchanged)",
+  "seed": null,
+  "sha256": "1ee6af70086f45406e7bc91b52a692b4d16179ec5c764989e4cde0f91054f13c",
+  "actualSize": [1024, 1536],
+  "alpha": "Real alpha: background 0, figure body 253-254 (model never writes 255), faint speckles below 8 at the margins; prepare.py snaps both ends.",
+  "review": "Accepted first take. Full figure hair to boots; ponytail on her right, tide dial on her left hip, capsules on her right hip, whistle, cape and backpack straps match the sheet; five fingers on both hands; transparent field."
+}

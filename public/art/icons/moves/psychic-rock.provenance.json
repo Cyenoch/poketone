@@ -1,0 +1,47 @@
+{
+  "createdAt": "2026-11-17",
+  "generator": "Magpie generate_image, ash/gpt-image-2.5-sunburst",
+  "generationRecords": "assets/icons/source/psychic-rock-generation.json",
+  "sheets": [
+    {
+      "source": "assets/icons/source/moves-sheet-psychic.png",
+      "generationId": "image-38907-13",
+      "grid": [4, 2],
+      "cells": [
+        "confusion",
+        "hypnosis",
+        "psybeam",
+        "psychic",
+        "future-sight",
+        "psyshock",
+        null,
+        null
+      ]
+    },
+    {
+      "source": "assets/icons/source/moves-sheet-rock-ground.png",
+      "generationId": "image-38907-12",
+      "grid": [4, 2],
+      "cells": [
+        "rock-throw",
+        "rollout",
+        "magnitude",
+        "rock-slide",
+        "earthquake",
+        "stone-edge",
+        "tectonic-rage",
+        null
+      ]
+    },
+    {
+      "source": "assets/icons/source/moves-sheet-psystrike-redo.png",
+      "generationId": "image-38907-20",
+      "grid": [2, 2],
+      "cells": ["psystrike", null, null, null]
+    }
+  ],
+  "output": "public/art/icons/moves/<cell>.webp",
+  "processing": "assets/icons/prepare-psychic-rock.py: composite RGBA sources onto #f5f1e8 to remove transparent-area noise, slice full cells, border flood-fill tolerance 38 via slice-sheet.py, alpha trim, 8% square padding, Lanczos to 128x128, WebP q88.",
+  "selection": "Psystrike uses the preserved redo with a complete rounded beam tail; the first psychic sheet's clipped beam cell is unused. All gray spare stars are unused. No additional generation during recovery.",
+  "rights": "AI-generated artwork for a noncommercial Pokémon fan project; Pokémon designs and trademarks belong to their rights holders. Not licensed as standalone open art."
+}

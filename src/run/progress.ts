@@ -2,7 +2,11 @@ import { items, type ItemId } from "./sim/content/items";
 import { starterOrder, type StarterId } from "./sim/content/lines/index";
 import type { Difficulty } from "./sim/content/difficulties";
 import { labDefinitions, type LabId, type LabLevels } from "./sim/content/lab";
-import { BACKPACK_BASE, starterUnlocks } from "./sim/content/params/progression";
+import {
+  BACKPACK_BASE,
+  starterUnlocks,
+  type StarterUnlock,
+} from "./sim/content/params/progression";
 import type { RunResult } from "./createRun";
 import { labItem, metaBonuses, nextCost } from "./lab";
 
@@ -23,7 +27,7 @@ export interface Progress {
   best: Partial<Record<StarterId, BestRecord>>;
   /** Lifetime kills over every run. */
   kills: number;
-  /** Unlock-challenge progress: kills × (1 + 研究), toward `starterUnlocks`. */
+  /** Unlock-challenge progress: kills × (1 + 研究), toward research `starterUnlocks`. */
   research: number;
   /** Banked 星星沙子 and bought lab levels. */
   stardust: number;
@@ -34,8 +38,31 @@ export interface Progress {
   backpack: ItemId[];
 }
 
+/** Partners cleared with at `difficulty` or above (`best` keeps a partner's hardest victory). */
+export function distinctClears(progress: Progress, difficulty: Difficulty): number {
+  return Object.values(progress.best).filter((b) => b.victory && b.difficulty >= difficulty).length;
+}
+
+/** How far a partner's condition is met: `have` of `need` (a clear counts 0 or 1). */
+export function starterUnlockProgress(
+  progress: Progress,
+  unlock: StarterUnlock,
+): { have: number; need: number } {
+  switch (unlock.kind) {
+    case "research":
+      return { have: progress.research, need: unlock.points };
+    case "clear":
+      return { have: Math.min(1, progress.clears[unlock.difficulty]), need: 1 };
+    case "distinctClears":
+      return { have: distinctClears(progress, unlock.difficulty), need: unlock.count };
+  }
+}
+
 export function starterUnlocked(progress: Progress, starter: StarterId): boolean {
-  return progress.research >= (starterUnlocks[starter] ?? 0);
+  const unlock = starterUnlocks[starter];
+  if (!unlock) return true;
+  const { have, need } = starterUnlockProgress(progress, unlock);
+  return have >= need;
 }
 
 export function archiveSlots(progress: Progress): number {

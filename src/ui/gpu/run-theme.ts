@@ -154,6 +154,43 @@ const runThemes = {
       return still;
     },
   },
+  psychic: {
+    deep: "#7a1840",
+    light: "#ff9cc0",
+    // Psi waves: small rings with a dot at their heart, staggered rows.
+    grain: `vec2 q=mod(p+vec2(mod(floor(p.y/13.),2.)*7.,0.),vec2(14.,13.))-vec2(7.,6.5);
+      float r=length(q);
+      grain=max((1.-smoothstep(.6-aa,.6+aa,abs(r-4.)))*.34,(1.-smoothstep(1.2-aa,1.2+aa,r))*.4);`,
+    grainInk: "#ffe3ee",
+    // Ripples: rounded scallops, a small one between each large one.
+    edge: (x, d) =>
+      `float u=mod(${x},16.);vec2 a=vec2((u-5.)/5.,(${d})/7.),b=vec2((u-12.5)/2.5,(${d})/3.6);edge=max(step(dot(a,a),1.),step(dot(b,b),1.));`,
+    // Levitates: a slow bob with a soft pulse at the top.
+    motion: (t) => {
+      const p = swing(t, 2);
+      return [0, 1 + p * 0.06, -p * 3];
+    },
+  },
+  rock: {
+    deep: "#5a4a1c",
+    light: "#e3cf86",
+    // Strata: diamond-cut facets on a staggered lattice.
+    grain: `vec2 q=mod(p+vec2(mod(floor(p.y/12.),2.)*7.,0.),vec2(14.,12.))-vec2(7.,6.);
+      float f=abs(q.x)*.8+abs(q.y);
+      grain=(1.-smoothstep(.7-aa,.7+aa,abs(f-4.2)))*.36;`,
+    grainInk: "#fbf2d2",
+    // Crags: peaks of three heights.
+    edge: (x, d) =>
+      `float c=floor(${x}/10.);float h=5.+3.*fract(c*.618);edge=step(${d},h*(1.-abs(mod(${x},10.)-5.)/5.));`,
+    // A heavy thud every 2.2s: lift, drop past rest, settle.
+    motion: (t) => {
+      const u = (t % 2.2) / 2.2;
+      if (u >= 0.72 && u < 0.84) return [0, 1.03, -3];
+      if (u >= 0.84 && u < 0.9) return [0, 1.08, 2];
+      if (u >= 0.9 && u < 0.95) return [0, 0.98, 0.5];
+      return still;
+    },
+  },
 } satisfies Partial<Record<ElementType, RunTheme>>;
 type RunThemeType = keyof typeof runThemes;
 const runThemeTypes = Object.keys(runThemes) as RunThemeType[];
@@ -162,6 +199,7 @@ const runThemeTypes = Object.keys(runThemes) as RunThemeType[];
 const moveSteps: Partial<Record<ElementType, { deep: string; light: string }>> = {
   normal: { deep: "#5f5a4e", light: "#d1cabb" },
   poison: { deep: "#60307e", light: "#ddb5ed" },
+  ground: { deep: "#6e3f17", light: "#f0c08e" },
 };
 
 function isRunTheme(type: ElementType): type is RunThemeType {

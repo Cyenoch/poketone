@@ -1,0 +1,68 @@
+{
+  "createdAt": "2026-11-17",
+  "sourceKind": "Existing generated multiview character artwork, front views",
+  "processing": "Byte-identical copies of the character pipeline front drawings; preserved independently so portrait rebuilds do not depend on mutable model work. The output derivation is recorded in public/art/portraits/psychic-rock.provenance.json.",
+  "sources": [
+    {
+      "asset": "abra",
+      "source": "assets/icons/source/portraits-psychic-rock/abra.png",
+      "size": [471, 471],
+      "sha256": "1abc48782eb283dd639dd3d44e058551b1e08278bb3642de61ab0f63a38f0fa1",
+      "copiedFrom": "assets/characters/abra/generation/split/v-front.png",
+      "parentSheet": "assets/characters/abra/generation/sheet.jpg",
+      "parentSheetSha256": "60413d7a8f1fe8574e247f5a0130f581cebbf51a52b2fd220fb3c6e0498fd29d",
+      "anatomyReference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/63.png"
+    },
+    {
+      "asset": "kadabra",
+      "source": "assets/icons/source/portraits-psychic-rock/kadabra.png",
+      "size": [496, 496],
+      "sha256": "28346b6319c639bfe00644028d18f19ca48105a628faea8b61b30c2c53ae7b15",
+      "copiedFrom": "assets/characters/kadabra/generation/split/v-front.png",
+      "parentSheet": "assets/characters/kadabra/generation/sheet.jpg",
+      "parentSheetSha256": "98f3445b7efb3360a1e486bf6c7d4e42c08c0c8cff1573a5ec3883783420e1d9",
+      "anatomyReference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/64.png"
+    },
+    {
+      "asset": "alakazam",
+      "source": "assets/icons/source/portraits-psychic-rock/alakazam.png",
+      "size": [498, 498],
+      "sha256": "c926e848968de9c83f643c3a1a247b3c703b0ac0ead51545d37ce43ce07e182a",
+      "copiedFrom": "assets/characters/alakazam/generation/split/v-front.png",
+      "parentSheet": "assets/characters/alakazam/generation/sheet.jpg",
+      "parentSheetSha256": "61e90c46728e6391f4fa61cba66ddcdd41669ada09410f412e77909683f6a55c",
+      "anatomyReference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/65.png"
+    },
+    {
+      "asset": "geodude",
+      "source": "assets/icons/source/portraits-psychic-rock/geodude.png",
+      "size": [529, 529],
+      "sha256": "c2b80d08d30696501a5a7d5aa17249599fe5203b368fb299919918645d1e7709",
+      "copiedFrom": "assets/characters/geodude/generation/split/v-front.png",
+      "parentSheet": "assets/characters/geodude/generation/sheet.jpg",
+      "parentSheetSha256": "e23fb36a41455a5264eac73b29934a59ec533f6bbc82935cb711a6bef38d2e5d",
+      "anatomyReference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/74.png"
+    },
+    {
+      "asset": "graveler",
+      "source": "assets/icons/source/portraits-psychic-rock/graveler.png",
+      "size": [498, 498],
+      "sha256": "4dadbf57dc8127ba4610d87063fad3292395dc773925171cd0d4157136da1197",
+      "copiedFrom": "assets/characters/graveler/generation/split/v-front.png",
+      "parentSheet": "assets/characters/graveler/generation/sheet.jpg",
+      "parentSheetSha256": "104007c82657cedeec75009df5c557639c277936d759b71d299241ed9d8d3ce5",
+      "anatomyReference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/75.png"
+    },
+    {
+      "asset": "golem",
+      "source": "assets/icons/source/portraits-psychic-rock/golem.png",
+      "size": [516, 516],
+      "sha256": "96bb7f8188863dc3f236c0c729e0f505c68575d90bef87b894f977f9ea802f38",
+      "copiedFrom": "assets/characters/golem/generation/split/v-front.png",
+      "parentSheet": "assets/characters/golem/generation/sheet.jpg",
+      "parentSheetSha256": "cb62c338fa05f24ea1964aa534a01add2743f8eb93030bc1106e28942df4e0a3",
+      "anatomyReference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/76.png"
+    }
+  ],
+  "rights": "Pok\u00e9mon fan artwork; character rights remain with their owners. Noncommercial project, no standalone asset license."
+}

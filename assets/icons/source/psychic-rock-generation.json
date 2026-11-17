@@ -1,0 +1,111 @@
+{
+  "createdAt": "2026-11-17",
+  "generator": "Magpie generate_image, ash/gpt-image-2.5-sunburst",
+  "note": "Recovered original requests and generation results from interrupted task. No new generation calls during recovery.",
+  "requests": [
+    {
+      "id": "image-38907-11",
+      "status": "failed",
+      "path": "assets/icons/source/portraits-psychic-rock.png",
+      "size": "1536x1024",
+      "reference_images": [
+        "public/art/portraits/machop.webp",
+        "public/art/portraits/dratini.webp",
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/63.png",
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/64.png",
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/65.png",
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/75.png",
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/76.png"
+      ],
+      "prompt": "A sprite sheet of 6 full body Pokémon character portraits arranged in perfectly even 3x2 grid of equal square cells, wide blank white gaps, each character centered and fully contained in its cell on pure white background. Row by row left to right: Abra (small golden yellow fox-like psychic Pokémon, brown shoulder and chest plates, closed eyes, seated with bent legs and thick long yellow tail); Kadabra (yellow fox-like psychic biped, red forehead star, long thin moustache, brown torso armor, one silver spoon, thick striped tail); Alakazam (yellow psychic biped, long cream moustache, brown torso armor, two silver spoons one in each hand, no tail); Geodude (round grey boulder with stern face, two muscular rock arms raised into fists, NO legs); Graveler (round craggy grey boulder Pokémon with FOUR arms, two raised upper fists and two smaller lower arms, two short feet); Golem (large spherical polygonal brown rock shell, small reptilian grey head, two muscular short arms, two clawed legs, no tail). Three-quarter friendly confident poses, exact official character colors and recognizable silhouettes, equal visual weight. Match the rendering style of the first two portrait references exactly; use the official artwork references only for accurate species anatomy. No scenery, shadows or cell lines. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject.",
+      "failure": "Image service safety rejection; no image produced."
+    },
+    {
+      "id": "image-38907-13",
+      "status": "completed",
+      "path": "assets/icons/source/moves-sheet-psychic.png",
+      "size": "1536x1024",
+      "reference_images": ["assets/icons/source/moves-sheet.png"],
+      "prompt": "A sprite sheet of 7 game move icons plus one spare cell, arranged in a perfectly even 4×2 grid of equal square cells separated by wide uniform empty gaps, each icon centered in its cell and filling about 75% of it, on a plain flat warm off-white (#f5f1e8) background, no grid lines. Match the rendering style of the reference image exactly (thick dark navy outline on every shape, flat cel shading, same visual weight); do not copy its subjects. Row by row, left to right: 1) Confusion: a curved pink-purple psychic energy shard with two short wavy vibration arcs; 2) Hypnosis: three thick concentric pink rings spiralling inward into a violet sleepy closed eye; 3) Psybeam: a diagonal pink rainbow spiral beam with lavender cyan and golden bands; 4) Psychic: a pink psychic orb squeezed by two violet curved pressure arcs with a sharp central burst; 5) Future Sight: a violet prophetic eye above a circular pink seal, a vertical white-pink pillar descending onto the seal, no letters or star polygons; 6) Psyshock: three bright pink angular psychic crystal shards linked by a short zigzag violet energy trail; 7) Psystrike: a thick magenta psychic beam passing through shards into a large pink-violet psychic blossom-like energy burst, no flowers or petals; 8) a small neutral gray star (unused). Colour language: psychic pink and violet, rainbow accents only on Psybeam. Clean solid background, no noise and no glow halo. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject.",
+      "sha256": "a42a7cb7ca9bd589d93ea2182babed6899ee2b3f02d1b67b27ab8a1ee94d0121"
+    },
+    {
+      "id": "image-38907-12",
+      "status": "completed",
+      "path": "assets/icons/source/moves-sheet-rock-ground.png",
+      "size": "1536x1024",
+      "reference_images": ["assets/icons/source/moves-sheet.png"],
+      "prompt": "A sprite sheet of 7 game move icons plus one spare cell, arranged in a perfectly even 4×2 grid of equal square cells separated by wide uniform empty gaps, each icon centered in its cell and filling about 75% of it, on a plain flat warm off-white (#f5f1e8) background, no grid lines. Match the rendering style of the reference image exactly (thick dark navy outline on every shape, flat cel shading, same visual weight); do not copy its subjects. Row by row, left to right: 1) Rock Throw: one chunky grey-brown boulder flying diagonally with two short ochre speed lines and tiny chips; 2) Rollout: a round grey boulder rolling forward inside a curled ochre motion swoosh with a dust puff; 3) Magnitude: a small brown cracked patch of earth with three concentric terracotta shock rings; 4) Rock Slide: three angular grey-brown boulders falling onto a gold impact burst and rock chips; 5) Earthquake: a broad brown slab of earth split by a deep jagged central fissure, two upturned edges and orange shock waves; 6) Stone Edge: a fan of three tall sharp slate-grey rock spikes erupting upward with ochre rubble; 7) Tectonic Rage: a huge brown monolith crashing into split earth, smaller stone columns thrusting up around it, terracotta impact burst, no lightning; 8) a small neutral gray star (unused). Colour language: rock warm slate grey and ochre, ground terracotta and warm brown. Clean solid background, no noise and no glow halo. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject.",
+      "sha256": "3bb6d9a5a8caa6762934ce57aa73113551064a7f7aee2d5cc0ed649c4a2a7f8f"
+    },
+    {
+      "id": "image-38907-18",
+      "status": "completed",
+      "path": "assets/icons/source/ultimates-psychic-rock.png",
+      "size": "1024x1024",
+      "reference_images": [
+        "public/art/icons/ultimates/charmander.webp",
+        "public/art/icons/ultimates/gastly.webp"
+      ],
+      "prompt": "A sprite sheet in exactly 2x2 evenly spaced square cells with broad empty margins, plain flat warm off-white (#f5f1e8) background, no grid lines. Top left: Psychic Field ultimate icon, a large pink-violet elliptical psychic field ring pulling inward, four bright pink radial beams and three descending lavender pillars around a luminous pink central orb, distinct thick outlined solid shapes. Top right: Rockslide Quake ultimate icon, a cluster of large angular grey-brown falling rocks crashing into a broad split earthen plate with a terracotta shock ring and ochre dust bursts. Bottom left and bottom right: a neutral gray star (unused). Each entirely contained centered in its own cell, no touching. Match style of reference. Clean solid background, no noise and no glow halo. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject.",
+      "sha256": "0a8400f9a9bcb7ce6cd99836cc1db37ae132637286e95737c01bad044ea0a3b7"
+    },
+    {
+      "id": "image-38907-14",
+      "status": "completed",
+      "path": "assets/icons/source/crests-psychic-rock-ground.png",
+      "size": "1024x1024",
+      "reference_images": [
+        "public/art/icons/crests/fire.webp",
+        "public/art/icons/crests/water.webp"
+      ],
+      "prompt": "A sprite sheet of 4 game type crest icons arranged in perfectly even 2x2 grid equal square cells separated by wide uniform empty gaps, each icon centered on plain flat warm off-white (#f5f1e8) background. Row by row left to right: PSYCHIC a bold pink spiral curling inward with two small violet orbit sparks; ROCK a compact cluster of three angular ochre and grey-brown boulders with broad flat facets; GROUND two stacked warm terracotta earth layers with a central jagged fissure and two small brown pebbles; a small neutral gray star (unused). Match visual weight and thick outline of reference crests. Clean solid background, no noise and no glow halo. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject.",
+      "sha256": "fb3a0c97870d13386743dbbd8759ac5f8a9b6aa38a72be6b5369d7769d4ea45c"
+    },
+    {
+      "id": "image-38907-15",
+      "status": "completed",
+      "path": "assets/icons/source/card-psychic.png",
+      "size": "1024x1024",
+      "reference_images": ["public/art/cards/ghost.webp"],
+      "prompt": "A decorative full-bleed background pattern for a game choice card: rounded psychic spirals, concentric ripple arcs and tiny four-point psychic sparks. Light airy palette dominated by pale blush pink (#fde0ea) with rose and lavender accents, soft low-contrast tonal shapes, motifs clustered toward the edges and corners with a calm, nearly empty lighter centre, fills the whole square edge to edge, no frame. Match the reference rendering style and quiet centre, do not copy its subjects. Thin soft outlines in a slightly darker tint of the same colour, no dark navy or black lines. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones. Saturated but not neon colours. No text, no letters, no numbers, no logos, no borders, no drop shadows.",
+      "sha256": "214225a071aca78e3e3f2c60c85dd9ee96397895da1a396df4e40be9d205595d"
+    },
+    {
+      "id": "image-38907-16",
+      "status": "completed",
+      "path": "assets/icons/source/card-rock.png",
+      "size": "1024x1024",
+      "reference_images": ["public/art/cards/fighting.webp"],
+      "prompt": "A decorative full-bleed background pattern for a game choice card: chunky angular boulders, little faceted pebbles and broad stone facets. Light airy palette dominated by pale sandy ochre (#f2ebcf) with soft ochre and warm slate accents, soft low-contrast tonal shapes, motifs clustered toward the edges and corners with a calm, nearly empty lighter centre, fills the whole square edge to edge, no frame. Match the reference rendering style and quiet centre, do not copy its subjects. Thin soft outlines in a slightly darker tint of the same colour, no dark navy or black lines. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones. Saturated but not neon colours. No text, no letters, no numbers, no logos, no borders, no drop shadows.",
+      "sha256": "94abc9d56c8a9ebe38b9c88dd06da9932aa43ca5cc71a5fd96753cf2740e3890"
+    },
+    {
+      "id": "image-38907-17",
+      "status": "completed",
+      "path": "assets/icons/source/card-ground.png",
+      "size": "1024x1024",
+      "reference_images": ["public/art/cards/fighting.webp"],
+      "prompt": "A decorative full-bleed background pattern for a game choice card: soft curved earth strata, small cracked-earth patches and rounded dust curls. Light airy palette dominated by pale warm peach (#f8e6d4) with gentle terracotta and sandy brown accents, soft low-contrast tonal shapes, motifs clustered toward the edges and corners with a calm, nearly empty lighter centre, fills the whole square edge to edge, no frame. Match the reference rendering style and quiet centre, do not copy its subjects. Thin soft outlines in a slightly darker tint of the same colour, no dark navy or black lines. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones. Saturated but not neon colours. No text, no letters, no numbers, no logos, no borders, no drop shadows.",
+      "sha256": "b25b235c747b26bc549139c32817afcc204c2dc0c1457a426c940834234907bb"
+    },
+    {
+      "id": "image-38907-19",
+      "status": "failed",
+      "path": "assets/icons/source/portraits-psychic-rock.png",
+      "size": "1536x1024",
+      "reference_images": ["public/art/portraits/machop.webp", "public/art/portraits/dratini.webp"],
+      "prompt": "A sprite sheet of 6 full body Pokémon character portraits arranged in perfectly even 3x2 grid of equal square cells, wide blank white gaps, each character centered and fully contained in its cell on pure white background. Row by row left to right: Abra; Kadabra; Alakazam; Geodude; Graveler; Golem. Faithful classic species anatomy and colors: Abra has closed eyes and a yellow tail, Kadabra carries one silver spoon and has a tail, Alakazam carries two silver spoons and has no tail, Geodude is a grey boulder with two rock arms and no legs, Graveler is a craggy grey boulder with four arms and two short feet, Golem has a round brown stone shell with a grey reptilian head and four short limbs. Three-quarter friendly confident poses, exact recognizable silhouettes, equal visual weight. Match rendering style of the references only; do not copy their species. No scenery, shadows or cell lines. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject.",
+      "failure": "Image service safety rejection; no image produced."
+    },
+    {
+      "id": "image-38907-20",
+      "status": "completed",
+      "path": "assets/icons/source/moves-sheet-psystrike-redo.png",
+      "size": "1024x1024",
+      "reference_images": ["assets/icons/source/moves-sheet.png"],
+      "prompt": "A sprite sheet in exactly 2x2 even square cells with very broad empty margins on a solid warm off-white (#f5f1e8) background. Top left: Psystrike move icon, one short diagonal pink-violet psychic beam with a rounded fully visible tail, three small pink psychic crystal shards along the beam, ending in a bright compact pink-violet energy impact burst. Every part including the left tail fully contained within the middle 70 percent of its cell, no clipping. The other three cells contain small neutral grey stars unused. Match rendering style of the reference image exactly; do not copy its subjects. Clean solid background, no noise and no glow halo. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject.",
+      "sha256": "7448a6335613e69ff88a7305f541ca600fbd76ca31968d2a341585edc49d626c"
+    }
+  ]
+}

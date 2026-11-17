@@ -6,57 +6,49 @@ import {
   type NavigationDirection,
 } from "../../platform/input";
 import { currentInputMode } from "./input-glyph";
-import {
-  abortableEffect,
-  Container,
-  Content,
-  Image,
-  Text,
-  withOpacity,
-  type FontFamilies,
-} from "@pmndrs/uikit";
-import { Easing } from "@tweenjs/tween.js";
-import { Color, Matrix4, Mesh, PlaneGeometry, Vector3, type Texture } from "three";
-import { images } from "../../prepare/images";
+import { Component, Container, Image, Text, type FontFamilies } from "@pmndrs/uikit";
+import { Matrix4, Vector3, type Object3D, type Texture } from "three";
 import { getAudio } from "../../audio/engine";
 import { LEGAL_NOTICE } from "../../legalNotice";
 import { COMMUNITY_LINKS } from "../../community";
 import { type LobbyPick } from "../../lobbyPick";
+import {
+  trainerArt,
+  trainerOrder,
+  trainers,
+  trainerUnlocked,
+  XIAQING_UNLOCK_KILLS,
+  type TrainerId,
+} from "../../trainers";
 import { STAGE_ROUTE } from "../../run/sim/content/campaign";
 import { formatTime, typeNames } from "../../run/labels";
 import { difficultyLock, starterLock } from "../../run/locks";
 import { starterUnlocked, type Progress } from "../../run/progress";
-import { starterUnlocks } from "../../run/sim/content/params/progression";
 import { difficulties, type Difficulty } from "../../run/sim/content/difficulties";
 import { items, type ItemId } from "../../run/sim/content/items";
 import { starterOrder, starters, type StarterId } from "../../run/sim/content/lines/index";
 import { type StageId } from "../../run/sim/content/stages/index";
-import { BoxShadow, OutlineRing } from "./box-shadow";
-import { CodexBall } from "./codex-parts";
-import { CURRENCY_NAME, GpuCurrency } from "./currency";
-import { cubicBezier, uiEaseOut } from "./focus-mark";
+import { BallBadge } from "./ball";
+import { CURRENCY_ICON, CURRENCY_NAME } from "./currency";
 import { GameButton } from "./game-button";
-import { HoverPattern } from "./hover-pattern";
 import { createMenuIcon } from "./icons";
+import { LockChip } from "./lock-chip";
 import { fade, stack } from "./layer";
 import { balanceLines, textWidth } from "./line-break";
 import type { LobbyScene } from "./lobby-scene";
 import { MapSwatch } from "./map-swatch";
-import { idleTicked } from "./motion";
-import { OutlinedText } from "./outlined-text";
-import { themeColors, typeColors } from "./run-theme";
-import { createTriangleMark, HatchFill, RadialFace, Silhouette } from "./screen-parts";
-import { SlantPlate, slantOf } from "./slant-plate";
+import { EASE, LIFT, SNAP, stagger } from "./motion";
+import { themeColors } from "./run-theme";
+import { revealInScroller } from "./scroll-reveal";
+import { createTriangleMark } from "./screen-parts";
+import { ArrowButton, SlantTab } from "./slant-controls";
+import { SlantPlate } from "./slant-plate";
+import { segmentTray, SegmentFace } from "./segment-face";
 import { UiStage } from "./stage";
-import { leadTag } from "./tag";
+import { slantTag } from "./tag";
+import { HARD_SHADOW, slantOf, ui } from "./tokens";
 import { GpuTooltip } from "./tooltip";
-import { UiShaderMaterial } from "./ui-shader";
 import type { UiInsets } from "./viewport";
-
-/** Portraits for the roster's locked silhouettes: views of the image store's shared Sources. */
-function artTexture(url: string, onLoad: () => void): Texture {
-  return images().texture(url, "art", onLoad);
-}
 
 export interface LobbyState {
   progress: Progress;
@@ -76,52 +68,47 @@ export interface LobbyCallbacks {
 }
 
 const LONG_PRESS_MS = 450;
-/** A horizontal drag this long in the hero zone switches partner. */
+/** A horizontal drag this long over the stage switches partner. */
 const SWIPE = 48;
-/** Wheel distance per partner switch over the hero zone. */
+/** Wheel distance per partner switch over the stage. */
 const WHEEL_STEP = 100;
-const NAVY = "#142f50",
-  NAVY_DEEP = "#0d233f",
-  SURFACE = "#e9f4fb",
-  YELLOW = "#ffd45b",
-  ICE = "#d8effb",
-  BLUE = "#2165a4",
-  SEGMENT_EDGE = "#0a1c33";
-const ease = (t: number) => cubicBezier(t, 0.25, 0.1, 0.25, 1);
-/** 出发's light sweep: one pass every SHINE_EVERY, SHINE_MS long (and one at once on hover). */
-const SHINE_EVERY = 4200;
-const SHINE_MS = 650;
-/** The tightest gap between compact medals (a wide roster). */
-const COMPACT_ROSTER_GAP = 6;
-/** Below this medal size a desktop roster folds into two staggered rows. */
-const ROW_MEDAL_MIN = 64;
-/** Two-row desktop medals stay at most this large, so the column keeps clear of the cards. */
-const STAGGER_MEDAL_MAX = 72;
+/** Keeps badge lift, plate shadows and focus rings inside the clipped decision column. */
+const COLUMN_ROOM = 12;
+/** Partners per roster row. */
+const PER_ROW = 5;
+/** The evolution chain's arrows. */
+const CHAIN_ARROW = "#b9bec8";
+const counts = new Intl.NumberFormat("zh-CN", { maximumSignificantDigits: 21 });
 
-/** DESIGN.md: desktop / compact (logical height ≤ 600, landscape) sizes. */
+/** Disposes a detached subtree, children before parents, as `UiStage.dispose` does: a component's
+ *  own dispose does not reach its children (their materials and text would leak). */
+function disposeTree(root: Object3D): void {
+  const components: { dispose(): void }[] = [];
+  root.traverse((object) => {
+    if (object instanceof Component) components.push(object);
+  });
+  for (const component of components.reverse()) component.dispose();
+}
+
+/** Desktop / compact (logical height ≤ 600, landscape) sizes. */
 function tokens(compact: boolean) {
   return {
     edge: compact ? 16 : 28,
-    top: compact ? 8 : 20,
-    bottom: compact ? 12 : 24,
-    bar: compact ? 44 : 48,
-    gap: compact ? 8 : 12,
-    ribbon: compact ? 40 : 64,
-    ribbonIndent: compact ? 8 : 12,
+    top: compact ? 8 : 24,
+    bottom: compact ? 10 : 24,
+    gap: compact ? 8 : 10,
+    ribbon: compact ? 44 : 68,
     name: compact ? 26 : 44,
-    nameStroke: compact ? 2.5 : 3.5,
-    tagsGap: compact ? -6 : 8,
-    medalMax: compact ? 56 : 84,
-    medalGap: compact ? 10 : 14,
-    rosterGap: compact ? 8 : 18,
-    trayGap: compact ? 8 : 14,
-    trayPad: compact ? 4 : 6,
-    segment: compact ? 44 : 46,
-    launch: compact ? 56 : 84,
-    slot: compact ? 28 : 40,
-    switchKey: compact ? 48 : 56,
-    legalGap: compact ? 6 : 10,
-    zoneGap: compact ? 16 : 24,
+    plate: compact ? 36 : 44,
+    plateText: compact ? 18 : 22,
+    avatar: compact ? 48 : 60,
+    badge: compact ? 48 : 64,
+    badgeGap: compact ? 8 : 16,
+    chain: compact ? 30 : 52,
+    slot: compact ? 40 : 40,
+    swatch: compact ? 22 : 34,
+    brand: compact ? 30 : 38,
+    section: compact ? 8 : 14,
   };
 }
 
@@ -135,373 +122,266 @@ type ControlKind =
   | "prev"
   | "next"
   | "tile"
+  | "trainer"
   | "difficulty"
   | "start"
   | "info";
+interface PaintState {
+  hovered: boolean;
+  focused: boolean;
+  focusVisible: boolean;
+  pressed: boolean;
+}
 interface Control {
   kind: ControlKind;
   panel: Container;
-  /** Roster or difficulty position. */
+  /** Roster, trainer, link or difficulty position. */
   index: number;
   tip(): string | null;
   locked(): boolean;
   activate(): void;
-  paint(state: {
-    hovered: boolean;
-    focused: boolean;
-    focusVisible: boolean;
-    pressed: boolean;
-  }): void;
+  paint(state: PaintState): void;
   update(deltaMs: number): void;
   dispose(): void;
 }
-
-/** A locked line's unlock progress: a 4px ring, xp blue from 12 o'clock clockwise on navy-deep. */
-class ProgressRing {
-  readonly content = new Content({
-    positionType: "absolute",
-    positionLeft: -4,
-    positionTop: -4,
-    keepAspectRatio: false,
-    depthTest: false,
-  });
-  private readonly geometry = new PlaneGeometry(1, 1);
-  private readonly material = new UiShaderMaterial("lobby-progress-ring", {
-    uniforms: { share: { value: 0 }, opacity: { value: 1 } },
-    vertexShader: `
-      varying vec2 ringUv;
-      #include <clipping_planes_pars_vertex>
-      void main() {
-        ringUv = uv;
-        vec4 mvPosition = modelViewMatrix * vec4(position, 1.);
-        #include <clipping_planes_vertex>
-        gl_Position = projectionMatrix * mvPosition;
-      }`,
-    fragmentShader: `
-      uniform float share, opacity;
-      varying vec2 ringUv;
-      #include <clipping_planes_pars_fragment>
-      vec3 toLinear(vec3 c) { return mix(c / 12.92, pow((c + .055) / 1.055, vec3(2.4)), step(.04045, c)); }
-      void main() {
-        #include <clipping_planes_fragment>
-        vec2 q = ringUv - .5;
-        float r = length(q) * 2.;
-        float aa = fwidth(r);
-        float band = smoothstep(.86 - aa, .86 + aa, r) * (1. - smoothstep(1. - aa, 1., r));
-        if (band <= 0.) discard;
-        float angle = fract(atan(q.x, q.y) / 6.2831853 + 1.);
-        vec3 ink = angle < share ? vec3(.349, .784, 1.) : vec3(.051, .137, .247);
-        gl_FragColor = vec4(toLinear(ink), band * opacity);
-        #include <colorspace_fragment>
-      }`,
-  });
-  constructor() {
-    this.content.add(new Mesh(this.geometry, this.material));
-    this.content.notifyAncestorsChanged();
-    abortableEffect(() => {
-      const parent = this.content.parentContainer.value;
-      const size = parent?.size.value;
-      const border = parent?.borderInset.value;
-      if (!size || !border) return;
-      // Follow the resolved border box after layout, including resize and UI scale changes.
-      this.content.setProperties({
-        positionLeft: -border[3] - 4,
-        positionTop: -border[0] - 4,
-        width: size[0] + 8,
-        height: size[1] + 8,
-      });
-    }, this.content.abortSignal);
-  }
-  set(share: number): void {
-    this.material.uniforms.share.value = share;
-  }
-  dispose(): void {
-    this.content.dispose();
-    this.geometry.dispose();
-    this.material.dispose();
-  }
+/** Anything with the shared pointer/keyboard/gamepad setters (GameButton, SlantTab, ArrowButton). */
+interface Keyed {
+  panel: Container;
+  setHovered(hovered: boolean): void;
+  setFocused(focused: boolean): void;
+  setFocusVisible(visible: boolean): void;
+  setPressed(pressed: boolean): void;
+  fitTouch(): void;
+  update?(deltaMs: number): void;
+  dispose(): void;
 }
 
 /**
- * A 研究所 / 图鉴 card (DESIGN.md): a solid face in a 3px navy-deep frame on a 5px hard
- * base, its Magpie illustration standing on the bottom-left corner and rising over the top edge,
- * the name centred in the slot right of it. Hover lifts it (the ball pattern lights, the picture
- * grows and tilts); focus adds the blue ring; a press sinks it onto its base.
+ * A name plate (trainer, partner): a slanted plate with its name centred on the parallelogram,
+ * unrolling from the left (400ms SNAP) as the name fades in.
  */
-class LobbyCard {
+class NamePlate {
   readonly panel = new Container({
-    positionType: "absolute",
-    borderWidth: 3,
-    borderColor: NAVY_DEEP,
-    borderRadius: 10,
-  });
-  private readonly base = new BoxShadow(10, [
-    { y: 5, blur: 0, color: NAVY_DEEP, alpha: 1 },
-    { y: 10, blur: 16, color: NAVY_DEEP, alpha: 0.28 },
-  ]);
-  private readonly pattern: HoverPattern;
-  private readonly ring = new OutlineRing(10, BLUE, 3, 4);
-  private readonly art;
-  private readonly artShade: Silhouette;
-  private readonly slot = new Container({
-    positionType: "absolute",
-    positionTop: 0,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
+    alignSelf: "flex-start",
   });
-  private readonly name: Text;
+  private readonly plate: SlantPlate;
+  private readonly word = new Container({ flexShrink: 0 });
+  private readonly text: Text;
+  private readonly shade: Text | null;
+  private readonly pose = { reveal: 1 };
   private readonly stage: UiStage;
-  private readonly pose = { lit: 0, down: 0 };
-  private lit = false;
-  private down = false;
 
-  constructor(stage: UiStage, label: string, url: string, face: string) {
+  constructor(
+    stage: UiStage,
+    style: ConstructorParameters<typeof SlantPlate>[1],
+    name: string,
+    shade: string | null,
+  ) {
     this.stage = stage;
-    this.panel.setProperties({ backgroundColor: face });
-    this.pattern = new HoverPattern(stage.motion, () => stage.invalidate(), face, 7);
-    this.ring.content.setProperties({ display: "none" });
-    this.art = new Image({ src: url, positionType: "absolute" });
-    this.artShade = new Silhouette(
-      artTexture(url, () => stage.invalidate()),
-      0.35,
-    );
-    this.artShade.content.setProperties({ positionType: "absolute" });
-    this.name = new Text({
-      text: label,
-      fontWeight: 800,
-      color: NAVY_DEEP,
-      whiteSpace: "pre",
-      wordBreak: "keep-all",
-    });
-    this.slot.add(this.name);
-    this.panel.add(this.base.content, stack(this.pattern.content, 1), stack(this.slot, 2));
-    this.panel.add(
-      stack(this.artShade.content, 3),
-      stack(this.art, 4),
-      stack(this.ring.content, 5),
-    );
+    this.plate = new SlantPlate(this.panel, style);
+    this.plate.set({ depth: HARD_SHADOW.offset });
+    const look = { text: name, fontWeight: 800, whiteSpace: "pre", wordBreak: "keep-all" } as const;
+    this.text = new Text({ ...look, color: ui.white });
+    // A hard copy in the type's deep colour behind the name.
+    this.shade = shade
+      ? new Text({ ...look, color: shade, positionType: "absolute", positionTop: 3 })
+      : null;
+    if (this.shade) this.word.add(stack(this.shade, 1));
+    this.word.add(stack(this.text, 2));
+    this.panel.add(this.plate.content, stack(this.word, 1));
   }
 
-  /** Box (logical units, from the top left) and the illustration's corner inset. */
-  place(x: number, y: number, w: number, h: number, inset: number): void {
-    const art = 1.1 * h;
-    this.panel.setProperties({ positionLeft: x, positionTop: y, width: w, height: h });
-    for (const node of [this.art, this.artShade.content])
-      node.setProperties({
-        width: art,
-        height: art,
-        positionLeft: inset - 3,
-        positionBottom: inset - 3,
+  /** Height and type size; the padding is even on both sides, so the name sits on the centre. */
+  size(height: number, font: number, padding: number): void {
+    const lean = slantOf(height) / 2;
+    const spacing = font * 0.06;
+    this.panel.setProperties({ height, paddingX: padding + lean });
+    for (const text of [this.text, this.shade])
+      text?.setProperties({
+        fontSize: font,
+        letterSpacing: spacing,
+        // The tracking trails the last glyph: the same indent before the first keeps it centred.
+        paddingLeft: spacing,
       });
-    this.artShade.content.setProperties({ transformTranslateY: 3 });
-    const left = Math.min(art, 0.6 * w) + inset + 6 - 3;
-    this.slot.setProperties({
-      positionLeft: left,
-      width: Math.max(0, w - 6 - left - 10),
-      height: h - 6,
-    });
-    const size = h >= 90 ? 20 : 16;
-    this.name.setProperties({
-      fontSize: size,
-      letterSpacing: size * 0.06,
-      paddingLeft: size * 0.06,
-    });
-    this.apply();
+    this.shade?.setProperties({ positionLeft: Math.max(2, font * 0.07) });
   }
 
-  paint(state: {
-    hovered: boolean;
-    focused: boolean;
-    focusVisible: boolean;
-    pressed: boolean;
-  }): void {
-    const lit = state.hovered || (state.focused && state.focusVisible);
-    this.ring.content.setProperties({
-      display: state.focused && state.focusVisible ? "flex" : "none",
-    });
-    this.pattern.setFocused(lit);
-    if (lit !== this.lit || state.pressed !== this.down) {
-      this.lit = lit;
-      this.down = state.pressed;
-      this.stage.motion.animate(
-        this.pose,
-        { lit: lit ? 1 : 0, down: state.pressed ? 1 : 0 },
-        state.pressed ? 60 : 140,
-        () => this.apply(),
-        ease,
-      );
-    }
+  setName(name: string): void {
+    this.text.setProperties({ text: name });
+    this.shade?.setProperties({ text: name });
   }
 
-  private apply(): void {
-    const { lit, down } = this.pose;
-    this.panel.setProperties({
-      transformTranslateY: -2 * lit * (1 - down) + 5 * down,
-      transformScaleX: 1 + 0.012 * down,
-      transformScaleY: 1 - 0.03 * down,
-    });
-    this.base.set([
-      { y: 5 + 2 * lit * (1 - down) - 5 * down, blur: 0, color: NAVY_DEEP, alpha: 1 },
-      { y: 10, blur: 16, color: NAVY_DEEP, alpha: 0.28 * (1 - down) },
-    ]);
-    const grow = 1 + 0.06 * lit;
-    // CSS rotate(−3deg) turns counter-clockwise on a y-down screen; UIKit's z turns the other way.
-    for (const node of [this.art, this.artShade.content])
-      node.setProperties({
-        transformScaleX: grow,
-        transformScaleY: grow,
-        transformRotateZ: 3 * lit,
-      });
-    this.stage.invalidate();
-  }
-
-  update(deltaMs: number): void {
-    this.pattern.update(deltaMs);
+  /** Unrolls from the left (the plate), the name fading in with it. */
+  enter(delay: number): void {
+    this.stage.motion.enter(
+      this.pose,
+      { reveal: 0 },
+      { reveal: 1 },
+      400,
+      () => {
+        this.plate.set({ reveal: this.pose.reveal });
+        fade(this.word, Math.min(1, this.pose.reveal * 1.4));
+        this.stage.invalidate();
+      },
+      SNAP,
+      delay,
+    );
   }
 
   dispose(): void {
     this.stage.motion.cancel(this.pose);
-    this.base.dispose();
-    this.pattern.dispose();
-    this.ring.dispose();
-    this.artShade.dispose();
+    this.plate.dispose();
   }
 }
 
 /**
- * The lobby (DESIGN.md): the root screen over its world scene (`lobby-scene.ts`: backdrop,
- * podium, type light and the live partner). The UI is transparent over the scene: the top bar
- * (brand, balance, 研究所 / 图鉴 / 设置), ‹ › beside the podium, the legal line, and one decision
- * column anchored bottom right — the type ribbon, the tags, the roster, the backpack and the tray
- * with the difficulty and 出发.
+ * The lobby: the root screen over its world scene (`lobby-scene.ts`: paper stage, trainer slab and
+ * full-body art, line-drawn ball stage and the live partner). Left: the trainer — name plate and
+ * three portraits bottom left. Right: the partner — ‹ › beside the stage, the decision column (type
+ * name plate, type tag and best record, evolution chain, roster, backpack), the route and the
+ * difficulty with 出发 bottom right. Top: 研究所 / 图鉴 / 联机 and the balance; the wordmark, the
+ * community links, 设置 and 全屏 top right.
  */
 export class GpuLobby {
   readonly stage = new UiStage();
   readonly minLayout = { width: 760, height: 360 };
   private readonly callbacks: LobbyCallbacks;
-  private readonly topBar = new Container({
+  private readonly tabs = new Container({
     positionType: "absolute",
     flexDirection: "row",
     alignItems: "center",
   });
-  private readonly brand = new Container({ flexDirection: "row", alignItems: "center", gap: 10 });
-  private readonly mark = new Image({
-    src: "/art/portraits/charmander.webp",
-    width: 48,
-    height: 48,
+  private readonly balance = new Container({
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingLeft: 8,
+    paddingRight: 12,
     flexShrink: 0,
   });
-  private readonly word: OutlinedText;
-  private readonly balance: GpuCurrency;
+  private readonly balancePlate: SlantPlate;
+  private readonly balanceText = new Text({
+    fontSize: 16,
+    fontWeight: 800,
+    color: ui.white,
+    whiteSpace: "pre",
+  });
+  /** Top right: the wordmark before the keys, one row centred on the tabs' row. */
+  private readonly corner = new Container({
+    positionType: "absolute",
+    flexDirection: "row",
+    alignItems: "center",
+  });
+  private readonly brand = new Container({ flexDirection: "row", flexShrink: 0 });
+  private readonly brandWords: Text[];
+  private readonly keys = new Container({ flexDirection: "row", alignItems: "center" });
+  private readonly trainerBox = new Container({
+    positionType: "absolute",
+    flexDirection: "column",
+    alignItems: "flex-start",
+  });
+  private readonly trainerPlate: NamePlate;
+  /** Beside the plate while a locked trainer is previewed: a padlock and the KO count. */
+  private readonly trainerLock = new LockChip();
+  private readonly trainerHead = new Container({ flexDirection: "row", alignItems: "center" });
+  private readonly avatars = new Container({ flexDirection: "row", alignItems: "flex-end" });
+  private readonly avatarBoxes: Container[] = [];
   private readonly column = new Container({
     positionType: "absolute",
     flexDirection: "column",
     alignItems: "stretch",
+    padding: COLUMN_ROOM,
+    scrollbarColor: ui.line,
+    scrollbarWidth: 3,
   });
-  private readonly ribbon = new Container({ flexDirection: "row", alignItems: "center" });
-  private readonly tags = new Container({ flexDirection: "row", alignItems: "center" });
-  /** One or two rows of medals (`rosterLayout`). */
-  private readonly roster = new Container({ flexDirection: "column", alignItems: "stretch" });
-  private readonly rosterRows = [0, 1].map(
-    () => new Container({ flexDirection: "row", alignItems: "flex-end" }),
-  );
-  private rosterRowsKey = "";
-  /** Medals per roster row (all of them in one row). */
-  private rosterPerRow = 0;
-  private readonly backpack = new Container({ flexDirection: "row", alignItems: "center", gap: 6 });
-  private readonly tray = new Container({
+  private readonly columnContent = new Container({
     flexDirection: "column",
-    backgroundColor: NAVY_DEEP,
-    borderWidth: 3,
-    borderColor: NAVY,
-    borderRadius: 14,
+    alignItems: "stretch",
+    flexShrink: 0,
   });
-  private readonly segmentsRow = new Container({ flexDirection: "row", gap: 4 });
-  private readonly launch = new Container({
+  // The partner's rows end on the column's right edge, as the roster and the block below do.
+  private readonly ribbon = new Container({
     flexDirection: "row",
+    justifyContent: "flex-end",
     alignItems: "center",
+    gap: 10,
     flexShrink: 0,
   });
-  private readonly launchPlate: SlantPlate;
-  private readonly launchEmblem = new Container({
+  private readonly meta = new Container({
+    flexDirection: "row",
+    justifyContent: "flex-end",
     alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 999,
-    borderWidth: 2,
-    borderColor: YELLOW,
-    backgroundColor: NAVY_DEEP,
-    flexShrink: 0,
+    gap: 10,
   });
-  private readonly launchText = new Text({
-    text: "出发",
+  private readonly chain = new Container({
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    gap: 8,
+  });
+  private readonly divider = new Container({ height: 2, backgroundColor: ui.ink, flexShrink: 0 });
+  private readonly roster = new Container({ flexDirection: "row", flexWrap: "wrap" });
+  private readonly backpack = new Container({
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    gap: 8,
+  });
+  private readonly route = new Container({
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+  });
+  private readonly routeName = new Text({
+    text: "6 关探险",
     fontWeight: 800,
-    color: NAVY_DEEP,
+    color: ui.muted,
     whiteSpace: "pre",
   });
-  /** Centres the word on the whole plate (not between the emblem and the wedges). */
-  private readonly launchWord = new Container({
+  private readonly swatches: MapSwatch[] = [];
+  private swatchSize = 0;
+  private readonly go = new Container({
     positionType: "absolute",
-    positionLeft: 0,
-    positionTop: 0,
-    width: "100%",
-    height: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-  });
-  private readonly arrows: Content[] = [];
-  private readonly arrowBox = new Container({ flexDirection: "row", alignItems: "center" });
-  /** The brand's corner: the community links, then the legal line. */
-  private readonly legal = new Container({
-    positionType: "absolute",
-    flexDirection: "column",
-    alignItems: "flex-start",
-    justifyContent: "center",
-  });
-  private readonly links = new Container({ flexDirection: "row", alignItems: "center" });
-  /** Map tabs occupy the launch tray above difficulty; the destination labels 出发. */
-  private readonly mapSign = new Container({
     flexDirection: "row",
     alignItems: "center",
   });
-  private readonly mapName = new Text({
-    fontWeight: 800,
-    color: NAVY_DEEP,
+  private readonly startButton: GameButton;
+  private readonly legal = new Text({
+    text: LEGAL_NOTICE,
+    fontWeight: 700,
+    lineHeight: "145%",
+    color: ui.muted,
     whiteSpace: "pre",
     wordBreak: "keep-all",
   });
-  private readonly mapTiles: { panel: Container; swatch: MapSwatch }[] = [];
-  private readonly legalText: Text;
-  private readonly prev: GameButton;
-  private readonly next: GameButton;
+  private readonly prev: ArrowButton;
+  private readonly next: ArrowButton;
+  private readonly fullscreen: GameButton;
+  private toggleFullscreen: (() => void) | undefined;
+  private readonly fullscreenIcon = new FullscreenIcon();
   private readonly tooltip: GpuTooltip;
   private readonly controls: Control[] = [];
   private readonly tiles: Control[] = [];
   private readonly segments: Control[] = [];
-  private readonly buttons: GameButton[] = [];
-  private readonly cards: LobbyCard[];
-  /** Where the cards sit (§3.1): above the column, or in the top bar on short screens. */
-  private cardsInBar = false;
-  private readonly medals: { panel: Container; ball: CodexBall; badge: Container }[] = [];
-  /** 出发's last light sweep (lobby time, ms). */
-  private shineAt = 0;
-  private shineShown = -1;
-  private readonly segmentBoxes: Container[] = [];
+  private readonly trainerControls: Control[] = [];
+  private readonly keyed: Keyed[] = [];
+  private readonly badges: { badge: BallBadge; entry: { x: number; o: number } }[] = [];
   private readonly disposables: { dispose(): void; update?(): void }[] = [];
-  private readonly plateParts: { dispose(): void; update?(): void }[] = [];
+  /** The selected partner's parts (rebuilt on a switch). */
+  private readonly partnerParts: { dispose(): void }[] = [];
+  private ribbonPlate: NamePlate | null = null;
   private readonly carryTips: { panel: Container; item: ItemId }[] = [];
   private readonly inverse = new Matrix4();
   private readonly point = new Vector3();
   private scene: LobbyScene | null = null;
-  private emblemImage: {
-    setProperties(p: {
-      transformRotateZ?: number;
-      transformScaleX?: number;
-      transformScaleY?: number;
-    }): void;
-  } | null = null;
-  private ribbonPlate: SlantPlate | null = null;
   private progress: Progress;
   private selected: StarterId;
+  private trainer: TrainerId;
+  private trainerPreview: TrainerId | null = null;
   private difficulty: Difficulty;
   private map: StageId;
   private focused = -1;
@@ -513,27 +393,22 @@ export class GpuLobby {
   private revealed = true;
   private covered = false;
   private departing = false;
+  /** The list entrance runs once, on the first frame the lobby shows. */
+  private entered = false;
   private touchTip = -1;
   private hoveredTip = -1;
   private tipPress: { index: number; at: number; x: number; y: number; fired: boolean } | null =
     null;
   private swipe: { x: number; y: number; done: boolean } | null = null;
   private pointer: { x: number; y: number } | null = null;
+  private columnDrag = false;
   private wheel = 0;
   private elapsed = 0;
-  private legalLaid = "";
   private placed = "";
+  private legalLaid = "";
+  /** Where the legal line sits: between the trainer and 出发, or (narrow) at the column's end. */
+  private legalInColumn = false;
   private zone = { x: 0, y: 0, r: 0, b: 0 };
-  /** The launch plate's look, eased between its states. */
-  private readonly lit = { value: 0 };
-  private readonly press = { value: 0 };
-  private readonly spin = { value: 0 };
-  private litOn = false;
-  private downOn = false;
-  private patternPhase = 0;
-  private launchPose = "";
-  /** The ribbon and tags slide in from 12 to the right on a switch. */
-  private readonly slide = { value: 1 };
 
   constructor(
     fonts: FontFamilies,
@@ -544,141 +419,129 @@ export class GpuLobby {
     this.callbacks = callbacks;
     this.progress = state.progress;
     this.selected = state.pick.starter;
+    this.trainer = state.pick.trainer;
     this.difficulty = state.pick.difficulty;
     this.map = "forest";
-    this.stage.root.setProperties({ fontFamilies: fonts, color: NAVY });
+    this.stage.root.setProperties({ fontFamilies: fonts, color: ui.ink });
     this.tooltip = new GpuTooltip(this.stage);
 
-    // Top bar: brand | balance, 研究所, 图鉴, 设置.
-    // The game logo: the display wordmark in white with a navy-deep outline, on the brand mark.
-    this.word = new OutlinedText(
-      {
-        text: "poketone",
-        fontFamily: "Poketone Display",
-        fontWeight: 400,
-        fontSize: 34,
-        letterSpacing: -0.5,
-        lineHeight: "110%",
-        color: "#ffffff",
-      },
-      { width: 6, color: NAVY_DEEP },
-    );
-    this.brand.add(this.mark, this.word.root);
-    this.balance = new GpuCurrency(this.stage);
-    this.balance.set(state.progress.stardust);
-    this.balance.solid();
-    const settings = new GameButton(this.stage, {
-      tone: "scene",
-      size: "small",
-      square: true,
-      flat: true,
-      icon: createMenuIcon("settings"),
-    });
-    const multiplayer = new GameButton(this.stage, {
-      tone: "scene",
-      size: "small",
-      label: "联机",
-      flat: true,
-    });
-    this.buttons.push(multiplayer);
-    this.controls.push(
-      this.keyControl("multiplayer", multiplayer, () => this.callbacks.multiplayer()),
-    );
-    this.fullscreen = new GameButton(this.stage, {
-      tone: "scene",
-      size: "small",
-      square: true,
-      flat: true,
-      icon: this.fullscreenIcon,
-    });
-    this.fullscreen.panel.setProperties({ display: "none" });
-    this.buttons.push(this.fullscreen);
-    this.controls.push(
-      this.keyControl("fullscreen", this.fullscreen, () => this.toggleFullscreen?.()),
-    );
-    this.buttons.push(settings);
-    this.topBar.add(
-      this.brand,
-      new Container({ flexGrow: 1 }),
-      this.balance.root,
-      multiplayer.panel,
-      settings.panel,
-      this.fullscreen.panel,
-    );
-    this.controls.push(this.keyControl("settings", settings, () => this.callbacks.settings()));
-    // 研究所 / 图鉴: two illustrated cards under 设置 (or in the top bar on short screens, §3.1).
-    this.cards = [
-      new LobbyCard(this.stage, "研究所", "/art/lobby/card-lab.webp", ICE),
-      new LobbyCard(this.stage, "图鉴", "/art/lobby/card-codex.webp", "#fce5e5"),
+    // Top left: 研究所 / 图鉴 / 联机, then the balance (an upright ink chip).
+    const tabs: [ControlKind, string, () => void][] = [
+      ["lab", "研究所", () => this.callbacks.lab()],
+      ["codex", "图鉴", () => this.callbacks.codex()],
+      ["multiplayer", "联机", () => this.callbacks.multiplayer()],
     ];
-    for (const [i, card] of this.cards.entries()) {
-      this.stage.root.add(stack(card.panel, 3));
-      this.controls.push({
-        kind: i === 0 ? "lab" : "codex",
-        panel: card.panel,
-        index: i,
-        tip: () => null,
-        locked: () => false,
-        activate: () => (i === 0 ? this.callbacks.lab() : this.callbacks.codex()),
-        paint: (state) => card.paint(state),
-        update: (deltaMs) => card.update(deltaMs),
-        dispose: () => card.dispose(),
-      });
+    for (const [kind, label, activate] of tabs) {
+      const tab = new SlantTab(this.stage, label);
+      this.tabs.add(tab.panel);
+      this.controls.push(this.keyControl(kind, tab, activate));
     }
-
-    // The map sign, then ‹ › beside the podium (placed after layout).
-    this.buildMapSign();
-    this.prev = this.switchButton(-1);
-    this.next = this.switchButton(1);
-
-    // The decision column: ribbon, tags, roster, backpack, tray.
-    this.roster.add(...this.rosterRows);
-    for (const [index, id] of starterOrder.entries()) this.tile(id, index);
-    this.launchPlate = new SlantPlate(
-      this.launch,
-      { fill: YELLOW, topLine: { color: "#ffe9a3", width: 4 }, pattern: true },
-      12,
+    this.balancePlate = new SlantPlate(this.balance, { fill: ui.ink, upright: true });
+    this.balancePlate.set({ depth: 3 });
+    this.balance.add(
+      this.balancePlate.content,
+      stack(new Image({ src: CURRENCY_ICON, width: 24, height: 24 }), 1),
+      stack(this.balanceText, 1),
     );
-    this.buildTray();
-    this.column.add(
-      stack(this.ribbon, 2),
-      stack(this.tags, 4),
-      stack(this.roster, 1),
-      stack(this.backpack, 1),
-      stack(this.tray, 1),
-    );
+    this.balanceText.setProperties({ text: counts.format(state.progress.stardust) });
+    this.tabs.add(this.balance);
 
-    // Quiet legal copy under the brand, outside the decision column and thumb zone.
-    this.legalText = new Text({
-      text: LEGAL_NOTICE,
-      fontSize: 11,
-      lineHeight: "145%",
-      fontWeight: 700,
-      color: ICE,
-      textAlign: "center",
-      whiteSpace: "pre",
-      wordBreak: "keep-all",
-      backgroundColor: withOpacity(NAVY_DEEP, 0.62),
-      borderRadius: 4,
-      paddingX: 8,
-      paddingY: 3,
-    });
+    // Top right: the wordmark ("poke" ink, "tone" ball red), the links, 设置 and 全屏.
+    this.brandWords = [
+      ["poke", ui.ink],
+      ["tone", ui.ball],
+    ].map(
+      ([text, color]) =>
+        new Text({
+          text,
+          color,
+          fontFamily: "Poketone Display",
+          fontWeight: 400,
+          lineHeight: "110%",
+          letterSpacing: -0.5,
+        }),
+    );
+    this.brand.add(...this.brandWords);
     for (const [i, link] of COMMUNITY_LINKS.entries()) {
       const button = new GameButton(this.stage, {
-        tone: "scene",
+        tone: "secondary",
         size: "small",
         label: link.label,
-        flat: true,
       });
-      this.buttons.push(button);
-      this.links.add(button.panel);
+      this.keys.add(button.panel);
       this.controls.push({
         ...this.keyControl("link", button, () => this.callbacks.openLink(link.url)),
         index: i,
       });
     }
-    this.legal.add(this.links, this.legalText);
-    this.stage.root.add(stack(this.legal, 1), stack(this.column, 2), stack(this.topBar, 3));
+    const settings = new GameButton(this.stage, {
+      tone: "secondary",
+      size: "small",
+      square: true,
+      icon: createMenuIcon("settings"),
+    });
+    this.keys.add(settings.panel);
+    this.controls.push(this.keyControl("settings", settings, () => this.callbacks.settings()));
+    this.fullscreen = new GameButton(this.stage, {
+      tone: "secondary",
+      size: "small",
+      square: true,
+      icon: this.fullscreenIcon,
+    });
+    this.fullscreen.panel.setProperties({ display: "none" });
+    this.keys.add(this.fullscreen.panel);
+    this.controls.push(
+      this.keyControl("fullscreen", this.fullscreen, () => this.toggleFullscreen?.()),
+    );
+    this.corner.add(this.brand, this.keys);
+
+    // Bottom left: the trainer's name plate over the three portraits.
+    this.trainerPlate = new NamePlate(
+      this.stage,
+      { fill: ui.ink },
+      trainers[this.trainer].name,
+      null,
+    );
+    this.disposables.push(this.trainerPlate);
+    this.buildTrainers();
+    this.trainerHead.add(stack(this.trainerPlate.panel, 2), stack(this.trainerLock.panel, 2));
+    this.trainerBox.add(this.trainerHead, this.avatars);
+
+    // ‹ › beside the stage.
+    this.prev = this.switchButton(-1);
+    this.next = this.switchButton(1);
+
+    // The decision column: name plate, tag and record, chain, roster, backpack.
+    for (const [index, id] of starterOrder.entries()) this.tile(id, index);
+    this.columnContent.add(
+      stack(this.ribbon, 2),
+      stack(this.meta, 3),
+      stack(this.chain, 1),
+      this.divider,
+      stack(this.roster, 1),
+      stack(this.backpack, 1),
+    );
+    this.column.add(this.columnContent);
+
+    // Bottom right: the route, then the difficulty tray and 出发.
+    const tray = segmentTray();
+    this.disposables.push(tray);
+    for (const [index, def] of difficulties.entries())
+      this.segment(tray.tray, def.name, index as Difficulty);
+    this.startButton = new GameButton(this.stage, { tone: "primary", size: "cta", label: "出发" });
+    this.keyed.push(this.startButton);
+    this.go.add(tray.tray, this.startButton.panel);
+    this.controls.push(this.keyControl("start", this.startButton, () => this.depart()));
+
+    this.stage.root.add(
+      stack(this.trainerBox, 1),
+      stack(this.legal, 1),
+      stack(this.route, 1),
+      stack(this.go, 2),
+      stack(this.column, 2),
+      stack(this.corner, 3),
+      stack(this.tabs, 3),
+    );
     this.buildPartner();
   }
 
@@ -688,31 +551,19 @@ export class GpuLobby {
     this.placed = "";
     const form = starters[this.selected].stages[0].form;
     scene.show(form.id, form.types[0]!);
+    scene.showTrainer(this.trainer);
     scene.setCovered(this.covered || !this.revealed);
   }
 
   // ── Controls ────────────────────────────────────────────────────────────────────────────────
 
-  private switchButton(step: -1 | 1): GameButton {
-    const icon = createMenuIcon("chevron");
-    if (step < 0) icon.setProperties({ transformScaleX: -1 });
-    const button = new GameButton(this.stage, {
-      tone: "scene",
-      size: "normal",
-      square: true,
-      flat: true,
-      icon,
-    });
+  private switchButton(step: -1 | 1): ArrowButton {
+    const button = new ArrowButton(this.stage, step < 0 ? "left" : "right");
     button.panel.setProperties({ positionType: "absolute" });
-    this.buttons.push(button);
     this.stage.root.add(stack(button.panel, 1));
     this.controls.push(this.keyControl(step < 0 ? "prev" : "next", button, () => this.cycle(step)));
     return button;
   }
-
-  private readonly fullscreen: GameButton;
-  private toggleFullscreen: (() => void) | undefined;
-  private readonly fullscreenIcon = new FullscreenIcon();
 
   setFullscreenAction(action: (() => void) | undefined, active: boolean): void {
     if (this.fullscreenIcon.setActive(active)) this.stage.invalidate();
@@ -724,7 +575,8 @@ export class GpuLobby {
     this.stage.invalidate();
   }
 
-  private keyControl(kind: ControlKind, button: GameButton, activate: () => void): Control {
+  private keyControl(kind: ControlKind, button: Keyed, activate: () => void): Control {
+    if (!this.keyed.includes(button)) this.keyed.push(button);
     return {
       kind,
       panel: button.panel,
@@ -736,325 +588,173 @@ export class GpuLobby {
         button.setHovered(hovered);
         button.setFocused(focused);
         button.setFocusVisible(focusVisible);
-        button.setPressed(pressed);
+        // Departing holds 出发 down until the run's cover takes the screen.
+        button.setPressed(pressed || (kind === "start" && this.departing));
       },
       update: () => {},
       dispose: () => {},
     };
   }
 
-  /**
-   * The route sign (§3.9): six ordered map tiles, outside interactive focus navigation.
-   */
-  private buildMapSign(): void {
-    for (const id of STAGE_ROUTE) {
+  /** Trainer portraits stay visible; a locked tile previews its silhouette without selecting it. */
+  private buildTrainers(): void {
+    for (const [index, id] of trainerOrder.entries()) {
       const panel = new Container({
-        borderRadius: 7,
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+        padding: 4,
+      });
+      const plate = new SlantPlate(panel, {
+        fill: trainers[id].color,
+        border: { color: ui.ink, width: 2 },
+        upright: true,
+      });
+      const portrait = new Image({
+        src: trainerArt(id),
+        width: "100%",
+        height: "100%",
+        borderRadius: 3,
+      });
+      panel.add(plate.content, stack(portrait, 1));
+      this.avatars.add(panel);
+      this.avatarBoxes.push(panel);
+      const pose = { lift: 0 };
+      let target = -1;
+      const control: Control = {
+        kind: "trainer",
+        panel,
+        index,
+        tip: () => null,
+        locked: () => !trainerUnlocked(this.progress, id),
+        activate: () => {
+          if (!trainerUnlocked(this.progress, id)) {
+            this.trainerPreview = id;
+            this.showTrainer();
+            return;
+          }
+          if (this.trainer === id && !this.trainerPreview) return;
+          this.trainerPreview = null;
+          this.trainer = id;
+          getAudio().sfx("ui-confirm");
+          this.showTrainer();
+          this.changed();
+        },
+        paint: ({ hovered, focused, focusVisible, pressed }) => {
+          const chosen = this.trainer === id;
+          const locked = !trainerUnlocked(this.progress, id);
+          portrait.setProperties({ src: trainerArt(id, locked ? "portrait-locked" : "portrait") });
+          plate.set({
+            fill: chosen ? ui.white : locked ? ui.line : trainers[id].color,
+            focus: focused && focusVisible ? 1 : 0,
+          });
+          const lift = pressed ? -LIFT.press : chosen ? LIFT.picked : hovered ? LIFT.hover : 0;
+          if (lift === target) return;
+          target = lift;
+          this.stage.motion.animate(
+            pose,
+            { lift },
+            LIFT.ms,
+            () => {
+              panel.setProperties({ transformTranslateY: -pose.lift });
+              plate.set({ depth: HARD_SHADOW.offset + pose.lift });
+              this.stage.invalidate();
+            },
+            SNAP,
+          );
+        },
+        update: () => {},
+        dispose: () => {
+          this.stage.motion.cancel(pose);
+          plate.dispose();
+        },
+      };
+      this.trainerControls.push(control);
+      this.controls.push(control);
+    }
+  }
+
+  /** The route: six round map thumbnails joined by dotted lines, after its name (not
+   *  interactive). Rebuilt when the thumbnail size changes (the swatch's corner is fixed). */
+  private buildRoute(size: number): void {
+    if (size === this.swatchSize) return;
+    this.swatchSize = size;
+    for (const swatch of this.swatches.splice(0)) swatch.dispose();
+    for (const child of this.route.children.slice()) {
+      child.removeFromParent();
+      if (child !== this.routeName) disposeTree(child);
+    }
+    this.route.add(this.routeName);
+    for (const [i, id] of STAGE_ROUTE.entries()) {
+      if (i > 0) {
+        const dots = new Container({ flexDirection: "row", gap: 2, flexShrink: 0 });
+        for (let d = 0; d < 3; d++)
+          dots.add(
+            new Container({ width: 2.5, height: 2.5, borderRadius: 2, backgroundColor: ui.ink }),
+          );
+        this.route.add(dots);
+      }
+      const panel = new Container({
+        width: size,
+        height: size,
+        borderRadius: 999,
         borderWidth: 2,
-        borderColor: NAVY,
+        borderColor: ui.ink,
         flexShrink: 0,
       });
-      const swatch = new MapSwatch(id, 5);
+      const swatch = new MapSwatch(id, size / 2 - 2);
       panel.add(swatch.content);
-      this.mapSign.add(panel);
-      this.mapTiles.push({ panel, swatch });
-      this.disposables.push(swatch);
+      this.route.add(panel);
+      this.swatches.push(swatch);
     }
-    this.mapName.setProperties({ text: "6 关探险" });
   }
 
-  private texture(url: string): Texture {
-    return artTexture(url, () => this.stage.invalidate());
-  }
-
-  /** A roster medal (§3.2 名册): portrait in its type ring; picked, hovered, focused, cleared, locked. */
+  /** A roster badge: the partner's portrait over a Poké Ball; its silhouette until it joins. */
   private tile(id: StarterId, index: number): void {
     const form = starters[id].stages[0].form;
-    const tone = typeColors[form.types[0]!];
-    const panel = new Container({
-      alignItems: "center",
-      justifyContent: "center",
-      borderRadius: 999,
-      borderWidth: 3,
-      borderColor: NAVY,
-      flexShrink: 0,
-    });
-    const shadow = new BoxShadow(999, [
-      { y: 3, blur: 0, color: NAVY_DEEP, alpha: 1 },
-      { y: 6, blur: 12, color: NAVY_DEEP, alpha: 0.22 },
-    ]);
-    const outer = new OutlineRing(999, NAVY_DEEP, 2, 0);
-    const ring = new OutlineRing(999, BLUE, 3, 3);
-    ring.content.setProperties({ display: "none" });
-    const face = new RadialFace({ at: [0.5, 0.4], inner: "#ffffff", middle: tone.soft, mid: 0.7 });
-    const hatch = new HatchFill(0.35, 999);
-    const pattern = new HoverPattern(
-      this.stage.motion,
-      () => this.stage.invalidate(),
-      SURFACE,
-      999,
-    );
-    const portrait = new Image({
-      src: `/art/portraits/${form.id}.webp`,
-      width: "84%",
-      height: "84%",
-    });
-    const silhouette = new Silhouette(this.texture(`/art/portraits/${form.id}.webp`), 0.4);
-    silhouette.content.setProperties({ width: "84%", height: "84%", display: "none" });
-    const ball = new CodexBall(this.stage.motion, () => this.stage.invalidate());
-    ball.content.setProperties({ positionType: "absolute", positionLeft: -4, positionTop: -4 });
-    const progress = new ProgressRing();
-    const need = starterUnlocks[id] ?? 1;
-    // The corner badge: a success check (cleared) or a lock (not yet joined).
-    const badge = new Container({
-      positionType: "absolute",
-      positionRight: -4,
-      positionBottom: -4,
-      borderRadius: 999,
-      borderWidth: 2,
-      borderColor: "#ffffff",
-      alignItems: "center",
-      justifyContent: "center",
-    });
-    const check = createMenuIcon("check");
-    const lock = createMenuIcon("lock");
-    for (const icon of [check, lock])
-      icon.setProperties({ width: "62%", height: "62%", color: "#ffffff" });
-    badge.add(check, lock);
-    panel.add(shadow.content, stack(outer.content, 0), face.content, stack(hatch.content, 1));
-    panel.add(stack(pattern.content, 1), stack(portrait, 2), stack(silhouette.content, 2));
-    panel.add(stack(progress.content, 3), stack(badge, 4), stack(ball.content, 4));
-    panel.add(stack(ring.content, 5));
-    this.medals.push({ panel, ball, badge });
-    // Hover lifts, a press sinks, the pick pops (Back.Out) and holds the medal larger and raised.
-    const pose = { lit: 0, down: 0 };
-    const picked = { pick: id === this.selected ? 1 : 0 };
-    const was = { lit: false, down: false, checked: id === this.selected };
-    const apply = () => {
-      const { lit, down } = pose;
-      const { pick } = picked;
-      const up = 1 - down;
-      panel.setProperties({
-        transformTranslateY: -4 * pick - 3 * lit * up + 3 * down,
-        transformScaleX: 1 + 0.1 * pick + 0.05 * lit * up - 0.03 * down,
-        transformScaleY: 1 + 0.1 * pick + 0.05 * lit * up - 0.05 * down,
-      });
-      shadow.set([
-        { y: 3 + 2 * pick + 2 * lit * up - 3 * down, blur: 0, color: NAVY_DEEP, alpha: 1 },
-        { y: 6 + 4 * lit * up, blur: 12, color: NAVY_DEEP, alpha: 0.22 * up },
-      ]);
-      this.stage.invalidate();
-    };
+    const type = themeColors(form.types[0]!).theme;
+    const badge = new BallBadge(this.stage.motion, () => this.stage.invalidate(), 56);
+    badge.portrait(`/art/portraits/${form.id}.webp`);
+    const entry = { x: 0, o: 1 };
+    this.badges.push({ badge, entry });
+    this.roster.add(badge.panel);
     const control: Control = {
       kind: "tile",
-      panel,
+      panel: badge.panel,
       index,
+      // A partner not yet joined says what it still needs.
       tip: () => starterLock(this.progress, id) ?? form.name,
-      locked: () => starterLock(this.progress, id) !== null,
+      locked: () => !starterUnlocked(this.progress, id),
       activate: () => this.pick(id),
       paint: ({ hovered, focused, focusVisible, pressed }) => {
         const locked = control.locked();
-        const checked = id === this.selected;
         const cleared = !locked && !!this.progress.best[id]?.victory;
-        ring.content.setProperties({ display: focused && focusVisible ? "flex" : "none" });
-        outer.content.setProperties({ display: checked ? "flex" : "none" });
-        // Only the picked medal carries the ball mark: the party reads at a glance.
-        ball.content.setProperties({ display: checked ? "flex" : "none" });
-        ball.set(checked, true);
-        panel.setProperties({
-          borderWidth: checked ? 4 : 3,
-          borderColor: checked ? YELLOW : hovered && !locked ? BLUE : NAVY,
-          backgroundColor: locked ? "#c9d6e2" : undefined,
+        badge.set({
+          selected: id === this.selected,
+          silhouette: locked,
+          hovered,
+          focused,
+          focusVisible,
+          pressed,
+          type,
+          mark: cleared ? "clear" : null,
         });
-        const lit = hovered && !locked && !checked;
-        const down = pressed && !locked && !checked;
-        if (lit !== was.lit || down !== was.down)
-          this.stage.motion.animate(
-            pose,
-            { lit: lit ? 1 : 0, down: down ? 1 : 0 },
-            down ? 60 : 140,
-            apply,
-            ease,
-          );
-        if (checked !== was.checked) {
-          // A pick pops in with a small overshoot; the medal left behind settles back.
-          this.stage.motion.animate(
-            picked,
-            { pick: checked ? 1 : 0 },
-            checked ? 320 : 160,
-            apply,
-            checked ? Easing.Back.Out : ease,
-          );
-        }
-        was.lit = lit;
-        was.down = down;
-        was.checked = checked;
-        pattern.setFocused(hovered && !locked && !checked);
-        face.content.setProperties({ display: locked ? "none" : "flex" });
-        hatch.content.setProperties({ display: locked ? "flex" : "none" });
-        portrait.setProperties({ display: locked ? "none" : "flex" });
-        silhouette.content.setProperties({ display: locked ? "flex" : "none" });
-        progress.content.setProperties({ display: locked ? "flex" : "none" });
-        progress.set(Math.min(1, this.progress.research / need));
-        badge.setProperties({
-          display: locked || cleared ? "flex" : "none",
-          backgroundColor: locked ? NAVY_DEEP : "#2f8f5b",
-        });
-        check.setProperties({ display: cleared ? "flex" : "none" });
-        lock.setProperties({ display: locked ? "flex" : "none" });
       },
-      update: (deltaMs) => {
-        face.update();
-        hatch.update();
-        pattern.update(deltaMs);
-      },
-      dispose: () => {
-        this.stage.motion.cancel(pose);
-        this.stage.motion.cancel(picked);
-        shadow.dispose();
-        outer.dispose();
-        ring.dispose();
-        face.dispose();
-        hatch.dispose();
-        pattern.dispose();
-        silhouette.dispose();
-        ball.dispose();
-        progress.dispose();
-      },
+      update: () => {},
+      dispose: () => badge.dispose(),
     };
     this.controls.push(control);
     this.tiles.push(control);
-    apply();
   }
 
-  // ── Tray: difficulty and 出发 ─────────────────────────────────────────────────────────────────
-
-  private buildTray(): void {
-    const shadow = new BoxShadow(14, [{ y: 8, blur: 18, color: NAVY_DEEP, alpha: 0.3 }]);
-    this.disposables.push(shadow);
-    // `inset 0 3px 0 rgb(0 0 0 / 30%)`: the tray's lip.
-    this.tray.add(
-      shadow.content,
-      new Container({
-        positionType: "absolute",
-        positionLeft: 0,
-        positionTop: 0,
-        width: "100%",
-        height: 3,
-        borderTopLeftRadius: 11,
-        borderTopRightRadius: 11,
-        backgroundColor: withOpacity("#000000", 0.3),
-      }),
-    );
-    for (const [index, def] of difficulties.entries()) this.segment(def.name, index as Difficulty);
-    // 出发: the slanted plate, the type crest at its left end, the word, three wedges.
-    for (let i = 0; i < 3; i++) {
-      const wedge = createTriangleMark(NAVY_DEEP);
-      this.arrows.push(wedge);
-      this.arrowBox.add(wedge);
-    }
-    this.launch.add(
-      this.launchPlate.content,
-      stack(this.launchEmblem, 2),
-      stack(new Container({ flexGrow: 1 }), 2),
-      stack(this.arrowBox, 2),
-      stack(this.launchWord, 2),
-    );
-    this.launchWord.setProperties({ flexDirection: "column", gap: 0 });
-    this.launchWord.add(this.launchText, this.mapName);
-    this.tray.add(stack(this.mapSign, 1), stack(this.segmentsRow, 1), stack(this.launch, 1));
-    const control: Control = {
-      kind: "start",
-      panel: this.launch,
-      index: 0,
-      tip: () => null,
-      locked: () => false,
-      activate: () => this.depart(),
-      paint: ({ hovered, focused, focusVisible, pressed }) => {
-        const lit = hovered || (focused && focusVisible);
-        this.launchPlate.set({ focus: focused && focusVisible && !this.departing ? 1 : 0 });
-        if (lit !== this.litOn) {
-          this.litOn = lit;
-          if (lit && this.elapsed - this.shineAt > SHINE_MS) this.shineAt = this.elapsed;
-          this.stage.motion.animate(
-            this.lit,
-            { value: lit ? 1 : 0 },
-            220,
-            () => this.stage.invalidate(),
-            ease,
-          );
-        }
-        const down = pressed || this.departing;
-        if (down !== this.downOn) {
-          this.downOn = down;
-          this.stage.motion.animate(this.press, { value: down ? 1 : 0 }, 60, () =>
-            this.stage.invalidate(),
-          );
-        }
-      },
-      update: () => {},
-      dispose: () => {},
-    };
-    this.controls.push(control);
-  }
-
-  /** One press: the pressed plate holds, its crest turns once, and input locks until the cover. */
-  private depart(): void {
-    if (this.departing) return;
-    this.departing = true;
-    this.shineAt = this.elapsed;
-    this.spin.value = 0;
-    this.stage.motion.animate(
-      this.spin,
-      { value: 1 },
-      600,
-      () => this.stage.invalidate(),
-      uiEaseOut,
-    );
-    this.repaint();
-    this.callbacks.start({ starter: this.selected, difficulty: this.difficulty, stage: this.map });
-  }
-
-  /** A difficulty segment (§3.2 难度): navy raised, ice when picked, hatched when locked. */
-  private segment(label: string, value: Difficulty): void {
-    const panel = new Container({
-      flexGrow: 1,
-      flexBasis: 0,
-      minWidth: 0,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 8,
-      borderWidth: 2,
-      borderColor: SEGMENT_EDGE,
-      borderRadius: 8,
-    });
-    const base = new BoxShadow(8, [{ y: 3, blur: 0, color: SEGMENT_EDGE, alpha: 1 }]);
-    const sheen = new Container({
-      positionType: "absolute",
-      positionLeft: 2,
-      positionRight: 2,
-      positionTop: 0,
-      height: 1.5,
-      backgroundColor: withOpacity("#ffffff", 0.14),
-    });
-    const hatch = new HatchFill(0.12, 6);
-    const pattern = new HoverPattern(this.stage.motion, () => this.stage.invalidate(), NAVY, 6);
-    const ring = new OutlineRing(8, BLUE, 3, 3);
-    ring.content.setProperties({ display: "none" });
-    const ball = new CodexBall(this.stage.motion, () => this.stage.invalidate());
-    ball.content.setProperties({ width: 18, height: 18 });
-    const lock = createMenuIcon("lock");
-    lock.setProperties({ width: 16, height: 16, color: "#9fb3c6" });
-    const text = new Text({ text: label, fontSize: 16, fontWeight: 800, whiteSpace: "pre" });
-    panel.add(base.content, stack(sheen, 1), stack(hatch.content, 1), stack(pattern.content, 1));
-    panel.add(stack(ball.content, 2), stack(lock, 2), stack(text, 2), stack(ring.content, 3));
-    this.segmentsRow.add(panel);
-    this.segmentBoxes.push(panel);
+  /** A difficulty option on the ink tray. */
+  private segment(tray: Container, label: string, value: Difficulty): void {
+    const face = new SegmentFace(this.stage, label);
+    tray.add(stack(face.panel, 1));
     const reason = () => difficultyLock(this.progress, value);
     const control: Control = {
       kind: "difficulty",
-      panel,
+      panel: face.panel,
       index: value,
       tip: reason,
       locked: () => reason() !== null,
@@ -1064,56 +764,59 @@ export class GpuLobby {
         getAudio().sfx("ui-move");
         this.changed();
       },
-      paint: ({ hovered, focused, focusVisible }) => {
-        const locked = control.locked();
-        const checked = this.difficulty === value;
-        ring.content.setProperties({ display: focused && focusVisible ? "flex" : "none" });
-        panel.setProperties({ backgroundColor: locked ? "#3a5470" : checked ? SURFACE : NAVY });
-        base.content.setProperties({ display: locked ? "none" : "flex" });
-        sheen.setProperties({ display: locked ? "none" : "flex" });
-        hatch.content.setProperties({ display: locked ? "flex" : "none" });
-        pattern.setSurface(checked ? SURFACE : NAVY);
-        pattern.setFocused(hovered && !locked);
-        ball.content.setProperties({ display: locked ? "none" : "flex" });
-        ball.set(checked, true);
-        lock.setProperties({ display: locked ? "flex" : "none" });
-        text.setProperties({ color: locked ? "#9fb3c6" : checked ? NAVY_DEEP : "#ffffff" });
-      },
-      update: (deltaMs) => {
-        hatch.update();
-        pattern.update(deltaMs);
-      },
-      dispose: () => {
-        base.dispose();
-        hatch.dispose();
-        pattern.dispose();
-        ring.dispose();
-        ball.dispose();
-      },
+      paint: (state) =>
+        face.paint({ ...state, checked: this.difficulty === value, locked: control.locked() }),
+      update: (deltaMs) => face.update(deltaMs),
+      dispose: () => face.dispose(),
     };
+    this.keyed.push({
+      panel: face.panel,
+      fitTouch: () => face.fitTouch(),
+      setHovered() {},
+      setFocused() {},
+      setFocusVisible() {},
+      setPressed() {},
+      dispose() {},
+    });
     this.controls.push(control);
     this.segments.push(control);
   }
 
+  /** One press: 出发 holds down and input locks until the run's cover. */
+  private depart(): void {
+    if (this.departing || this.previewing()) return;
+    this.departing = true;
+    this.repaint();
+    this.callbacks.start({
+      starter: this.selected,
+      difficulty: this.difficulty,
+      stage: this.map,
+      trainer: this.trainer,
+    });
+  }
+
   // ── Pick ────────────────────────────────────────────────────────────────────────────────────
 
+  /** A joined partner becomes the pick; one not yet joined cannot be picked. */
   private pick(id: StarterId): void {
-    if (starterLock(this.progress, id) !== null || id === this.selected) return;
+    if (id === this.selected || !starterUnlocked(this.progress, id)) return;
     this.selected = id;
     getAudio().sfx("ui-move");
-    this.buildPartner();
-    const form = starters[id].stages[0].form;
-    this.scene?.show(form.id, form.types[0]!);
-    this.slide.value = 0;
-    this.applySlide();
-    this.stage.motion.animate(
-      this.slide,
-      { value: 1 },
-      340,
-      () => this.applySlide(),
-      (t) => t,
-    );
+    this.showPartner();
+    this.ribbonPlate?.enter(0);
     this.changed();
+  }
+
+  /** A locked trainer is on show: 出发 waits, as the stage is not what would leave. */
+  private previewing(): boolean {
+    return this.trainerPreview !== null;
+  }
+
+  /** The selected partner's plate, column and model. */
+  private showPartner(): void {
+    const form = starters[this.selected].stages[0].form;
+    this.buildPartner();
+    this.scene?.show(form.id, form.types[0]!);
   }
 
   /** The next (previous) partner that has joined, wrapping. */
@@ -1125,172 +828,138 @@ export class GpuLobby {
   }
 
   private changed(): void {
-    this.callbacks.pick({ starter: this.selected, difficulty: this.difficulty, stage: this.map });
+    this.callbacks.pick({
+      starter: this.selected,
+      difficulty: this.difficulty,
+      stage: this.map,
+      trainer: this.trainer,
+    });
     this.repaint();
   }
 
-  /** A switch: the ribbon and tags sweep in from the right, the 出发 crest pops (Back.Out). */
-  private applySlide(): void {
-    const t = this.slide.value;
-    const sweep = Easing.Back.Out(t);
-    const shown = uiEaseOut(Math.min(1, t * 1.8));
-    fade(this.ribbon, shown).setProperties({ transformTranslateX: 40 * (1 - sweep) });
-    const late = Math.max(0, (t - 0.15) / 0.85);
-    fade(this.tags, uiEaseOut(Math.min(1, late * 1.8))).setProperties({
-      transformTranslateX: 40 * (1 - Easing.Back.Out(late)),
-    });
-    // The new ribbon catches one sweep of light as it lands.
-    this.ribbonPlate?.set({ shine: t < 1 ? Math.max(0, (t - 0.25) / 0.75) : -1 });
-    const pop = 0.55 + 0.45 * sweep;
-    this.emblemImage?.setProperties({ transformScaleX: pop, transformScaleY: pop });
-    this.stage.invalidate();
+  /** The trainer's name, the scene's slab and art; their entrance replays. */
+  private showTrainer(): void {
+    const id = this.trainerPreview ?? this.trainer;
+    const locked = !trainerUnlocked(this.progress, id);
+    this.trainerPlate.setName(trainers[id].name);
+    const count = (n: number) => n.toLocaleString("en-US");
+    this.trainerLock.set(
+      locked ? `${count(this.progress.kills)} / ${count(XIAQING_UNLOCK_KILLS)}` : null,
+    );
+    this.trainerPlate.enter(180);
+    this.scene?.showTrainer(id, locked);
+    this.repaint();
   }
 
-  /** The selected partner's ribbon and tags, the backpack, and the 出发 emblem. */
+  /** The selected partner's name plate, tag and record, evolution chain and the backpack. */
   private buildPartner(): void {
     for (let i = this.controls.length - 1; i >= 0; i--)
       if (this.controls[i]!.kind === "info") this.controls.splice(i, 1);
-    for (const part of this.plateParts.splice(0)) part.dispose();
-    for (const node of [this.ribbon, this.tags, this.backpack])
+    for (const part of this.partnerParts.splice(0)) part.dispose();
+    for (const node of [this.ribbon, this.meta, this.chain, this.backpack])
       for (const child of node.children.slice()) {
         child.removeFromParent();
-        (child as { dispose?: () => void }).dispose?.();
+        disposeTree(child);
       }
     this.carryTips.length = 0;
     const t = tokens(this.compact);
-    const starter = starters[this.selected];
+    const shown = this.selected;
+    const starter = starters[shown];
     const form = starter.stages[0].form;
     const type = form.types[0]!;
-    const { theme, deep, soft } = themeColors(type);
-    // The ribbon: the theme band slanted; the outlined name; the crest over its top right corner.
-    const plate = new SlantPlate(this.ribbon, { fill: theme, theme: { type, deep } }, 10);
-    this.plateParts.push(plate);
+    const { theme, deep } = themeColors(type);
+    // The name plate: the type colour with its card face, the name in white over a deep copy.
+    const plate = new NamePlate(
+      this.stage,
+      { fill: theme, card: { type, loaded: () => this.stage.invalidate() } },
+      form.name,
+      deep,
+    );
+    plate.size(t.ribbon, t.name, this.compact ? 18 : 24);
+    this.partnerParts.push(plate);
     this.ribbonPlate = plate;
-    const name = new OutlinedText(
-      {
-        text: form.name,
-        fontSize: t.name,
-        fontWeight: 800,
-        color: "#ffffff",
-        letterSpacing: t.name * 0.04,
-      },
-      { width: t.nameStroke, color: NAVY_DEEP },
+    this.ribbon.add(plate.panel);
+    // The type tag (crest + name), then the best record on desktop.
+    const tag = slantTag(
+      typeNames[type],
+      { face: ui.ink, size: this.compact ? 12 : 14 },
+      new Image({
+        src: `/art/icons/crests/${type}.webp`,
+        width: this.compact ? 14 : 16,
+        height: this.compact ? 14 : 16,
+      }),
     );
-    this.plateParts.push(name);
-    name.root.setProperties({ minWidth: 0 });
-    this.ribbon.add(plate.content, stack(name.root, 2), new Container({ flexGrow: 1 }));
-    const crestMini = new Image({
-      src: `/art/icons/crests/${type}.webp`,
-      width: this.compact ? 15 : 18,
-      height: this.compact ? 15 : 18,
-    });
-    const ink = `#${new Color(NAVY_DEEP).lerp(new Color(theme), 0.45).getHexString()}`;
-    const typeTag = leadTag(
-      this.compact,
-      { face: soft, ring: { color: theme, width: 2 } },
-      [{ text: typeNames[type], color: ink }],
-      crestMini,
-    );
-    this.plateParts.push(typeTag);
-    this.ribbon.add(stack(typeTag.tag, 3));
-    const record = this.progress.best[this.selected];
-    this.tags.setProperties({ display: record && !this.compact ? "flex" : "none" });
-    if (record && !this.compact) {
-      const best = new Container({
-        height: 28,
-        paddingX: 10,
-        borderRadius: 8,
-        alignItems: "center",
-        backgroundColor: withOpacity(NAVY_DEEP, 0.72),
-        flexShrink: 0,
-      });
-      best.add(
+    this.partnerParts.push(tag);
+    this.meta.add(tag.tag);
+    const record = this.progress.best[shown];
+    if (record && !this.compact)
+      this.meta.add(
         new Text({
           text: `最佳 ${difficulties[record.difficulty].name} · ${record.victory ? "通关" : "坚持"} ${formatTime(record.time)}`,
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: 800,
-          color: ICE,
+          color: ui.ink,
           whiteSpace: "pre",
         }),
       );
-      this.tags.add(best);
-    }
-    // The backpack: its badge and only the items packed; nothing when empty.
-    const carried = this.progress.backpack;
-    const host = this.backpack;
-    // Desktop keeps the row's height even when empty, so the column never jumps (§3.2).
-    this.backpack.setProperties({ display: carried.length || !this.compact ? "flex" : "none" });
-    if (carried.length > 0) {
-      // Compact slots grow to the touch minimum: the badge keeps pace so the row reads as one.
-      const side = this.compact
-        ? Math.round(0.8 * Math.max(t.slot, this.stage.viewport.minTarget))
-        : t.slot;
-      const badge = new Container({
-        width: side,
-        height: side,
+    // The evolution chain: the line's forms in circles, the partner's own ringed in its colour.
+    const forms = starter.stages.flatMap((s) => (s.kind === "evolve" && s.form ? [s.form] : []));
+    const chainHost = this.compact ? this.meta : this.chain;
+    this.chain.setProperties({ display: this.compact ? "none" : "flex" });
+    for (const [i, step] of forms.entries()) {
+      if (i > 0) {
+        const arrow = createTriangleMark(CHAIN_ARROW);
+        arrow.setProperties({ width: 6, height: 9 });
+        chainHost.add(arrow);
+      }
+      const circle = new Container({
+        width: t.chain,
+        height: t.chain,
         borderRadius: 999,
-        borderWidth: 2,
-        borderColor: NAVY,
-        backgroundColor: NAVY_DEEP,
+        borderWidth: i === 0 ? 3 : 2,
+        borderColor: i === 0 ? theme : ui.line,
+        backgroundColor: ui.white,
         alignItems: "center",
         justifyContent: "center",
         flexShrink: 0,
       });
-      const icon = createMenuIcon("backpack");
-      icon.setProperties({ width: "62%", height: "62%", color: YELLOW });
-      badge.add(icon);
-      host.add(badge);
+      circle.add(new Image({ src: `/art/portraits/${step.id}.webp`, width: "84%", height: "84%" }));
+      chainHost.add(circle);
+    }
+    // The backpack: its label and only the items packed; nothing when empty.
+    const carried = this.progress.backpack;
+    this.backpack.setProperties({ display: carried.length ? "flex" : "none" });
+    if (carried.length > 0) {
+      const label = slantTag("背包", { face: ui.ink, size: 12, upright: true });
+      this.partnerParts.push(label);
+      this.backpack.add(label.tag);
       for (const item of carried) {
         const slot = new Container({
-          width: t.slot,
-          height: t.slot,
-          borderRadius: 6,
-          borderWidth: 2,
-          borderColor: NAVY,
           alignItems: "center",
           justifyContent: "center",
           flexShrink: 0,
         });
-        const base = new BoxShadow(6, [{ y: 3, blur: 0, color: NAVY_DEEP, alpha: 1 }]);
-        const face = new RadialFace({
-          at: [0.5, 0.38],
-          inner: "#ffffff",
-          middle: ICE,
-          mid: 0.72,
-          radius: 4,
+        const face = new SlantPlate(slot, {
+          fill: ui.white,
+          border: { color: ui.line, width: 2 },
+          upright: true,
         });
+        face.set({ depth: 3 });
+        this.partnerParts.push(face);
         slot.add(
-          base.content,
           face.content,
-          stack(
-            new Image({ src: `/art/icons/items/${item}.webp`, width: "80%", height: "80%" }),
-            1,
-          ),
+          stack(new Image({ src: `/art/icons/items/${item}.webp`, width: 30, height: 30 }), 1),
         );
-        this.plateParts.push(base, face);
-        host.add(slot);
+        this.backpack.add(slot);
         this.carryTips.push({ panel: slot, item });
-        this.infoControl(slot, () => items[item].name);
+        this.infoControl(slot, face, () => items[item].name);
       }
     }
-    // The 出发 emblem: the type crest in a navy-deep disc with a yellow inner ring.
-    for (const child of this.launchEmblem.children.slice()) child.removeFromParent();
-    const emblem = new Image({
-      src: `/art/icons/crests/${type}.webp`,
-      width: "72%",
-      height: "72%",
-    });
-    this.emblemImage = emblem;
-    this.launchEmblem.add(emblem);
     this.applySizes();
     this.repaint();
   }
 
-  private infoControl(panel: Container, tip: () => string): void {
-    panel.setProperties({
-      minHeight: this.stage.viewport.minTarget,
-      minWidth: this.stage.viewport.minTarget,
-    });
+  private infoControl(panel: Container, face: SlantPlate, tip: () => string): void {
     const control: Control = {
       kind: "info",
       panel,
@@ -1301,7 +970,10 @@ export class GpuLobby {
         this.touchTip = this.controls.indexOf(control);
       },
       paint: ({ focused, focusVisible, hovered }) =>
-        panel.setProperties({ borderColor: (focused && focusVisible) || hovered ? BLUE : NAVY }),
+        face.set({
+          focus: focused && focusVisible ? 1 : 0,
+          border: hovered ? ui.ink : ui.line,
+        }),
       update() {},
       dispose() {},
     };
@@ -1313,16 +985,18 @@ export class GpuLobby {
   update(state: LobbyState): void {
     const changed = state.progress !== this.progress;
     this.progress = state.progress;
-    this.balance.set(state.progress.stardust);
+    this.balanceText.setProperties({ text: counts.format(state.progress.stardust) });
     if (state.pick.starter !== this.selected) {
       this.selected = state.pick.starter;
-      const form = starters[this.selected].stages[0].form;
-      this.scene?.show(form.id, form.types[0]!);
-      this.buildPartner();
+      this.showPartner();
     } else if (changed) this.buildPartner();
     this.difficulty = state.pick.difficulty;
     this.map = "forest";
-    this.mapName.setProperties({ text: "6 关探险" });
+    if (state.pick.trainer !== this.trainer || (changed && this.trainerPreview)) {
+      this.trainerPreview = null;
+      this.trainer = state.pick.trainer;
+      this.showTrainer();
+    }
     this.repaint();
   }
 
@@ -1343,6 +1017,7 @@ export class GpuLobby {
   }
 
   private repaint(): void {
+    this.startButton.setDisabled(this.previewing());
     for (const [i, control] of this.controls.entries())
       control.paint({
         hovered: i === this.hovered,
@@ -1365,41 +1040,15 @@ export class GpuLobby {
     this.repaint();
   }
 
-  /** §3.2 名册: medal size and rows for `starterOrder`'s length (see the surface brief). */
-  private rosterLayout(colW: number): { rows: number; medal: number; gap: number } {
+  /** Roster badge size and gap: touch-sized, five to a row. */
+  private rosterSize(): { badge: number; gap: number } {
     const t = tokens(this.compact);
-    const min = this.stage.viewport.minTarget;
-    const n = this.medals.length;
-    const room = colW - 12;
-    const fit = (perRow: number, gap: number) => Math.floor((room - (perRow - 1) * gap) / perRow);
-    if (this.compact) {
-      const gap = Math.max(
-        COMPACT_ROSTER_GAP,
-        Math.min(t.medalGap, Math.floor((room - n * min) / Math.max(1, n - 1))),
-      );
-      return { rows: 1, medal: Math.max(min, Math.min(t.medalMax, fit(n, gap))), gap };
-    }
-    if (fit(n, t.medalGap) >= ROW_MEDAL_MIN)
-      return {
-        rows: 1,
-        medal: Math.max(min, Math.min(t.medalMax, fit(n, t.medalGap))),
-        gap: t.medalGap,
-      };
-    const perRow = Math.ceil(n / 2);
-    const medal = Math.max(min, Math.min(STAGGER_MEDAL_MAX, fit(perRow, t.medalGap)));
-    return { rows: 2, medal, gap: t.medalGap };
+    return { badge: Math.max(t.badge, this.stage.viewport.minTarget), gap: t.badgeGap };
   }
 
   private colW(): number {
-    const v = this.stage.viewport;
-    const vw = v.width;
-    const preferred = this.compact
-      ? Math.min(340, Math.max(296, Math.round(0.38 * vw)))
-      : Math.min(420, Math.max(360, Math.round(0.31 * vw)));
-    if (!this.compact) return preferred;
-    // The compact roster stays one row of touch-sized medals: the column widens to hold them.
-    const n = this.medals.length;
-    return Math.max(preferred, n * v.minTarget + (n - 1) * COMPACT_ROSTER_GAP + 12);
+    const { badge, gap } = this.rosterSize();
+    return PER_ROW * badge + (PER_ROW - 1) * gap;
   }
 
   private pads() {
@@ -1413,229 +1062,254 @@ export class GpuLobby {
     };
   }
 
-  /** §3 sizes for the current viewport. */
+  /** Sizes for the current viewport; positions that depend on measured boxes follow in `place`. */
   private applySizes(): void {
     const v = this.stage.viewport;
     const t = tokens(this.compact);
     const pad = this.pads();
-    const colW = this.colW();
-    this.topBar.setProperties({
+    const min = v.minTarget;
+    for (const button of this.keyed) button.fitTouch();
+    for (const button of [this.prev, this.next])
+      button.panel.setProperties({ minWidth: Math.max(40 + slantOf(44), min) });
+    // The tabs and the corner share one top inset and one row height (set in `place`).
+    this.tabs.setProperties({
       positionLeft: pad.left,
+      positionTop: pad.top,
+      gap: t.gap,
+      minHeight: 0,
+    });
+    this.balance.setProperties({ height: this.compact ? 34 : 38 });
+    for (const word of this.brandWords) word.setProperties({ fontSize: t.brand });
+    this.corner.setProperties({
       positionRight: pad.right,
       positionTop: pad.top,
-      // At least the touch minimum (a 44 host px key at 80% is 55 units): the row stays centred.
-      height: Math.max(t.bar, v.minTarget),
-      gap: t.gap,
+      gap: this.compact ? 14 : 18,
+      minHeight: 0,
     });
-    this.mark.setProperties({ width: this.compact ? 36 : 48, height: this.compact ? 36 : 48 });
-    this.word.set({ fontSize: this.compact ? 25 : 34 });
-    for (const button of this.buttons) button.fitTouch();
-    const side = Math.max(t.switchKey, v.minTarget);
-    for (const button of [this.prev, this.next])
-      button.panel.setProperties({ minWidth: side, minHeight: side });
-    this.links.setProperties({ gap: t.gap });
-    this.legal.setProperties({
-      gap: t.legalGap,
-      positionLeft: pad.left,
-      positionTop: pad.top + Math.max(t.bar, v.minTarget) + 16,
-      width: Math.max(160, v.width - pad.left - pad.right - colW - t.zoneGap),
+    this.keys.setProperties({ gap: 8 });
+    this.trainerPlate.size(t.plate, t.plateText, this.compact ? 18 : 22);
+    this.trainerBox.setProperties({ positionLeft: pad.left, positionBottom: pad.bottom, gap: 10 });
+    this.avatars.setProperties({ gap: this.compact ? 8 : 10 });
+    this.trainerHead.setProperties({ gap: this.compact ? 8 : 10 });
+    this.trainerLock.size(t.plate, this.compact);
+    const avatar = Math.max(t.avatar, min);
+    for (const box of this.avatarBoxes) box.setProperties({ width: avatar, height: avatar });
+    const colW = this.colW();
+    this.column.setProperties({
+      positionRight: pad.right - COLUMN_ROOM,
+      width: colW + COLUMN_ROOM * 2,
     });
-    this.column.setProperties({ positionRight: pad.right, width: colW });
-    for (const node of [
-      this.ribbon,
-      this.tags,
-      this.roster,
-      this.backpack,
-      this.tray,
-      this.mapSign,
-      this.segmentsRow,
-      this.launch,
-    ])
-      node.setProperties({ flexShrink: 0 });
-    this.ribbon.setProperties({
-      height: t.ribbon,
-      marginLeft: t.ribbonIndent,
-      marginRight: 6,
-      paddingLeft: this.compact ? 16 : 22,
-      paddingRight: this.compact ? 12 : 18,
-      gap: 12,
-    });
-    this.tags.setProperties({ marginTop: t.tagsGap, marginLeft: this.compact ? 6 : 8, gap: 8 });
-    const { rows, medal, gap } = this.rosterLayout(colW);
-    this.roster.setProperties({ marginTop: t.rosterGap, paddingTop: 3 + (rows > 1 ? 3 : 0) });
-    const perRow = Math.ceil(this.medals.length / rows);
-    this.rosterPerRow = perRow;
-    const rowsKey = `${rows}`;
-    if (rowsKey !== this.rosterRowsKey) {
-      this.rosterRowsKey = rowsKey;
-      // Top row first, in roster order.
-      for (const [i, { panel }] of this.medals.entries())
-        this.rosterRows[Math.floor(i / perRow)]!.add(panel);
-    }
-    const [top, second] = this.rosterRows as [Container, Container];
-    const counts = [Math.min(perRow, this.medals.length), this.medals.length - perRow];
-    if (rows === 1) top.setProperties({ justifyContent: "space-between", gap, paddingX: 6 });
-    else top.setProperties({ justifyContent: "center", gap, paddingX: 0 });
-    second.setProperties({
-      display: rows > 1 ? "flex" : "none",
-      justifyContent: "center",
-      gap,
-      // Honeycomb: the second row sits half a medal over, 0.87 of a step down.
-      marginTop: Math.round(0.87 * (medal + gap) - medal),
-      paddingLeft: counts[1] === counts[0] ? medal + gap : 0,
-    });
-    for (const { panel, ball, badge } of this.medals) {
-      panel.setProperties({ width: medal, height: medal });
-      ball.content.setProperties({ width: this.compact ? 18 : 22, height: this.compact ? 18 : 22 });
-      badge.setProperties({ width: this.compact ? 20 : 24, height: this.compact ? 20 : 24 });
-    }
-    this.backpack.setProperties({
-      marginTop: 14,
-      marginLeft: 4,
-      height: Math.max(44, v.minTarget),
-    });
+    this.ribbonPlate?.size(t.ribbon, t.name, this.compact ? 18 : 24);
+    this.meta.setProperties({ marginTop: t.section, flexShrink: 0, gap: this.compact ? 8 : 10 });
+    this.chain.setProperties({ marginTop: t.section, flexShrink: 0 });
+    this.divider.setProperties({ marginTop: t.section, marginBottom: t.section + 4 });
+    const { badge, gap } = this.rosterSize();
+    this.roster.setProperties({ width: colW, gap, flexShrink: 0 });
+    for (const { badge: b } of this.badges)
+      b.panel.setProperties({ width: badge, height: badge, minWidth: badge, minHeight: badge });
+    this.backpack.setProperties({ marginTop: t.section + 2, flexShrink: 0 });
     for (const control of this.controls)
       if (control.kind === "info")
-        control.panel.setProperties({ minWidth: v.minTarget, minHeight: v.minTarget });
-    this.tray.setProperties({
-      marginTop: t.trayGap,
-      padding: t.trayPad,
-      paddingBottom: t.trayPad + 6,
-      gap: t.trayPad,
+        control.panel.setProperties({
+          width: Math.max(t.slot, min),
+          height: Math.max(t.slot, min),
+        });
+    this.routeName.setProperties({ fontSize: this.compact ? 12 : 13, marginRight: 8 });
+    this.route.setProperties({ gap: this.compact ? 3 : 6 });
+    this.buildRoute(t.swatch);
+    // The tray and 出发 span the column's width: one block with the column above it.
+    this.go.setProperties({
+      positionRight: pad.right,
+      positionBottom: pad.bottom,
+      gap: 12,
+      minWidth: this.compact ? 0 : colW,
     });
-    for (const box of this.segmentBoxes)
-      box.setProperties({ height: Math.max(t.segment, v.minTarget) });
-    const emblem = this.compact ? 40 : 56;
-    const launchH = Math.max(t.launch, v.minTarget);
-    this.launch.setProperties({
-      height: launchH,
-      paddingLeft: (this.compact ? 12 : 16) + slantOf(launchH) / 2,
-      paddingRight: (this.compact ? 14 : 22) + slantOf(launchH) / 2,
-    });
-    this.launchEmblem.setProperties({ width: emblem, height: emblem });
-    const word = this.compact ? 26 : 36;
-    // The tracking trails the last glyph: the same indent before the first keeps the word centred.
-    this.launchText.setProperties({
-      fontSize: word,
-      letterSpacing: word * 0.24,
-      paddingLeft: word * 0.24,
-    });
-    this.arrowBox.setProperties({ gap: this.compact ? 2 : 3 });
-    for (const wedge of this.arrows)
-      wedge.setProperties({ width: this.compact ? 12 : 16, height: this.compact ? 17 : 22 });
-    const tile = this.compact ? 30 : 40;
-    this.mapSign.setProperties({ height: tile, gap: 4 });
-    for (const { panel } of this.mapTiles)
-      panel.setProperties({ flexGrow: 1, flexBasis: 0, height: tile });
-    this.mapName.setProperties({ fontSize: this.compact ? 12 : 15, letterSpacing: 0 });
+    this.startButton.panel.setProperties({ flexGrow: 1 });
+    // The route is the column's last row on compact screens (no room above the tray).
+    const routeHome = this.compact ? this.columnContent : this.stage.root;
+    if (this.route.parentContainer.value !== routeHome) {
+      this.route.removeFromParent();
+      routeHome.add(this.route);
+    }
+    this.route.setProperties(
+      this.compact
+        ? {
+            positionType: "relative",
+            positionRight: 0,
+            marginTop: t.section,
+            flexShrink: 0,
+            minWidth: 0,
+          }
+        : { positionType: "absolute", positionRight: pad.right, marginTop: 0, minWidth: colW },
+    );
     this.legalLaid = "";
   }
 
-  /** After layout: the legal line's breaks, then the column's bottom, the scene and ‹ ›. */
+  /** After layout: the legal line, the column's height, ‹ › and the scene's layout. */
   private place(): void {
     const v = this.stage.viewport;
     const t = tokens(this.compact);
     const pad = this.pads();
-    const font = this.legalText.fontSignal.value;
-    if (font) {
-      const size = this.compact ? 10 : 11;
-      const room = Math.max(160, v.width - pad.left - pad.right - this.colW() - t.zoneGap) - 16;
-      const key = `${room},${size}`;
-      if (key !== this.legalLaid) {
-        this.legalLaid = key;
-        this.legal.setProperties({ justifyContent: "flex-start" });
-        this.legalText.setProperties({
-          fontSize: size,
-          textAlign: "left",
-          text:
-            textWidth(LEGAL_NOTICE, size, font) <= room
-              ? LEGAL_NOTICE
-              : balanceLines(LEGAL_NOTICE, room, size, font),
-        });
-      }
-    }
-    const legalH = this.legalText.size.value?.[1];
-    if (legalH === undefined) return;
-    const contentBottom = v.height - pad.bottom;
+    const goS = this.go.size.value,
+      boxS = this.trainerBox.size.value,
+      cornerS = this.corner.size.value,
+      tabsS = this.tabs.size.value,
+      routeS = this.route.size.value,
+      contentS = this.columnContent.size.value;
+    const font = this.legal.fontSignal.value;
+    if (!goS || !boxS || !cornerS || !tabsS || !routeS || !contentS || !font) return;
     const colW = this.colW();
     const colX = v.width - pad.right - colW;
-    // The cards (§3.1) need the column's height and the top bar's balance and brand as laid out.
-    const colH = this.column.size.value?.[1];
-    const balanceM = this.balance.root.globalMatrix.value,
-      balanceS = this.balance.root.size.value,
-      brandM = this.brand.globalMatrix.value,
-      brandS = this.brand.size.value;
-    if (colH === undefined || !balanceM || !balanceS || !brandM || !brandS) return;
-    const balanceLeft = balanceM.elements[12]! - this.stage.camera.left - balanceS[0] / 2;
-    const brandRight = brandM.elements[12]! - this.stage.camera.left + brandS[0] / 2;
-    const key = [v.width, v.height, v.scale, legalH, colW, this.compact, colH, balanceLeft].join(
-      ",",
-    );
+    const goTop = v.height - pad.bottom - goS[1];
+    const routeTop = goTop - 12 - routeS[1];
+    // The legal line: in the gap between the trainer and the bottom-right block, else (narrow)
+    // at the column's end.
+    const legalSize = this.compact ? 10 : 11;
+    const blockLeft = v.width - pad.right - Math.max(goS[0], this.compact ? 0 : routeS[0]);
+    // Clear of the trainer's portraits and of the slab, whose edge leans left going down.
+    const slab = Math.round(v.width * (this.compact ? 0.3 : 0.4375));
+    const slabFoot = slab - v.height * Math.tan((14 * Math.PI) / 180) + 28;
+    const legalLeft = Math.max(pad.left + boxS[0], slabFoot) + 2 * t.gap + 8;
+    const legalRoom = blockLeft - 2 * t.gap - 8 - legalLeft;
+    const inColumn = legalRoom < 180;
+    const legalWidth = inColumn ? colW : legalRoom;
+    const legalKey = `${inColumn},${Math.round(legalWidth)},${legalSize}`;
+    if (legalKey !== this.legalLaid) {
+      this.legalLaid = legalKey;
+      this.legalInColumn = inColumn;
+      const home = inColumn ? this.columnContent : this.stage.root;
+      if (this.legal.parentContainer.value !== home) {
+        this.legal.removeFromParent();
+        home.add(this.legal);
+      }
+      this.legal.setProperties({
+        fontSize: legalSize,
+        textAlign: inColumn ? "right" : "center",
+        text:
+          textWidth(LEGAL_NOTICE, legalSize, font) <= legalWidth
+            ? LEGAL_NOTICE
+            : balanceLines(LEGAL_NOTICE, legalWidth, legalSize, font),
+        ...(inColumn
+          ? {
+              positionType: "relative",
+              positionLeft: 0,
+              positionBottom: 0,
+              marginTop: t.section + 4,
+              width: colW,
+            }
+          : {
+              positionType: "absolute",
+              marginTop: 0,
+              width: legalRoom,
+              positionLeft: legalLeft,
+              positionBottom: pad.bottom,
+            }),
+      });
+      return;
+    }
+    const legalS = this.legal.size.value;
+    if (!legalS) return;
+    const key = [
+      v.width,
+      v.height,
+      v.scale,
+      colW,
+      this.compact,
+      ...goS,
+      ...boxS,
+      ...cornerS,
+      ...tabsS,
+      ...routeS,
+      ...contentS,
+      ...legalS,
+    ].join(",");
     if (key === this.placed) return;
     this.placed = key;
-    this.column.setProperties({ positionBottom: pad.bottom });
-    const barBottom = pad.top + Math.max(t.bar, v.minTarget);
-    const inset = this.compact ? 2 : 4;
-    const over = (h: number) => 0.1 * h + inset + 0.066 * h;
-    let cardH = this.compact ? 56 : 96;
-    const cardGap = this.compact ? 8 : 14;
-    const colTop = contentBottom - colH;
-    this.cardsInBar = colTop - barBottom - over(cardH) - cardH - cardGap < 0;
-    let top: number;
-    if (!this.cardsInBar) {
-      const w = (colW - cardGap) / 2;
-      top = barBottom + over(cardH) + (this.compact ? 2 : 4);
-      this.cards.forEach((card, i) => card.place(colX + i * (w + cardGap), top, w, cardH, inset));
-    } else {
-      // In the top bar, left of the balance (844×390, 760×427).
-      cardH = Math.max(44, v.minTarget);
-      const w = Math.min(150, (balanceLeft - 12 - brandRight - 16 - 8) / 2);
-      top = pad.top + over(cardH) + 1;
-      const right = balanceLeft - 12;
-      this.cards.forEach((card, i) =>
-        card.place(right - w - (1 - i) * (w + 8), top, w, cardH, inset),
-      );
-    }
-    const headBottom = this.cardsInBar ? top + cardH : barBottom;
+    // One row height for the tabs and the corner, so their centres line up.
+    const barH = Math.max(tabsS[1], cornerS[1]);
+    if (tabsS[1] !== barH) this.tabs.setProperties({ minHeight: barH });
+    if (cornerS[1] !== barH) this.corner.setProperties({ minHeight: barH });
+    const barBottom = pad.top + barH;
+    const top = barBottom + (this.compact ? 8 : 20);
+    const bottom = this.compact ? goTop - 8 : routeTop - 16;
+    const maxH = bottom - top + 2 * COLUMN_ROOM;
     this.column.setProperties({
-      overflow: "visible",
+      positionTop: top - COLUMN_ROOM,
+      maxHeight: maxH,
+      overflow: contentS[1] + COLUMN_ROOM * 2 > maxH ? "scroll" : "visible",
     });
-    // The hero zone (§3.4).
-    const zone = {
-      x: pad.left,
-      y: headBottom + (this.compact ? 4 : 12),
-      r: colX - t.zoneGap,
-      b: contentBottom,
-    };
-    this.zone = zone;
-    const zoneW = zone.r - zone.x,
-      zoneH = zone.b - zone.y;
-    const podW = Math.min(zoneW * 0.62, zoneH * 1.05);
-    const podH = (podW * 406) / 1200;
-    const cx = zone.x + zoneW / 2;
-    const podTop = zone.b - podH;
-    const feetY = podTop + 0.33 * podH;
-    const heroH = Math.min((feetY - zone.y) * 0.82, zoneW * 0.82);
-    const side = Math.max(t.switchKey, v.minTarget);
-    const offset = Math.min(podW / 2 + (this.compact ? 6 : 10) + side / 2, zoneW / 2 - side / 2);
-    const cy = podTop + 0.45 * podH;
-    this.prev.panel.setProperties({
-      positionLeft: cx - offset - side / 2,
-      positionTop: cy - side / 2,
-    });
-    this.next.panel.setProperties({
-      positionLeft: cx + offset - side / 2,
-      positionTop: cy - side / 2,
-    });
-    const k = v.scale;
+    if (!this.compact) this.route.setProperties({ positionTop: routeTop });
+    this.reveal();
+    // The scene: the slab, the trainer, the ball stage between the slab and the column.
+    const floor = this.legalInColumn ? v.height - pad.bottom : v.height - pad.bottom - legalS[1];
+    const lean = Math.tan((14 * Math.PI) / 180);
+    const clear = 28;
+    const zoneR = colX - (this.compact ? 16 : 24);
+    const side = Math.max(44, v.minTarget);
+    const arrowW = Math.max(40 + slantOf(44), v.minTarget);
+    // The partner fills the height down to the ball, which stands above the legal line.
+    let feetY = Math.min((this.compact ? 0.66 : 0.68) * v.height, floor - 34);
+    const heroH = Math.min(0.46 * v.height, (feetY - barBottom - 12) * 0.9);
+    // ‹ › flank the partner's lower body, clear of the slab's edge at their own height and of
+    // the trainer's reach above it; the stage is centred between them.
+    const arrowY = feetY - 0.2 * heroH - side / 2;
+    const zoneL = slab - arrowY * lean + clear;
+    const cx = (zoneL + zoneR) / 2;
+    // The ball's dashed rim (1.22 rx) stays clear of the slab at the ball's own height.
+    const rx = Math.min(
+      220,
+      (cx - (slab - feetY * lean) - clear) / 1.22,
+      (zoneR - zoneL) / 2 / (this.compact ? 1.12 : 1),
+    );
+    feetY = Math.min(feetY, floor - 0.42 * rx);
+    // The partner may pass behind half of each arrow: its widest part is rarely at their height.
+    const heroW = zoneR - zoneL - arrowW - 16;
+    this.zone = { x: zoneL, y: barBottom + 8, r: zoneR, b: v.height - pad.bottom };
+    this.prev.panel.setProperties({ positionLeft: zoneL, positionTop: arrowY });
+    this.next.panel.setProperties({ positionLeft: zoneR - arrowW, positionTop: arrowY });
+    const s = v.scale;
     this.scene?.setLayout({
-      width: v.width * k,
-      height: v.height * k,
-      podium: { x: (cx - podW / 2) * k, y: podTop * k, w: podW * k, h: podH * k },
-      feet: { x: cx * k, y: feetY * k },
-      heroH: heroH * k,
-      column: { x: colX * k, y: (contentBottom - colH) * k, w: colW * k, h: colH * k },
+      width: v.width * s,
+      height: v.height * s,
+      slab: slab * s,
+      trainer: {
+        x: slab * (this.compact ? 0.38 : 0.45) * s,
+        y: (this.compact ? 0.14 : 0.12) * v.height * s,
+        h: (this.compact ? 1.3 : 1.325) * v.height * s,
+        // A reaching hand stays out of the partner's space beyond the arrows.
+        right: (zoneL + arrowW) * s,
+      },
+      feet: { x: cx * s, y: feetY * s },
+      rx: rx * s,
+      heroW: heroW * s,
+      heroH: heroH * s,
     });
+  }
+
+  /** The first frame the lobby shows: the plates unroll, the column's rows slide in. */
+  private enter(): void {
+    this.entered = true;
+    this.trainerPlate.enter(180);
+    this.ribbonPlate?.enter(180);
+    const rows = [this.meta, this.chain, this.backpack];
+    for (const [i, row] of rows.entries()) this.slideIn(row, { x: 0, o: 1 }, stagger(i, 45, 120));
+    for (const [i, { badge, entry }] of this.badges.entries())
+      this.slideIn(badge.panel, entry, stagger(i, 45, 200));
+  }
+
+  private slideIn(node: Container, pose: { x: number; o: number }, delay: number): void {
+    this.stage.motion.enter(
+      pose,
+      { x: -60, o: 0 },
+      { x: 0, o: 1 },
+      380,
+      () => {
+        fade(node, pose.o).setProperties({ transformTranslateX: pose.x });
+        this.stage.invalidate();
+      },
+      EASE,
+      delay,
+    );
   }
 
   // ── Input ──────────────────────────────────────────────────────────────────────────────────
@@ -1661,19 +1335,19 @@ export class GpuLobby {
     if (!this.revealed || this.departing) return -1;
     for (let i = this.controls.length - 1; i >= 0; i--) {
       const control = this.controls[i]!;
-      if (
-        ["info", "tile", "map", "difficulty", "start"].includes(control.kind) &&
-        !this.contains(this.column, x, y)
-      )
-        continue;
+      // The column clips its rows: one scrolled out of it is not there.
+      if (inColumn(control.kind) && !this.contains(this.column, x, y)) continue;
       if (this.contains(control.panel, x, y)) return i;
     }
-    return -1;
+    return this.contains(this.column, x, y) && (this.column.maxScrollPosition.value[1] ?? 0) > 0
+      ? this.controls.length
+      : -1;
   }
 
   focus(index: number): void {
     if (index === this.focused) return;
     this.focused = index;
+    this.reveal();
     this.repaint();
   }
 
@@ -1692,12 +1366,37 @@ export class GpuLobby {
     this.controls[index]?.activate();
   }
 
-  /** The wheel over the hero zone switches partner, one per step. */
+  private reveal(): void {
+    const control = this.controls[this.focused];
+    if (control && inColumn(control.kind))
+      revealInScroller(control.panel, this.column, COLUMN_ROOM);
+  }
+
+  /** The column scrolls; the wheel over the stage switches partner, one per step. */
   scroll(delta: number): void {
     const at = this.pointer;
     if (this.departing) return;
-    if (currentInputMode().kind === "gamepad" || (at && this.contains(this.column, at.x, at.y)))
+    if (
+      this.columnDrag ||
+      currentInputMode().kind === "gamepad" ||
+      (at && this.contains(this.column, at.x, at.y))
+    ) {
+      const [x, y] = this.column.scrollPosition.value;
+      this.column.scrollPosition.value = [
+        x,
+        Math.max(
+          0,
+          Math.min(
+            this.column.maxScrollPosition.value[1] ?? 0,
+            y + delta / this.stage.viewport.scale,
+          ),
+        ),
+      ];
+      this.touchTip = -1;
+      this.tipPress = null;
+      this.stage.invalidate();
       return;
+    }
     if (!at || !this.inZone(at.x, at.y)) return;
     this.wheel += delta;
     if (Math.abs(this.wheel) < WHEEL_STEP) return;
@@ -1720,8 +1419,13 @@ export class GpuLobby {
     this.focus(this.index("start"));
   }
 
-  private linkStops(): number[] {
-    return this.controls.flatMap((control, index) => (control.kind === "link" ? [index] : []));
+  /** Back from the 图鉴 page: on the key that opened it. */
+  focusCodex(): void {
+    this.focus(this.index("codex"));
+  }
+
+  private stops(kind: ControlKind): number[] {
+    return this.controls.flatMap((control, index) => (control.kind === kind ? [index] : []));
   }
 
   private index(kind: ControlKind): number {
@@ -1733,27 +1437,37 @@ export class GpuLobby {
       ? this.tiles
       : control.kind === "difficulty"
         ? this.segments
-        : null;
+        : control.kind === "trainer"
+          ? this.trainerControls
+          : null;
   }
 
   private picked(list: Control[], index: number): number {
     return this.controls.indexOf(list.find((c) => c.index === index)!);
   }
 
-  /** Tab stops (§4): 设置, 研究所, 图鉴, ‹, ›, the picked
-   *  partner, the picked difficulty, 出发. */
-  private tabStops(): number[] {
+  /** The top row, left to right: the tabs, the links, 设置, 全屏. */
+  private topRow(): number[] {
     return [
-      this.index("settings"),
-      ...(this.toggleFullscreen ? [this.index("fullscreen")] : []),
-      this.index("multiplayer"),
       this.index("lab"),
       this.index("codex"),
-      ...this.linkStops(),
+      this.index("multiplayer"),
+      ...this.stops("link"),
+      this.index("settings"),
+      ...(this.toggleFullscreen ? [this.index("fullscreen")] : []),
+    ];
+  }
+
+  /** Tab stops: the top row, the picked trainer, ‹ ›, the picked partner, the backpack, the
+   *  picked difficulty, 出发. */
+  private tabStops(): number[] {
+    return [
+      ...this.topRow(),
+      this.picked(this.trainerControls, trainerOrder.indexOf(this.trainer)),
       this.index("prev"),
       this.index("next"),
       this.picked(this.tiles, starterOrder.indexOf(this.selected)),
-      ...this.controls.flatMap((control, index) => (control.kind === "info" ? [index] : [])),
+      ...this.stops("info"),
       this.picked(this.segments, this.difficulty),
       this.index("start"),
     ];
@@ -1825,22 +1539,16 @@ export class GpuLobby {
     return false;
   }
 
-  /** §4 arrows: 出发 switches partner sideways; the groups pick; up and down walk the column. */
+  /** Arrows: the groups pick sideways, 出发 switches partner sideways; up and down walk the
+   *  screen's regions (top row, trainer, stage, column, tray). */
   private arrow(current: Control, action: NavigationDirection): void {
     const sideways = action === "left" || action === "right";
     const step = action === "left" || action === "up" ? -1 : 1;
     const tile = this.picked(this.tiles, starterOrder.indexOf(this.selected));
     const segment = this.picked(this.segments, this.difficulty);
-    const infos = this.controls.flatMap((control, index) =>
-      control.kind === "info" ? [index] : [],
-    );
-    const links = this.linkStops();
-    const top =
-      current.kind === "lab" ||
-      current.kind === "codex" ||
-      current.kind === "settings" ||
-      current.kind === "multiplayer" ||
-      current.kind === "fullscreen";
+    const trainer = this.picked(this.trainerControls, trainerOrder.indexOf(this.trainer));
+    const infos = this.stops("info");
+    const row = this.topRow();
     const group = this.group(current);
     if (sideways) {
       if (group) {
@@ -1849,56 +1557,53 @@ export class GpuLobby {
         const next = group[(at + step + group.length) % group.length]!;
         this.focus(this.controls.indexOf(next));
         next.activate();
-      } else if (current.kind === "link") {
-        const at = links.indexOf(this.focused);
-        this.focus(links[Math.min(links.length - 1, Math.max(0, at + step))]!);
       } else if (current.kind === "info") {
         const at = infos.indexOf(this.focused);
         this.focus(infos[(at + step + infos.length) % infos.length]!);
-      } else if (top) {
-        // The cards' row (and, in the top bar, 设置 right of them): ← → walk it, no wrap.
-        const row = [this.index("lab"), this.index("codex")];
-        row.push(this.index("multiplayer"), this.index("settings"));
-        if (this.toggleFullscreen) row.push(this.index("fullscreen"));
+      } else if (row.includes(this.focused)) {
         const at = row.indexOf(this.focused);
-        if (at >= 0) this.focus(row[Math.min(row.length - 1, Math.max(0, at + step))]!);
+        this.focus(row[Math.min(row.length - 1, Math.max(0, at + step))]!);
       } else if (current.kind === "prev" || current.kind === "next")
         this.focus(this.index(current.kind === "prev" ? "next" : "prev"));
       else this.cycle(step as -1 | 1);
       return;
     }
     const up = action === "up";
-    if (group === this.tiles && this.rosterPerRow < this.tiles.length) {
-      // Two roster rows: up and down cross between them (and pick), then leave the roster.
+    if (group === this.tiles) {
+      // The roster's rows: up and down cross between them (and pick), then leave the roster.
       const at = this.tiles.indexOf(current);
-      const row = Math.floor(at / this.rosterPerRow);
-      const lastRow = Math.floor((this.tiles.length - 1) / this.rosterPerRow);
-      if (up ? row > 0 : row < lastRow) {
-        const to = Math.min(this.tiles.length - 1, at + (up ? -1 : 1) * this.rosterPerRow);
+      const rowAt = Math.floor(at / PER_ROW);
+      const lastRow = Math.floor((this.tiles.length - 1) / PER_ROW);
+      if (up ? rowAt > 0 : rowAt < lastRow) {
+        const to = Math.min(this.tiles.length - 1, at + (up ? -1 : 1) * PER_ROW);
         const next = this.tiles[to]!;
         this.focus(this.controls.indexOf(next));
         next.activate();
         return;
       }
     }
+    const below = infos[0] ?? segment;
     const targets: Record<ControlKind, [number, number]> = {
-      start: [segment, this.focused],
-      difficulty: [infos.at(-1) ?? tile, this.index("start")],
-      tile: [this.index("next"), infos[0] ?? segment],
+      lab: [this.focused, trainer],
+      codex: [this.focused, trainer],
+      multiplayer: [this.focused, this.index("prev")],
+      link: [this.focused, tile],
+      settings: [this.focused, tile],
+      fullscreen: [this.focused, tile],
+      trainer: [this.index("lab"), this.focused],
+      prev: [this.index("multiplayer"), trainer],
+      next: [this.index("multiplayer"), segment],
+      tile: [this.index("settings"), below],
       info: [tile, segment],
-      prev: [links[0]!, tile],
-      link: [this.index("multiplayer"), this.index("prev")],
-      next: [this.index("codex"), tile],
-      lab: [this.cardsInBar ? this.focused : this.index("settings"), this.index("next")],
-      codex: [this.cardsInBar ? this.focused : this.index("settings"), this.index("next")],
-      multiplayer: [this.index("settings"), this.index("next")],
-      fullscreen: [this.focused, this.index("settings")],
-      settings: [this.focused, this.cardsInBar ? this.index("next") : this.index("lab")],
+      difficulty: [infos.at(-1) ?? tile, this.index("start")],
+      start: [segment, this.focused],
     };
     this.focus(targets[current.kind][up ? 0 : 1]);
   }
 
   pointerDown(x: number, y: number, touch: boolean): void {
+    this.pointer = { x, y };
+    this.columnDrag = touch && this.contains(this.column, x, y);
     const index = this.tipTarget(x, y);
     if (this.touchTip >= 0 && index !== this.touchTip) this.touchTip = -1;
     this.tipPress = touch && index >= 0 ? { index, at: this.elapsed, x, y, fired: false } : null;
@@ -1924,6 +1629,7 @@ export class GpuLobby {
   }
 
   pointerUp(touch: boolean): boolean {
+    this.columnDrag = false;
     this.swipe = null;
     const press = this.tipPress;
     this.tipPress = null;
@@ -1937,11 +1643,11 @@ export class GpuLobby {
   /** Tip targets: controls, the balance, then the backpack's items. */
   private tipTarget(x: number, y: number): number {
     const control = this.hit(x, y);
-    if (control >= 0) {
+    if (control >= 0 && control < this.controls.length) {
       const c = this.controls[control]!;
       return c.kind === "tile" || c.tip() ? control : -1;
     }
-    if (this.contains(this.balance.root, x, y)) return this.controls.length;
+    if (this.contains(this.balance, x, y)) return this.controls.length;
     const item = this.carryTips.findIndex((tip) => this.contains(tip.panel, x, y));
     return item >= 0 ? this.controls.length + 1 + item : -1;
   }
@@ -1960,11 +1666,11 @@ export class GpuLobby {
         panel: control.panel,
         text: control.tip() ?? "",
         locked: control.locked(),
-        column: ["tile", "difficulty", "map", "info"].includes(control.kind),
+        column: inColumn(control.kind),
       };
     }
     if (index === this.controls.length)
-      return { panel: this.balance.root, text: CURRENCY_NAME, locked: false, column: false };
+      return { panel: this.balance, text: CURRENCY_NAME, locked: false, column: false };
     const tip = this.carryTips[index - this.controls.length - 1];
     return tip
       ? { panel: tip.panel, text: items[tip.item].name, locked: false, column: true }
@@ -1974,6 +1680,7 @@ export class GpuLobby {
   afterLayout(deltaMs: number): void {
     this.elapsed += deltaMs;
     this.place();
+    if (!this.entered && this.revealed && !this.covered) this.enter();
     const press = this.tipPress;
     if (press && !press.fired && this.elapsed - press.at >= LONG_PRESS_MS) {
       press.fired = true;
@@ -1996,61 +1703,9 @@ export class GpuLobby {
     );
     this.tooltip.update();
     for (const control of this.controls) control.update(deltaMs);
-    for (const button of this.buttons) button.update(deltaMs);
-    for (const part of [...this.disposables, ...this.plateParts]) part.update?.();
-    this.launchPlate.update();
-    this.animateLaunch(deltaMs);
-  }
-
-  /** 出发's states (§3.3): idle wedges light in turn on the 15Hz clock; lit, the pattern drifts. */
-  private animateLaunch(deltaMs: number): void {
-    const lit = this.lit.value,
-      down = this.press.value;
-    const hold = this.covered || !this.revealed;
-    if (lit > 0 && !hold) this.patternPhase = (this.patternPhase + deltaMs / 24000) % 1;
-    const tick = idleTicked(15);
-    this.launchPlate.set({
-      depth: 6 + 2 * lit * (1 - down) - 6 * down,
-      strength: 0.55 + 0.45 * lit,
-      phase: this.patternPhase,
-      inset: down,
-    });
-    // Pose and placement change only with the state or the layout; setting them again every frame
-    // would mark the stage changed and redraw the canvas each frame (DESIGN 空闲循环).
-    const pose = [lit, down, this.spin.value].join(",");
-    if (pose !== this.launchPose) {
-      this.launchPose = pose;
-      this.launch.setProperties({
-        transformTranslateY: -2 * lit * (1 - down) + 6 * down,
-        transformScaleX: 1 + 0.012 * down,
-        transformScaleY: 1 - 0.03 * down,
-      });
-      this.emblemImage?.setProperties({ transformRotateZ: -360 * this.spin.value });
-      this.arrowBox.setProperties({ transformTranslateX: 6 * lit });
-    }
-    const easing = lit > 0 && lit < 1;
-    // The light sweep: one pass every SHINE_EVERY, stepped on the scene's 30Hz clock while it runs.
-    if (!hold) {
-      if (this.elapsed - this.shineAt > SHINE_EVERY) this.shineAt = this.elapsed;
-      const k = (this.elapsed - this.shineAt) / SHINE_MS;
-      const shine = k < 1 ? k : -1;
-      if (shine !== this.shineShown && (shine < 0 || idleTicked(30))) {
-        this.shineShown = shine;
-        this.launchPlate.set({ shine });
-        this.stage.invalidate();
-      }
-    }
-    // Idle loops step on the 15Hz clock only, so the lobby redraws with its scene, not every frame.
-    if (hold || !(tick || easing)) return;
-    // The wedges light in turn, 0.4 → 1 (1.2s; 0.6s and all lit under a pointer or focus).
-    const period = lit > 0.5 ? 600 : 1200;
-    const at = ((this.elapsed % period) / period) * 3;
-    this.arrows.forEach((wedge, i) => {
-      const on =
-        lit > 0.5 ? 1 : Math.max(0.4, 1 - 0.6 * Math.min(Math.abs(at - i), 3 - Math.abs(at - i)));
-      fade(wedge, on);
-    });
-    this.stage.invalidate();
+    for (const swatch of this.swatches) swatch.update();
+    // 出发's light sweep steps on the idle clock while the lobby shows.
+    if (!this.covered && this.revealed) this.startButton.update(deltaMs);
   }
 
   /** Context lost: the stage (the image store releases and restores the shared portraits). */
@@ -2060,11 +1715,17 @@ export class GpuLobby {
 
   dispose(): void {
     for (const control of this.controls) control.dispose();
-    for (const part of [...this.plateParts, ...this.disposables]) part.dispose();
-    for (const button of this.buttons) button.dispose();
-    this.launchPlate.dispose();
-    this.balance.dispose();
+    for (const part of [...this.partnerParts, ...this.disposables, ...this.swatches])
+      part.dispose();
+    for (const button of this.keyed) button.dispose();
+    for (const { entry } of this.badges) this.stage.motion.cancel(entry);
+    this.balancePlate.dispose();
     this.tooltip.dispose();
     this.stage.dispose();
   }
+}
+
+/** Rows of the scrolling decision column (hit-tested and revealed inside it). */
+function inColumn(kind: ControlKind): boolean {
+  return kind === "tile" || kind === "info";
 }

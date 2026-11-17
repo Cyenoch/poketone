@@ -25,7 +25,7 @@ export interface SpawnState {
 /**
  * Where the run is in its stage's zones (openspec/specs/world-progression/spec.md): `active` fights toward the guardian,
  * `cleared` lets the players gather what it dropped and use the stations until they leave by the
- * landmark, `transitioning` holds the world still while the host readies the next zone's field.
+ * exit it opened, `transitioning` holds the world still while the host readies the next zone's field.
  */
 export interface ZoneState {
   /** 0-based index into the stage's `zones`. */
@@ -33,6 +33,8 @@ export interface ZoneState {
   /** Ticks fought in this zone; its clock (roster, beats, curves, final swarm) is `tick × TICK`. */
   tick: number;
   phase: "active" | "cleared" | "transitioning";
+  /** Where the fallen guardian opened the way out; set when the zone is cleared. */
+  exit: { x: number; z: number } | null;
 }
 
 export interface World {

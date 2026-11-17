@@ -5,8 +5,6 @@ import { setTimeout as delay } from "node:timers/promises";
 import sharp from "sharp";
 import sdl from "@kmamal/sdl";
 import { Text } from "@pmndrs/uikit";
-import { getCaretTransformation } from "@pmndrs/uikit/dist/text/layout/query.js";
-import { Vector3 } from "three";
 import { GpuSaveDialog } from "../src/ui/gpu/save-dialog";
 import { createNativeApp } from "../src/platform/native/main";
 import { decodeSave, encodeSave } from "../src/run/save";
@@ -159,32 +157,11 @@ try {
   await capture("save");
   const save = host.inspect().screens.at(-1)!;
   assert(save instanceof GpuSaveDialog);
-  let glyphs: Text | undefined;
-  save.stage.root.traverse((node) => {
-    if (node instanceof Text && String(node.properties.peek().text) === save.buffer.text)
-      glyphs = node;
-  });
-  assert(glyphs?.textLayout.value);
-  const caretPoint = (index: number) => {
-    const caret = getCaretTransformation(glyphs!.textLayout.value!, index);
-    const world = new Vector3(...caret.position, 0).applyMatrix4(glyphs!.globalTextMatrix.value!);
-    return {
-      x: (world.x - save.stage.camera.left) * save.stage.viewport.scale,
-      y: (save.stage.camera.top - world.y) * save.stage.viewport.scale,
-    };
-  };
-  game.surface.window.emit("mouseButtonDown", { button: 1, ...caretPoint(1) });
-  game.surface.window.emit("mouseMove", caretPoint(4));
-  assert.deepEqual([save.buffer.start, save.buffer.end], [1, 4]);
-  game.surface.window.emit("blur");
-  game.surface.window.emit("mouseMove", caretPoint(8));
-  assert.deepEqual([save.buffer.start, save.buffer.end], [1, 4], "blur must end text selection");
-  await press(saveStage, "复制");
+  await press(saveStage, "复制存档");
   const imported = decodeSave(sdl.clipboard.text);
   imported.progress.stardust = 1234;
-  host.inspect().screens.at(-1)!.focus(1);
-  game.surface.window.emit("textInput", { text: encodeSave(imported) });
-  await press(saveStage, "导入");
+  sdl.clipboard.setText(encodeSave(imported));
+  await press(saveStage, "粘贴导入");
   await until(() => host.inspect().screens.length === 1, "save import failed to close");
   assert.equal(decodeSave(await readFile(savePath, "utf8")).progress.stardust, 1234);
 

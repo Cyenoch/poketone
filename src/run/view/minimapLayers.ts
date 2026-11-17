@@ -48,6 +48,7 @@ const HEAT_HALF = ARENA_HALF + 8;
 const INK = "#0d233f",
   YELLOW = "#ffd45b",
   GUARDIAN = "#d9384f",
+  EXIT = "#bff4ff",
   DOWN = "#e0475a";
 /** Seconds per pulse of the guardian and downed-teammate rings. */
 const PULSE_SECONDS = 1.4;
@@ -369,13 +370,39 @@ export class MapLayers {
           angle,
         );
       }
-    } else if (world.bossId === null) {
-      const landmark = landmarkOf(world);
-      const { x, y } = pin(
-        map.ox + map.xx * landmark.x + map.xz * landmark.z,
-        map.oy + map.zx * landmark.x + map.zz * landmark.z,
+    } else if (world.zone.phase === "cleared" && world.zone.exit) {
+      // The exit the guardian opened where it fell: a cyan ring, labelled and pinned like the guardian.
+      const exit = world.zone.exit;
+      const { x, y, angle } = pin(
+        map.ox + map.xx * exit.x + map.xz * exit.z,
+        map.oy + map.zx * exit.x + map.zz * exit.z,
       );
-      circle(x, y, unit * 5, "#bff4ff", unit * 2);
+      const k = angle === null ? 1 : 0.75;
+      ring(x, y, unit * (20 + 18 * wave) * k, EXIT);
+      circle(x, y, unit * 8 * k, EXIT, unit * 2.8);
+      circle(x, y, unit * 3.2 * k, EXIT, unit * 3.2);
+      labelAt(
+        -2,
+        "出口",
+        x,
+        Math.max(0, Math.min(size - unit * 16, y + (y <= centre ? unit * 14 : -unit * 28))),
+        1,
+        11,
+      );
+      if (angle !== null) {
+        const reach = unit * 14 * k;
+        this.markers.add(
+          x + Math.cos(angle) * reach,
+          y + Math.sin(angle) * reach,
+          unit * 9 * k,
+          unit * 9 * k,
+          3,
+          EXIT,
+          INK,
+          unit * 1.2,
+          angle,
+        );
+      }
     }
     for (const [id, label] of this.labels)
       if (!seen.has(id)) label.panel.setProperties({ display: "none" });

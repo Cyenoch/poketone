@@ -4,7 +4,7 @@
 
 当前是仓库内的 **Bun + SDL + WebGL2 应用入口**。启动进入正式大厅，可选择伙伴、地图和已解锁难度，进入研究所、图鉴和设置，出发、重开、结算后返回大厅。Web 与 native 使用同一 `app/session.ts`、GPU 宿主和对局会话，不维护两套导航/进度/音频调度。
 
-存档窗口、编辑状态和导入流程现由两端共享；native 使用 SDL 文本/剪贴板和真正的 AppKit 文件面板。手柄通过同一语义动作入口接入，硬件矩阵仍待实机验收。native 与 Web 都可 DataChannel 直连，也保留 Harbor 中转与恢复。macOS arm64 可构建不依赖仓库、Bun PATH 或当前目录的独立 `.app`，见 [打包说明](NATIVE-PACKAGING.md)；发布签名、公证和第二台机器仍未验证。
+存档窗口和导入流程现由两端共享；native 使用 SDL 剪贴板和真正的 AppKit 文件面板。手柄通过同一语义动作入口接入，硬件矩阵仍待实机验收。native 与 Web 都可 DataChannel 直连，也保留 Harbor 中转与恢复。macOS arm64 可构建不依赖仓库、Bun PATH 或当前目录的独立 `.app`，见 [打包说明](NATIVE-PACKAGING.md)；发布签名、公证和第二台机器仍未验证。
 
 ```sh
 bun install
@@ -17,7 +17,7 @@ bun run native --save /tmp/poketone-native-session/save.v3.txt
 bun run test:native
 ```
 
-已在 macOS arm64、Bun 1.4.4、ANGLE Metal 上运行。入口每次将当前源码编译到 `node_modules/.cache/poketone/native.mjs`，资源从当前仓库 `public/` 读取，不启动 Web 服务，也不读取旧实验目录。字体基础字集仍须按现有流程先生成（`bun run fonts:base`）。默认存档为 `~/.poketone/save.v3.txt`，内容就是 Web 导出的存档码；启动时校验，损坏或不支持的版本直接报错，不覆盖原文件。保存先写同目录临时文件并 flush，再 rename。设置 → 存档可编辑、导入、复制、打开与导出文件。伙伴/难度/地图偏好另存为 `save.v3.txt.pick.json`，不进入可移植存档；缺失时使用默认选择，JSON 损坏或文件读取错误会记录带路径警告并使用默认选择，不阻止有效进度加载。
+已在 macOS arm64、Bun 1.4.4、ANGLE Metal 上运行。入口每次将当前源码编译到 `node_modules/.cache/poketone/native.mjs`，资源从当前仓库 `public/` 读取，不启动 Web 服务，也不读取旧实验目录。字体基础字集仍须按现有流程先生成（`bun run fonts:base`）。默认存档为 `~/.poketone/save.v3.txt`，内容就是 Web 导出的存档码；启动时校验，损坏或不支持的版本直接报错，不覆盖原文件。保存先写同目录临时文件并 flush，再 rename。设置 → 存档经剪贴板或文件导出、导入。伙伴/难度/地图偏好另存为 `save.v3.txt.pick.json`，不进入可移植存档；缺失时使用默认选择，JSON 损坏或文件读取错误会记录带路径警告并使用默认选择，不阻止有效进度加载。
 
 全屏按钮在进入后保留，图标切换为退出动作；F11 使用同一个 native 切换函数。大厅、研究所、设置、HUD 和局内窗口共用全屏状态与图标。
 

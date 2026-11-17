@@ -18,14 +18,16 @@ OWN-WORLD: DESIGN.md's established world: the coastal backdrop, navy / ice / war
 - the slanted 启程板 for 出发;
 - the lead tag size (28);
 - the Magpie podium raster;
-- a Pokémon-world backdrop (`public/art/lobby/backdrop.webp`, nano banana 2.1 from a hand-made layout guide). Its landmarks (Pokémon Center, Mart, Lapras) sit in the band left visible between the partner and the column at both sizes;
+- a Pokémon-world coastal overlook (`public/art/lobby/backdrop.webp`, Magpie Image). A quiet meadow receives the separate podium; the curved route, Pokémon Center, Mart and Lapras occupy the central gap. The source image, prompt and previous backdrop are preserved under `public/art/lobby/source/`, with the generation and processing recorded in `lobby.provenance.json`;
 - 研究所 / 图鉴 as two stylised cards with Magpie object art breaking the top edge. They sit under Settings above the column, or in the top bar row when there is no height (phone).
 
 STORY: picking a partner rebuilds the scene's type light: the podium ring, the aura, the rising crests, the ribbon and the crest on 出发. The partner is the live low-poly GLB, never an upscaled portrait.
 
-FIRST VIEWPORT: desktop 1280×800 and phone 844×390 use one structure. The hero zone is on the left and the decision column on the right, anchored bottom-right. The legal notice is centered along the bottom on wide screens and right-aligned below the decision column on compact screens. Nothing interactive goes in the phone's bottom-left. A short screen (logical height ≤ 600) uses the lobby's compact sizes.
+FIRST VIEWPORT: desktop 1280×800 and phone 844×390 use one structure. The hero zone is on the left and the decision column on the right, anchored bottom-right. Community links and the legal notice sit beneath the brand. Compact hero space starts below the measured legal group; top-bar cards end before the column so they cannot overlap its name ribbon. A short screen (logical height ≤ 600) uses the lobby's compact sizes.
 
-ROSTER: the medals derive from `starterOrder`, never a fixed count. The compact tier keeps one row (touch-minimum medals; the column widens to hold them before the hero zone gives way). Desktop keeps one row while a medal stays ≥ 64; past that, two staggered rows (top row first, the second offset by half a medal, honeycomb spacing). Only the picked medal carries the Poké Ball mark; it sits larger and lifted, so the party reads at a glance.
+SHORT LANDSCAPE: the decision column ends below the top bar. When its content exceeds that viewport it scrolls internally, with room for medal lift, plate slants and focus rings. Focus reveals the addressed control; clipped controls cannot intercept the top bar.
+
+ROSTER: the medals derive from `starterOrder`, never a fixed count. Desktop keeps one row while a medal stays ≥ 64; past that, two staggered rows with medals capped at 72. Compact keeps one row only when touch-minimum medals fit the existing column; otherwise it uses two touch-minimum rows, leaving the hero zone open. Nine starters read as 5 + 4, top row first, the shorter row centered with honeycomb spacing. Compact medal gaps are 10 logical units, and backpack/tray margins are 6 so a full backpack remains reachable. Only the picked medal carries the Poké Ball mark; its approved hover, press and selection motion stays intact.
 
 FEEL (one authored moment per action, all on the shared motion clock):
 - Switching partner is the lobby's moment: a type light pillar flashes up from the podium, a shockwave runs across the podium's top face, the new partner pops in with a small overshoot while the old one sinks; the ribbon sweeps in from the right, the picked medal pops.

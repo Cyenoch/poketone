@@ -1,0 +1,30 @@
+{
+  "createdAt": "2026-11-17",
+  "generator": "Magpie generate_image, ash/gpt-image-2.5-sunburst",
+  "generationRecords": "assets/icons/source/psychic-rock-generation.json",
+  "assets": [
+    {
+      "asset": "psychic.webp",
+      "source": "assets/icons/source/card-psychic.png",
+      "generationId": "image-38907-15",
+      "softColor": "#fde0ea",
+      "artShare": 1
+    },
+    {
+      "asset": "rock.webp",
+      "source": "assets/icons/source/card-rock.png",
+      "generationId": "image-38907-16",
+      "softColor": "#f2ebcf",
+      "artShare": 0.95
+    },
+    {
+      "asset": "ground.webp",
+      "source": "assets/icons/source/card-ground.png",
+      "generationId": "image-38907-17",
+      "softColor": "#f8e6d4",
+      "artShare": 0.85
+    }
+  ],
+  "processing": "assets/icons/prepare-psychic-rock.py: Lanczos to 512x512 RGB; reduce source art share in 5% steps against the specified type soft color, encode WebP q86 and re-read until every encoded pixel has at least 4.8:1 contrast against #142f50. Cards are intentionally opaque full-bleed backgrounds.",
+  "rights": "Generated for a noncommercial Pokémon fan project; not licensed as standalone open art."
+}

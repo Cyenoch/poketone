@@ -3,13 +3,24 @@
  * gates use (progress, lab costs), so the reason can never disagree with the lock.
  */
 import { nextCost, type LabItem } from "./lab";
-import { unlockedDifficulty, type Progress } from "./progress";
+import {
+  starterUnlocked,
+  starterUnlockProgress,
+  unlockedDifficulty,
+  type Progress,
+} from "./progress";
 import { starterUnlocks } from "./sim/content/params/progression";
 import { difficulties, type Difficulty } from "./sim/content/difficulties";
 import { moves } from "./sim/content/moves";
 import type { StarterId } from "./sim/content/lines/index";
 import type { FusionPart } from "./sim/fusion";
 import { MAX_MOVE_LEVEL } from "./sim/content/params/cards";
+import { trainerUnlocked, XIAQING_UNLOCK_KILLS, type TrainerId } from "../trainers";
+
+export function trainerLock(progress: Progress, trainer: TrainerId): string | null {
+  if (trainerUnlocked(progress, trainer)) return null;
+  return `累计击败 ${progress.kills.toLocaleString("en-US")} / ${XIAQING_UNLOCK_KILLS.toLocaleString("en-US")} 解锁`;
+}
 
 export function difficultyLock(progress: Progress, difficulty: Difficulty): string | null {
   if (difficulty <= unlockedDifficulty(progress)) return null;
@@ -17,9 +28,18 @@ export function difficultyLock(progress: Progress, difficulty: Difficulty): stri
 }
 
 export function starterLock(progress: Progress, starter: StarterId): string | null {
-  const need = starterUnlocks[starter];
-  if (need === undefined || progress.research >= need) return null;
-  return `累计击倒 ${Math.floor(progress.research)} / ${need} 后加入`;
+  const unlock = starterUnlocks[starter];
+  if (!unlock || starterUnlocked(progress, starter)) return null;
+  const { have, need } = starterUnlockProgress(progress, unlock);
+  const count = (n: number) => Math.floor(n).toLocaleString("en-US");
+  switch (unlock.kind) {
+    case "research":
+      return `累计击倒 ${count(have)} / ${count(need)}`;
+    case "clear":
+      return `通关${difficulties[unlock.difficulty].name}`;
+    case "distinctClears":
+      return `不同伙伴通关${unlock.difficulty > 0 ? difficulties[unlock.difficulty].name : ""} ${have} / ${need}`;
+  }
 }
 
 export function labLock(item: LabItem, level: number, stardust: number): string | null {

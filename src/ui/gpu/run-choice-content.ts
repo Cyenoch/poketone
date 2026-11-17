@@ -19,29 +19,26 @@ import { archetypeNames } from "../../run/labels";
 import { itemIcon, moveIcon } from "../../screens/runArt";
 import type { RunOverlayControl } from "./run-overlays-control";
 import type { UiStage } from "./stage";
-import { cubicBezier, FocusMark, uiEaseOut } from "./focus-mark";
+import { cubicBezier, uiEaseOut } from "./focus-mark";
 import {
   ChoiceArt,
-  ChoiceBannerPlate,
-  ChoiceBannerTail,
-  ChoiceButtonSkin,
   ChoiceCardSurface,
   ChoiceIconPlate,
-  ChoiceSpark,
-  srgb,
   toneColor,
   type CardKind,
   type ChoiceCardStyle,
 } from "./run-choice-surface";
 import { themeColors } from "./run-theme";
-import { HoverPattern } from "./hover-pattern";
-import { gameTag, rarityTag, typeTag } from "./tag";
+import { rarityTag, slantTag, typeTag } from "./tag";
+import { SlantPlate } from "./slant-plate";
+import { UprightPlate } from "./run-overlays-surface";
+import { HARD_SHADOW, RADIUS_INNER, slantOf, ui } from "./tokens";
 import { balanceLines, breakLines, textWidth } from "./line-break";
 import { createMenuIcon } from "./icons";
 import { actionTerms } from "../../run/glossary";
 import { createRunCommandIcon } from "./run-overlays-icons";
-import { fade, inheritedOpacity, stack } from "./layer";
-import { idleTicked } from "./motion";
+import { fade, stack } from "./layer";
+import { EASE, idleTicked, LIFT, SNAP, stagger } from "./motion";
 
 export interface ChoiceState {
   kind: "choice";
@@ -73,7 +70,6 @@ const PICK_MS = 280;
 const SETTLE_MS = 600;
 const easeIn = (t: number) => cubicBezier(t, 0.42, 0, 1, 1);
 const easeInOut = (t: number) => cubicBezier(t, 0.42, 0, 0.58, 1);
-const cssEase = (t: number) => cubicBezier(t, 0.25, 0.1, 0.25, 1);
 const clamp01 = (t: number) => Math.min(1, Math.max(0, t));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 /** CSS `line-height: normal` for the UI font: Chrome rounds its ascent and descent (1095 / 353). */
@@ -81,7 +77,6 @@ const lineBox = (size: number) => Math.round(1.095 * size) + Math.round(0.353 * 
 /** UIKit reads a numeric line height as a multiple of the font size. */
 const lineHeight = (size: number, px: number) => px / size;
 
-const chestTheme = { face: "#ffd45b", deep: "#9c6a1d", light: "#fff0b0" };
 const kindNames: Record<CardKind, string> = { move: "招式", item: "道具", train: "训练" };
 const trainNames = { dmg: "伤害", hp: "HP", speed: "速度", area: "范围", cd: "冷却" };
 const trainIcons = {
@@ -227,7 +222,6 @@ interface Card {
   /** Lifted and veiled: focused, and either keyboard focus is visible or the pointer is on it. */
   shown: boolean;
   pointer: boolean;
-  pattern: { x: number; y: number };
   born: number;
   pose: CardPose;
   /** The pose a pick started from. */
@@ -239,29 +233,27 @@ type Action = "reroll" | "skip" | "banish" | "defer";
 interface ActionButton {
   kind: Action;
   panel: Container;
-  skin: ChoiceButtonSkin;
-  pattern: HoverPattern;
-  cursor: FocusMark;
+  plate: UprightPlate;
   glyph: Content;
   label: Text;
   badge: Container;
   focused: boolean;
   pointer: boolean;
   pressed: boolean;
-  /** 0 → its own paint, 1 → the lit (yellow) paint; hover raises, press sinks. */
-  motion: { lit: number; hover: number; press: number };
+  /** Hover lifts 3px, a press sinks 1px (SNAP). */
+  pose: { y: number };
   control: RunOverlayControl | null;
 }
 interface Banner {
   root: Container;
+  /** The slanted name plate (its box) and its paint. */
   plate: Container;
-  plateSkin: ChoiceBannerPlate;
-  tails: ChoiceBannerTail[];
-  kicker: { row: Container; compact: boolean | null } | null;
+  slant: SlantPlate;
+  kicker: { tag: Container; dispose(): void } | null;
+  words: { text: Text; size: "word" | "number" | "chest" }[];
   line: Container;
-  words: { box: Container; texts: Text[]; size: "word" | "number" | "chest"; small: number }[];
-  sparks: { content: ChoiceSpark; size: number }[];
-  born: number;
+  reveal: { value: number };
+  ink: { value: number };
 }
 interface Flight {
   index: number;
@@ -413,7 +405,7 @@ export class GpuChoiceContent {
     this.coarse = coarse;
     for (const badge of this.keycaps) badge.setProperties({ display: coarse ? "none" : "flex" });
   }
-  private text(text: string, size: number, color = "#0d233f", weight = 800): Text {
+  private text(text: string, size: number, color: string = ui.ink, weight = 800): Text {
     return new Text({
       text,
       fontSize: size,
@@ -423,27 +415,6 @@ export class GpuChoiceContent {
       flexShrink: 0,
       minWidth: 0,
     });
-  }
-  /** ui/tag.css: badge 11 px in 16, chip 12 px in 21; the box centres the font's line box. */
-  private tag(
-    text: string,
-    size: "badge" | "chip",
-    face: string,
-    ink: string,
-    ring?: { color: string; width: number },
-  ): Container {
-    return gameTag(text, { size, face, ink, ring });
-  }
-  /** `box-shadow: 0 0 0 2px <color>` around a chip: a ring that takes no layout space. */
-  private ringed(chip: Container, color: string, radius: number): Container {
-    const ring = new Container({
-      padding: 2,
-      borderRadius: radius,
-      backgroundColor: color,
-      flexShrink: 0,
-    });
-    ring.add(stack(chip, 1));
-    return ring;
   }
   /** The kind chip's 16-unit glyph (run-screen.css `--glyph`), a filled shape. */
   private kindGlyph(kind: CardKind, size: number): Content {
@@ -492,7 +463,7 @@ export class GpuChoiceContent {
     geometry.translate(-8, -8, 0);
     geometry.boundingBox = new Box3(new Vector3(-8, -8, 0), new Vector3(8, 8, 0));
     const material = new MeshBasicMaterial({
-      color: "#0d233f",
+      color: ui.ink,
       transparent: true,
       depthTest: false,
       depthWrite: false,
@@ -514,218 +485,84 @@ export class GpuChoiceContent {
 
   // ---------------------------------------------------------------- banner
 
+  /** The level (or chest) on a slanted plate that unrolls from the left: the type's deep colour
+   *  under its card face with a type stripe, the chest an ink plate with a gold stripe. */
   private buildBanner(): void {
     const chest = this.state.pending.source === "chest";
     const theme = themeColors(this.state.theme);
-    const colors = chest ? chestTheme : { face: theme.theme, deep: theme.deep, light: theme.light };
-    const root = new Container({ flexDirection: "row", flexShrink: 0 });
-    const tails = (["start", "end"] as const).map((side) => {
-      const tail = new ChoiceBannerTail(side, colors.face, colors.deep);
-      tail.content.setProperties({
-        positionLeft: side === "start" ? 0 : undefined,
-        positionRight: side === "end" ? 0 : undefined,
-        transformOriginX: side === "start" ? "right" : "left",
-      });
-      root.add(tail.content);
-      return tail;
+    const root = new Container({ flexDirection: "row", alignItems: "center", flexShrink: 0 });
+    const plate = new Container({
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
     });
-    const plate = stack(
-      new Container({
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0,
-      }),
-      1,
-    );
-    const plateSkin = new ChoiceBannerPlate(
-      chest ? "chest" : this.state.theme,
-      colors.face,
-      colors.light,
-    );
-    plate.add(plateSkin.content);
-    const line = stack(new Container({ flexDirection: "row", alignItems: "flex-start" }), 1);
+    const slant = new SlantPlate(plate, {
+      fill: chest ? ui.ink : theme.deep,
+      stripe: {
+        color: chest ? toneColor({ kind: "move", tone: "legendary", type: null }) : theme.theme,
+        width: 10,
+      },
+      card: chest ? undefined : { type: this.state.theme, loaded: () => this.stage.invalidate() },
+    });
+    plate.add(slant.content);
+    const line = stack(new Container({ flexDirection: "row", alignItems: "flex-end", gap: 6 }), 1);
     const words: Banner["words"] = [];
     const word = (text: string, size: Banner["words"][number]["size"]) => {
-      const box = new Container({ flexShrink: 0 });
-      const texts: Text[] = [];
-      // -webkit-text-stroke 6px navy-deep under the fill (paint-order stroke): 3px shows outside.
-      for (let i = 0; i < 12; i++) {
-        const stroke = this.text(text, 22, "#0d233f");
-        stroke.setProperties({ positionType: "absolute", positionLeft: 0, positionTop: 0 });
-        box.add(stroke);
-        texts.push(stroke);
-      }
-      const ink = stack(this.text(text, 22, "#ffffff"), 1);
-      box.add(ink);
-      texts.push(ink);
-      line.add(box);
-      words.push({ box, texts, size, small: 0 });
+      const t = this.text(text, 22, ui.white, 900);
+      line.add(t);
+      words.push({ text: t, size });
     };
     let kicker: Banner["kicker"] = null;
     if (chest) word("宝箱", "chest");
     else {
-      // `.game-tag` (ui.css, later in the cascade) keeps its own inset ring over the kicker's.
-      const chip = this.tag("升级", "chip", "#ffd45b", "#0d233f", { color: "#142f50", width: 1.5 });
-      const row = stack(new Container({ flexDirection: "row", justifyContent: "center" }), 2);
-      row.add(chip);
-      kicker = { row, compact: null };
+      kicker = slantTag("升级", { face: ui.white, ink: ui.ink, size: 13 });
+      stack(kicker.tag, 1);
+      plate.add(kicker.tag);
       word("Lv", "word");
       word(String(this.state.level), "number");
     }
     plate.add(line);
     root.add(plate);
-    const sparks = [
-      { fill: "#ffffff", size: 14 },
-      { fill: "#ffd45b", size: 10 },
-      { fill: "#ffd45b", size: 18 },
-      { fill: "#ffffff", size: 10 },
-    ].map(({ fill, size }) => {
-      const content = new ChoiceSpark(fill, colors.light);
-      stack(content.content, 2);
-      root.add(content.content);
-      return { content, size };
-    });
     this.bannerBox.add(root);
-    this.banner = {
-      root,
-      plate,
-      plateSkin,
-      tails,
-      kicker,
-      line,
-      words,
-      sparks,
-      born: this.elapsed,
-    };
+    const reveal = { value: 0 },
+      ink = { value: 0 };
+    this.banner = { root, plate, slant, kicker, words, line, reveal, ink };
     this.bannerCard = `${this.state.pending.id}:${this.state.pending.source}`;
+    const apply = () => {
+      slant.set({ reveal: reveal.value });
+      fade(line, ink.value);
+      if (kicker) fade(kicker.tag, ink.value);
+      this.stage.invalidate();
+    };
+    // Name-plate unroll 0.4s SNAP; the words come up as it passes.
+    this.stage.motion.enter(reveal, { value: 0 }, { value: 1 }, 400, apply, SNAP);
+    this.stage.motion.enter(ink, { value: 0 }, { value: 1 }, 260, apply, EASE, 160);
   }
 
   private layoutBanner(m: Metrics): void {
     const b = this.banner;
     if (!b) return;
-    const chest = this.state.pending.source === "chest";
-    const height = m.compact ? 32 : 64,
-      tail = m.compact ? 34 : 58,
-      under = m.compact ? 12 : 18,
-      notch = m.compact ? 9 : 14,
-      top = m.compact ? 9 : 16,
-      bottom = m.compact ? 6 : 10;
-    b.root.setProperties({ paddingX: tail, height, marginBottom: m.compact ? 2 : 6 });
-    for (const t of b.tails) {
-      t.content.setProperties({
-        positionTop: top,
-        width: tail + under,
-        height: height - top + bottom,
-      });
-      t.setMetrics(m.frame, notch);
-    }
+    const height = m.compact ? 38 : 60;
+    const lean = slantOf(height) / 2;
     b.plate.setProperties({
       height,
-      minWidth: m.compact ? 0 : 200,
-      paddingLeft: m.frame + (m.compact ? (chest ? 12 : 4) : 24),
-      paddingRight: m.frame + (m.compact ? 12 : 24),
-      gap: m.compact ? 8 : 0,
+      // Symmetric: the words sit on the parallelogram's centre.
+      paddingX: (m.compact ? 18 : 26) + lean,
+      gap: m.compact ? 8 : 12,
     });
-    b.plateSkin.setMetrics(m.frame, m.compact ? 3 : 5, !m.compact);
-    // Re-parent only when the layout changes: UIKit drops a panel re-added in the same pass.
-    if (b.kicker && b.kicker.compact !== m.compact) {
-      const { row } = b.kicker;
-      b.kicker.compact = m.compact;
-      row.removeFromParent();
-      if (m.compact) {
-        // Inline before the level.
-        b.plate.add(row);
-        row.setProperties({ positionType: "relative", positionTop: undefined, width: undefined });
-        b.line.removeFromParent();
-        b.plate.add(b.line);
-      } else {
-        // top: round(down, -tag-h / 2 - frame / 2) of the padding box.
-        row.setProperties({
-          positionType: "absolute",
-          positionTop: m.frame + Math.floor(-21 / 2 - m.frame / 2),
-          positionLeft: 0,
-          width: "100%",
-        });
-        b.plate.add(row);
-      }
-    }
-    const stroke = m.compact ? 2.5 : 3;
     const sizes = {
-      word: m.compact ? 15 : 22,
-      number: m.compact ? 26 : 44,
-      chest: m.compact ? 26 : 32,
+      word: m.compact ? 15 : 20,
+      number: m.compact ? 26 : 40,
+      chest: m.compact ? 22 : 30,
     };
-    // Baselines line up: the smaller "Lv" sits lower in the level's taller line box.
-    const lineTall = Math.max(...b.words.map((w) => lineBox(sizes[w.size])));
-    const ascent = Math.max(...b.words.map((w) => Math.round(1.095 * sizes[w.size])));
-    for (const w of b.words) {
-      const size = sizes[w.size];
-      w.box.setProperties({
-        marginTop: ascent - Math.round(1.095 * size) + (w.size === "chest" ? 1 : 0),
-        marginLeft: w.size === "number" ? Math.round(size * 0.26 * 0.5) : 0,
+    for (const w of b.words)
+      w.text.setProperties({
+        fontSize: sizes[w.size],
+        lineHeight: lineHeight(sizes[w.size], lineBox(sizes[w.size])),
+        marginBottom: w.size === "word" ? (m.compact ? 3 : 6) : 0,
       });
-      w.texts.forEach((t, i) => {
-        const angle = (i / 12) * Math.PI * 2;
-        t.setProperties({
-          fontSize: size,
-          lineHeight: lineHeight(size, lineBox(size)),
-          ...(i < 12
-            ? {
-                positionLeft: Math.cos(angle) * stroke,
-                positionTop: Math.sin(angle) * stroke,
-              }
-            : {}),
-        });
-      });
-    }
-    b.line.setProperties({ height: lineTall });
-    const spark = (i: number) => (m.compact ? (i === 2 ? 12 : 9) : b.sparks[i]!.size);
-    const place = [
-      { left: tail - 10, top: -14 },
-      { left: tail + 14, bottom: -4 },
-      { right: tail - 14, top: -6 },
-      { right: tail + 20, bottom: -10 },
-    ];
-    b.sparks.forEach((s, i) =>
-      s.content.content.setProperties({
-        width: spark(i),
-        height: spark(i),
-        positionLeft: place[i]!.left,
-        positionRight: place[i]!.right,
-        positionTop: place[i]!.top,
-        positionBottom: place[i]!.bottom,
-      }),
-    );
-  }
-
-  private animateBanner(): void {
-    const b = this.banner;
-    if (!b) return;
-    const age = this.elapsed - b.born;
-    // choice-banner-stamp 300ms: scale 1.7 → .94 (55%, opaque) → 1, ease-out per segment.
-    const t = clamp01(age / 300);
-    const scale =
-      t < 0.55 ? lerp(1.7, 0.94, uiEaseOut(t / 0.55)) : lerp(0.94, 1, uiEaseOut((t - 0.55) / 0.45));
-    fade(b.plate, t < 0.55 ? uiEaseOut(t / 0.55) : 1).setProperties({
-      transformScaleX: scale,
-      transformScaleY: scale,
-    });
-    // choice-banner-unfurl 220ms after 120ms, from under the plate.
-    const unfurl = uiEaseOut(clamp01((age - 120) / 220));
-    for (const tail of b.tails)
-      tail.content.setProperties({ transformScaleX: Math.max(1e-3, unfurl) });
-    // ui-fade-in 200ms after 260ms; twinkle 1.6s alternate, each a quarter period apart.
-    b.sparks.forEach((s, i) => {
-      const cycle = age / 1600 + i * 0.25;
-      const leg = cycle % 2;
-      const k = easeInOut(leg < 1 ? leg : 2 - leg);
-      fade(s.content.content, cssEase(clamp01((age - 260) / 200))).setProperties({
-        transformScaleX: lerp(0.55, 1, k),
-        transformScaleY: lerp(0.55, 1, k),
-        transformRotateZ: -lerp(-20, 20, k),
-      });
-    });
+    b.line.setProperties({ height: lineBox(sizes[b.words.at(-1)!.size]) });
   }
 
   // ---------------------------------------------------------------- cards
@@ -736,22 +573,23 @@ export class GpuChoiceContent {
       const surface = new ChoiceCardSurface(copy, this.art);
       const panel = new Container({ flexDirection: "column", flexShrink: 1, minWidth: 0 });
       panel.add(surface.content);
-      // `.game-tag--light` keeps its inset navy ring and 4px corners over `.run-card__kind`; only
-      // the item chip's own rule (more specific) swaps it for a 2px leather ring outside.
-      const item = copy.kind === "item";
-      const chip = this.tag(
-        kindNames[copy.kind],
-        "chip",
-        "#ffffff",
-        "#0d233f",
-        item ? undefined : { color: "#142f50", width: 1.5 },
+      // The kind chip rides the head's plate: a white upright chip with its glyph.
+      const glyph = this.kindGlyph(copy.kind, 14);
+      const label = stack(this.text(kindNames[copy.kind], 12, ui.ink, 800), 1);
+      const kind = stack(
+        new Container({
+          positionType: "absolute",
+          height: 23,
+          paddingX: 8,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 4,
+          borderRadius: RADIUS_INNER,
+          backgroundColor: ui.white,
+        }),
+        2,
       );
-      const glyph = stack(this.kindGlyph(copy.kind, 14), 1);
-      const label = chip.children[0]! as Component;
-      label.removeFromParent();
-      chip.add(glyph, label);
-      const kind = stack(item ? this.ringed(chip, "#4a3218", 6) : chip, 2);
-      kind.setProperties({ positionType: "absolute" });
+      kind.add(stack(glyph, 1), label);
       const key = stack(
         new InputGlyph(this.docked ? "choiceConfirm" : "confirm", String(index + 1)),
         2,
@@ -768,7 +606,7 @@ export class GpuChoiceContent {
       const plate = copy.kind === "train" ? null : new ChoiceIconPlate(copy.kind, copy.type);
       if (plate) icon.add(plate.content);
       icon.add(stack(new Image({ src: copy.icon, width: "100%", height: "100%" }), 1));
-      const title = this.text(copy.title, 22, "#142f50");
+      const title = this.text(copy.title, 22, ui.ink, 900);
       // CJK titles break between any two characters, as the browser breaks them.
       title.setProperties({ flexShrink: 1, wordBreak: "keep-all", whiteSpace: "pre" });
       head.add(icon, title);
@@ -780,7 +618,7 @@ export class GpuChoiceContent {
         if (copy.boosts) tagRow.add(typeTag(copy.boosts));
       }
       const lines = copy.lines.map((line) => {
-        const text = stack(this.text(line, 15, "#142f50", 700), 1);
+        const text = stack(this.text(line, 15, ui.ink, 700), 1);
         text.setProperties({
           width: "100%",
           flexShrink: 0,
@@ -813,9 +651,8 @@ export class GpuChoiceContent {
         focused: false,
         shown: false,
         pointer: false,
-        pattern: { x: 0, y: 0 },
         born: this.elapsed,
-        pose: { x: 0, y: 28, scale: 0.94, rotation: -3, opacity: 0 },
+        pose: { x: -60, y: 0, scale: 1, rotation: 0, opacity: 0 },
         from: null,
         applied: "",
         dimmed: false,
@@ -857,11 +694,10 @@ export class GpuChoiceContent {
         gap: m.compact ? 2 : 6,
         justifyContent: m.compact ? "center" : "flex-start",
       });
-      // Chip and badge centred in the band on whole pixels: round(up, (band - tag-h) / 2).
-      const ring = card.copy.kind === "item" ? 2 : 0;
+      // Chip and tags centred in the head on whole pixels.
       card.kind.setProperties({
-        positionLeft: m.frame + 8 - ring,
-        positionTop: m.frame + Math.ceil((m.band - 21) / 2) - ring,
+        positionLeft: m.frame + 6,
+        positionTop: m.frame + Math.ceil((m.band - 23) / 2),
       });
       card.key.setProperties({
         positionRight: m.frame + 8,
@@ -929,21 +765,20 @@ export class GpuChoiceContent {
       const panel = new Container({
         minHeight: 44,
         minWidth: 44,
-        paddingX: 18,
-        paddingY: 10,
+        paddingX: 16,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        gap: 12,
+        gap: 8,
         flexShrink: 0,
       });
-      const skin = new ChoiceButtonSkin();
-      const pattern = new HoverPattern(this.stage.motion, () => this.stage.invalidate(), "#ffd45b");
+      const plate = new UprightPlate(panel, { fill: ui.white, border: ui.ink });
       const glyph =
         kind === "reroll"
           ? createRunCommandIcon("reset")
           : createMenuIcon(kind === "skip" ? "chevron" : "close");
-      const label = stack(this.text("", 16, "#142f50"), 1);
+      glyph.setProperties({ width: 20, height: 20 });
+      const label = stack(this.text("", 15, ui.ink), 1);
       const badge = stack(
         new InputGlyph(
           kind === "defer" ? "back" : this.docked ? "choiceConfirm" : "confirm",
@@ -952,90 +787,54 @@ export class GpuChoiceContent {
         1,
       );
       this.keycap(badge);
-      const group = stack(
-        new Container({ flexDirection: "row", alignItems: "center", gap: 10 }),
-        1,
-      );
-      badge.setProperties({ marginLeft: 6 });
-      group.add(label, badge);
-      panel.add(skin.content, pattern.content, stack(glyph, 1), group);
-      const cursor = new FocusMark(this.stage.motion, () => this.stage.invalidate());
-      cursor.mesh.renderOrder = 30;
-      cursor.setParentScale(18 / 22);
-      this.stage.scene.add(cursor.mesh);
+      panel.add(plate.content, stack(glyph, 1), label, badge);
       this.actionsBox.add(panel);
       this.actions.push({
         kind,
         panel,
-        skin,
-        pattern,
-        cursor,
+        plate,
         glyph,
         label,
         badge,
         focused: false,
         pointer: false,
         pressed: false,
-        motion: { lit: 0, hover: 0, press: 0 },
+        pose: { y: 0 },
         control: null,
       });
     }
   }
 
-  /** `.game-button` paint: lit while focused, hovered or armed (aria-pressed); hatched when spent. */
-  private paintAction(action: ActionButton): void {
-    const disabled = this.count(action.kind) <= 0;
-    const { lit, hover, press } = action.motion;
-    const own = disabled
-      ? { fill: "#d0dfeb", ink: "#657b91", border: "#9fb5c7", base: "#9fb5c7" }
-      : // Armed banish is `aria-pressed`: it only lights (yellow), from its normal paint.
-        { fill: "#e9f4fb", ink: "#142f50", border: "#142f50", base: "#0d233f" };
-    const mix = (a: string, b: string) => srgb(a).lerp(srgb(b), disabled ? 0 : lit);
-    const ink = mix(own.ink, "#0d233f");
-    action.skin.setPaint(
-      mix(own.fill, "#ffd45b"),
-      mix(own.border, "#142f50"),
-      mix(own.base, "#0d233f"),
-      disabled,
-    );
-    const depth = disabled ? 1 : lerp(lerp(2, 3, hover), 0, press);
-    action.skin.setDepth(depth, press);
-    const color = `rgb(${Math.round(ink.x * 255)},${Math.round(ink.y * 255)},${Math.round(ink.z * 255)})`;
-    action.label.setProperties({ color });
-    action.glyph.setProperties({ color });
-    action.panel.setProperties({
-      transformTranslateY: lerp(-hover, 2, press),
-      transformScaleX: lerp(1, 1.012, press),
-      transformScaleY: lerp(1, 0.96, press),
-    });
-    this.stage.invalidate();
-  }
+  /** An upright secondary key: spent → mist and muted; armed banish → ink; keyboard focus → ring. */
   private refreshAction(action: ActionButton): void {
     action.badge.setProperties({
       display:
         this.coarse || (currentInputMode().kind === "gamepad" && !action.focused) ? "none" : "flex",
     });
     const available = this.count(action.kind) > 0;
-    const armed = action.kind === "banish" && this.state.banishing;
-    const lit = available && (action.focused || action.pointer || armed);
-    const hover = available && action.pointer;
-    const press = available && action.pressed;
-    action.cursor.setFocused(lit);
-    action.pattern.setFocused(available && (action.focused || action.pointer));
-    const target = { lit: lit ? 1 : 0, hover: hover ? 1 : 0, press: press ? 1 : 0 };
-    if (
-      target.lit === action.motion.lit &&
-      target.hover === action.motion.hover &&
-      target.press === action.motion.press
-    )
-      return this.paintAction(action);
-    this.stage.motion.animate(
-      action.motion,
-      target,
-      press ? 60 : 140,
-      () => this.paintAction(action),
-      press || hover ? uiEaseOut : cssEase,
-    );
+    const armed = available && action.kind === "banish" && this.state.banishing;
+    const ink = !available ? ui.muted : armed ? ui.white : ui.ink;
+    action.plate.set({
+      fill: !available ? ui.mist : armed ? ui.ink : ui.white,
+      border: available ? ui.ink : ui.line,
+      focus: action.focused && this.focusVisible ? 1 : 0,
+    });
+    action.label.setProperties({ color: ink });
+    action.glyph.setProperties({ color: ink });
+    const y = !available ? 0 : action.pressed ? LIFT.press : action.pointer ? -LIFT.hover : 0;
+    if (y !== action.pose.y)
+      this.stage.motion.animate(
+        action.pose,
+        { y },
+        LIFT.ms,
+        () => {
+          action.panel.setProperties({ transformTranslateY: action.pose.y });
+          action.plate.set({ depth: HARD_SHADOW.offset - action.pose.y });
+          this.stage.invalidate();
+        },
+        SNAP,
+      );
+    this.stage.invalidate();
   }
 
   // ---------------------------------------------------------------- controls and state
@@ -1048,6 +847,7 @@ export class GpuChoiceContent {
         card: index,
         enabled: () => !this.flight && this.cardEnabled(index),
         action: () => this.pick(index),
+        selfDrawn: true,
         setFocused: (focused) => this.setCardFocus(card, focused),
         setPointerOver: (over) => {
           card.pointer = over;
@@ -1067,6 +867,7 @@ export class GpuChoiceContent {
               : actionTerms[action.kind]
             : "本局已用完",
         action: () => this.actionPressed(action.kind),
+        selfDrawn: true,
         setFocused: (focused) => {
           action.focused = focused;
           this.refreshAction(action);
@@ -1098,6 +899,7 @@ export class GpuChoiceContent {
   setFocusVisible(visible: boolean): void {
     this.focusVisible = visible;
     for (const card of this.cards) this.applyCardFocus(card);
+    for (const action of this.actions) this.refreshAction(action);
   }
   private applyCardFocus(card: Card): void {
     card.key.setProperties({
@@ -1108,16 +910,16 @@ export class GpuChoiceContent {
     const shown = card.focused && (this.focusVisible || card.pointer);
     if (shown === card.shown) return;
     card.shown = shown;
-    // transform 140ms var(--ease-out); --veil 140ms ease.
+    // The picked lift (5px; 2px in the dock), SNAP.
     const redraw = () => this.stage.invalidate();
     this.stage.motion.animate(
       card.lift,
-      { value: shown ? (this.docked ? -2 : -6) : 0 },
-      140,
+      { value: shown ? (this.docked ? -2 : -LIFT.picked) : 0 },
+      LIFT.ms,
       redraw,
-      uiEaseOut,
+      SNAP,
     );
-    this.stage.motion.animate(card.veil, { value: shown ? 1 : 0 }, 140, redraw, cssEase);
+    this.stage.motion.animate(card.veil, { value: shown ? 1 : 0 }, LIFT.ms, redraw, SNAP);
   }
 
   private paint(): void {
@@ -1269,13 +1071,10 @@ export class GpuChoiceContent {
         minWidth: v.minTarget,
         minHeight: actionHeight,
         paddingX: 12,
-        paddingY: 8,
         gap: 8,
         flexShrink: 1,
       });
-      action.label.setProperties({ fontSize: 16, whiteSpace: "pre" });
-      action.glyph.setProperties({ display: "flex", width: 20, height: 20 });
-      action.badge.setProperties({ marginLeft: 0 });
+      action.label.setProperties({ fontSize: 15, whiteSpace: "pre" });
     }
     // Only the cards scroll when a long description needs room; Later and reroll stay visible.
     this.dockScroll.setProperties({
@@ -1303,7 +1102,6 @@ export class GpuChoiceContent {
     const font = this.cards[0]?.title.fontSignal.value;
     if (!font) this.layoutKey = "";
     for (const card of this.cards) {
-      const ring = card.copy.kind === "item" ? 2 : 0;
       card.surface.setMetrics(band, frame);
       card.panel.setProperties({
         width: cardWidth,
@@ -1318,8 +1116,8 @@ export class GpuChoiceContent {
       card.kindLabel.setProperties({ display: cardWidth < 160 ? "none" : "flex" });
       card.kind.setProperties({
         display: "flex",
-        positionLeft: frame + 4 - ring,
-        positionTop: frame + Math.ceil((band - 21) / 2) - ring,
+        positionLeft: frame + 4,
+        positionTop: frame + Math.ceil((band - 23) / 2),
       });
       card.key.setProperties({ positionRight: 5, positionTop: undefined, positionBottom: 5 });
       card.icon.setProperties({ width: icon, height: icon, padding: compactHeader ? 2 : 4 });
@@ -1378,7 +1176,11 @@ export class GpuChoiceContent {
     const m = (this.metrics = metrics(this.stage));
     // Touch targets: the viewport's minimum at every scale (44 host px), as the HUD's.
     for (const action of this.actions)
-      action.panel.setProperties({ minHeight: v.minTarget, minWidth: v.minTarget });
+      action.panel.setProperties({
+        minHeight: v.minTarget,
+        minWidth: v.minTarget,
+        paddingX: 16,
+      });
     const hudTop = Math.max(12, v.safeArea.top),
       hudLeft = Math.max(12, v.safeArea.left),
       hudRight = Math.max(12, v.safeArea.right),
@@ -1487,9 +1289,8 @@ export class GpuChoiceContent {
   /** The rail column is as wide as its widest item: the ribbon or the widest action. */
   private railWidth(m: Metrics): number {
     const plate = this.banner?.plate.size.value?.[0] ?? (m.compact ? 110 : 200);
-    const tails = (m.compact ? 34 : 58) * 2;
     const action = Math.max(0, ...this.actions.map((a) => a.panel.size.value?.[0] ?? 120));
-    return Math.max(plate + tails, action);
+    return Math.max(plate, action);
   }
 
   afterLayout(deltaMs: number): void {
@@ -1529,25 +1330,11 @@ export class GpuChoiceContent {
     if (flight) flight.elapsed += deltaMs;
     for (const [index, card] of this.cards.entries()) {
       this.poseCard(card, index, flight);
-      this.animateCardSurface(card, deltaMs);
+      this.animateCardSurface(card);
     }
-    this.animateBanner();
     const chrome = flight ? 1 - easeIn(clamp01(flight.elapsed / 140)) : 1;
     fade(this.bannerBox, chrome);
     fade(this.actionsBox, chrome);
-    for (const action of this.actions) {
-      action.pattern.update(deltaMs);
-      const matrix = action.panel.globalMatrix.value,
-        size = action.panel.size.value;
-      if (matrix && size) {
-        action.cursor.mesh.position.set(
-          matrix.elements[12]! - size[0] / 2,
-          matrix.elements[13]!,
-          0.1,
-        );
-        action.cursor.setParentOpacity(inheritedOpacity(action.panel));
-      }
-    }
     if (flight && !flight.landed && flight.elapsed >= PICK_MS) {
       flight.landed = true;
       this.callbacks.pick(flight.index, false);
@@ -1555,10 +1342,7 @@ export class GpuChoiceContent {
     // Entrances (deal, banner stamp) and a pick's flight draw every frame; after that the window
     // is idle: sparks, the pointer's card drift and the legendary sweep step on the page's idle
     // clock (DESIGN.md 空闲循环: 15Hz; the sweep 30Hz while it crosses, so it does not stutter).
-    const settling =
-      flight !== null ||
-      this.elapsed - this.dealtAt < SETTLE_MS ||
-      (this.banner !== null && this.elapsed - this.banner.born < SETTLE_MS);
+    const settling = flight !== null || this.elapsed - this.dealtAt < SETTLE_MS || false;
     if (settling || idleTicked(this.sweeping() ? 30 : 15)) this.stage.invalidate();
   }
 
@@ -1619,15 +1403,15 @@ export class GpuChoiceContent {
         };
       }
     } else {
-      // run-card-in 200ms ease-out, 60ms apart, from below with a slight tilt.
-      const e = uiEaseOut(clamp01((this.elapsed - this.dealtAt - index * 60) / 200));
+      // List entrance: 60px from the left, fading in, 0.38s EASE, 45ms apart.
+      const e = EASE(clamp01((this.elapsed - this.dealtAt - stagger(index)) / 380));
       const lift = enabled ? card.lift.value : 0;
       pose = {
-        x: 0,
-        y: lerp(28, lift, e),
-        scale: lerp(0.94, 1, e),
-        rotation: lerp(-3, 0, e),
-        opacity: e,
+        x: lerp(-60, 0, e),
+        y: lift,
+        scale: 1,
+        rotation: 0,
+        opacity: clamp01((this.elapsed - this.dealtAt - stagger(index)) / 380),
       };
     }
     card.pose = pose;
@@ -1653,18 +1437,8 @@ export class GpuChoiceContent {
     });
   }
 
-  private animateCardSurface(card: Card, deltaMs: number): void {
-    const index = this.cards.indexOf(card);
-    // The picked card keeps its :hover look while it pops; the others leave it as they fall.
-    const lit =
-      card.shown && this.cardEnabled(index) && (!this.flight || this.flight.index === index);
+  private animateCardSurface(card: Card): void {
     card.surface.setVeil(card.veil.value);
-    // --card-fx drifts one tile per 24s, only under a resting pointer (DESIGN.md).
-    if (lit && card.pointer) {
-      card.pattern.x = (card.pattern.x + (84 * deltaMs) / 24000) % 84;
-      card.pattern.y = (card.pattern.y + (42 * deltaMs) / 24000) % 42;
-    }
-    card.surface.setPattern(lit, card.pattern.x, card.pattern.y);
     if (card.copy.kind === "move" && card.copy.tone === "legendary") {
       // run-card-sweep 3.2s ease-in-out after .5s: across in the first 55%, then rest.
       const age = this.elapsed - card.born - 500;
@@ -1698,10 +1472,8 @@ export class GpuChoiceContent {
   }
   private clearActions(): void {
     for (const action of this.actions) {
-      this.stage.motion.cancel(action.motion);
-      action.pattern.dispose();
-      action.cursor.dispose();
-      action.skin.dispose();
+      this.stage.motion.cancel(action.pose);
+      action.plate.dispose();
       this.keycaps.delete(action.badge);
       this.disposeTree(action.panel);
     }
@@ -1710,10 +1482,10 @@ export class GpuChoiceContent {
   private clearBanner(): void {
     const b = this.banner;
     if (!b) return;
-    for (const tail of b.tails) tail.dispose();
-    b.plateSkin.dispose();
-    for (const spark of b.sparks) spark.content.dispose();
-    if (b.kicker && !b.kicker.row.parent) this.disposeTree(b.kicker.row);
+    this.stage.motion.cancel(b.reveal);
+    this.stage.motion.cancel(b.ink);
+    b.slant.dispose();
+    b.kicker?.dispose();
     this.disposeTree(b.root);
     this.banner = null;
   }

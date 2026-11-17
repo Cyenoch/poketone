@@ -7,6 +7,9 @@ import { InputGlyph } from "./input-glyph";
 import { GpuDamageNumbers } from "./run-damage-numbers";
 import { softOf } from "./run-choice-surface";
 import { crestPose, themeColors, themeGrain } from "./run-theme";
+import { SlantPlate } from "./slant-plate";
+import { LIFT, SNAP } from "./motion";
+import { RADIUS_INNER, slantOf, ui } from "./tokens";
 import { GpuEdgeGlow } from "./run-edge-glow";
 import { GpuEdgeIndicators } from "./run-edge-indicators";
 import type { World } from "../../run/sim/state/world";
@@ -23,27 +26,26 @@ import {
 } from "@pmndrs/uikit";
 import { Color, Matrix4, Vector3 } from "three";
 import type { RunSnapshot } from "../../run/createRun";
-import { formatTime } from "../../run/labels";
+import { formatTime, typeNames } from "../../run/labels";
 import { moves } from "../../run/sim/content/moves";
 import type { ElementType } from "../../run/sim/content/elements";
 import type { StarterId } from "../../run/sim/content/lines/index";
 import { UiStage } from "./stage";
 import type { UiInsets } from "./viewport";
 import { RunHudArt, RunHudSurface } from "./run-hud-surface";
-import { RunHeaderSurface } from "./run-overlays-surface";
 import { RunHudInteract } from "./run-hud-interact";
 import { OutlinedText } from "./outlined-text";
 import { uiEaseOut, cubicBezier } from "./focus-mark";
 
 const cssEase = (t: number) => cubicBezier(t, 0.25, 0.1, 0.25, 1);
-import { HoverPattern } from "./hover-pattern";
 import { fade, stack } from "./layer";
 import { CURRENCY_ICON } from "./currency";
 import { createMenuIcon } from "./icons";
 import { createRunCommandIcon } from "./run-overlays-icons";
 import { playerColors } from "../player-colors";
-import { typeTag } from "./tag";
+import { slantTag } from "./tag";
 import { formDefs } from "../../run/sim/content/lines/index";
+import { GpuTrainerCutin, type CueGlyphs } from "./trainer-cutin";
 
 export interface RunHudNotice {
   id: number;
@@ -69,7 +71,8 @@ interface Slot {
   /** The slot and, for a move, its name label under it. */
   cell: Container;
   panel: Container;
-  label: Text | null;
+  /** The move's name on a small ink plate under the slot (keyboard and mouse). */
+  label: { box: Container; text: Text; plate: SlantPlate } | null;
   face: RunHudSurface;
   image: Image<ImageOutProperties<unknown>>;
   badge: Text;
@@ -79,13 +82,14 @@ interface Slot {
   sweep: { ready: number; cd: number; since: number; shown: number };
 }
 
-/** A teammate's compact line: portrait in their player colour, P tag, level, HP bar. */
+/** A teammate's slanted line: portrait in their player colour, P tag, level, HP gauge. */
 interface Mate {
   row: Container;
+  plate: SlantPlate;
   face: Image<ImageOutProperties<unknown>>;
   tag: Text;
   level: Text;
-  fill: Container;
+  bar: RunHudSurface;
   form: string | null;
 }
 
@@ -95,9 +99,15 @@ interface Control {
   panel: Container;
   action: "fullscreen" | "pause" | "stats" | "dash" | "ultimate" | "left" | "right" | "interact";
   enabled: boolean;
-  /** The ball pattern while hovered or keyboard-focused; none on the ultimate, whose face is art. */
-  pattern?: HoverPattern;
+  /** The slanted ink face of a square key; the round thumbs and the prompt have none. */
+  plate?: SlantPlate;
+  /** Hover lift / press sink (px, down positive). */
+  pose: { y: number };
 }
+
+/** A slanted key's ink face, and its face under the pointer. */
+const KEY_FACE = ui.ink;
+const KEY_HOVER = "#2e2e3a";
 
 /** Persistent HUD nodes consume the existing 10Hz snapshot; only GPU properties animate per frame. */
 /** The HUD's idle loops redraw at 15Hz (see `afterLayout`). */
@@ -142,6 +152,7 @@ interface HealthBar {
 
 export class GpuRunHud {
   readonly stage = new UiStage();
+  readonly trainers: GpuTrainerCutin;
   /** Floating combat text over the world, under the controls; the run spawns and moves it. */
   readonly numbers: GpuDamageNumbers;
   private readonly edges = new GpuEdgeGlow(this.stage);
@@ -178,7 +189,7 @@ export class GpuRunHud {
     minWidth: 0,
     maxWidth: 300,
   });
-  /** The portrait medal: the form's portrait on the theme disc inside the XP ring. */
+  /** The portrait medal: the form's portrait on the theme disc. */
   private readonly medal = new Container({
     width: 64,
     height: 64,
@@ -192,26 +203,25 @@ export class GpuRunHud {
     height: "84%",
   });
   private portraitForm: string | null = null;
-  /** The level pill on the medal's lower-left rim. */
-  private readonly level = new OutlinedText(
-    { text: "1", fontSize: 15, fontWeight: 800, color: "#ffffff" },
-    { width: 3, color: "#0d233f" },
-  );
-  private readonly levelPill = new Container({
+  /** The level on an ink badge over the medal's lower-left rim. */
+  private readonly level = new Text({ text: "1", fontSize: 15, fontWeight: 800, color: ui.white });
+  private readonly levelTag = new Container({
     positionType: "absolute",
-    positionLeft: 0,
-    positionBottom: -4,
+    positionLeft: -4,
+    positionBottom: -6,
     height: 20,
     paddingX: 6,
     flexDirection: "row",
     alignItems: "center",
     gap: 2,
-    borderRadius: 999,
-    borderWidth: 1.5,
-    borderColor: "#d8effb",
-    backgroundColor: "#0d233f",
   });
-  /** The name plate right of the medal: the form's name and types over the HP bar. */
+  private readonly levelPlate = new SlantPlate(
+    this.levelTag,
+    { fill: ui.ink, upright: true },
+    RADIUS_INNER,
+  );
+  /** The name plate right of the medal: the form's name and types over the HP and XP bars, on
+   *  the theme's slanted card face, centred between its leaning ends (see `fitPlateEnds`). */
   private readonly plate = new Container({
     flexDirection: "column",
     justifyContent: "center",
@@ -220,24 +230,20 @@ export class GpuRunHud {
     minWidth: 0,
     gap: 4,
   });
-  private readonly plateFace = new RunHudSurface("plate");
+  private plateFace: SlantPlate | null = null;
+  private plateEnd = 0;
   private readonly nameRow = new Container({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     minWidth: 0,
   });
-  private readonly formName = new Text({
-    text: "",
-    fontSize: 16,
-    fontWeight: 800,
-    color: "#ffffff",
-    whiteSpace: "pre",
-    flexShrink: 1,
-    minWidth: 0,
-  });
-  private readonly formTypes = new Container({ flexDirection: "row", gap: 3, flexShrink: 0 });
-  private typeTags: Container[] = [];
+  private readonly formName = new OutlinedText(
+    { text: "", fontSize: 16, fontWeight: 800, color: ui.white },
+    { width: 3, color: ui.ink },
+  );
+  private readonly formTypes = new Container({ flexDirection: "row", gap: 2, flexShrink: 0 });
+  private typeTags: { tag: Container; dispose(): void }[] = [];
   /** Compact lines for the other players, under the vitals. */
   private readonly team = new Container({
     flexDirection: "column",
@@ -246,17 +252,11 @@ export class GpuRunHud {
     display: "none",
   });
   private readonly mates: Mate[] = [];
-  private readonly xp = new RunHudSurface("ring");
+  /** XP: a thin gauge under the HP bar. */
+  private readonly xp = new RunHudSurface("bar");
+  private readonly xpBar = new Container({ width: "100%", height: 6, flexShrink: 0 });
   private readonly medalFace = new RunHudSurface("medal");
-  private readonly hpPlate = new Container({
-    width: "100%",
-    minWidth: 55,
-    height: 22,
-    padding: 3,
-    borderWidth: 2,
-    borderColor: "#0d233f",
-    borderRadius: 6,
-  });
+  private readonly hpPlate = new Container({ width: "100%", minWidth: 55, height: 22 });
   private readonly hp = new RunHudSurface("hp");
   private readonly hpChip = new RunHudSurface("chip");
   /** `.run-meter--hp > b`: the HP at caption size, then `/max` at badge size, 700, 85%. */
@@ -271,14 +271,14 @@ export class GpuRunHud {
     }),
     4,
   );
-  // `.run-meter--hp > b`: -webkit-text-stroke 3px navy-deep on both parts.
+  // The HP in white on a 3px ink stroke, `/max` smaller.
   private readonly hpNow = new OutlinedText(
-    { text: "", fontSize: 13, fontWeight: 800, color: "#ffffff" },
-    { width: 3, color: "#0d233f" },
+    { text: "", fontSize: 13, fontWeight: 800, color: ui.white },
+    { width: 3, color: ui.ink },
   );
   private readonly hpMax = new OutlinedText(
-    { text: "", fontSize: 11, fontWeight: 700, color: "#ffffff" },
-    { width: 3, color: "#0d233f" },
+    { text: "", fontSize: 11, fontWeight: 800, color: ui.white },
+    { width: 3, color: ui.ink },
   );
   private readonly center = new Container({
     flexDirection: "column",
@@ -287,22 +287,24 @@ export class GpuRunHud {
     width: 260,
     gap: 4,
   });
-  private readonly clockStack = new Container({ alignItems: "center" });
+  /** The clock on its slanted ink plate (rampage: pink on wine). */
+  private readonly clockStack = new Container({ alignItems: "center", justifyContent: "center" });
+  private readonly clockPlate = new SlantPlate(this.clockStack, { fill: ui.ink });
   /** The readout under the compass, faded out while a run window is open (see `setWindowOpen`). */
   private readonly readout = { opacity: 1 };
-  /** `.run-clock__time`: white, -webkit-text-stroke 6px navy-deep (rampage: pink on wine). */
   private readonly clock = new OutlinedText(
-    { text: "00:00", fontSize: 32, fontWeight: 800, color: "#ffffff" },
-    { width: 6, color: "#0d233f" },
+    { text: "00:00", fontSize: 30, fontWeight: 800, color: ui.white },
+    { width: 2, color: ui.ink },
   );
-  private readonly meta = new Text({
+  /** Stage, zone state and knockouts on a smaller ink chip under the clock. */
+  private readonly meta = new Container({ alignItems: "center", justifyContent: "center" });
+  private readonly metaPlate = new SlantPlate(this.meta, { fill: ui.ink, upright: true });
+  private readonly metaText = new Text({
     text: "",
     fontSize: 13,
     fontWeight: 800,
-    color: "#d8effb",
-    backgroundColor: withOpacity("#0d233f", 0.55),
-    paddingX: 10,
-    borderRadius: 12,
+    color: ui.mist,
+    whiteSpace: "pre",
   });
   private readonly boss = new Container({
     width: "100%",
@@ -312,12 +314,10 @@ export class GpuRunHud {
     display: "none",
   });
   /** The guardian's name, set when it changes (each zone has its own guardian). */
-  private readonly bossName = new Text({
-    text: "",
-    fontSize: 16,
-    fontWeight: 800,
-    color: "#ffffff",
-  });
+  private readonly bossName = new OutlinedText(
+    { text: "", fontSize: 16, fontWeight: 800, color: ui.white },
+    { width: 3, color: ui.ink },
+  );
   private readonly bossHp = new RunHudSurface("hp");
   private readonly bossChip = new RunHudSurface("chip");
   private readonly right = new Container({
@@ -336,6 +336,14 @@ export class GpuRunHud {
     paddingX: 10,
     paddingY: 0,
   });
+  private readonly pursePlate = new Container({
+    flexDirection: "row",
+    alignItems: "center",
+    height: 32,
+    paddingLeft: 4,
+    paddingRight: 4,
+  });
+  private readonly purseFace = new SlantPlate(this.pursePlate, { fill: ui.ink, upright: true });
   private readonly bottom = new Container({
     width: "100%",
     flexDirection: "row",
@@ -354,6 +362,7 @@ export class GpuRunHud {
     gap: 12,
   });
   private choiceOpen = false;
+  private windowOpen = false;
   private readonly moveRow = new Container({
     flexDirection: "row",
     gap: 8,
@@ -391,10 +400,10 @@ export class GpuRunHud {
       fontSize: 16,
       fontWeight: 800,
       lineHeight: 1.4,
-      color: "#ffffff",
+      color: ui.white,
       whiteSpace: "normal",
     },
-    { width: 3, color: "#0d233f" },
+    { width: 3, color: ui.ink },
   );
   private readonly noticeIcons = {
     info: createMenuIcon("arrow"),
@@ -421,22 +430,7 @@ export class GpuRunHud {
     glow: { t: 0 },
     target: null,
   };
-  /** Shield as an ice band over the top of the HP bar, its length the share of the max left. */
-  private readonly shieldBar = stack(
-    new Container({
-      positionType: "absolute",
-      positionLeft: 0,
-      positionTop: 0,
-      height: "45%",
-      width: "0%",
-      borderRadius: 3,
-      borderWidth: 1,
-      borderColor: "#0d233f",
-      backgroundColor: "#bfe9ff",
-      display: "none",
-    }),
-    1,
-  );
+  /** Shield as an ice band along the top of the HP bar (drawn by its surface). */
   private readonly shieldState = { fill: 0 };
   private shieldTarget = -1;
   /** Dash charges as pips over the dash key, shown only when there is more than one. */
@@ -494,8 +488,8 @@ export class GpuRunHud {
     height: 104,
     borderRadius: 52,
     borderWidth: 3,
-    borderColor: withOpacity("#ffffff", 0.65),
-    backgroundColor: withOpacity("#0d233f", 0.22),
+    borderColor: withOpacity(ui.white, 0.65),
+    backgroundColor: withOpacity(ui.ink, 0.22),
     alignItems: "center",
     justifyContent: "center",
     display: "none",
@@ -504,19 +498,27 @@ export class GpuRunHud {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#ffd45b",
-    borderBottomWidth: 2,
-    borderColor: "#0d233f",
+    backgroundColor: ui.white,
+    borderWidth: 2,
+    borderBottomWidth: 4,
+    borderColor: ui.ink,
   });
 
   private readonly callbacks: RunHudCallbacks;
-  constructor(fonts: FontFamilies, starter: StarterId, callbacks: RunHudCallbacks) {
+  constructor(
+    fonts: FontFamilies,
+    starter: StarterId,
+    callbacks: RunHudCallbacks,
+    glyphs: CueGlyphs,
+  ) {
     this.callbacks = callbacks;
     this.stage.root.setProperties({
       fontFamilies: fonts,
       flexDirection: "column",
       color: "#ffffff",
     });
+    // After the families: its texts resolve "Poketone UI" as they mount.
+    this.trainers = new GpuTrainerCutin(this.stage, glyphs);
     this.numbers = new GpuDamageNumbers(this.stage);
     this.indicators = new GpuEdgeIndicators(this.stage, [
       this.top,
@@ -525,29 +527,21 @@ export class GpuRunHud {
       this.interact.row,
     ]);
     this.surfaces.push(this.xp, this.hp, this.hpChip, this.bossHp, this.bossChip);
+    this.xp.uniforms.hudColor.value.set("#59c8ff");
     this.xp.uniforms.hudLight.value.set("#a9e6ff");
+    this.xpBar.add(this.xp.content);
     // One notch where the bar turns to the low-HP look (30% real HP), placed through the curve.
     this.hp.uniforms.hudTicks.value.set(healthLength(LOW_HP, PLAYER_HP_CURVE), -1, -1);
-    this.medal.add(this.xp.content);
-    this.medalFace.content.setProperties({
-      positionLeft: 6,
-      positionTop: 6,
-      width: 46,
-      height: 46,
-    });
+    this.medalFace.content.setProperties({ width: "100%", height: "100%" });
     this.surfaces.push(this.medalFace);
     this.medal.add(stack(this.medalFace.content, 1), stack(this.portrait, 2));
-    this.levelPill.add(
-      stack(
-        new OutlinedText(
-          { text: "Lv", fontSize: 10, fontWeight: 800, color: "#d8effb" },
-          { width: 2.5, color: "#0d233f" },
-        ).root,
-        1,
-      ),
-      stack(this.level.root, 1),
+    this.levelPlate.set({ depth: 3 });
+    this.levelTag.add(
+      this.levelPlate.content,
+      stack(new Text({ text: "Lv", fontSize: 10, fontWeight: 800, color: ui.muted }), 1),
+      stack(this.level, 1),
     );
-    this.medal.add(stack(this.levelPill, 4));
+    this.medal.add(stack(this.levelTag, 4));
     this.crest = stack(
       new Image({
         src: "/art/icons/crests/fire.webp",
@@ -564,22 +558,25 @@ export class GpuRunHud {
     stack(this.hpChip.content, 1);
     fade(this.hpMax.root, 0.85);
     this.hpText.add(this.hpNow.root, this.hpMax.root);
-    hpBox.add(this.hp.content, this.hpChip.content, this.shieldBar, this.hpText);
+    hpBox.add(this.hp.content, this.hpChip.content, this.hpText);
     this.hpPlate.add(hpBox);
-    this.surfaces.push(this.plateFace);
-    this.nameRow.add(stack(this.formName, 1), stack(this.formTypes, 1));
-    this.plate.add(this.plateFace.content, this.nameRow, stack(this.hpPlate, 1));
-    // The medal overlaps the plate's square end and draws over it.
+    this.formName.root.setProperties({ flexShrink: 1, minWidth: 0 });
+    this.nameRow.add(stack(this.formName.root, 1), stack(this.formTypes, 1));
+    this.plate.add(stack(this.nameRow, 1), stack(this.hpPlate, 1), stack(this.xpBar, 1));
+    // The medal overlaps the plate's left end and draws over it.
     this.vitals.add(stack(this.medal, 3), this.plate);
     for (let i = 0; i < 3; i++) this.mates.push(this.addMate());
-    this.clockStack.add(this.clock.root);
+    this.clockPlate.set({ depth: 4 });
+    this.clockStack.add(this.clockPlate.content, stack(this.clock.root, 1));
+    this.metaPlate.set({ depth: 3 });
+    this.meta.add(this.metaPlate.content, stack(this.metaText, 1));
     this.center.add(this.compassSlot, this.clockStack, this.meta);
-    const bossBar = new Container({ width: "100%", height: 14 });
+    const bossBar = new Container({ width: "100%", height: 16 });
     stack(this.bossChip.content, 1);
     bossBar.add(this.bossHp.content, this.bossChip.content);
     this.boss.add(
       // The hit chip swells past the bar's top edge; the name stays above it (DESIGN.md 掉血段).
-      stack(this.bossName, 2),
+      stack(this.bossName.root, 2),
       bossBar,
     );
     this.center.add(this.boss);
@@ -589,40 +586,31 @@ export class GpuRunHud {
       flexWrap: "wrap",
       justifyContent: "flex-end",
       alignItems: "center",
-      gap: 12,
-    });
-    const pursePlate = new Container({
-      flexDirection: "row",
-      alignItems: "center",
-      height: 32,
-      paddingRight: 4,
-      backgroundColor: withOpacity("#0d233f", 0.55),
-      borderColor: withOpacity("#ffd45b", 0.7),
-      borderWidth: 2,
-      borderRadius: 999,
+      gap: 8,
     });
     const purseIcon = stack(
       new Image({
         src: CURRENCY_ICON,
         width: 40,
         height: 40,
-        marginLeft: -10,
-        marginRight: 4,
+        marginLeft: -12,
+        marginRight: 0,
       }),
       1,
     );
-    pursePlate.add(purseIcon, this.stardust);
-    const fullscreen = this.addControl("fullscreen", 48, 5).panel;
+    this.purseFace.set({ depth: 3 });
+    this.pursePlate.add(this.purseFace.content, purseIcon, stack(this.stardust, 1));
+    const fullscreen = this.addControl("fullscreen", 48).panel;
     const icon = this.fullscreenIcon;
-    icon.setProperties({ width: 24, height: 24, color: "#d8effb" });
+    icon.setProperties({ width: 24, height: 24, color: ui.white });
     fullscreen.add(stack(icon, 1));
     fullscreen.setProperties({ display: "none" });
-    // The build panel's touch entry (C / LB elsewhere); glyph 5 is the plain button face.
-    const stats = this.addControl("stats", 48, 5).panel;
+    // The build panel's touch entry (C / LB elsewhere).
+    const stats = this.addControl("stats", 48).panel;
     const statsIcon = createRunCommandIcon("chart");
-    statsIcon.setProperties({ color: "#d8effb" });
+    statsIcon.setProperties({ color: ui.white });
     stats.add(stack(statsIcon, 1), this.keycap("C", "stats"));
-    purse.add(pursePlate, stats, this.addControl("pause", 48, 1).panel, fullscreen);
+    purse.add(this.pursePlate, stats, this.addControl("pause", 48, 1).panel, fullscreen);
     this.right.add(purse, this.mapSlot);
     this.noticeText.root.setProperties({ flexGrow: 1, flexShrink: 1, minWidth: 0 });
     for (const icon of Object.values(this.noticeIcons)) {
@@ -641,7 +629,7 @@ export class GpuRunHud {
     for (let i = 0; i < 4; i++) this.moves.push(this.addSlot(this.moveRow, true));
     for (let i = 0; i < MAX_ITEM_SLOTS + 1; i++) this.items.push(this.addSlot(this.itemRow, false));
     this.turnRow.add(this.addControl("left", 48, 3).panel, this.addControl("right", 48, 4).panel);
-    const ultimate = this.addControl("ultimate", 64, 0);
+    const ultimate = this.addThumb("ultimate", 0);
     this.ultimate = ultimate.surface;
     stack(this.halo.content, -1).setProperties({
       positionLeft: "-25%",
@@ -659,27 +647,19 @@ export class GpuRunHud {
     this.ultArt.uniforms.artBright.value = this.ultLook.bright;
     this.ultArt.content.setProperties({ width: "62%", height: "62%" });
     ultimate.panel.add(stack(this.ultArt.content, 1), this.keycap("F", "ult"));
-    const dash = this.addControl("dash", 64, 2);
+    const dash = this.addThumb("dash", 2);
     this.dash = dash.surface;
-    // `.run-thumb` --ring-fill: var(--ice).
+    // The dash gauge stays ice: distinct from every type colour.
     this.dash.uniforms.hudColor.value.set("#d8effb");
     dash.panel.add(this.keycap("Space", "dash"), this.dashPips);
     this.thumbs.add(ultimate.panel, dash.panel);
     this.placeBar();
     this.bottom.add(this.slots, this.actions);
-    const interactPattern = new HoverPattern(
-      this.stage.motion,
-      () => this.stage.invalidate(),
-      "#142f50",
-      8,
-      false,
-    );
-    this.interact.panel.add(interactPattern.content);
     this.controls.push({
       panel: this.interact.panel,
       action: "interact",
       enabled: false,
-      pattern: interactPattern,
+      pose: { y: 0 },
     });
     this.stage.root.add(
       this.top,
@@ -690,11 +670,8 @@ export class GpuRunHud {
     this.stick.add(this.knob);
     this.stage.root.add(this.stick);
   }
-  private addControl(
-    action: Control["action"],
-    size: number,
-    glyph: number,
-  ): { panel: Container; surface: RunHudSurface } {
+  /** A square HUD key (pause, build panel, fullscreen, turn): an ink face, a white icon. */
+  private addControl(action: Control["action"], size: number, glyph = 0): { panel: Container } {
     const panel = new Container({
       width: size,
       height: size,
@@ -703,23 +680,39 @@ export class GpuRunHud {
       flexShrink: 0,
       alignItems: "center",
       justifyContent: "center",
-      borderRadius: size / 2,
     });
-    const surface = new RunHudSurface("button", glyph);
+    const plate = new SlantPlate(panel, { fill: KEY_FACE, upright: true });
+    plate.set({ depth: 3 });
+    panel.add(plate.content);
+    if (glyph) {
+      const surface = new RunHudSurface("glyph", glyph);
+      panel.add(stack(surface.content, 1));
+      this.surfaces.push(surface);
+    }
+    this.controls.push({ panel, action, enabled: true, plate, pose: { y: 0 } });
+    return { panel };
+  }
+  /** A round thumb key (dash, ultimate): its outer ring is the gauge. */
+  private addThumb(
+    action: "dash" | "ultimate",
+    glyph: number,
+  ): { panel: Container; surface: RunHudSurface } {
+    const panel = new Container({
+      width: 64,
+      height: 64,
+      minWidth: 44,
+      minHeight: 44,
+      flexShrink: 0,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 32,
+      borderColor: ui.ink,
+    });
+    const surface = new RunHudSurface("ring", glyph);
+    surface.uniforms.hudDeep.value.set("#3a3a46");
     panel.add(surface.content);
     this.surfaces.push(surface);
-    const pattern =
-      action === "ultimate"
-        ? undefined
-        : new HoverPattern(
-            this.stage.motion,
-            () => this.stage.invalidate(),
-            "#0d233f",
-            size / 2,
-            false,
-          );
-    if (pattern) panel.add(pattern.content);
-    this.controls.push({ panel, action, enabled: true, pattern });
+    this.controls.push({ panel, action, enabled: true, pose: { y: 0 } });
     return { panel, surface };
   }
   private addMate(): Mate {
@@ -730,34 +723,27 @@ export class GpuRunHud {
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
-      borderRadius: 999,
-      backgroundColor: withOpacity("#0d233f", 0.62),
       display: "none",
     });
+    const plate = new SlantPlate(row, { fill: ui.ink, upright: true });
+    plate.set({ depth: 3 });
     const face = new Image({
       width: 24,
       height: 24,
       borderRadius: 12,
       borderWidth: 2,
-      backgroundColor: "#d8effb",
+      backgroundColor: ui.mist,
       flexShrink: 0,
     });
     const tag = new Text({ text: "", fontSize: 12, fontWeight: 800 });
-    const level = new Text({ text: "", fontSize: 12, fontWeight: 800, color: "#d8effb" });
-    const track = new Container({
-      width: 84,
-      height: 8,
-      borderRadius: 4,
-      borderWidth: 1.5,
-      borderColor: "#0d233f",
-      backgroundColor: "#22364f",
-      overflow: "hidden",
-    });
-    const fill = new Container({ height: "100%", width: "100%", borderRadius: 3 });
-    track.add(fill);
-    row.add(face, tag, level, track);
+    const level = new Text({ text: "", fontSize: 12, fontWeight: 800, color: ui.white });
+    const track = new Container({ width: 84, height: 8 });
+    const bar = new RunHudSurface("bar");
+    track.add(bar.content);
+    this.surfaces.push(bar);
+    row.add(plate.content, stack(face, 1), stack(tag, 1), stack(level, 1), stack(track, 1));
     this.team.add(row);
-    return { row, face, tag, level, fill, form: null };
+    return { row, plate, face, tag, level, bar, form: null };
   }
   private updateTeam(team: RunSnapshot["team"]): void {
     this.team.setProperties({ display: team.length > 0 ? "flex" : "none" });
@@ -769,23 +755,17 @@ export class GpuRunHud {
         mate.form = data.form;
         mate.face.setProperties({ src: `/art/portraits/${data.form}.webp` });
       }
-      const color = playerColors[data.slot] ?? "#ffffff";
+      const color = playerColors[data.slot] ?? ui.white;
       const share = data.alive ? Math.max(0, Math.min(1, data.hp / data.maxHp)) : 0;
       mate.face.setProperties({ borderColor: color, opacity: data.alive ? 1 : 0.4 });
-      // On the wine row of a downed teammate the player colour stays on the ring only.
-      mate.tag.setProperties({ text: `P${data.slot + 1}`, color: data.alive ? color : "#ffffff" });
-      mate.level.setProperties({
-        text: `Lv ${data.level}`,
-        color: data.alive ? "#d8effb" : "#ffffff",
-      });
-      mate.fill.setProperties({
-        width: `${share * 100}%`,
-        backgroundColor: share < LOW_HP ? "#ff6f7d" : "#7fd96a",
-      });
-      mate.row.setProperties({
-        // Down and waiting for a rescue: the line turns wine like the rampage clock.
-        backgroundColor: data.alive ? withOpacity("#0d233f", 0.62) : withOpacity("#96182e", 0.75),
-      });
+      // On the wine line of a downed teammate the player colour stays on the ring only.
+      mate.tag.setProperties({ text: `P${data.slot + 1}`, color: data.alive ? color : ui.white });
+      mate.level.setProperties({ text: `Lv ${data.level}` });
+      mate.bar.uniforms.hudFill.value = share;
+      mate.bar.uniforms.hudColor.value.set(share < LOW_HP ? "#ff6f7d" : "#7fd96a");
+      mate.bar.uniforms.hudLight.value.copy(mate.bar.uniforms.hudColor.value);
+      // Down and waiting for a rescue: the line turns wine like the rampage clock.
+      mate.plate.set({ fill: data.alive ? ui.ink : "#96182e" });
     });
   }
   private addSlot(row: Container, move: boolean): Slot {
@@ -795,27 +775,26 @@ export class GpuRunHud {
       flexShrink: 0,
       alignItems: "center",
       justifyContent: "center",
-      borderRadius: 8,
-      overflow: "hidden",
     });
     const face = new RunHudSurface("slot");
-    face.uniforms.hudColor.value.set("#e9f4fb");
+    face.uniforms.hudColor.value.set(ui.mist);
     this.surfaces.push(face);
     panel.add(face.content);
-    const image = stack(new Image({ width: "74%", height: "74%", display: "none" }), 1);
+    const image = stack(new Image({ width: 44, height: 44, display: "none" }), 1);
     const badge = stack(
       new Text({
         text: "",
         positionType: "absolute",
-        positionRight: 0,
+        positionRight: 3,
         positionTop: 0,
         fontSize: 11,
         fontWeight: 800,
-        backgroundColor: "#0d233f",
-        color: "#ffffff",
+        backgroundColor: ui.ink,
+        color: ui.white,
         paddingX: 3,
-        // `.run-badge`: a theme-deep tab in the corner, its free corner rounded.
-        borderBottomLeftRadius: 4,
+        // A theme-deep tab in the top-right corner, its free corner rounded.
+        borderBottomLeftRadius: RADIUS_INNER,
+        borderTopRightRadius: RADIUS_INNER,
       }),
       3,
     );
@@ -830,26 +809,31 @@ export class GpuRunHud {
     panel.add(badge);
     const cell = new Container({ flexDirection: "column", alignItems: "center", flexShrink: 0 });
     cell.add(panel);
-    let label: Text | null = null;
+    let label: Slot["label"] = null;
     if (move) {
-      // Keyboard and mouse only (`placeBar`): the name on a navy tab over the slot's lower rim.
-      label = new Text({
-        text: "",
-        fontSize: 11,
-        fontWeight: 800,
-        color: "#ffffff",
-        whiteSpace: "pre",
-        wordBreak: "keep-all",
+      // Keyboard and mouse only (`placeBar`): the name on an ink tag over the slot's foot.
+      const box = new Container({
+        height: 18,
         paddingX: 6,
-        marginTop: -8,
-        borderRadius: 999,
-        backgroundColor: "#0d233f",
-        borderWidth: 1.5,
-        borderColor: withOpacity("#d8effb", 0.6),
+        marginTop: -7,
+        alignItems: "center",
+        justifyContent: "center",
         display: "none",
         visibility: "hidden",
       });
-      cell.add(stack(label, 4));
+      const plate = new SlantPlate(box, { fill: ui.ink, upright: true }, RADIUS_INNER);
+      plate.set({ depth: 2 });
+      const text = new Text({
+        text: "",
+        fontSize: 11,
+        fontWeight: 800,
+        color: ui.white,
+        whiteSpace: "pre",
+        wordBreak: "keep-all",
+      });
+      box.add(plate.content, stack(text, 1));
+      cell.add(stack(box, 4));
+      label = { box, text, plate };
     }
     row.add(cell);
     return {
@@ -910,32 +894,44 @@ export class GpuRunHud {
     this.placeDevReadout();
     const medal = this.compact ? 52 : 64;
     this.medal.setProperties({ width: medal, height: medal });
-    // The face sits inside the xp ring: 2px border and 4px padding on each side.
-    this.medalFace.content.setProperties({ width: medal - 12, height: medal - 12 });
-    // The plate's square end runs under the medal's right half; its leaning end keeps 20px clear.
+    // The plate's left end runs under the medal's right half. Both ends keep half the lean plus
+    // the same gap, so the upright rows sit on the face's centre line between the medal and the cut.
+    this.plateEnd = (this.compact ? 10 : 12) + slantOf(this.compact ? 56 : 72) / 2;
     this.plate.setProperties({
       marginLeft: -medal / 2,
-      paddingLeft: medal / 2 + (this.compact ? 8 : 10),
-      // 16px clear of the leaning end at the plate's foot (lean 0.3 × the plate's height).
-      paddingRight: this.compact ? 30 : 36,
-      paddingY: this.compact ? 4 : 6,
+      paddingLeft: medal / 2 + this.plateEnd,
+      paddingRight: this.plateEnd,
+      paddingY: this.compact ? 5 : 7,
       gap: this.compact ? 3 : 4,
     });
-    this.formName.setProperties({ fontSize: this.compact ? 14 : 16 });
-    this.hpPlate.setProperties({ height: this.compact ? 20 : 24 });
+    this.formName.set({ fontSize: this.compact ? 14 : 16 });
+    const hpHeight = this.compact ? 18 : 22;
+    this.hpPlate.setProperties({ height: hpHeight });
+    this.xpBar.setProperties({ height: this.compact ? 5 : 6 });
     this.hpNow.set({ fontSize: this.compact ? 12 : 14 });
     this.hpMax.set({ fontSize: this.compact ? 10 : 11 });
-    // Clear of the Lv pill, which hangs 4px under the medal.
+    // Clear of the Lv tag, which hangs 6px under the medal.
     this.team.setProperties({ marginTop: this.compact ? 10 : 12, gap: this.compact ? 3 : 4 });
     for (const mate of this.mates) {
-      mate.row.setProperties({ height: this.compact ? 24 : 28 });
+      const h = this.compact ? 22 : 26;
+      mate.row.setProperties({ height: h });
+      mate.face.setProperties({ width: h - 4, height: h - 4, borderRadius: (h - 4) / 2 });
       mate.level.setProperties({ width: this.compact ? 36 : 40 });
     }
-    this.clock.set({ fontSize: this.compact ? 24 : 32 });
-    this.meta.setProperties({ fontSize: this.compact ? 11 : 13 });
+    const clockHeight = this.compact ? 30 : 40;
+    this.clockStack.setProperties({
+      height: clockHeight,
+      paddingX: (this.compact ? 12 : 16) + slantOf(clockHeight) / 2,
+    });
+    this.clock.set({ fontSize: this.compact ? 22 : 30 });
+    const metaHeight = this.compact ? 18 : 22;
+    this.meta.setProperties({ height: metaHeight, paddingX: this.compact ? 8 : 10 });
+    this.metaText.setProperties({ fontSize: this.compact ? 11 : 13 });
+    const purseHeight = this.compact ? 28 : 32;
+    this.pursePlate.setProperties({ height: purseHeight });
     this.stardust.setProperties({
       fontSize: this.compact ? 15 : 20,
-      paddingX: this.compact ? 5 : 10,
+      paddingX: this.compact ? 5 : 8,
     });
     this.bottom.setProperties({
       flexDirection: "column",
@@ -954,19 +950,30 @@ export class GpuRunHud {
       gap: 8,
     });
     this.turnRow.setProperties({ display: this.coarse ? "flex" : "none" });
-    for (const slot of this.moves)
-      slot.panel.setProperties({ width: this.compact ? 48 : 60, height: this.compact ? 48 : 60 });
-    for (const slot of this.items)
-      slot.panel.setProperties({ width: this.compact ? 34 : 40, height: this.compact ? 34 : 40 });
+    const sizeSlots = (slots: Slot[], size: number) => {
+      for (const slot of slots) {
+        slot.panel.setProperties({ width: size, height: size });
+        slot.image.setProperties({
+          width: Math.round(size * 0.72),
+          height: Math.round(size * 0.72),
+        });
+      }
+    };
+    sizeSlots(this.moves, this.compact ? 48 : 60);
+    sizeSlots(this.items, this.compact ? 34 : 40);
     for (const control of this.controls) {
       const thumb = control.action === "dash" || control.action === "ultimate";
+      // The thumbs are 64 (76 under a coarse pointer) and the keys 48 tall in short landscape too;
+      // only slots and type shrink there.
       const target = thumb ? (this.coarse ? 76 : 64) : 48;
       control.panel.setProperties({
         minWidth: v.minTarget,
         minHeight: v.minTarget,
-        // --size-thumb 64 (76 under a coarse pointer) and --size-icon-button 48 keep their size in
-        // short landscape; only slots and type shrink there.
-        ...(control.action !== "interact" ? { width: target, height: target } : {}),
+        ...(control.action === "interact"
+          ? {}
+          : thumb
+            ? { width: target, height: target, borderRadius: target / 2 }
+            : { width: target, height: target }),
       });
     }
     this.stage.invalidate();
@@ -1024,9 +1031,7 @@ export class GpuRunHud {
         }
         this.vitals.setProperties({ transformTranslateX: x, transformTranslateY: y });
         const flash = 1 - uiEaseOut(Math.min(1, t / 420));
-        this.hpPlate.setProperties({
-          borderColor: new Color("#0d233f").lerp(this.hurtRed, flash),
-        });
+        this.hp.uniforms.hudFrame.value.copy(this.ink).lerp(this.hurtRed, flash);
         this.stage.invalidate();
       },
       (v) => v,
@@ -1038,6 +1043,9 @@ export class GpuRunHud {
    * 140ms fade instead of being sliced. The compass above stays.
    */
   setWindowOpen(open: boolean): void {
+    // Called on every input sample: only a change restarts the fade (a restart redraws each frame).
+    if (open === this.windowOpen) return;
+    this.windowOpen = open;
     this.stage.motion.animate(this.readout, { opacity: open ? 0 : 1 }, 140, () => {
       for (const part of [this.clockStack, this.meta, this.boss]) fade(part, this.readout.opacity);
       this.stage.invalidate();
@@ -1077,7 +1085,7 @@ export class GpuRunHud {
       this.actions.add(this.turnRow);
     }
     for (const slot of this.moves)
-      slot.label?.setProperties({ display: this.coarse ? "none" : "flex" });
+      slot.label?.box.setProperties({ display: this.coarse ? "none" : "flex" });
     // Keyboard and mouse: lifted by the name label's overhang so the circles centre on the slots.
     this.thumbs.setProperties({
       alignItems: this.coarse ? "center" : "flex-end",
@@ -1116,8 +1124,8 @@ export class GpuRunHud {
         paddingX: 4,
         borderRadius: 4,
         borderWidth: 1.5,
-        borderColor: "#0d233f",
-        backgroundColor: "#d8effb",
+        borderColor: ui.ink,
+        backgroundColor: ui.white,
         alignItems: "center",
         justifyContent: "center",
         display: this.coarse ? "none" : "flex",
@@ -1132,6 +1140,13 @@ export class GpuRunHud {
     const previous = this.state?.snapshot;
     this.state = state;
     this.stage.root.setProperties({ display: state.visible ? "flex" : "none" });
+    this.trainers.cues.suppress(
+      !state.visible || state.blocked
+        ? "blocked"
+        : state.notice?.tone === "danger"
+          ? "danger"
+          : "open",
+    );
     if (state.blocked) this.cancel();
     const snap = state.snapshot;
     if (!snap) return;
@@ -1140,21 +1155,21 @@ export class GpuRunHud {
     const colors = themeColors(state.theme);
     const palette = [colors.theme, colors.deep, colors.light] as const;
     if (this.plateTheme !== state.theme) {
-      // The vitals plate is the theme band: theme fill under the theme grain.
+      // The name plate is the theme's slanted card: theme fill with its card face over it.
       this.plateTheme = state.theme;
-      this.hpGrain?.content.removeFromParent();
-      this.hpGrain?.dispose();
-      this.hpGrain = new RunHeaderSurface(state.theme, palette[0], palette[0], false);
-      this.hpPlate.add(stack(this.hpGrain.content, -1));
+      this.plateFace?.dispose();
+      this.plateFace = new SlantPlate(this.plate, {
+        fill: palette[0],
+        card: { type: state.theme, loaded: () => this.stage.invalidate() },
+      });
+      this.plate.add(this.plateFace.content);
     }
-    this.xp.uniforms.hudDeep.value.set(palette[1]);
     this.medalFace.uniforms.hudColor.value.set(palette[0]);
     this.medalFace.uniforms.hudDeep.value.set(palette[1]);
     this.medalFace.uniforms.hudLight.value.set(palette[2]);
     const grain = themeGrain(state.theme);
     this.medalFace.uniforms.hudGrain.value.set(grain.color);
     this.medalFace.uniforms.hudKind.value = grain.kind;
-    this.xp.uniforms.hudColor.value.set("#59c8ff");
     this.ultimate.uniforms.hudColor.value.set(palette[2]);
     this.ultimate.uniforms.hudLight.value.set(palette[2]);
     this.ultimate.uniforms.hudTheme.value.set(palette[0]);
@@ -1163,18 +1178,18 @@ export class GpuRunHud {
     this.ultimate.uniforms.hudKind.value = grain.kind;
     this.halo.uniforms.hudColor.value.set(palette[2]);
     this.crest.setProperties({ src: `/art/icons/crests/${state.theme}.webp` });
-    this.plateFace.uniforms.hudDeep.value.set(palette[1]);
     if (snap.form !== this.portraitForm) {
       this.portraitForm = snap.form;
       const def = formDefs[snap.form];
       this.portrait.setProperties({ src: `/art/portraits/${snap.form}.webp` });
-      this.formName.setProperties({ text: def.name });
+      this.formName.set({ text: def.name });
       for (const tag of this.typeTags) {
-        tag.removeFromParent();
+        tag.tag.removeFromParent();
         tag.dispose();
+        tag.tag.dispose();
       }
-      this.typeTags = def.types.map(typeTag);
-      this.formTypes.add(...this.typeTags);
+      this.typeTags = def.types.map((type) => slantTag(typeNames[type], { size: 11 }));
+      this.formTypes.add(...this.typeTags.map((tag) => tag.tag));
     }
     this.updateTeam(snap.team);
     const goal = snap.level + Math.max(0, Math.min(1, snap.xp / snap.xpNext));
@@ -1182,7 +1197,7 @@ export class GpuRunHud {
     if (xp.progress < 0 || goal < xp.progress) {
       // The first reading (or a new run's lower one) is where the ring starts, not a gain.
       Object.assign(xp, { progress: goal, goal, trail: goal, hold: 0, glow: 0 });
-      this.level.set({ text: String(snap.level) });
+      this.level.setProperties({ text: String(snap.level) });
       this.drawXp();
     } else xp.goal = goal;
     this.updateHealth(
@@ -1195,11 +1210,13 @@ export class GpuRunHud {
     this.hp.uniforms.hudDeep.value.set(low ? "#c22f45" : "#3a9a45");
     this.hpNow.set({ text: String(Math.ceil(snap.hp)) });
     this.hpMax.set({ text: `/${Math.round(snap.maxHp)}` });
-    this.clock.set({ text: formatTime(snap.time), color: snap.rampage ? "#ffc2c2" : "#ffffff" });
-    this.clock.setStrokeColor(snap.rampage ? "#5c0f1f" : "#0d233f");
-    this.meta.setProperties({
-      // `.run-clock[data-rampage] .run-clock__meta`: wine, rgb(150 24 46 / 82%).
-      backgroundColor: snap.rampage ? withOpacity("#96182e", 0.82) : withOpacity("#0d233f", 0.55),
+    // Rampage: pink figures on wine plates.
+    const plateInk = snap.rampage ? "#96182e" : ui.ink;
+    this.clock.set({ text: formatTime(snap.time), color: snap.rampage ? "#ffc2c2" : ui.white });
+    this.clock.setStrokeColor(plateInk);
+    this.clockPlate.set({ fill: plateInk });
+    this.metaPlate.set({ fill: plateInk });
+    this.metaText.setProperties({
       text: `${STAGE_ROUTE.indexOf(snap.stage) + 1}/6 ${stageDefs[snap.stage].name} ${zoneState(snap)} · ${snap.kills}`,
     });
     if (previous && previous.stardust !== snap.stardust) this.popStardust();
@@ -1207,8 +1224,7 @@ export class GpuRunHud {
     this.stardust.setProperties({ text: `+${snap.stardust}` });
     this.boss.setProperties({ display: snap.boss ? "flex" : "none" });
     if (snap.boss) {
-      if (snap.boss.name !== previous?.boss?.name)
-        this.bossName.setProperties({ text: snap.boss.name });
+      if (snap.boss.name !== previous?.boss?.name) this.bossName.set({ text: snap.boss.name });
       this.updateHealth(
         this.bossBar,
         snap.boss.hp / snap.boss.max,
@@ -1228,7 +1244,7 @@ export class GpuRunHud {
         "moves",
       );
       // `.run-move`: the move's own type face, rimmed in the current theme.
-      slot.face.uniforms.hudColor.value.set(move ? softOf(moves[move.id].type) : "#e9f4fb");
+      slot.face.uniforms.hudColor.value.set(move ? softOf(moves[move.id].type) : ui.mist);
       slot.face.uniforms.hudDeep.value.set(palette[0]);
       if (move)
         // `Tag tone="theme"`: the run theme's deep step, whatever the move's own type.
@@ -1323,10 +1339,8 @@ export class GpuRunHud {
     slot.face.uniforms.hudReady.value = id ? 1 : 0;
     if (slot.id !== id) {
       slot.id = id;
-      slot.label?.setProperties({
-        text: id ? moves[id as keyof typeof moves].name : "",
-        visibility: id ? "visible" : "hidden",
-      });
+      slot.label?.text.setProperties({ text: id ? moves[id as keyof typeof moves].name : "" });
+      slot.label?.box.setProperties({ visibility: id ? "visible" : "hidden" });
       slot.image.setProperties({
         src: id ? `/art/icons/${folder}/${id}.webp` : undefined,
         display: id ? "flex" : "none",
@@ -1413,9 +1427,7 @@ export class GpuRunHud {
       { t: 1 },
       HEAL_MS,
       () => {
-        this.hpPlate.setProperties({
-          borderColor: new Color("#0d233f").lerp(this.healLight, 1 - this.healAge.t),
-        });
+        this.hp.uniforms.hudFrame.value.copy(this.ink).lerp(this.healLight, 1 - this.healAge.t);
         this.stage.invalidate();
       },
       uiEaseOut,
@@ -1482,7 +1494,7 @@ export class GpuRunHud {
   }
   /** The level beat: the medal shows the new level and pops (420ms). */
   private levelBeat(level: number): void {
-    this.level.set({ text: String(level) });
+    this.level.setProperties({ text: String(level) });
     const pose = this.medalPose;
     pose.scale = 1.35;
     this.stage.motion.animate(
@@ -1513,11 +1525,11 @@ export class GpuRunHud {
   private slotsTwoRows: boolean | null = null;
   private itemSpan = -1;
   private readonly white = new Color("#ffffff");
+  private readonly ink = new Color(ui.ink);
   private readonly hurtRed = new Color("#ff6f7d");
   private readonly healLight = new Color("#9be884");
   private readonly healAge = { t: 1 };
   private plateTheme: string | null = null;
-  private hpGrain: RunHeaderSurface | null = null;
   private readonly keycaps: Container[] = [];
   private ultArt!: RunHudArt;
   /** `.run-ult img` filter: saturate(.25) brightness(.75) until ready, 160ms transition. */
@@ -1543,6 +1555,16 @@ export class GpuRunHud {
     );
   }
   afterLayout(deltaMs: number): void {
+    // Under the left column (vitals, teammates, the notice): its foot from the stage top.
+    const leftMatrix = this.left.globalMatrix.value;
+    this.trainers.frame({
+      bottom: this.interactBottom,
+      top: leftMatrix
+        ? this.stage.viewport.height / 2 -
+          leftMatrix.elements[13]! +
+          (this.left.size.value?.[1] ?? 0) / 2
+        : 0,
+    });
     // The left column holds the vitals, the teammates and the notice: the readout goes under all.
     const leftHeight = this.left.size.value?.[1] ?? 0;
     if (Math.abs(leftHeight - this.leftHeight) > 0.5) {
@@ -1639,8 +1661,7 @@ export class GpuRunHud {
     // Under an open window (the level-up cards) the ring holds, so its beat plays on return.
     if (this.state?.visible && !this.state.blocked) this.stepXp(deltaMs);
     for (const slot of this.moves) this.sweepSlot(slot, deltaMs);
-    for (const control of this.controls) control.pattern?.update(deltaMs);
-    this.hpGrain?.update();
+    this.fitPlateEnds();
     if (!this.state?.visible) return;
     if (!idleStep) return;
     if (this.hp.uniforms.hudReady.value > 0) {
@@ -1687,16 +1708,22 @@ export class GpuRunHud {
   }
   /** Eases the shield band to its share over 120ms; nothing to draw while it holds still. */
   private updateShield(shield: number, max: number): void {
-    const target = max > 0 ? Math.max(0, Math.min(1, shield / max)) : 0;
+    const target = max > 0 ? Math.max(0, Math.min(1, shield / max)) : -1;
     if (target === this.shieldTarget) return;
     this.shieldTarget = target;
-    this.shieldBar.setProperties({ display: max > 0 ? "flex" : "none" });
+    if (target < 0) {
+      this.stage.motion.cancel(this.shieldState);
+      this.shieldState.fill = 0;
+      this.hp.uniforms.hudShield.value = -1;
+      this.stage.invalidate();
+      return;
+    }
     this.stage.motion.animate(
       this.shieldState,
       { fill: target },
       120,
       () => {
-        this.shieldBar.setProperties({ width: `${this.shieldState.fill * 100}%` });
+        this.hp.uniforms.hudShield.value = this.shieldState.fill;
         this.stage.invalidate();
       },
       uiEaseOut,
@@ -1718,7 +1745,7 @@ export class GpuRunHud {
                 height: 9,
                 borderRadius: 5,
                 borderWidth: 1.5,
-                borderColor: "#0d233f",
+                borderColor: ui.ink,
               });
               this.dashPips.add(dot);
               return dot;
@@ -1727,7 +1754,7 @@ export class GpuRunHud {
       this.dashPips.setProperties({ display: max > 1 ? "flex" : "none" });
     }
     this.dashPipDots.forEach((dot, i) =>
-      dot.setProperties({ backgroundColor: i < ready ? "#ffd45b" : "#536b82" }),
+      dot.setProperties({ backgroundColor: i < ready ? "#ffd45b" : "#5a5a66" }),
     );
   }
 
@@ -1743,24 +1770,43 @@ export class GpuRunHud {
     slot.cooldown!.uniforms.hudFill.value = next;
     this.stage.invalidate();
   }
-  /** A mouse over a control (null: over none): it lights with the ball pattern like every control. */
+  /** A mouse over a control (null: over none): it lifts and lightens. */
   hover(index: number | null): void {
     if (index === this.hovered) return;
     this.hovered = index;
     this.interact.setHovered(index !== null && this.controls[index]?.action === "interact");
     this.paintFocus();
   }
-  /** Keyboard focus is outlined (`:focus-visible`); hover and focus light the ball pattern. */
+  /** Keyboard focus is ringed in ink, following each key's shape; the pointer shows none. */
   setFocusVisible(visible: boolean): void {
     this.focusVisible = visible;
     this.paintFocus();
   }
   private paintFocus(): void {
+    const pressed = new Set(this.held.values());
     this.controls.forEach((c, i) => {
       const ringed = i === this.selected && this.focusVisible;
-      if (c.action === "interact") this.interact.setFocusRing(ringed);
-      else c.panel.setProperties({ borderWidth: ringed ? 2 : 0, borderColor: "#ffd45b" });
-      c.pattern?.setFocused(ringed || i === this.hovered);
+      const hovered = i === this.hovered;
+      if (c.action === "interact") {
+        this.interact.setFocusRing(ringed);
+        return;
+      }
+      if (c.plate) c.plate.set({ focus: ringed ? 1 : 0, fill: hovered ? KEY_HOVER : KEY_FACE });
+      else c.panel.setProperties({ borderWidth: ringed ? 3 : 0 });
+      // Hover lifts, a press sinks; the pose eases over the shared 160ms snap.
+      const y = pressed.has(i) ? LIFT.press : hovered ? -LIFT.hover : 0;
+      if (y !== c.pose.y)
+        this.stage.motion.animate(
+          c.pose,
+          { y },
+          LIFT.ms,
+          () => {
+            c.panel.setProperties({ transformTranslateY: c.pose.y });
+            c.plate?.set({ depth: 3 - c.pose.y });
+            this.stage.invalidate();
+          },
+          SNAP,
+        );
     });
     this.stage.invalidate();
   }
@@ -1794,7 +1840,6 @@ export class GpuRunHud {
     this.held.set(id, index);
     this.focus(index);
     if (this.controls[index]!.action === "interact") this.interact.setPressed(true);
-    else this.controls[index]!.panel.setProperties({ transformTranslateY: 2 });
     const action = this.controls[index]!.action;
     if (action === "left" || action === "right") this.updateTurn();
     else if (action === "dash" || action === "ultimate") this.activate(index);
@@ -1811,7 +1856,7 @@ export class GpuRunHud {
     this.held.delete(id);
     const c = this.controls[index]!;
     if (c.action === "interact") this.interact.setPressed(false);
-    else c.panel.setProperties({ transformTranslateY: 0 });
+    else this.paintFocus();
     if (c.action === "left" || c.action === "right") this.updateTurn();
     else if (!cancel && this.hit(x, y) === index && c.action !== "dash" && c.action !== "ultimate")
       this.activate(index);
@@ -1891,6 +1936,20 @@ export class GpuRunHud {
     this.devReadout.set(text);
   }
 
+  /**
+   * The name plate's ends: half its measured lean plus the same gap on both sides (the left one
+   * past the medal's overlap), so the upright rows sit on the slanted face's centre line.
+   */
+  private fitPlateEnds(): void {
+    const size = this.plate.size.value;
+    if (!size) return;
+    const end = (this.compact ? 10 : 12) + slantOf(size[1]) / 2;
+    if (Math.abs(end - this.plateEnd) < 0.05) return;
+    this.plateEnd = end;
+    const medal = this.compact ? 52 : 64;
+    this.plate.setProperties({ paddingLeft: medal / 2 + end, paddingRight: end });
+  }
+
   private placeDevReadout(): void {
     const v = this.stage.viewport;
     const edge = this.compact ? 12 : 16;
@@ -1901,6 +1960,7 @@ export class GpuRunHud {
   }
 
   dispose(): void {
+    this.trainers.dispose();
     this.indicators.dispose();
     this.numbers.dispose();
     this.edges.dispose();
@@ -1908,8 +1968,18 @@ export class GpuRunHud {
     this.cancel();
     this.interact.dispose();
     this.stage.motion.cancel(this.shieldState);
-    for (const control of this.controls) control.pattern?.dispose();
-    this.hpGrain?.dispose();
+    for (const control of this.controls) {
+      this.stage.motion.cancel(control.pose);
+      control.plate?.dispose();
+    }
+    for (const mate of this.mates) mate.plate.dispose();
+    for (const tag of this.typeTags) tag.dispose();
+    for (const slot of this.moves) slot.label?.plate.dispose();
+    this.plateFace?.dispose();
+    this.levelPlate.dispose();
+    this.clockPlate.dispose();
+    this.metaPlate.dispose();
+    this.purseFace.dispose();
     this.ultArt.dispose();
     for (const surface of this.surfaces) surface.dispose();
     this.stage.dispose();

@@ -41,6 +41,12 @@ export const Shape = {
   fist: 18,
   /** Inked dragon scale: an almond along its motion (+x) with curved scallop bands. */
   scale: 19,
+  /** Faceted boulder: an uneven heptagon per seed, a lit top face and shaded side facets. */
+  rock: 20,
+  /** Crystal diamond along +x (psychic shards): two shaded halves, a bright core line. */
+  gem: 21,
+  /** Inked hypnotic disc: two spiral arms of body over accent around a pale eye; turn it with spin. */
+  spiral: 22,
 } as const;
 
 /** A particle or sprite recipe. Sizes are half-extents in world units, scaled by the size passed in. */
@@ -353,6 +359,49 @@ vec4 scale(vec2 p) {
   return layer(mix(c, INK, smoothstep(0.62, 0.8, q)), a, 0.0);
 }
 
+vec4 rock(vec2 p, float seed) {
+  // Max over seven edge planes: a convex, uneven outline that stays the same for one seed.
+  float d = -1e3;
+  float facet = 0.0;
+  for (int i = 0; i < 7; i++) {
+    float ang = (float(i) + hash12(vec2(float(i), seed * 7.0)) * 0.5) * 0.8976 + seed * 6.28;
+    vec2 n = vec2(cos(ang), sin(ang));
+    float e = dot(p, n) - (0.72 + 0.18 * hash12(vec2(seed * 13.0, float(i))));
+    if (e > d) {
+      d = e;
+      facet = dot(n, vec2(-0.55, 0.8));
+    }
+  }
+  float a = smoothstep(0.03, -0.03, d);
+  float top = smoothstep(-0.3, -0.36, d);
+  vec3 side = mix(vAccent.rgb, vBody.rgb, smoothstep(-0.9, 0.9, facet) * 0.85);
+  vec3 c = mix(side, mix(vBody.rgb, vec3(1.0), 0.18), top);
+  vec3 ink = mix(vAccent.rgb, vec3(0.12, 0.09, 0.07), 0.75);
+  return layer(mix(c, ink, smoothstep(-0.1, -0.04, d)), a, 0.0);
+}
+
+vec4 gem(vec2 p, float add) {
+  float d = abs(p.x) + abs(p.y) / 0.56 - 1.0;
+  float a = smoothstep(0.04, -0.04, d);
+  vec3 c = mix(vBody.rgb, vAccent.rgb, step(0.0, p.y) * 0.55);
+  float core = smoothstep(0.1, 0.0, abs(p.y)) * (1.0 - abs(p.x));
+  c = mix(c, vec3(1.0), clamp(core + smoothstep(0.35, 0.0, length(p)) * 0.6, 0.0, 1.0));
+  vec3 ink = mix(vAccent.rgb, INK, 0.5);
+  return layer(mix(c, ink, smoothstep(-0.16, -0.08, d)), a, add * (1.0 - smoothstep(-0.2, -0.1, d)));
+}
+
+vec4 spiral(vec2 p) {
+  float r = length(p);
+  // Two Archimedean arms: the band index runs with angle and radius, so it winds inward.
+  float d = abs(fract(atan(p.y, p.x) * 0.31831 - r * 2.4) - 0.5) * 2.0;
+  float aa = max(fwidth(d), 0.03);
+  float arm = smoothstep(0.5 - aa, 0.5 + aa, d) * smoothstep(0.08, 0.2, r);
+  vec3 c = mix(vAccent.rgb, vBody.rgb, arm);
+  c = mix(c, vec3(1.0), smoothstep(0.16, 0.08, r));
+  c = mix(c, INK, smoothstep(0.8, 0.88, r));
+  return layer(c, smoothstep(1.0, 0.94, r), 0.0);
+}
+
 void main() {
   float shape = vMeta.x;
   float age = vMeta.y;
@@ -379,7 +428,10 @@ void main() {
   else if (shape < 16.5) c = note(p);
   else if (shape < 17.5) c = spirit(p, seed);
   else if (shape < 18.5) c = fist(p);
-  else c = scale(p);
+  else if (shape < 19.5) c = scale(p);
+  else if (shape < 20.5) c = rock(p, seed);
+  else if (shape < 21.5) c = gem(p, add);
+  else c = spiral(p);
   c *= vBody.a;
   if (c.r + c.g + c.b + c.a < 0.004) discard;
   gl_FragColor = c;

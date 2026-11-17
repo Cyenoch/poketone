@@ -3,6 +3,7 @@ import { setLayoutGrid } from "@pmndrs/uikit/dist/flex/yoga.js";
 import { NoToneMapping, OrthographicCamera, Scene, type WebGLRenderer } from "three";
 import { releaseUploads } from "../../rendering/releaseUploads";
 import { UiMotion } from "./motion";
+import { ui } from "./tokens";
 import { uiViewport, type UiInsets } from "./viewport";
 
 /** Framebuffer pixels per CSS pixel of the renderer every stage draws with (set by its host). */
@@ -30,7 +31,7 @@ export class UiStage {
         height: 1,
         fontFamily: "Poketone UI",
         fontWeight: 500,
-        color: "#142f50",
+        color: ui.ink,
       },
       undefined,
       {

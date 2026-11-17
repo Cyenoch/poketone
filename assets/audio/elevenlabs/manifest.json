@@ -1635,6 +1635,657 @@
       },
       "note": "Batch 1 mostly under 300 Hz; regenerated (takes 5-8). Two takes pass the attack limit."
     },
+    "cast-psychic": {
+      "kind": "sfx",
+      "tier": "medium",
+      "maxMs": 600,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.8,
+        "prompt_influence": 0.5
+      },
+      "node": "idgsySA4BTyNqImKruwj",
+      "prompt": "Low warped pressure swell, a soft muffled whoomp of air folding inward then releasing as one dull rounded pulse, mid-range audible on a small speaker, no chime, no bell, no ring, no shimmer, no sparkle, no pitched tone, no high-pitched whine, short, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-cast-psychic-2.mp3",
+          "generationId": "lj01xpo8XgoDGhB93mlu"
+        },
+        {
+          "file": "sfx-cast-psychic-4.mp3",
+          "generationId": "t5YnPGq8J9unatBNFm6G"
+        }
+      ],
+      "pick": ["sfx-cast-psychic-2.mp3", "sfx-cast-psychic-4.mp3"],
+      "ship": "cast-psychic",
+      "spend": {
+        "credits": 10.6656,
+        "date": "2026-11-17"
+      },
+      "note": "Recovered completed generations from the interrupted implementation; no new psychic-cast generation. Rejected 1/3 below 300 Hz. Selected 2/4: centroid 416-645 Hz, <1% above 4 kHz, tonal 14-57%. Medium feedback capped at 600 ms; heavy casts align via event.windup. Not listened to."
+    },
+    "hit-psychic": {
+      "kind": "sfx",
+      "tier": "small",
+      "frequent": true,
+      "maxMs": 160,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "595j9UV8XrG8MoFRdMq5",
+      "prompt": "Single short muted leathery pop on a hollow wooden box, a soft rubbery pap with an immediate attack and no tail, dark warm mid-range, audible on a small speaker, no bass, no boom, no ring, no bell, no chime, no pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-hit-psychic-5.mp3",
+          "generationId": "DtYTA6AIDUkkV0Xysacu"
+        },
+        {
+          "file": "sfx-hit-psychic-6.mp3",
+          "generationId": "XQ3JZAKZDLhjqy79h2Zs"
+        }
+      ],
+      "pick": ["sfx-hit-psychic-5.mp3", "sfx-hit-psychic-6.mp3"],
+      "ship": "hit-psychic",
+      "spend": {
+        "credits": 13.332,
+        "date": "2026-11-17"
+      },
+      "note": "First pressure-knock batch rejected: all below 300 Hz, two also TONAL. Selected 5/6 from the leathery/wooden pap batch: centroid 944-1389 Hz, <1% above 4 kHz, tonal 24-32%, 20 ms attack. Small bed capped at 160 ms; immediate hit/contact and ultimate damage use measured hitMs. Not listened to."
+    },
+    "cast-rock": {
+      "kind": "sfx",
+      "tier": "small",
+      "maxMs": 240,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "J74vx2Ailcz8ja7hU7tL",
+      "prompt": "Single stylized cartoon game stone toss: short rounded elastic wump, playful weight, soft rubbery low-mid punch and tiny chunky particle flutter. Warm clear midrange, cushioned attack, quarter-second decay. Designed cartoon SFX, not realistic foley. No stone grinding, scrape, gravel friction, metal, clink, ping, chime, ringing tone, laser, whistle, wind hiss or cinematic boom. Dry, no reverb, music or voice.",
+      "takes": [
+        {
+          "file": "sfx-cast-rock-1.mp3",
+          "generationId": "EdFe9VqadR4iaRVTSIQl",
+          "prompt": "One heavy rough stone grinding forward into a dull chunky clunk, rounded mid-range stone friction with weight and a short gravel tail, audible on a small speaker, no hiss, no metallic ring, no bell, no pitched tone, dry close-mic, no reverb, no music, no voice",
+          "node": "smmb8pzZBl8C0VkuUN18",
+          "note": "Retained rejected previous release: user rejected the piercing/inappropriate Geodude attack and specified stylized cartoon game SFX instead of realistic stone/earth foley."
+        },
+        {
+          "file": "sfx-cast-rock-3.mp3",
+          "generationId": "YWVoEJEZ1fdi43mdJfG8",
+          "prompt": "One heavy rough stone grinding forward into a dull chunky clunk, rounded mid-range stone friction with weight and a short gravel tail, audible on a small speaker, no hiss, no metallic ring, no bell, no pitched tone, dry close-mic, no reverb, no music, no voice",
+          "node": "smmb8pzZBl8C0VkuUN18",
+          "note": "Retained rejected previous release: user rejected the piercing/inappropriate Geodude attack and specified stylized cartoon game SFX instead of realistic stone/earth foley."
+        },
+        {
+          "file": "sfx-cast-rock-cartoon-1.mp3",
+          "generationId": "ks5dSYcgkiQv9obo5AVj",
+          "prompt": "Single stylized cartoon game stone toss: short rounded elastic wump, playful weight, soft rubbery low-mid punch and tiny chunky particle flutter. Warm clear midrange, cushioned attack, quarter-second decay. Designed cartoon SFX, not realistic foley. No stone grinding, scrape, gravel friction, metal, clink, ping, chime, ringing tone, laser, whistle, wind hiss or cinematic boom. Dry, no reverb, music or voice.",
+          "node": "J74vx2Ailcz8ja7hU7tL",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Selected source for the shaped derivative in pick; original retained. Infrasonic and upper transient correction are recorded on the derivative. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-cast-rock-cartoon-2.mp3",
+          "generationId": "sO2T69n4PjX93hW25VQ6",
+          "prompt": "Single stylized cartoon game stone toss: short rounded elastic wump, playful weight, soft rubbery low-mid punch and tiny chunky particle flutter. Warm clear midrange, cushioned attack, quarter-second decay. Designed cartoon SFX, not realistic foley. No stone grinding, scrape, gravel friction, metal, clink, ping, chime, ringing tone, laser, whistle, wind hiss or cinematic boom. Dry, no reverb, music or voice.",
+          "node": "J74vx2Ailcz8ja7hU7tL",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Rejected: high-frequency hiss plus predominantly infrasonic body. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-cast-rock-cartoon-3.mp3",
+          "generationId": "ihjTCzxE3j2icrKFLKCj",
+          "prompt": "Single stylized cartoon game stone toss: short rounded elastic wump, playful weight, soft rubbery low-mid punch and tiny chunky particle flutter. Warm clear midrange, cushioned attack, quarter-second decay. Designed cartoon SFX, not realistic foley. No stone grinding, scrape, gravel friction, metal, clink, ping, chime, ringing tone, laser, whistle, wind hiss or cinematic boom. Dry, no reverb, music or voice.",
+          "node": "J74vx2Ailcz8ja7hU7tL",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Selected source for the shaped derivative in pick; original retained. Infrasonic and upper transient correction are recorded on the derivative. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-cast-rock-cartoon-4.mp3",
+          "generationId": "6V1ipWlVKBP7n1rg3YfF",
+          "prompt": "Stylized cartoon rock toss, one soft compact weighted fwump with a muted punchy pap and tiny soft chunky pops. Broad warm low-mid noise body, 400-900 Hz presence, gentle attack, 0.2 second decay. Playful designed game SFX, not realistic foley. No wind hiss, stone grinding, gravel, scrape, metal, clink, ping, chime, ringing, boing, squeak, whistle, laser or sub boom. Dry, no reverb, music or voice.",
+          "node": "K9riQpiC9a8gQFg4Crwy",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Rejected: near-silent output below the project raw-peak floor and mostly infrasonic. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-cast-rock-cartoon-5.mp3",
+          "generationId": "JM1MVS7fiD1JK7IGujVu",
+          "prompt": "Stylized cartoon rock toss, one soft compact weighted fwump with a muted punchy pap and tiny soft chunky pops. Broad warm low-mid noise body, 400-900 Hz presence, gentle attack, 0.2 second decay. Playful designed game SFX, not realistic foley. No wind hiss, stone grinding, gravel, scrape, metal, clink, ping, chime, ringing, boing, squeak, whistle, laser or sub boom. Dry, no reverb, music or voice.",
+          "node": "K9riQpiC9a8gQFg4Crwy",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Rejected: almost all energy below 100 Hz, insufficient midrange body. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-cast-rock-cartoon-6.mp3",
+          "generationId": "5QfY9QL0GymZr46B3nrZ",
+          "prompt": "Stylized cartoon rock toss, one soft compact weighted fwump with a muted punchy pap and tiny soft chunky pops. Broad warm low-mid noise body, 400-900 Hz presence, gentle attack, 0.2 second decay. Playful designed game SFX, not realistic foley. No wind hiss, stone grinding, gravel, scrape, metal, clink, ping, chime, ringing, boing, squeak, whistle, laser or sub boom. Dry, no reverb, music or voice.",
+          "node": "K9riQpiC9a8gQFg4Crwy",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Rejected: persistent narrow midrange resonance around 1.7 kHz. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-cast-rock-cartoon-1-shaped.flac",
+          "generationId": "ks5dSYcgkiQv9obo5AVj",
+          "prompt": "Single stylized cartoon game stone toss: short rounded elastic wump, playful weight, soft rubbery low-mid punch and tiny chunky particle flutter. Warm clear midrange, cushioned attack, quarter-second decay. Designed cartoon SFX, not realistic foley. No stone grinding, scrape, gravel friction, metal, clink, ping, chime, ringing tone, laser, whistle, wind hiss or cinematic boom. Dry, no reverb, music or voice.",
+          "node": "J74vx2Ailcz8ja7hU7tL",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 0,
+          "note": "Selected cartoon take; removes generated infrasonic energy and softens the upper mid/high transient before standard project mastering. Original MP3 retained. Metric-selected, not listened to. No generation charge for this derivative; source credits are recorded on derivedFrom.",
+          "derivedFrom": "sfx-cast-rock-cartoon-1.mp3",
+          "processing": {
+            "tool": "ffmpeg",
+            "filter": "highpass=f=120:p=2,lowpass=f=1600:p=2,afade=t=in:d=0.006,acompressor=threshold=0.04:ratio=3:attack=2:release=30:knee=4:makeup=1",
+            "sampleRate": 44100,
+            "channels": 2,
+            "sampleFormat": "s16"
+          }
+        },
+        {
+          "file": "sfx-cast-rock-cartoon-3-shaped.flac",
+          "generationId": "ihjTCzxE3j2icrKFLKCj",
+          "prompt": "Single stylized cartoon game stone toss: short rounded elastic wump, playful weight, soft rubbery low-mid punch and tiny chunky particle flutter. Warm clear midrange, cushioned attack, quarter-second decay. Designed cartoon SFX, not realistic foley. No stone grinding, scrape, gravel friction, metal, clink, ping, chime, ringing tone, laser, whistle, wind hiss or cinematic boom. Dry, no reverb, music or voice.",
+          "node": "J74vx2Ailcz8ja7hU7tL",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 0,
+          "note": "Selected cartoon take; removes generated infrasonic energy and softens the upper mid/high transient before standard project mastering. Original MP3 retained. Metric-selected, not listened to. No generation charge for this derivative; source credits are recorded on derivedFrom.",
+          "derivedFrom": "sfx-cast-rock-cartoon-3.mp3",
+          "processing": {
+            "tool": "ffmpeg",
+            "filter": "highpass=f=120:p=2,lowpass=f=1600:p=2,afade=t=in:d=0.006,acompressor=threshold=0.04:ratio=3:attack=2:release=30:knee=4:makeup=1",
+            "sampleRate": 44100,
+            "channels": 2,
+            "sampleFormat": "s16"
+          }
+        }
+      ],
+      "pick": ["sfx-cast-rock-cartoon-1-shaped.flac", "sfx-cast-rock-cartoon-3-shaped.flac"],
+      "ship": "cast-rock",
+      "spend": {
+        "credits": 20.6646,
+        "date": "2026-11-17"
+      },
+      "note": "User direction: stylized cartoon action-game SFX, rounded elastic weight and tiny exaggerated particles, never realistic stone/earth foley. Replaces the human-rejected Geodude release retained in rejected/geodude-realistic. Three candidates plus one three-candidate retry; all original sources retained. Casts are short recurring small-tier bed feedback; rock/ground hits merge within 120 ms, retain their material on crit, and replace the matching ordinary kill pop. Rock-throw cast stays at launch (windup=0), landing uses projectile feedback and damage/contact, including misses; elite-kill stays a lead. Source shaping removes infrasonic output and rolls off at 1.6 kHz, not just a gain reduction. No human listening or device acceptance is claimed.",
+      "frequent": true
+    },
+    "hit-rock": {
+      "kind": "sfx",
+      "tier": "small",
+      "frequent": true,
+      "maxMs": 160,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "8wPqWjVHz3kMetaHU4Kq",
+      "prompt": "Single stylized cartoon game rock impact: compact round rubbery bonk-thump, playful heavy weight and tiny soft exaggerated rubble patter. Warm low-mid body, broad midrange pop, cushioned quick attack, very short decay. Designed cartoon SFX, not realistic foley. No stone clack, scrape, gritty friction, metallic crunch, clink, ping, bell, chime, ring, laser, whistle or cinematic boom. Dry, no reverb, music or voice.",
+      "takes": [
+        {
+          "file": "sfx-hit-rock-10.mp3",
+          "generationId": "gbg5E9spXXJZRaNEt0gm",
+          "prompt": "Single short heavy dull boulder impact on packed earth, one firm rounded clonk with a solid low-mid body and a muted wooden knock texture, damped immediately, audible on a small speaker, no gravel hiss, no scratch, no ring, no bell, no pitched tone, dry close-mic, no reverb, no music, no voice",
+          "node": "8GSIgACXsfCfycBeSsw5",
+          "note": "Retained rejected previous release: user rejected the piercing/inappropriate Geodude attack and specified stylized cartoon game SFX instead of realistic stone/earth foley."
+        },
+        {
+          "file": "sfx-hit-rock-12.mp3",
+          "generationId": "fKlZwzvIeftkEcEsCSxI",
+          "prompt": "Single short heavy dull boulder impact on packed earth, one firm rounded clonk with a solid low-mid body and a muted wooden knock texture, damped immediately, audible on a small speaker, no gravel hiss, no scratch, no ring, no bell, no pitched tone, dry close-mic, no reverb, no music, no voice",
+          "node": "8GSIgACXsfCfycBeSsw5",
+          "note": "Retained rejected previous release: user rejected the piercing/inappropriate Geodude attack and specified stylized cartoon game SFX instead of realistic stone/earth foley."
+        },
+        {
+          "file": "sfx-hit-rock-cartoon-1.mp3",
+          "generationId": "FEIikJcHqj6Q83c3EmYt",
+          "prompt": "Single stylized cartoon game rock impact: compact round rubbery bonk-thump, playful heavy weight and tiny soft exaggerated rubble patter. Warm low-mid body, broad midrange pop, cushioned quick attack, very short decay. Designed cartoon SFX, not realistic foley. No stone clack, scrape, gritty friction, metallic crunch, clink, ping, bell, chime, ring, laser, whistle or cinematic boom. Dry, no reverb, music or voice.",
+          "node": "8wPqWjVHz3kMetaHU4Kq",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Selected source for the shaped derivative in pick; original retained. Infrasonic and upper transient correction are recorded on the derivative. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-hit-rock-cartoon-2.mp3",
+          "generationId": "GnBZvGZRhtH1TChdelSz",
+          "prompt": "Single stylized cartoon game rock impact: compact round rubbery bonk-thump, playful heavy weight and tiny soft exaggerated rubble patter. Warm low-mid body, broad midrange pop, cushioned quick attack, very short decay. Designed cartoon SFX, not realistic foley. No stone clack, scrape, gritty friction, metallic crunch, clink, ping, bell, chime, ring, laser, whistle or cinematic boom. Dry, no reverb, music or voice.",
+          "node": "8wPqWjVHz3kMetaHU4Kq",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Rejected: strong 2-4 kHz transient and high-frequency energy. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-hit-rock-cartoon-3.mp3",
+          "generationId": "aG6GJS0iNUeCUpexytDR",
+          "prompt": "Single stylized cartoon game rock impact: compact round rubbery bonk-thump, playful heavy weight and tiny soft exaggerated rubble patter. Warm low-mid body, broad midrange pop, cushioned quick attack, very short decay. Designed cartoon SFX, not realistic foley. No stone clack, scrape, gritty friction, metallic crunch, clink, ping, bell, chime, ring, laser, whistle or cinematic boom. Dry, no reverb, music or voice.",
+          "node": "8wPqWjVHz3kMetaHU4Kq",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Selected source for the shaped derivative in pick; original retained. Infrasonic and upper transient correction are recorded on the derivative. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-hit-rock-cartoon-4.mp3",
+          "generationId": "YBJr4WlsvCIAIqw5Uj8F",
+          "prompt": "Stylized cartoon rock hit, single muffled punchy poof-thud with tiny soft chunky pops. Broad low-mid noisy body around 400-900 Hz, cushioned transient, weight without aggression, ends in 0.15 seconds. Playful designed game SFX, not realistic foley. No musical pitch, boing, squeak, stone clack, gravel friction, gritty crunch, metal, clink, ping, chime, whistle, laser or sub boom. Dry, no reverb, music or voice.",
+          "node": "II5amCTBs973NY1aoUdE",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Rejected: almost entirely infrasonic output; stronger source alternatives selected. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-hit-rock-cartoon-5.mp3",
+          "generationId": "U5QLSJJ18LpEdsnRl9Tw",
+          "prompt": "Stylized cartoon rock hit, single muffled punchy poof-thud with tiny soft chunky pops. Broad low-mid noisy body around 400-900 Hz, cushioned transient, weight without aggression, ends in 0.15 seconds. Playful designed game SFX, not realistic foley. No musical pitch, boing, squeak, stone clack, gravel friction, gritty crunch, metal, clink, ping, chime, whistle, laser or sub boom. Dry, no reverb, music or voice.",
+          "node": "II5amCTBs973NY1aoUdE",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Rejected: almost entirely infrasonic output; stronger source alternatives selected. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-hit-rock-cartoon-6.mp3",
+          "generationId": "tHgeREPB68KA6pcUQJwi",
+          "prompt": "Stylized cartoon rock hit, single muffled punchy poof-thud with tiny soft chunky pops. Broad low-mid noisy body around 400-900 Hz, cushioned transient, weight without aggression, ends in 0.15 seconds. Playful designed game SFX, not realistic foley. No musical pitch, boing, squeak, stone clack, gravel friction, gritty crunch, metal, clink, ping, chime, whistle, laser or sub boom. Dry, no reverb, music or voice.",
+          "node": "II5amCTBs973NY1aoUdE",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Rejected: almost entirely infrasonic output; stronger source alternatives selected. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-hit-rock-cartoon-1-shaped.flac",
+          "generationId": "FEIikJcHqj6Q83c3EmYt",
+          "prompt": "Single stylized cartoon game rock impact: compact round rubbery bonk-thump, playful heavy weight and tiny soft exaggerated rubble patter. Warm low-mid body, broad midrange pop, cushioned quick attack, very short decay. Designed cartoon SFX, not realistic foley. No stone clack, scrape, gritty friction, metallic crunch, clink, ping, bell, chime, ring, laser, whistle or cinematic boom. Dry, no reverb, music or voice.",
+          "node": "8wPqWjVHz3kMetaHU4Kq",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 0,
+          "note": "Selected cartoon take; removes generated infrasonic energy and softens the upper mid/high transient before standard project mastering. Original MP3 retained. Metric-selected, not listened to. No generation charge for this derivative; source credits are recorded on derivedFrom.",
+          "derivedFrom": "sfx-hit-rock-cartoon-1.mp3",
+          "processing": {
+            "tool": "ffmpeg",
+            "filter": "highpass=f=120:p=2,lowpass=f=1600:p=2,afade=t=in:d=0.006",
+            "sampleRate": 44100,
+            "channels": 2,
+            "sampleFormat": "s16"
+          }
+        },
+        {
+          "file": "sfx-hit-rock-cartoon-3-shaped.flac",
+          "generationId": "aG6GJS0iNUeCUpexytDR",
+          "prompt": "Single stylized cartoon game rock impact: compact round rubbery bonk-thump, playful heavy weight and tiny soft exaggerated rubble patter. Warm low-mid body, broad midrange pop, cushioned quick attack, very short decay. Designed cartoon SFX, not realistic foley. No stone clack, scrape, gritty friction, metallic crunch, clink, ping, bell, chime, ring, laser, whistle or cinematic boom. Dry, no reverb, music or voice.",
+          "node": "8wPqWjVHz3kMetaHU4Kq",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 0,
+          "note": "Selected cartoon take; removes generated infrasonic energy and softens the upper mid/high transient before standard project mastering. Original MP3 retained. Metric-selected, not listened to. No generation charge for this derivative; source credits are recorded on derivedFrom.",
+          "derivedFrom": "sfx-hit-rock-cartoon-3.mp3",
+          "processing": {
+            "tool": "ffmpeg",
+            "filter": "highpass=f=120:p=2,lowpass=f=1600:p=2,afade=t=in:d=0.006",
+            "sampleRate": 44100,
+            "channels": 2,
+            "sampleFormat": "s16"
+          }
+        }
+      ],
+      "pick": ["sfx-hit-rock-cartoon-1-shaped.flac", "sfx-hit-rock-cartoon-3-shaped.flac"],
+      "ship": "hit-rock",
+      "spend": {
+        "credits": 29.997,
+        "date": "2026-11-17"
+      },
+      "note": "User direction: stylized cartoon action-game SFX, rounded elastic weight and tiny exaggerated particles, never realistic stone/earth foley. Replaces the human-rejected Geodude release retained in rejected/geodude-realistic. Three candidates plus one three-candidate retry; all original sources retained. Casts are short recurring small-tier bed feedback; rock/ground hits merge within 120 ms, retain their material on crit, and replace the matching ordinary kill pop. Rock-throw cast stays at launch (windup=0), landing uses projectile feedback and damage/contact, including misses; elite-kill stays a lead. Source shaping removes infrasonic output and rolls off at 1.6 kHz, not just a gain reduction. No human listening or device acceptance is claimed."
+    },
+    "cast-ground": {
+      "kind": "sfx",
+      "tier": "small",
+      "maxMs": 240,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "9UpLI93vyDukwxYev8tb",
+      "prompt": "Single stylized cartoon game ground bounce: short elastic rounded bwump, warm chunky low-mid body, tiny playful soft flutter, cushioned punch with weight, friendly for repeated action. Designed cartoon SFX, not realistic earth foley. No dirt friction, scrape, gravel, gritty crunch, metal, clink, ping, chime, ringing tone, laser, whistle or cinematic rumble. Dry, no reverb, music or voice.",
+      "takes": [
+        {
+          "file": "sfx-cast-ground-2.mp3",
+          "generationId": "efT5iKaTHHwIHjmka0MF",
+          "prompt": "One heavy compacted earth heave collapsing into a dense muffled crunch, full-bodied mid-range coarse soil friction and a short rounded thud, audible on a small speaker, no hiss, no ring, no bell, no pitched tone, dry close-mic, no reverb, no music, no voice",
+          "node": "phBx5qb1tuoz7XS3sW9k",
+          "note": "Retained rejected previous release: user rejected the piercing/inappropriate Geodude attack and specified stylized cartoon game SFX instead of realistic stone/earth foley."
+        },
+        {
+          "file": "sfx-cast-ground-4.mp3",
+          "generationId": "q0NfisO4icYsaZqQcmH1",
+          "prompt": "One heavy compacted earth heave collapsing into a dense muffled crunch, full-bodied mid-range coarse soil friction and a short rounded thud, audible on a small speaker, no hiss, no ring, no bell, no pitched tone, dry close-mic, no reverb, no music, no voice",
+          "node": "phBx5qb1tuoz7XS3sW9k",
+          "note": "Retained rejected previous release: user rejected the piercing/inappropriate Geodude attack and specified stylized cartoon game SFX instead of realistic stone/earth foley."
+        },
+        {
+          "file": "sfx-cast-ground-cartoon-1.mp3",
+          "generationId": "xCzs7k4KJa2kX8Mohaqa",
+          "prompt": "Single stylized cartoon game ground bounce: short elastic rounded bwump, warm chunky low-mid body, tiny playful soft flutter, cushioned punch with weight, friendly for repeated action. Designed cartoon SFX, not realistic earth foley. No dirt friction, scrape, gravel, gritty crunch, metal, clink, ping, chime, ringing tone, laser, whistle or cinematic rumble. Dry, no reverb, music or voice.",
+          "node": "9UpLI93vyDukwxYev8tb",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Selected source for the shaped derivative in pick; original retained. Infrasonic and upper transient correction are recorded on the derivative. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-cast-ground-cartoon-2.mp3",
+          "generationId": "ENG3ZDRAx3SeXJ0LE2GQ",
+          "prompt": "Single stylized cartoon game ground bounce: short elastic rounded bwump, warm chunky low-mid body, tiny playful soft flutter, cushioned punch with weight, friendly for repeated action. Designed cartoon SFX, not realistic earth foley. No dirt friction, scrape, gravel, gritty crunch, metal, clink, ping, chime, ringing tone, laser, whistle or cinematic rumble. Dry, no reverb, music or voice.",
+          "node": "9UpLI93vyDukwxYev8tb",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Rejected: strong sustained narrow midrange resonance. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-cast-ground-cartoon-3.mp3",
+          "generationId": "oLnkssiHiTxYlxaz7fbZ",
+          "prompt": "Single stylized cartoon game ground bounce: short elastic rounded bwump, warm chunky low-mid body, tiny playful soft flutter, cushioned punch with weight, friendly for repeated action. Designed cartoon SFX, not realistic earth foley. No dirt friction, scrape, gravel, gritty crunch, metal, clink, ping, chime, ringing tone, laser, whistle or cinematic rumble. Dry, no reverb, music or voice.",
+          "node": "9UpLI93vyDukwxYev8tb",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Selected source for the shaped derivative in pick; original retained. Infrasonic and upper transient correction are recorded on the derivative. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-cast-ground-cartoon-4.mp3",
+          "generationId": "NcHlDXY0AARP38bydzzM",
+          "prompt": "Stylized cartoon ground move, one compact muffled thoomp-pap with tiny soft particle pops. Broad warm low-mid noise around 400-900 Hz, cushioned attack and 0.2 second tail, playful chunky weight. Designed game SFX, not realistic earth foley. No musical pitch, boing, squeak, dirt friction, gravel, scrape, gritty crunch, metal, clink, ping, chime, whistle, laser or sub rumble. Dry, no reverb, music or voice.",
+          "node": "BUkr9Rxso4tocAROo1MF",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Rejected: longer noisy high-frequency texture than the selected cartoon pops. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-cast-ground-cartoon-5.mp3",
+          "generationId": "RvIW0ZOZdE0nIADMJPrg",
+          "prompt": "Stylized cartoon ground move, one compact muffled thoomp-pap with tiny soft particle pops. Broad warm low-mid noise around 400-900 Hz, cushioned attack and 0.2 second tail, playful chunky weight. Designed game SFX, not realistic earth foley. No musical pitch, boing, squeak, dirt friction, gravel, scrape, gritty crunch, metal, clink, ping, chime, whistle, laser or sub rumble. Dry, no reverb, music or voice.",
+          "node": "BUkr9Rxso4tocAROo1MF",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Rejected: bright high-frequency transient. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-cast-ground-cartoon-6.mp3",
+          "generationId": "xJNVfBBRwYoh7AF3t2nx",
+          "prompt": "Stylized cartoon ground move, one compact muffled thoomp-pap with tiny soft particle pops. Broad warm low-mid noise around 400-900 Hz, cushioned attack and 0.2 second tail, playful chunky weight. Designed game SFX, not realistic earth foley. No musical pitch, boing, squeak, dirt friction, gravel, scrape, gritty crunch, metal, clink, ping, chime, whistle, laser or sub rumble. Dry, no reverb, music or voice.",
+          "node": "BUkr9Rxso4tocAROo1MF",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Rejected: pronounced 2-4 kHz attack and narrow resonance around 2.3 kHz. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-cast-ground-cartoon-1-shaped.flac",
+          "generationId": "xCzs7k4KJa2kX8Mohaqa",
+          "prompt": "Single stylized cartoon game ground bounce: short elastic rounded bwump, warm chunky low-mid body, tiny playful soft flutter, cushioned punch with weight, friendly for repeated action. Designed cartoon SFX, not realistic earth foley. No dirt friction, scrape, gravel, gritty crunch, metal, clink, ping, chime, ringing tone, laser, whistle or cinematic rumble. Dry, no reverb, music or voice.",
+          "node": "9UpLI93vyDukwxYev8tb",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 0,
+          "note": "Selected cartoon take; removes generated infrasonic energy and softens the upper mid/high transient before standard project mastering. Original MP3 retained. Metric-selected, not listened to. No generation charge for this derivative; source credits are recorded on derivedFrom.",
+          "derivedFrom": "sfx-cast-ground-cartoon-1.mp3",
+          "processing": {
+            "tool": "ffmpeg",
+            "filter": "highpass=f=120:p=2,lowpass=f=1600:p=2,afade=t=in:d=0.006",
+            "sampleRate": 44100,
+            "channels": 2,
+            "sampleFormat": "s16"
+          }
+        },
+        {
+          "file": "sfx-cast-ground-cartoon-3-shaped.flac",
+          "generationId": "oLnkssiHiTxYlxaz7fbZ",
+          "prompt": "Single stylized cartoon game ground bounce: short elastic rounded bwump, warm chunky low-mid body, tiny playful soft flutter, cushioned punch with weight, friendly for repeated action. Designed cartoon SFX, not realistic earth foley. No dirt friction, scrape, gravel, gritty crunch, metal, clink, ping, chime, ringing tone, laser, whistle or cinematic rumble. Dry, no reverb, music or voice.",
+          "node": "9UpLI93vyDukwxYev8tb",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 0,
+          "note": "Selected cartoon take; removes generated infrasonic energy and softens the upper mid/high transient before standard project mastering. Original MP3 retained. Metric-selected, not listened to. No generation charge for this derivative; source credits are recorded on derivedFrom.",
+          "derivedFrom": "sfx-cast-ground-cartoon-3.mp3",
+          "processing": {
+            "tool": "ffmpeg",
+            "filter": "highpass=f=120:p=2,lowpass=f=1600:p=2,afade=t=in:d=0.006",
+            "sampleRate": 44100,
+            "channels": 2,
+            "sampleFormat": "s16"
+          }
+        }
+      ],
+      "pick": ["sfx-cast-ground-cartoon-1-shaped.flac", "sfx-cast-ground-cartoon-3-shaped.flac"],
+      "ship": "cast-ground",
+      "spend": {
+        "credits": 20.6646,
+        "date": "2026-11-17"
+      },
+      "note": "User direction: stylized cartoon action-game SFX, rounded elastic weight and tiny exaggerated particles, never realistic stone/earth foley. Replaces the human-rejected Geodude release retained in rejected/geodude-realistic. Three candidates plus one three-candidate retry; all original sources retained. Casts are short recurring small-tier bed feedback; rock/ground hits merge within 120 ms, retain their material on crit, and replace the matching ordinary kill pop. Rock-throw cast stays at launch (windup=0), landing uses projectile feedback and damage/contact, including misses; elite-kill stays a lead. Source shaping removes infrasonic output and rolls off at 1.6 kHz, not just a gain reduction. No human listening or device acceptance is claimed.",
+      "frequent": true
+    },
+    "hit-ground": {
+      "kind": "sfx",
+      "tier": "small",
+      "frequent": true,
+      "maxMs": 160,
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5
+      },
+      "node": "Jmk7E0EXvg8m6BA0XdFW",
+      "prompt": "Stylized cartoon ground hit, one soft short pummf, broad warm low-mid noise around 400-900 Hz with a muted pap and soft chunky particles. Cushioned transient, playful weight, 0.15 second decay. Designed game SFX, not realistic earth foley. No musical pitch, boing, squeak, dirt friction, gravel, scrape, gritty crunch, metal, clink, ping, chime, whistle, laser or sub rumble. Dry, no reverb, music or voice.",
+      "takes": [
+        {
+          "file": "sfx-hit-ground-2.mp3",
+          "generationId": "mF0dqjwiAvfFFcd5yiUT",
+          "prompt": "Single very short heavy packed-soil impact, a dense dull thwack with a muted earthy crunch, immediate rounded mid-range attack, audible on a small speaker, no sub-bass boom, no hiss, no ring, no bell, no pitched tone, dry close-mic, no reverb, no music, no voice",
+          "node": "zkHuZCONQZRCi3OE8oq5",
+          "note": "Retained rejected previous release: user rejected the piercing/inappropriate Geodude attack and specified stylized cartoon game SFX instead of realistic stone/earth foley."
+        },
+        {
+          "file": "sfx-hit-ground-3.mp3",
+          "generationId": "V4j7qhwuticsqO3swIIn",
+          "prompt": "Single very short heavy packed-soil impact, a dense dull thwack with a muted earthy crunch, immediate rounded mid-range attack, audible on a small speaker, no sub-bass boom, no hiss, no ring, no bell, no pitched tone, dry close-mic, no reverb, no music, no voice",
+          "node": "zkHuZCONQZRCi3OE8oq5",
+          "note": "Retained rejected previous release: user rejected the piercing/inappropriate Geodude attack and specified stylized cartoon game SFX instead of realistic stone/earth foley."
+        },
+        {
+          "file": "sfx-hit-ground-cartoon-1.mp3",
+          "generationId": "3hFoNua7r8QrR3mhAWNk",
+          "prompt": "Single short stylized cartoon game ground hit: soft rounded springy domp, chunky warm midrange body and tiny muted cartoon particle pop. Cushioned immediate attack, weight with playful elasticity, quickly damped. Designed cartoon SFX, not realistic earth foley. No grit, friction, scrape, metal, clink, ping, bell, chime, ringing tone, laser, whistle or sub rumble. Dry, no reverb, music or voice.",
+          "node": "TLYzX5FJAjlLiQvuX68l",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Rejected: sustained narrow upper-mid resonance around 1.6-2 kHz. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-hit-ground-cartoon-2.mp3",
+          "generationId": "zsc5VRie1ZV8iYG6s0sV",
+          "prompt": "Single short stylized cartoon game ground hit: soft rounded springy domp, chunky warm midrange body and tiny muted cartoon particle pop. Cushioned immediate attack, weight with playful elasticity, quickly damped. Designed cartoon SFX, not realistic earth foley. No grit, friction, scrape, metal, clink, ping, bell, chime, ringing tone, laser, whistle or sub rumble. Dry, no reverb, music or voice.",
+          "node": "TLYzX5FJAjlLiQvuX68l",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Rejected: strong narrow midrange tail; broader retry takes selected. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-hit-ground-cartoon-3.mp3",
+          "generationId": "oXqV8iRZUn1chFXk4qOj",
+          "prompt": "Single short stylized cartoon game ground hit: soft rounded springy domp, chunky warm midrange body and tiny muted cartoon particle pop. Cushioned immediate attack, weight with playful elasticity, quickly damped. Designed cartoon SFX, not realistic earth foley. No grit, friction, scrape, metal, clink, ping, bell, chime, ringing tone, laser, whistle or sub rumble. Dry, no reverb, music or voice.",
+          "node": "TLYzX5FJAjlLiQvuX68l",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Rejected: near-pure midrange resonant tail. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-hit-ground-cartoon-4.mp3",
+          "generationId": "2Hh1iHaF2e6fRIx5LurK",
+          "prompt": "Stylized cartoon ground hit, one soft short pummf, broad warm low-mid noise around 400-900 Hz with a muted pap and soft chunky particles. Cushioned transient, playful weight, 0.15 second decay. Designed game SFX, not realistic earth foley. No musical pitch, boing, squeak, dirt friction, gravel, scrape, gritty crunch, metal, clink, ping, chime, whistle, laser or sub rumble. Dry, no reverb, music or voice.",
+          "node": "Jmk7E0EXvg8m6BA0XdFW",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Rejected: bright noisy transient; broader retry takes selected. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-hit-ground-cartoon-5.mp3",
+          "generationId": "HxpQFXK6XLOhOnXAr9OC",
+          "prompt": "Stylized cartoon ground hit, one soft short pummf, broad warm low-mid noise around 400-900 Hz with a muted pap and soft chunky particles. Cushioned transient, playful weight, 0.15 second decay. Designed game SFX, not realistic earth foley. No musical pitch, boing, squeak, dirt friction, gravel, scrape, gritty crunch, metal, clink, ping, chime, whistle, laser or sub rumble. Dry, no reverb, music or voice.",
+          "node": "Jmk7E0EXvg8m6BA0XdFW",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Selected source for the shaped derivative in pick; original retained. Infrasonic and upper transient correction are recorded on the derivative. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-hit-ground-cartoon-6.mp3",
+          "generationId": "t6P1zqwO98Sp317XgfJh",
+          "prompt": "Stylized cartoon ground hit, one soft short pummf, broad warm low-mid noise around 400-900 Hz with a muted pap and soft chunky particles. Cushioned transient, playful weight, 0.15 second decay. Designed game SFX, not realistic earth foley. No musical pitch, boing, squeak, dirt friction, gravel, scrape, gritty crunch, metal, clink, ping, chime, whistle, laser or sub rumble. Dry, no reverb, music or voice.",
+          "node": "Jmk7E0EXvg8m6BA0XdFW",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 1.6665,
+          "note": "Selected source for the shaped derivative in pick; original retained. Infrasonic and upper transient correction are recorded on the derivative. Selection is based on measurements, not human listening."
+        },
+        {
+          "file": "sfx-hit-ground-cartoon-5-shaped.flac",
+          "generationId": "HxpQFXK6XLOhOnXAr9OC",
+          "prompt": "Stylized cartoon ground hit, one soft short pummf, broad warm low-mid noise around 400-900 Hz with a muted pap and soft chunky particles. Cushioned transient, playful weight, 0.15 second decay. Designed game SFX, not realistic earth foley. No musical pitch, boing, squeak, dirt friction, gravel, scrape, gritty crunch, metal, clink, ping, chime, whistle, laser or sub rumble. Dry, no reverb, music or voice.",
+          "node": "Jmk7E0EXvg8m6BA0XdFW",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 0,
+          "note": "Selected cartoon take; removes generated infrasonic energy and softens the upper mid/high transient before standard project mastering. Original MP3 retained. Metric-selected, not listened to. No generation charge for this derivative; source credits are recorded on derivedFrom.",
+          "derivedFrom": "sfx-hit-ground-cartoon-5.mp3",
+          "processing": {
+            "tool": "ffmpeg",
+            "filter": "highpass=f=120:p=2,lowpass=f=1600:p=2,afade=t=in:d=0.006",
+            "sampleRate": 44100,
+            "channels": 2,
+            "sampleFormat": "s16"
+          }
+        },
+        {
+          "file": "sfx-hit-ground-cartoon-6-shaped.flac",
+          "generationId": "t6P1zqwO98Sp317XgfJh",
+          "prompt": "Stylized cartoon ground hit, one soft short pummf, broad warm low-mid noise around 400-900 Hz with a muted pap and soft chunky particles. Cushioned transient, playful weight, 0.15 second decay. Designed game SFX, not realistic earth foley. No musical pitch, boing, squeak, dirt friction, gravel, scrape, gritty crunch, metal, clink, ping, chime, whistle, laser or sub rumble. Dry, no reverb, music or voice.",
+          "node": "Jmk7E0EXvg8m6BA0XdFW",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5
+          },
+          "credits": 0,
+          "note": "Selected cartoon take; removes generated infrasonic energy and softens the upper mid/high transient before standard project mastering. Original MP3 retained. Metric-selected, not listened to. No generation charge for this derivative; source credits are recorded on derivedFrom.",
+          "derivedFrom": "sfx-hit-ground-cartoon-6.mp3",
+          "processing": {
+            "tool": "ffmpeg",
+            "filter": "highpass=f=120:p=2,lowpass=f=1600:p=2,afade=t=in:d=0.006",
+            "sampleRate": 44100,
+            "channels": 2,
+            "sampleFormat": "s16"
+          }
+        }
+      ],
+      "pick": ["sfx-hit-ground-cartoon-5-shaped.flac", "sfx-hit-ground-cartoon-6-shaped.flac"],
+      "ship": "hit-ground",
+      "spend": {
+        "credits": 16.665,
+        "date": "2026-11-17"
+      },
+      "note": "User direction: stylized cartoon action-game SFX, rounded elastic weight and tiny exaggerated particles, never realistic stone/earth foley. Replaces the human-rejected Geodude release retained in rejected/geodude-realistic. Three candidates plus one three-candidate retry; all original sources retained. Casts are short recurring small-tier bed feedback; rock/ground hits merge within 120 ms, retain their material on crit, and replace the matching ordinary kill pop. Rock-throw cast stays at launch (windup=0), landing uses projectile feedback and damage/contact, including misses; elite-kill stays a lead. Source shaping removes infrasonic output and rolls off at 1.6 kHz, not just a gain reduction. No human listening or device acceptance is claimed."
+    },
     "hit-fighting": {
       "kind": "sfx",
       "tier": "small",

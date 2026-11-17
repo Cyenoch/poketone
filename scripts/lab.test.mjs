@@ -13,9 +13,13 @@ import {
   setBackpack,
   starterUnlocked,
 } from "../src/run/progress.ts";
+import { starterLock } from "../src/run/locks.ts";
+import { runUnlocks } from "../src/run/unlocks.ts";
+import { validPick } from "../src/lobbyPick.ts";
+import { starterOrder } from "../src/run/sim/content/lines/index.ts";
 import { encodeSave, decodeSave } from "../src/run/save.ts";
 import { webAppStorage } from "../src/platform/web/app-storage.ts";
-import { saveSettings } from "../src/settings.ts";
+import { loadSettings, saveSettings } from "../src/settings.ts";
 import { moveParams } from "../src/run/sim/attacks.ts";
 import { SIGNATURE_GATES } from "../src/run/sim/content/params/cards.ts";
 import { killEnemy } from "../src/run/sim/combat.ts";
@@ -272,8 +276,9 @@ test("the last guardian reward and remaining ground stardust are carried out exa
   assert.equal(w.zone.phase, "cleared");
   assert.equal(w.outcome, "playing");
   assert.equal(player.stardust, STARDUST.guardian);
-  // The landmark is the exit: leaving the last zone wins the run.
-  const exit = w.map.pads.find((pad) => pad.tag === "landmark");
+  // The fallen guardian opens the exit: leaving the last zone wins the run.
+  const exit = w.zone.exit;
+  assert.ok(exit);
   player.x = exit.x;
   player.z = exit.z;
   stepWorld(w, [{ t: "interact", player: 0 }]);
@@ -362,6 +367,51 @@ test("研究 speeds unlock progress: Pikachu joins after 2,500 / 1.5 kills at le
   assert.equal(once.kills, 1667);
   assert.equal(starterUnlocked(once, "pikachu"), true);
   assert.equal(starterUnlocked(recordRun(emptyProgress(), result(1667, 0)), "pikachu"), false);
+});
+
+const win = (starter, difficulty) => ({ ...result(0, 0), outcome: "victory", starter, difficulty });
+
+test("a research partner joins at its points: Geodude at 8,000, the lock line counting toward it", () => {
+  const short = { ...emptyProgress(), research: 7999 };
+  assert.equal(starterUnlocked(short, "geodude"), false);
+  assert.equal(starterLock(short, "geodude"), "累计击倒 7,999 / 8,000");
+  assert.equal(starterUnlocked({ ...short, research: 8000 }, "geodude"), true);
+  assert.equal(starterLock({ ...short, research: 8000 }, "geodude"), null);
+});
+
+test("a clear partner joins on its difficulty's first clear: Machop on 普通, Gastly on 困难", () => {
+  const lost = recordRun(emptyProgress(), result(500, 0));
+  assert.equal(starterLock(lost, "machop"), "通关普通");
+  const normal = recordRun(lost, win("charmander", 0));
+  assert.equal(starterUnlocked(normal, "machop"), true);
+  assert.equal(starterLock(normal, "gastly"), "通关困难");
+  assert.equal(runUnlocks(lost, normal), "解锁难度「困难」 · 腕力 加入");
+  assert.equal(starterUnlocked(recordRun(normal, win("bulbasaur", 1)), "gastly"), true);
+});
+
+test("distinct clears count partners, not runs, and a hard clear survives a later easier one", () => {
+  let progress = emptyProgress();
+  for (const id of ["charmander", "charmander", "bulbasaur", "squirtle"])
+    progress = recordRun(progress, win(id, 0));
+  assert.equal(starterLock(progress, "abra"), "不同伙伴通关 3 / 4");
+  progress = recordRun(progress, win("machop", 1));
+  progress = recordRun(progress, win("machop", 0));
+  assert.equal(progress.best.machop.difficulty, 1, "best keeps the hardest victory");
+  assert.equal(starterUnlocked(progress, "abra"), true);
+  assert.equal(starterLock(progress, "dratini"), "不同伙伴通关困难 1 / 3");
+  progress = recordRun(recordRun(progress, win("charmander", 2)), win("squirtle", 1));
+  assert.equal(starterUnlocked(progress, "dratini"), true, "a 噩梦 clear counts toward 困难");
+});
+
+test("importing a low-progress save locks its partners again and corrects the pick", () => {
+  let rich = { ...emptyProgress(), research: 9000 };
+  rich = recordRun(rich, win("charmander", 0));
+  for (const id of ["bulbasaur", "squirtle", "pikachu"]) rich = recordRun(rich, win(id, 1));
+  for (const id of starterOrder) assert.equal(starterUnlocked(rich, id), true, id);
+  const low = decodeSave(encodeSave({ progress: emptyProgress(), settings: loadSettings() }));
+  const locked = starterOrder.filter((id) => !starterUnlocked(low.progress, id));
+  assert.deepEqual(locked, ["pikachu", "gastly", "dratini", "machop", "abra", "geodude"]);
+  assert.equal(validPick(low.progress, { starter: "dratini" }).starter, "charmander");
 });
 
 test("the backpack saves up to its slots and the next run starts with its items at level 1", () => {

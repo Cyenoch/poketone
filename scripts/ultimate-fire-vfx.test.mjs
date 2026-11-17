@@ -119,13 +119,17 @@ test("instant player bursts expose the full damage disc before their residue", (
       "ball-storm",
       "lava-plume",
       "discharge",
+      "rock-throw",
+      "psystrike",
+      "tectonic-rage",
+      "earthquake",
     ]) {
       for (const radius of [1, 2]) {
         const area = {
           id: 99,
           owner: 0,
           move,
-          kind: move === "lava-plume" || move === "discharge" ? "nova" : "burst",
+          kind: ["lava-plume", "discharge", "earthquake"].includes(move) ? "nova" : "burst",
           type: "fire",
           x: 2,
           z: -3,

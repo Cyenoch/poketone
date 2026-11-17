@@ -1,0 +1,10 @@
+{
+  "form": "alakazam",
+  "bones": 13,
+  "vertices": 3541,
+  "triangles": 2239,
+  "runSeconds": 0.8,
+  "runCycles": 1,
+  "plantedSpeedPerHeight": 1.7,
+  "credits": 0
+}

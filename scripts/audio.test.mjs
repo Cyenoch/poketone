@@ -1,9 +1,50 @@
 import assert from "node:assert/strict";
+import { readFileSync, readdirSync } from "node:fs";
 import { test } from "node:test";
 import { soundStart, untilNextBeat } from "../src/audio/schedule.ts";
-import { createAudio } from "../src/audio/engine.ts";
+import { createAudio, SFX_NAMES } from "../src/audio/engine.ts";
 import { installResources } from "../src/platform/resources.ts";
 import { installRuntime } from "../src/platform/runtime.ts";
+
+test("every registered effect ships its selected masters and measured timing", () => {
+  const source = new URL("../assets/audio/elevenlabs/", import.meta.url);
+  const published = new URL("../public/audio/", import.meta.url);
+  const json = (url) => JSON.parse(readFileSync(url, "utf8"));
+  const manifest = json(new URL("manifest.json", source));
+  const timing = json(new URL("master/timing.json", source));
+  const bank = json(new URL("bank.json", published));
+  const byName = (a, b) => a.localeCompare(b);
+  assert.deepEqual(Object.keys(bank.sfx).sort(byName), [...SFX_NAMES].sort(byName));
+  const files = [];
+  for (const [id, asset] of Object.entries(manifest.assets)) {
+    if (asset.kind !== "sfx" || !asset.ship) continue;
+    const entry = bank.sfx[asset.ship];
+    assert.ok(asset.pick.length > 0, `${id}: nothing selected`);
+    assert.equal(entry.files.length, asset.pick.length, `${id}: published variant count`);
+    assert.equal(entry.hitMs.length, asset.pick.length, `${id}: timing count`);
+    for (const [i, raw] of asset.pick.entries()) {
+      const take = asset.takes.find((candidate) => candidate.file === raw);
+      assert.ok(take?.generationId, `${id}: missing generation provenance for ${raw}`);
+      assert.ok(readFileSync(new URL(`raw/${raw}`, source)).length > 0);
+      const master = `${id}${asset.pick.length > 1 ? `-${i + 1}` : ""}.flac`;
+      assert.deepEqual(
+        readFileSync(new URL(entry.files[i], published)),
+        readFileSync(new URL(`master/${master}`, source)),
+        `${id}: published audio differs from its master`,
+      );
+      assert.equal(entry.hitMs[i], timing[master].hitMs, `${id}: stale hit timing`);
+      assert.ok(entry.hitMs[i] >= 0 && entry.hitMs[i] < timing[master].lenMs);
+    }
+    files.push(...entry.files);
+  }
+  assert.deepEqual(
+    files.sort(byName),
+    readdirSync(new URL("sfx/", published))
+      .map((file) => `sfx/${file}`)
+      .sort(byName),
+    "published effects must all belong to the bank",
+  );
+});
 
 test("a sound whose hit is later than the effect's key frame skips its lead-in instead of landing late", () => {
   // A sound that hits 405 ms in, cued on a key frame only 90 ms away.

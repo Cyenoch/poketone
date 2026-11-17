@@ -5,6 +5,8 @@ import type { ElementType } from "../../run/sim/content/elements";
 import { typeNames } from "../../run/labels";
 import { typeColors } from "./run-theme";
 import { stack } from "./layer";
+import { SlantPlate } from "./slant-plate";
+import { HARD_SHADOW, RADIUS_INNER, slantOf, ui } from "./tokens";
 
 /**
  * ui/tag.css `.game-tag`: badge 11px in 16, chip 12px in 21. The ring is `box-shadow: inset`, so it
@@ -57,16 +59,16 @@ export function gameTag(
  *  a gem before its name. */
 export function rarityTag(name: string, color: string): Container {
   const tag = gameTag(name, {
-    face: "#ffffff",
-    ink: "#0d233f",
-    ring: { color: "#142f50", width: 1.5 },
+    face: ui.white,
+    ink: ui.ink,
+    ring: { color: ui.ink, width: 1.5 },
   });
   // ::before is content-box (the global border-box rule matches elements only): 7 + 2 × 1.5.
   const gem = new Container({
     width: 10,
     height: 10,
     borderWidth: 1.5,
-    borderColor: "#142f50",
+    borderColor: ui.ink,
     backgroundColor: color,
     transformRotateZ: 45,
     flexShrink: 0,
@@ -78,10 +80,10 @@ export function rarityTag(name: string, color: string): Container {
   return tag;
 }
 
-/** `Tag tone="type"`: soft face, 2px type ring, the type hue darkened toward navy (45%). */
+/** `Tag tone="type"`: soft face, 2px type ring, the type hue darkened toward ink (45%). */
 export function typeTag(type: ElementType): Container {
   const tone = typeColors[type];
-  const ink = `#${new Color("#0d233f").lerp(new Color(tone.type), 0.45).getHexString()}`;
+  const ink = `#${new Color(ui.ink).lerp(new Color(tone.type), 0.45).getHexString()}`;
   return gameTag(typeNames[type], {
     face: tone.soft,
     ink,
@@ -92,7 +94,7 @@ export function typeTag(type: ElementType): Container {
 
 /**
  * The lead tag (DESIGN.md): 28 tall, 15px text, 11 padding (short screens 24 / 13 / 9), a
- * 3px navy-deep hard base. `parts` run in one line (a muted prefix, then the value); `lead` is an
+ * 3px hard shadow. `parts` run in one line (a muted prefix, then the value); `lead` is an
  * icon before them. The ring is inset, as `gameTag`'s.
  */
 export function leadTag(
@@ -114,7 +116,7 @@ export function leadTag(
     borderWidth: ring,
     borderColor: tone.ring?.color,
   });
-  const base = new BoxShadow(8, [{ y: 3, blur: 0, color: "#0d233f", alpha: 1 }]);
+  const base = new BoxShadow(8, [{ y: 3, blur: 0, color: "#000000", alpha: HARD_SHADOW.alpha }]);
   tag.add(base.content);
   if (lead) tag.add(stack(lead, 1));
   for (const part of parts)
@@ -132,4 +134,50 @@ export function leadTag(
       ),
     );
   return { tag, dispose: () => base.dispose() };
+}
+
+/**
+ * A slanted chip (the type label: crest + name; a balance; a section label): −14° plate, radius 4,
+ * upright content, a 3px hard shadow. `lead` is an icon or image before the text.
+ */
+export function slantTag(
+  text: string,
+  tone: { face?: string; ink?: string; size?: number; upright?: boolean } = {},
+  lead?: Component,
+): { tag: Container; dispose(): void } {
+  const size = tone.size ?? 14;
+  const height = Math.round(size * 1.9);
+  const lean = tone.upright ? 0 : slantOf(height) / 2;
+  const tag = new Container({
+    height,
+    // Even padding: the text sits on the parallelogram's centre.
+    paddingLeft: 11 + lean,
+    paddingRight: 11 + lean,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flexShrink: 0,
+  });
+  const plate = new SlantPlate(
+    tag,
+    { fill: tone.face ?? ui.ink, upright: tone.upright },
+    RADIUS_INNER,
+  );
+  plate.set({ depth: 3 });
+  tag.add(plate.content);
+  if (lead) tag.add(stack(lead, 1));
+  tag.add(
+    stack(
+      new Text({
+        text,
+        fontSize: size,
+        fontWeight: 800,
+        color: tone.ink ?? ui.white,
+        whiteSpace: "pre",
+        wordBreak: "keep-all",
+      }),
+      1,
+    ),
+  );
+  return { tag, dispose: () => plate.dispose() };
 }

@@ -110,7 +110,15 @@ export interface FormModel {
   tail?: TailSpec;
   /** Body bones, front to back along one chain, that follow the avatar's path when turning (`view/spine.ts`). */
   spine?: readonly string[];
+  /** What moving leaves on soft ground (`environment/footprints.ts`). */
+  trail: Trail;
 }
+
+/**
+ * `prints`: a paw print per step. `drag`: one continuous groove along the named body bone's ground track, so it
+ * keeps the slither's wave. `none`: hovering or gliding forms touch nothing while they move.
+ */
+export type Trail = "prints" | "none" | { drag: string };
 
 /** The serpents' body chain, head end first. */
 const SERPENT_BODY = Array.from({ length: 9 }, (_, k) => `Body${k}`);
@@ -121,14 +129,89 @@ const SERPENT_BODY = Array.from({ length: 9 }, (_, k) => `Body${k}`);
  * centrelines read off rest-pose vertex plots (bind space is the GLB's own units, about 1 tall).
  */
 export const formModels: Record<FormId, FormModel> = {
+  // Hand-keyed planted runs; speed = authored stride / planted share / duration × form height.
+  abra: {
+    url: "/models/abra.glb",
+    runClipSpeed: 1.667,
+    runCycles: 1,
+    lift: { run: 0.003, idle: 0 },
+    trail: "prints",
+    tail: {
+      parent: "TailCarrier",
+      carriers: ["TailCarrier"],
+      points: [
+        [0.08, 0.27, 0],
+        [-0.08, 0.29, 0],
+        [-0.28, 0.4, 0],
+        [-0.4, 0.58, 0],
+        [-0.38, 0.77, 0],
+      ],
+      radius: 0.17,
+    },
+  },
+  kadabra: {
+    url: "/models/kadabra.glb",
+    runClipSpeed: 1.754,
+    runCycles: 1,
+    lift: { run: 0.003, idle: 0 },
+    trail: "prints",
+    tail: {
+      parent: "TailCarrier",
+      carriers: ["TailCarrier"],
+      points: [
+        [0, 0.3, 0],
+        [-0.12, 0.4, 0],
+        [-0.26, 0.43, 0],
+        [-0.25, 0.33, 0],
+        [-0.15, 0.25, 0],
+      ],
+      radius: 0.23,
+    },
+  },
+  alakazam: {
+    url: "/models/alakazam.glb",
+    runClipSpeed: 1.931,
+    runCycles: 1,
+    lift: { run: 0.003, idle: 0 },
+    trail: "prints",
+  },
+  // Geodude has no feet: one low hover cycle spans 2.6 heights of ground travel.
+  geodude: {
+    url: "/models/geodude.glb",
+    runClipSpeed: 2.6,
+    runCycles: 1,
+    lift: { run: 0, idle: 0 },
+    trail: "none",
+  },
+  graveler: {
+    url: "/models/graveler.glb",
+    runClipSpeed: 1.756,
+    runCycles: 1,
+    lift: { run: 0.01, idle: 0 },
+    trail: "prints",
+  },
+  golem: {
+    url: "/models/golem.glb",
+    runClipSpeed: 2.099,
+    runCycles: 1,
+    lift: { run: 0.003, idle: 0 },
+    trail: "prints",
+  },
   // Gastly and Haunter drift one bob wavelength (2.6 heights) per one-second cycle, so the float traces a fixed
   // wave over the ground; they hover, so the view never lowers them.
-  gastly: { url: "/models/gastly.glb", runClipSpeed: 2.6, runCycles: 1, lift: { run: 0, idle: 0 } },
+  gastly: {
+    url: "/models/gastly.glb",
+    runClipSpeed: 2.6,
+    runCycles: 1,
+    lift: { run: 0, idle: 0 },
+    trail: "none",
+  },
   haunter: {
     url: "/models/haunter.glb",
     runClipSpeed: 2.738,
     runCycles: 1,
     lift: { run: 0, idle: 0 },
+    trail: "none",
   },
   // Gengar hop-runs on planted feet (measured).
   gengar: {
@@ -136,6 +219,7 @@ export const formModels: Record<FormId, FormModel> = {
     runClipSpeed: 2.368,
     runCycles: 1,
     lift: { run: 0.033, idle: 0 },
+    trail: "prints",
   },
   // Serpents slither one body wavelength per one-second cycle; the wave stays fixed on the ground at that speed.
   dratini: {
@@ -144,6 +228,7 @@ export const formModels: Record<FormId, FormModel> = {
     runClipSpeed: 1.32,
     runCycles: 1,
     lift: { run: 0.001, idle: 0 },
+    trail: { drag: "Body6" },
   },
   dragonair: {
     url: "/models/dragonair.glb",
@@ -151,6 +236,7 @@ export const formModels: Record<FormId, FormModel> = {
     runClipSpeed: 1.734,
     runCycles: 1,
     lift: { run: 0, idle: 0 },
+    trail: { drag: "Body6" },
   },
   // Dragonite glides low when moving, one wing beat per 2.3 heights of travel; the hover must not be pulled down.
   dragonite: {
@@ -158,30 +244,35 @@ export const formModels: Record<FormId, FormModel> = {
     runClipSpeed: 2.417,
     runCycles: 1,
     lift: { run: 0, idle: 0 },
+    trail: "none",
   },
   machop: {
     url: "/models/machop.glb",
     runClipSpeed: 1.624,
     runCycles: 1,
     lift: { run: 0.007, idle: 0.005 },
+    trail: "prints",
   },
   machoke: {
     url: "/models/machoke.glb",
     runClipSpeed: 1.949,
     runCycles: 1,
     lift: { run: 0.002, idle: 0 },
+    trail: "prints",
   },
   machamp: {
     url: "/models/machamp.glb",
     runClipSpeed: 1.943,
     runCycles: 1,
     lift: { run: 0.002, idle: 0 },
+    trail: "prints",
   },
   charmander: {
     url: "/models/charmander.glb",
     runClipSpeed: 1.28,
     runCycles: 1,
     lift: { run: 0.02, idle: 0 },
+    trail: "prints",
     tail: {
       parent: "Pelvis",
       carriers: ["Pelvis"],
@@ -200,6 +291,7 @@ export const formModels: Record<FormId, FormModel> = {
     runClipSpeed: 1.464,
     runCycles: 2,
     lift: { run: 0.1352, idle: 0 },
+    trail: "prints",
     tail: {
       parent: "Pelvis",
       carriers: ["Pelvis"],
@@ -218,6 +310,7 @@ export const formModels: Record<FormId, FormModel> = {
     runClipSpeed: 1.488,
     runCycles: 2,
     lift: { run: 0.1856, idle: 0 },
+    trail: "prints",
     tail: {
       parent: "Pelvis",
       carriers: ["Pelvis"],
@@ -236,18 +329,21 @@ export const formModels: Record<FormId, FormModel> = {
     runClipSpeed: 1.248,
     runCycles: 1,
     lift: { run: 0.0064, idle: 0 },
+    trail: "prints",
   },
   ivysaur: {
     url: "/models/ivysaur.glb",
     runClipSpeed: 1.248,
     runCycles: 1,
     lift: { run: 0.0008, idle: 0 },
+    trail: "prints",
   },
   venusaur: {
     url: "/models/venusaur.glb",
     runClipSpeed: 1.8,
     runCycles: 1,
     lift: { run: 0.0008, idle: 0 },
+    trail: "prints",
   },
   // One tail, curling out on Squirtle's left (−Z); the asset pipeline cuts the mesh's duplicate on the right.
   squirtle: {
@@ -255,6 +351,7 @@ export const formModels: Record<FormId, FormModel> = {
     runClipSpeed: 1.28,
     runCycles: 1,
     lift: { run: 0.0088, idle: 0 },
+    trail: "prints",
     tail: {
       parent: "Pelvis",
       carriers: ["Waist", "Pelvis"],
@@ -274,6 +371,7 @@ export const formModels: Record<FormId, FormModel> = {
     runClipSpeed: 1.248,
     runCycles: 1,
     lift: { run: 0.004, idle: 0 },
+    trail: "prints",
   },
   // Blastoise's stub tail hides under the shell: no chain.
   blastoise: {
@@ -281,12 +379,14 @@ export const formModels: Record<FormId, FormModel> = {
     runClipSpeed: 1.736,
     runCycles: 2,
     lift: { run: 0.1696, idle: 0 },
+    trail: "prints",
   },
   pikachu: {
     url: "/models/pikachu.glb",
     runClipSpeed: 1.264,
     runCycles: 1,
     lift: { run: 0.0128, idle: 0 },
+    trail: "prints",
     // The flat blade rises up and to the left behind the body (`run-bipeds.py` moves it off the head bone).
     tail: {
       parent: "Pelvis",
@@ -306,6 +406,7 @@ export const formModels: Record<FormId, FormModel> = {
     runClipSpeed: 1.488,
     runCycles: 1,
     lift: { run: 0, idle: 0 },
+    trail: "prints",
     // The hand-built tail (`add_tail` in the asset pipeline): down behind the body, round the right foot on the
     // ground, then the bolt standing on its end.
     tail: {
@@ -763,12 +864,23 @@ export function runSharedNeeds(stage: StageId): Need[] {
  * Entries the lobby also holds are already in memory and on the GPU; releasing the run's handles
  * keeps them for the next run.
  */
-export async function loadRunAssets(world: World, signal: AbortSignal): Promise<RunAssets> {
+/** `progress` hears each file settle, as (settled, held so far): every file is held up front. */
+export async function loadRunAssets(
+  world: World,
+  signal: AbortSignal,
+  progress?: (settled: number, total: number) => void,
+): Promise<RunAssets> {
   const theme = stageThemes[world.stage];
   const handles: Handle<unknown>[] = [];
   const instances: ModelInstance[] = [];
+  let settled = 0;
   const hold = <T>(handle: Handle<T>) => {
     handles.push(handle);
+    if (progress)
+      void handle.result.then(
+        () => progress(++settled, handles.length),
+        () => {},
+      );
     return handle.result;
   };
   const release = () => {

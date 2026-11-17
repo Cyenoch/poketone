@@ -1,0 +1,8 @@
+{
+  "assets": ["gastly"],
+  "createdAt": "2026-11-17",
+  "source": "public/art/portraits/<form>.webp (new-lines.provenance.json)",
+  "processing": "Alpha-only mask for the locked-partner silhouette: the portrait's opaque purple haze keyed out by colour (sRGB luminance > 0.36 with b-g and r-g above about 0, smoothstep), the largest solid region kept, its interior holes filled, trimmed to alpha bounds, fit 220 px (the body's size in the portrait), centred on 320x320, lossless WebP",
+  "purpose": "The silhouette shader keeps a portrait's alpha; Gastly's haze is opaque, so its plain silhouette was a shapeless blob.",
+  "rights": "Derived from the project's own portrait; same terms as its source"
+}

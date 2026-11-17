@@ -18,6 +18,8 @@ export const fusionRecipes: readonly FusionRecipe[] = [
   { result: "nightmare-vortex", match: { pair: ["smog", "hex"] } },
   { result: "dragon-tempest", match: { pair: ["twister", "dragon-pulse"] } },
   { result: "hundred-fists", match: { pair: ["karate-chop", "brick-break"] } },
+  { result: "psystrike", match: { pair: ["psybeam", "psychic"] } },
+  { result: "tectonic-rage", match: { pair: ["magnitude", "rock-slide"] } },
 ];
 for (const { result } of fusionRecipes)
   if (!moves[result].fusion)

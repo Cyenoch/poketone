@@ -1,12 +1,23 @@
 import type { RunConfig } from "../run/sim/world";
 import type { Command } from "../run/sim/state/commands";
+import { difficulties } from "../run/sim/content/difficulties";
+import { starters, type StarterId } from "../run/sim/content/lines/index";
+import type { StageId } from "../run/sim/content/stages/index";
+import { playableStages } from "../lobbyPick";
+import type { TrainerId } from "../trainers";
 
-export const PROTOCOL_VERSION = 10;
+export const PROTOCOL_VERSION = 12;
 export type RoomErrorCode = "no-room" | "full" | "started" | "version";
-export type PlayerSetup = RunConfig["players"][number];
+export type PlayerSetup = RunConfig["players"][number] & { trainer: TrainerId };
+/** The host's choice of route and difficulty; changed only before the room starts. */
+export type Mission = Pick<RunConfig, "stage" | "difficulty">;
+export type MultiplayerConfig = Omit<RunConfig, "seed" | "players"> & {
+  players: readonly PlayerSetup[];
+};
 export interface Room {
   code: string;
   players: PlayerSetup[];
+  mission: Mission;
   started: boolean;
   ready: number[];
   /** Seats whose Harbor connection is currently open. */
@@ -15,14 +26,26 @@ export interface Room {
   departed: number[];
 }
 export type ClientMessage =
-  | { t: "enter"; version: number; build: string; code: string; player: PlayerSetup }
+  | {
+      t: "enter";
+      version: number;
+      build: string;
+      code: string;
+      player: PlayerSetup;
+      /** Creating only: the room's first mission. */
+      mission?: Mission;
+    }
   | { t: "resume"; version: number; build: string; code: string; token: string }
   | { t: "leave-room" }
   | { t: "quit" }
   | { t: "terminal"; data: string }
   | { t: "terminal-ack" }
   | { t: "ping" }
-  | { t: "start"; stage: RunConfig["stage"]; difficulty: RunConfig["difficulty"] }
+  | { t: "start" }
+  /** Before the start: the sender's own partner and trainer. */
+  | { t: "setup"; starter: PlayerSetup["starter"]; trainer: TrainerId }
+  /** Before the start, host only. */
+  | ({ t: "mission" } & Mission)
   | { t: "transport-ready"; peer: number }
   | { t: "signal"; to: number; signal: unknown }
   | { t: "relay"; to: number; data: string };
@@ -38,7 +61,7 @@ export type ServerMessage =
     }
   | { t: "pong" }
   | { t: "terminal"; data: string }
-  | { t: "start"; config: Omit<RunConfig, "seed"> }
+  | { t: "start"; config: MultiplayerConfig }
   | { t: "signal"; from: number; signal: unknown }
   | { t: "relay"; from: number; data: string }
   | { t: "error"; message: string; code?: RoomErrorCode }
@@ -46,6 +69,19 @@ export type ServerMessage =
 
 export function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function knownStarter(value: unknown): value is StarterId {
+  return typeof value === "string" && Object.hasOwn(starters, value);
+}
+
+export function knownMission(value: unknown): value is Mission {
+  return (
+    record(value) &&
+    playableStages.includes(value.stage as StageId) &&
+    Number.isInteger(value.difficulty) &&
+    Object.hasOwn(difficulties, Number(value.difficulty))
+  );
 }
 
 /** Peers send intent; player ownership is assigned by the connection, never by its payload. */

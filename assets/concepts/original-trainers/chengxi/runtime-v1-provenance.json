@@ -1,0 +1,30 @@
+{
+  "source": "assets/concepts/original-trainers/chengxi/cutin-source.png",
+  "sourceSha256": "c9fb1a30e8361509f72d91cf726aa024d2500639d9e703ce24feb647b4d97d44",
+  "generation": "assets/concepts/original-trainers/chengxi/cutin-generation.json",
+  "process": "prepare.py: preserve source alpha, remove alpha < 8 speckles, fixed head crop, Lanczos resize, transparent padding, lossless WebP",
+  "outputs": [
+    {
+      "file": "cutin.webp",
+      "crop": [40, 10, 1233, 1245],
+      "size": [768, 768],
+      "sha256": "ee22a4f3058f2a98dd596e3b8d25fd444fd72a49d8fb82486579d393c7a0b760"
+    },
+    {
+      "file": "portrait.webp",
+      "crop": [326, 0, 915, 689],
+      "size": [256, 256],
+      "sha256": "4c88aa58810e77850762ba92f7341b344f2e519e74deb1227c0f2fa0c045f9f1"
+    },
+    {
+      "file": "lobby.webp",
+      "source": "assets/concepts/original-trainers/chengxi/lobby-source.png",
+      "sourceSha256": "1ee6af70086f45406e7bc91b52a692b4d16179ec5c764989e4cde0f91054f13c",
+      "generation": "assets/concepts/original-trainers/chengxi/lobby-generation.json",
+      "process": "alpha < 8 -> 0, alpha >= 248 -> 255, alpha bbox crop, Lanczos resize to long side <= 1400, clear RGB under alpha 0, lossless WebP",
+      "crop": [148, 15, 942, 1510],
+      "size": [744, 1400],
+      "sha256": "189323d769517dd8612969809cc974725598c699331baa92bb016806169634bd"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "form": "golem",
+  "bones": 11,
+  "vertices": 3627,
+  "triangles": 2190,
+  "runSeconds": 0.8,
+  "runCycles": 1,
+  "plantedSpeedPerHeight": 1.534090909090909,
+  "credits": 0
+}

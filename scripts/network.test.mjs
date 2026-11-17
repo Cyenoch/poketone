@@ -10,7 +10,7 @@ import { enterZone, prepareZone } from "../src/run/sim/zones.ts";
 import { applyEntityDelta, entityDelta, entityState } from "../src/network/delta.ts";
 
 globalThis.__GAME_BUILD__ = "network-test";
-const player = { starter: "charmander" };
+const player = { starter: "charmander", trainer: "chengxi" };
 const connection = (rejoin) => ({
   directPeer() {
     throw new Error("Direct transport disabled for Harbor relay tests.");
@@ -22,7 +22,7 @@ const config = {
   stage: "forest",
   seed: 7,
   difficulty: 0,
-  players: [player, { starter: "squirtle" }],
+  players: [player, { starter: "squirtle", trainer: "yewei" }],
 };
 const until = async (condition) => {
   const end = Date.now() + 8000;
@@ -56,8 +56,8 @@ test("Harbor 房间 → 房主出发 → 地图、操作与分区同步；客机
   guest.onStart = (settings) => {
     b = new MultiplayerRun(guest, settings);
   };
-  host.start("forest", 0);
-  host.start("forest", 0);
+  host.start();
+  host.start();
   await until(() => a && b);
   const world = createWorld(config);
   world.players[1].faceX = -0;
@@ -200,7 +200,7 @@ test("意外断线只影响断线席位：房主继续，客机重连后续上�
   guest.onStart = (settings) => {
     b = new MultiplayerRun(guest, settings);
   };
-  host.start("forest", 0);
+  host.start();
   await until(() => a && b);
   const world = createWorld(config);
   a.publishMap(world);
@@ -250,7 +250,7 @@ test("队友重开客户端用原凭据重返，旧载入确认不能解除新�
   guest.onStart = (settings) => {
     b = new MultiplayerRun(guest, settings);
   };
-  host.start("forest", 0);
+  host.start();
   await until(() => a && b);
   const world = createWorld(config);
   a.publishMap(world);
@@ -272,6 +272,7 @@ test("队友重开客户端用原凭据重返，旧载入确认不能解除新�
   const restored = await c.initial();
   assert.equal(c.player, 1);
   assert.equal(c.config.players[1].starter, "squirtle");
+  assert.equal(c.config.players[1].trainer, "yewei", "原席位重返保留训练师");
   c.loading(restored);
   // Host changes map while this renderer is warming the preceding snapshot.
   world.zone.phase = "transitioning";
@@ -303,7 +304,7 @@ test("结算交付期间断线仍能恢复同一终局，不依赖地图准备�
   guest.onStart = (settings) => {
     b = new MultiplayerRun(guest, settings);
   };
-  host.start("forest", 0);
+  host.start();
   await until(() => a && b);
   const world = createWorld(config);
   a.publishMap(world);
@@ -330,7 +331,7 @@ test("离线时离开，重连后仍交付离开，房主继续", async (t) => {
   guest.onStart = (settings) => {
     b = new MultiplayerRun(guest, settings);
   };
-  host.start("forest", 0);
+  host.start();
   await until(() => a && b);
   guest.socket.close();
   b.dispose();
@@ -366,7 +367,7 @@ test("重返时服务暂时不可达不清除凭据，恢复服务后自动重�
   guest.onTicket = (value) => {
     ticket = value;
   };
-  host.start("forest", 0);
+  host.start();
   await until(() => ticket);
   guest.close(false);
   // Reserve a server's ephemeral port then stop it to produce a real connection refusal.
@@ -1206,7 +1207,7 @@ test("客机救援/倒地恢复保留按住方向，主动选卡不暂停队友"
   guest.onStart = (settings) => {
     b = new MultiplayerRun(guest, settings);
   };
-  host.start("forest", 0);
+  host.start();
   await until(() => a && b);
   const world = createWorld(config);
   const initial = b.initial();
@@ -1296,7 +1297,7 @@ async function startParty(sessions) {
       runs[id] = new MultiplayerRun(session, settings);
     };
   });
-  sessions[0].start("forest", 0);
+  sessions[0].start();
   await until(() => runs.filter(Boolean).length === sessions.length);
   const world = createWorld({ ...runs[0].config, seed: 7 });
   runs[0].publishMap(world);
@@ -2119,4 +2120,186 @@ test("客机冰迹上持续滑行，显示帧预览不改写已模拟位置", as
   owner.present(world);
   assert(world.players[1].x > x, "fractional display frames advance through the same ice context");
   assert.equal(owner.player.x, x, "presentation does not consume simulation movement");
+});
+
+test("Harbor 拒绝非法训练师身份，房间不产生该席位", async (t) => {
+  const server = startHarbor({ port: 0, hostname: "127.0.0.1" });
+  const url = `ws://127.0.0.1:${server.port}/multiplayer`;
+  const host = new MultiplayerSession(url, "", player, connection());
+  const forged = [];
+  t.after(() => {
+    host.close(false);
+    forged.forEach((session) => session.close(false));
+    server.stop(true);
+  });
+  await until(() => host.state.room);
+  for (const trainer of ["nobody", undefined, "__proto__"]) {
+    const session = new MultiplayerSession(
+      url,
+      host.state.room.code,
+      { starter: "squirtle", trainer },
+      connection(),
+    );
+    forged.push(session);
+    await until(() => session.state.error);
+    assert.match(session.state.error, /训练师选择无效/);
+  }
+  assert.equal(host.state.room.players.length, 1);
+});
+
+test("四人选同一训练师时按原席位区分，开局配置保留各自身份", async (t) => {
+  const { sessions } = await party(t, 4);
+  assert(sessions[0].state.room.players.every((one) => one.trainer === "chengxi"));
+  const { runs } = await startParty(sessions);
+  assert.deepEqual(
+    runs.map((run) => run.player),
+    [0, 1, 2, 3],
+  );
+  for (const run of runs)
+    assert.deepEqual(
+      run.config.players.map((one) => one.trainer),
+      ["chengxi", "chengxi", "chengxi", "chengxi"],
+    );
+});
+
+test("Harbor 接受夏晴身份并将其传入双方开局配置", async (t) => {
+  const { host, guest } = await pair(t);
+  guest.setup("squirtle", "xiaqing");
+  await until(() => host.state.room.players[1].trainer === "xiaqing");
+  const { runs } = await startParty([host, guest]);
+  for (const run of runs) assert.equal(run.config.players[1].trainer, "xiaqing");
+});
+
+test("房主仍在开局演出时，已载入的客机不会开跑", async (t) => {
+  const { host, guest } = await pair(t);
+  let a, b;
+  host.onStart = (settings) => {
+    a = new MultiplayerRun(host, settings);
+  };
+  guest.onStart = (settings) => {
+    b = new MultiplayerRun(guest, settings);
+  };
+  host.start();
+  await until(() => a && b);
+  const world = createWorld(config);
+  // createRun's order: the host marks its world loading, publishes it, then plays its opening.
+  a.loading(world);
+  a.publishMap(world);
+  const remote = await b.initial();
+  b.loading(remote);
+  await b.ready();
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  assert.equal(a.suspended, true, "房主未就绪不推进");
+  assert.equal(b.suspended, true, "客机等待房主");
+  assert.deepEqual(a.submit([{ t: "dash", player: 0 }]), []);
+  await a.ready();
+  await until(() => !a.suspended && !b.suspended);
+});
+
+test("房间内修改伙伴、训练师与任务广播给全员，开局与重返都用最后的选择", async (t) => {
+  const { host, guest, url } = await pair(t);
+  assert.deepEqual(host.state.room.mission, { stage: "forest", difficulty: 0 });
+  guest.setup("pikachu", "shuoye");
+  host.mission({ stage: "forest", difficulty: 1 });
+  for (const session of [host, guest])
+    await until(
+      () =>
+        session.state.room.players[1].starter === "pikachu" &&
+        session.state.room.mission.difficulty === 1,
+    );
+  assert.equal(host.state.room.players[1].trainer, "shuoye");
+  assert.equal(host.state.room.players[0].starter, "charmander", "只改发送者自己的席位");
+  assert.equal(host.state.canStart, true, "修改选择不重置传输就绪");
+  let ticket;
+  guest.onTicket = (value) => {
+    ticket = value;
+  };
+  const configs = [];
+  host.onStart = (settings) => configs.push(settings);
+  guest.onStart = (settings) => configs.push(settings);
+  host.start();
+  await until(() => configs.length === 2 && ticket);
+  for (const settings of configs) {
+    assert.equal(settings.difficulty, 1);
+    assert.deepEqual(
+      settings.players.map(({ starter, trainer }) => [starter, trainer]),
+      [
+        ["charmander", "chengxi"],
+        ["pikachu", "shuoye"],
+      ],
+    );
+  }
+  guest.close(false);
+  await until(() => !host.state.room.online.includes(1));
+  const replacement = new MultiplayerSession(url, ticket.code, player, connection(ticket));
+  t.after(() => replacement.close(false));
+  let resumed;
+  replacement.onStart = (settings) => {
+    resumed = settings;
+  };
+  await until(() => resumed);
+  assert.equal(resumed.players[1].starter, "pikachu", "重返保留房间内修改后的伙伴");
+  assert.equal(resumed.players[1].trainer, "shuoye");
+  assert.equal(resumed.difficulty, 1);
+});
+
+test("Harbor 拒绝未知伙伴/训练师与客机改任务，房间不变", async (t) => {
+  for (const forged of [
+    { t: "setup", starter: "mewtwo", trainer: "chengxi", error: /伙伴选择无效/ },
+    { t: "setup", starter: "__proto__", trainer: "chengxi", error: /伙伴选择无效/ },
+    { t: "setup", starter: "squirtle", trainer: "nobody", error: /训练师选择无效/ },
+    { t: "mission", stage: "forest", difficulty: 2, error: /只有房主/ },
+  ]) {
+    const { host, guest } = await pair(t);
+    const seen = [];
+    host.onChange = () => seen.push(structuredClone(host.state.room));
+    const { error, ...message } = forged;
+    guest.signal(message);
+    await until(() => guest.state.error);
+    assert.match(guest.state.error, error);
+    // Until the failed guest's seat is removed, every room Harbor sent kept the original choices.
+    await until(() => host.state.room.players.length === 1);
+    for (const room of seen) {
+      assert.deepEqual(room.mission, { stage: "forest", difficulty: 0 });
+      assert.deepEqual(
+        room.players.map(({ starter, trainer }) => [starter, trainer]),
+        [
+          ["charmander", "chengxi"],
+          ["squirtle", "yewei"],
+        ].slice(0, room.players.length),
+      );
+    }
+  }
+  for (const mission of [
+    { stage: "volcano", difficulty: 0 },
+    { stage: "forest", difficulty: 9 },
+  ]) {
+    const { host } = await pair(t);
+    host.signal({ t: "mission", ...mission });
+    await until(() => host.state.error);
+    assert.match(host.state.error, /冒险设置无效/);
+  }
+});
+
+test("出发后才到达的修改不改变开局配置，也不使发送者失败", async (t) => {
+  const { host, guest } = await pair(t);
+  const configs = [];
+  host.onStart = (settings) => configs.push(settings);
+  guest.onStart = (settings) => configs.push(settings);
+  host.start();
+  await until(() => configs.length === 2);
+  // The client no longer sends once playing; a change already in flight reaches Harbor like this.
+  guest.signal({ t: "setup", starter: "pikachu", trainer: "shuoye" });
+  host.signal({ t: "mission", stage: "forest", difficulty: 2 });
+  host.signal({ t: "ping" });
+  guest.signal({ t: "ping" });
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  assert.equal(guest.state.error, "");
+  assert.equal(host.state.error, "");
+  assert.equal(host.state.room.players[1].starter, "squirtle");
+  assert.equal(host.state.room.mission.difficulty, 0);
+  for (const settings of configs) {
+    assert.equal(settings.players[1].starter, "squirtle");
+    assert.equal(settings.difficulty, 0);
+  }
 });

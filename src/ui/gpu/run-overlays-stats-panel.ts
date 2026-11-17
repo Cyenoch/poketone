@@ -25,6 +25,8 @@ import { stack } from "./layer";
 import { breakLines } from "./line-break";
 import type { UiStage } from "./stage";
 import { gameTag, typeTag } from "./tag";
+import { segmentTray, SegmentFace } from "./segment-face";
+import { ui } from "./tokens";
 import {
   GpuBattlePage,
   INK,
@@ -58,11 +60,10 @@ export interface StatsPanelState {
 const PAGES = ["战况", "属性"] as const;
 
 interface Tab {
-  panel: Container;
-  label: Text;
-  ring: OutlineRing;
+  face: SegmentFace;
   focused: boolean;
   over: boolean;
+  pressed: boolean;
 }
 
 /** `--kind-*` (stats-panel.css); evolution takes the form's type colour. */
@@ -119,6 +120,7 @@ export class GpuStatsContent {
   });
   private readonly battle: GpuBattlePage;
   private readonly tabs: Tab[] = [];
+  private readonly tray: { dispose(): void };
   private page = 0;
   private readonly onPage: () => void;
   /** Details, laid over the frame (absolute in it), never clipped by the scrolling groups. */
@@ -183,9 +185,10 @@ export class GpuStatsContent {
       gameTag(abilities[starters[state.starter].ability].name, lightTone),
     );
     this.header.add(stack(this.title, 1), chips);
-    const strip = stack(new Container({ flexDirection: "row", gap: 4, flexShrink: 0 }), 1);
-    for (const [index, name] of PAGES.entries()) strip.add(this.tab(index, name));
-    this.header.add(strip);
+    const strip = segmentTray();
+    this.tray = strip;
+    for (const [index, name] of PAGES.entries()) strip.tray.add(this.tab(index, name));
+    this.header.add(stack(strip.tray, 1));
     this.battle = new GpuBattlePage(state.build, stage, () => this.page === 0);
     this.controls.push(...this.battle.controls);
 
@@ -220,52 +223,41 @@ export class GpuStatsContent {
     this.showPage(0);
   }
 
-  /** A page tab: white on the header, yellow with the navy edge when it is the page shown. */
+  /** A page tab: a segment on the ink tray, the page shown picked out in white. */
   private tab(index: number, name: string): Container {
-    // As tall as the close key: a full touch target (`resize`).
-    const panel = new Container({
-      height: 44,
-      paddingX: 14,
-      alignItems: "center",
-      justifyContent: "center",
-      borderRadius: 8,
-      borderWidth: 2,
-      flexShrink: 0,
-    });
-    const label = this.text(name, "name", NAVY_DEEP);
-    label.setProperties({ fontWeight: 800 });
-    const ring = new OutlineRing(8, NAVY_DEEP, 2, 2);
-    ring.content.setProperties({ display: "none" });
-    panel.add(stack(label, 1), stack(ring.content, 2));
-    const tab: Tab = { panel, label, ring, focused: false, over: false };
+    const tab: Tab = {
+      face: new SegmentFace(this.stage, name),
+      focused: false,
+      over: false,
+      pressed: false,
+    };
     this.tabs.push(tab);
+    const set = (change: Partial<Tab>) => {
+      Object.assign(tab, change);
+      this.paintTabs();
+    };
     this.controls.push({
-      panel,
+      panel: tab.face.panel,
       enabled: () => true,
       action: () => this.select(index),
-      setFocused: (focused) => {
-        tab.focused = focused;
-        this.paintTabs();
-      },
-      setPointerOver: (over) => {
-        tab.over = over;
-        this.paintTabs();
-      },
+      selfDrawn: true,
+      setFocused: (focused) => set({ focused }),
+      setPointerOver: (over) => set({ over }),
+      setPressed: (pressed) => set({ pressed }),
     });
-    return panel;
+    return tab.face.panel;
   }
 
   private paintTabs(): void {
-    for (const [index, tab] of this.tabs.entries()) {
-      const shown = index === this.page;
-      tab.panel.setProperties({
-        backgroundColor: shown ? YELLOW : tab.over ? "#d8effb" : "#ffffff",
-        borderColor: shown ? NAVY_DEEP : withOpacity(NAVY_DEEP, 0.25),
+    for (const [index, tab] of this.tabs.entries())
+      tab.face.paint({
+        checked: index === this.page,
+        locked: false,
+        hovered: tab.over,
+        focused: tab.focused,
+        focusVisible: this.focusVisible,
+        pressed: tab.pressed,
       });
-      tab.ring.content.setProperties({
-        display: tab.focused && this.focusVisible ? "flex" : "none",
-      });
-    }
     this.stage.invalidate();
   }
 
@@ -290,7 +282,7 @@ export class GpuStatsContent {
 
   /** The page tabs sit in the header, outside the scroll body, yet take taps. */
   isTab(control: RunOverlayControl): boolean {
-    return this.tabs.some((tab) => tab.panel === control.panel);
+    return this.tabs.some((tab) => tab.face.panel === control.panel);
   }
   /** The tab control of the page shown, for the host to move focus to after a turn. */
   get pageTab(): RunOverlayControl {
@@ -417,6 +409,7 @@ export class GpuStatsContent {
       enabled: () => this.page === 1,
       // Tap or Enter only focuses the row; focus opens its detail.
       action: () => {},
+      selfDrawn: true,
       tip: base ? term : undefined,
       setFocused: (focused) => {
         row.focused = focused;
@@ -442,13 +435,13 @@ export class GpuStatsContent {
         paddingX: 12,
         borderWidth: 2,
         borderColor: NAVY_DEEP,
-        borderRadius: 8,
-        backgroundColor: "#ffffff",
+        borderRadius: 6,
+        backgroundColor: ui.white,
         visibility: "hidden",
       }),
       50,
     );
-    const shadow = new BoxShadow(8, [{ y: 12, blur: 32, color: NAVY_DEEP, alpha: 0.25 }]);
+    const shadow = new BoxShadow(6, [{ y: 4, blur: 0, color: "#000000", alpha: 0.22 }]);
     this.shadows.push(shadow);
     detail.add(shadow.content);
     const wrapped: Row["wrapped"] = [];
@@ -494,8 +487,8 @@ export class GpuStatsContent {
       if (source.when) {
         const condition = gameTag(conditionTags[source.when], {
           size: "badge",
-          face: off ? "#d0dfeb" : INK,
-          ink: off ? INK : "#d8effb",
+          face: off ? ui.mist : INK,
+          ink: off ? INK : ui.white,
         });
         parts.push(condition);
       }
@@ -576,7 +569,7 @@ export class GpuStatsContent {
     const sizes = panelTextSizes(compact);
     for (const { node, role } of this.texts) node.setProperties({ fontSize: sizes[role] });
     this.battle.resize(compact);
-    for (const tab of this.tabs) tab.panel.setProperties({ height: this.stage.viewport.minTarget });
+    for (const tab of this.tabs) tab.face.fitTouch();
     this.header.setProperties({ minHeight: compact ? 48 : 56 });
     // Rows are touch targets: the viewport's minimum at every scale (44 host px).
     for (const row of this.rows)
@@ -591,7 +584,7 @@ export class GpuStatsContent {
         paddingLeft: compact ? 2 : 8,
         paddingRight: compact ? 2 : 0,
         paddingY: compact ? 8 : 0,
-        backgroundColor: compact ? "#d8effb" : undefined,
+        backgroundColor: compact ? ui.mist : undefined,
       });
       label.setProperties({
         text: compact ? name.split("").join("\n") : name,
@@ -663,7 +656,8 @@ export class GpuStatsContent {
       this.stage.motion.cancel(row.lit);
       row.ring.dispose();
     }
-    for (const tab of this.tabs) tab.ring.dispose();
+    for (const tab of this.tabs) tab.face.dispose();
+    this.tray.dispose();
     for (const shadow of this.shadows) shadow.dispose();
     this.surface.dispose();
     this.battle.dispose();
@@ -688,7 +682,7 @@ function portraitImage(form: FormId) {
   );
 }
 
-const lightTone = { face: "#ffffff", ink: NAVY_DEEP, ring: { color: INK, width: 1.5 } };
+const lightTone = { face: ui.white, ink: NAVY_DEEP, ring: { color: INK, width: 1.5 } };
 
 /**
  * `.stats-panel__header` background: the type-soft face, the card art 340px wide hanging 40px past

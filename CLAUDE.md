@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-poketone is a free, non-commercial, low-poly 3D Pokémon survivor-like (React 19 + TypeScript 7 + Three.js, Bun bundler + StyleX). There is no trainer: the player controls the Pokémon directly. `README.md` (Chinese) is the player/contributor overview (gameplay, controls, setup); `docs/DEVELOPMENT.md` covers the toolchain, dependency policy and the model/audio asset pipelines. Read both before larger changes. **Never add a shop, IAP, ads or any monetisation** (`PRODUCT.md`).
+poketone is a free, non-commercial, low-poly 3D Pokémon survivor-like (React 19 + TypeScript 7 + Three.js, Bun bundler + StyleX). The player controls the Pokémon directly; a chosen original trainer only provides lobby art, the opening release and in-run cut-ins (no stats). `README.md` (Chinese) is the player/contributor overview (gameplay, controls, setup); `docs/DEVELOPMENT.md` covers the toolchain, dependency policy and the model/audio asset pipelines. Read both before larger changes. **Never add a shop, IAP, ads or any monetisation** (`PRODUCT.md`).
 
 ## Documentation and OpenSpec
 
@@ -69,7 +69,7 @@ GitHub Actions runs the validation and deployment workflow in `.github/workflows
 ## Conventions
 
 - **Behaviour-preserving refactors must keep `bun run golden` unchanged.** Use active OpenSpec changes for tasks and `docs/ROADMAP.md` only for uncommitted product directions.
-- Active development: change structures directly. Don't add save migrations, compat shims or legacy fields. Settings are sound, developer mode and UI scale only; no gamepad rumble feedback/settings or reduced-motion listener, control or branch. Native default-path lookup rejects legacy `save.txt` without modifying it.
+- The game is live (2026-11-17): progress and save-export formats upgrade step by step from every released version (v4 onwards) with tests, keeping the old record until the upgraded one is saved (`progress-save` spec). Everything else changes structures directly: no compat shims or legacy fields, and world snapshots stay version-locked. Settings are sound, developer mode and UI scale only; no gamepad rumble feedback/settings or reduced-motion listener, control or branch. Native default-path lookup rejects legacy `save.txt` without modifying it.
 - Balance changes start from the analytical model (`bun run balance:model`). The bot is only for calibration.
 - UI work: read `PRODUCT.md`, `DESIGN.md` (tokens in its frontmatter) and the matching `.impeccable/surfaces/` brief first. In-run HUD/dialogs take the current Pokémon type's look through shared tokens in the GPU presentation layer; do not restore the deleted `ui/type-colors.css`. `.impeccable/` is excluded from oxfmt on purpose. Project skills live in `.agents/skills/` (for example `impeccable`, `game-ui-ux`, `game-feel`, and the project's own `skill-vfx` for move effects and telegraphs, and `skill-audio` for sound effects and music).
 - Mobile is landscape-only. WebGL 2 is required, with no silent fallback.

@@ -130,6 +130,7 @@ if (!fixture) {
         scene: new Scene(),
         camera: new PerspectiveCamera(),
         warmSet: noop,
+        setDeployment: noop,
         dispose: noop,
         releaseUploads: noop,
         frame: (_alpha, _dt, events) => {
@@ -178,13 +179,23 @@ if (!fixture) {
       ? ["hurt-feedback"]
       : fixture === "--notice-fixture"
         ? ["notice-feedback", "notice-age-feedback"]
-        : ["success", "refused", "dispose-preparing", "dispose-in-ready", "dispose-active"]) {
+        : [
+            "success",
+            "refused",
+            "dispose-preparing",
+            "dispose-in-ready",
+            "dispose-opening",
+            "dispose-active",
+            "rejoin",
+            "zone-destination",
+          ]) {
     assetGate = scenario === "dispose-preparing" ? Promise.withResolvers() : null;
     const events = [],
       errors = [];
     let client,
       controller,
       prepared = false;
+    const zoneLoads = [];
     const renderer = {
       compileAsync: async () => {},
       setClearColor: noop,
@@ -211,6 +222,12 @@ if (!fixture) {
       },
     };
     const hud = {
+      trainers: {
+        ready: Promise.resolve(),
+        prepare: async () => {},
+        show: (cue) => (cue.kind === "deploy" && openings.push("cue"), true),
+        clear: noop,
+      },
       stage: {
         viewport: {
           width: 800,
@@ -228,7 +245,9 @@ if (!fixture) {
     const bannerAges = [];
     const snapshots = [];
     let networkPair;
-    if (scenario === "notice-age-feedback") {
+    const openings = [];
+    let blocked = false;
+    if (scenario === "notice-age-feedback" || scenario === "rejoin") {
       const { MultiplayerRun } = await import(at("src/network/run.ts"));
       const { createWorld } = await import(at("src/run/sim/world.ts"));
       const endpoints = [0, 1].map((self) => ({
@@ -241,6 +260,8 @@ if (!fixture) {
           endpoints[1 - self].receiver(structuredClone(packet), self);
           return true;
         },
+        // A guest back on its original seat after a reconnect or reload.
+        restored: scenario === "rejoin" && self === 1,
         isReachable: () => true,
         close: noop,
         finish: noop,
@@ -249,7 +270,10 @@ if (!fixture) {
         stage: "forest",
         seed: 7,
         difficulty: 0,
-        players: [{ starter: "charmander" }, { starter: "charmander" }],
+        players: [
+          { starter: "charmander", trainer: "chengxi" },
+          { starter: "charmander", trainer: "yewei" },
+        ],
       };
       const host = new MultiplayerRun(endpoints[0], config);
       const guest = new MultiplayerRun(endpoints[1], config);
@@ -263,6 +287,7 @@ if (!fixture) {
       {
         stage: scenario === "reaction-feedback" ? "volcano" : "forest",
         starter: scenario === "reaction-feedback" ? "squirtle" : "charmander",
+        trainer: "chengxi",
         difficulty: 0,
         lab: NO_LAB,
         loadout: { archive: [], backpack: ["hp-up"] },
@@ -271,7 +296,7 @@ if (!fixture) {
         multiplayer: networkPair?.guest,
       },
       {
-        inputBlocked: () => false,
+        inputBlocked: () => blocked,
         onReady() {
           assert.equal(client, undefined, "no world is registered before persistence commits");
           events.push("commit");
@@ -280,6 +305,7 @@ if (!fixture) {
           if (scenario === "dispose-in-ready") controller.dispose();
         },
         onError: (e) => errors.push(e.message),
+        onDeployment: (active) => active && openings.push("deployment"),
         onSnapshot: (value) => snapshots.push(value),
         onBanner(text, tone, ageMs) {
           banners.push({ text, tone });
@@ -288,7 +314,7 @@ if (!fixture) {
         onPauseRequest: noop,
         onStatsRequest: noop,
         onMapChange: noop,
-        onZoneLoading: noop,
+        onZoneLoading: (...args) => zoneLoads.push(args),
         onEnd: noop,
       },
     );
@@ -312,6 +338,35 @@ if (!fixture) {
         assert.equal(actualWorld.tick, 0);
       } else {
         assert.deepEqual(events, ["commit", "setWorld"]);
+        if (scenario === "rejoin") {
+          await flush();
+          assert.deepEqual(openings, [], "a rejoin resumes the run without replaying its opening");
+          controller.dispose();
+          networkPair.host.dispose();
+          networkPair.guest.dispose();
+          continue;
+        }
+        // The cut-in's clock starts on the first frame the curtain no longer covers.
+        assert.deepEqual(openings, ["deployment"]);
+        blocked = true;
+        client.advance(100);
+        assert.deepEqual(openings, ["deployment"]);
+        blocked = false;
+        for (let frame = 0; frame < 10; frame++) client.advance(100);
+        assert.deepEqual(openings, ["deployment", "cue"]);
+        assert.equal(actualWorld.tick, 0, "opening presentation cannot advance combat");
+        if (scenario === "dispose-opening") {
+          const retained = client;
+          controller.dispose();
+          for (let frame = 0; frame < 40; frame++) retained.advance(100);
+          await flush();
+          assert.equal(actualWorld.tick, 0, "cancelled deployment cannot activate a run");
+          assert.equal(client, null);
+          continue;
+        }
+        for (let frame = 0; frame < 20; frame++) client.advance(100);
+        await flush();
+        assert.equal(actualWorld.tick, 0, "the last release frame is still before combat");
         if (scenario === "reaction-feedback") {
           await reactionFeedback(hud, client, actualWorld, banners);
         } else if (scenario === "hurt-feedback") {
@@ -323,6 +378,22 @@ if (!fixture) {
         } else {
           client.advance(100);
           assert.ok(actualWorld.tick > 0);
+        }
+        if (scenario === "zone-destination") {
+          const { nextField } = await import(at("src/run/sim/content/campaign.ts"));
+          const from = actualWorld.stage,
+            to = nextField(actualWorld).stage;
+          assert.notEqual(to, from);
+          actualWorld.zone.phase = "transitioning";
+          client.advance(100);
+          for (let i = 0; i < 1000 && zoneLoads.length < 2 && !errors.length; i++) await flush();
+          assert.deepEqual(errors, []);
+          assert.deepEqual(
+            zoneLoads,
+            [[true, to], [false]],
+            "a zone change's loading names the map it enters, not the run's first map",
+          );
+          assert.equal(actualWorld.stage, to);
         }
         if (scenario === "dispose-active") {
           const retained = client,

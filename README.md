@@ -2,7 +2,7 @@
 
 ![海岸关卡的载入画面](public/art/loading-coast.webp)
 
-一款免费的低多边形 3D 宝可梦幸存者类游戏。没有训练师，你直接操控宝可梦，在一波波野生宝可梦里活下来、升级、进化，一路打到紫苑塔。可以单人玩，也可以和朋友 2–4 人联机。
+一款免费的低多边形 3D 宝可梦幸存者类游戏。选一位训练师放出伙伴，然后直接操控宝可梦，在一波波野生宝可梦里活下来、升级、进化，一路打到紫苑塔。可以单人玩，也可以和朋友 2–4 人联机。
 
 > **English**: poketone is a free, non-commercial, low-poly 3D Pokémon survivor-like fan game. You play as the Pokémon itself, solo or in 2–4 player co-op, in the browser or as a native macOS app. Built with TypeScript, React and Three.js on Bun. Docs are in Chinese. This is an unofficial fan project, not affiliated with Nintendo, Game Freak, Creatures or The Pokémon Company; see [License and rights](#许可与权利).
 
@@ -16,7 +16,7 @@
 - **招式自动释放**：你负责走位和冲刺闪避。升级时从卡牌里挑新招式、强化或道具，可以重抽、跳过和放逐。
 - **进化与终极技**：伙伴随等级进化，终极技靠造成伤害和时间充能。
 - **局外成长**：冒险中收集的星星沙子可以在大厅的研究所换永久强化。难度分普通、困难、噩梦，逐档解锁。
-- **伙伴**：一开始可选小火龙、妙蛙种子、杰尼龟，皮卡丘随研究进度解锁。大厅里的图鉴收录角色、招式、道具、敌人和状态。
+- **伙伴**：一开始可选小火龙、妙蛙种子、杰尼龟、鬼斯、迷你龙、腕力、凯西和小拳石，皮卡丘随研究进度解锁。每条进化线都有自己的招式、特性、终极技和融合；大厅里的图鉴收录角色、招式、道具、敌人和状态。
 - **联机**：在大厅创建或加入房间，2–4 人合作，掉线后可以回到原来的位置。
 - **存档**保存在本机，可以在设置里导出和导入。
 

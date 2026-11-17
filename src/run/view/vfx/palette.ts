@@ -106,3 +106,29 @@ export const fighting = {
   dust: rgb("#cdb58f"),
   deep: rgb("#5a3418"),
 };
+
+// Abra line: bright pink thought-light over a pale core with a cool lilac edge. It reads by its high
+// value against the ghost line's near-black bodies, and stays pink, never the enemies' red or violet.
+export const psychic = {
+  core: rgb("#fff1fa"),
+  light: rgb("#ffc6ea"),
+  pink: rgb("#ff74c4"),
+  rose: rgb("#d2479a"),
+  lilac: rgb("#c8bcff"),
+  ink: rgb("#4b2257"),
+  // Psybeam's prism hints: thin strands only, never blobs (XP candy is cyan-blue).
+  mint: rgb("#bff7e4"),
+  lemon: rgb("#fff3a6"),
+};
+
+// Geodude line: grey-brown stone and warm earth with dark clay ink. No glow on rock: the weight is in
+// value, chunky silhouettes and dust, which keeps it apart from fighting's amber force.
+export const rock = {
+  light: rgb("#d8cab0"),
+  stone: rgb("#a3907a"),
+  dark: rgb("#62523f"),
+  ink: rgb("#33281e"),
+  earth: rgb("#b5874e"),
+  dust: rgb("#e2cfa6"),
+  clay: rgb("#7a5230"),
+};

@@ -1,15 +1,15 @@
 import type { ServerWebSocket } from "bun";
 import {
   PROTOCOL_VERSION,
+  knownMission,
+  knownStarter,
   record,
   type PlayerSetup,
   type Room,
   type RoomErrorCode,
   type ServerMessage,
 } from "../../src/network/protocol";
-import { starters } from "../../src/run/sim/content/lines/index";
-import { stageDefs } from "../../src/run/sim/content/stages/index";
-import { difficulties } from "../../src/run/sim/content/difficulties";
+import { isTrainerId } from "../../src/trainers";
 
 interface Connection {
   room?: HostedRoom;
@@ -177,12 +177,9 @@ export function startHarbor(
             if (room) throw new Error("已经在房间中。");
             if (msg.version !== PROTOCOL_VERSION || typeof msg.build !== "string")
               throw new RoomError("联机版本不同，请刷新游戏。", "version");
-            if (
-              !record(msg.player) ||
-              typeof msg.player.starter !== "string" ||
-              !Object.hasOwn(starters, msg.player.starter)
-            )
+            if (!record(msg.player) || !knownStarter(msg.player.starter))
               throw new Error("伙伴选择无效。");
+            if (!isTrainerId(msg.player.trainer)) throw new Error("训练师选择无效。");
             if (typeof msg.code !== "string") throw new Error("房间码无效。");
             if (msg.code) {
               room = rooms.get(msg.code);
@@ -192,6 +189,8 @@ export function startHarbor(
               if (room.build !== msg.build)
                 throw new RoomError("游戏版本不同，请所有玩家刷新后重建房间。", "version");
             } else {
+              if (msg.mission !== undefined && !knownMission(msg.mission))
+                throw new Error("冒险设置无效。");
               let code;
               do
                 code = String(crypto.getRandomValues(new Uint32Array(1))[0]! % 1000000).padStart(
@@ -200,7 +199,17 @@ export function startHarbor(
                 );
               while (rooms.has(code));
               room = {
-                state: { code, players: [], started: false, ready: [], online: [], departed: [] },
+                state: {
+                  code,
+                  players: [],
+                  mission: msg.mission
+                    ? { stage: msg.mission.stage, difficulty: msg.mission.difficulty }
+                    : { stage: "forest", difficulty: 0 },
+                  started: false,
+                  ready: [],
+                  online: [],
+                  departed: [],
+                },
                 build: msg.build,
                 sockets: [],
                 tokens: [],
@@ -278,21 +287,28 @@ export function startHarbor(
               room.state.ready.length !== room.sockets.length
             )
               throw new Error("等待全部玩家连接就绪后由房主出发。");
-            if (
-              msg.stage !== "forest" ||
-              !Number.isInteger(msg.difficulty) ||
-              !Object.hasOwn(difficulties, Number(msg.difficulty))
-            )
-              throw new Error("冒险设置无效。");
             room.state.started = true;
-            const config = {
-              stage: msg.stage as keyof typeof stageDefs,
-              difficulty: Number(msg.difficulty) as 0 | 1 | 2,
-              players: room.state.players,
-            };
+            const config = { ...room.state.mission, players: room.state.players };
             room.config = config;
             publish(room);
             room.sockets.forEach((peer) => send(peer, { t: "start", config }));
+          } else if (msg.t === "setup") {
+            if (!knownStarter(msg.starter)) throw new Error("伙伴选择无效。");
+            if (!isTrainerId(msg.trainer)) throw new Error("训练师选择无效。");
+            // A change that loses the race to the start is dropped: the run keeps the start's pick.
+            if (room.state.started) return;
+            room.state.players[from] = {
+              ...room.state.players[from]!,
+              starter: msg.starter,
+              trainer: msg.trainer,
+            };
+            publish(room);
+          } else if (msg.t === "mission") {
+            if (from !== 0) throw new Error("只有房主可以修改冒险设置。");
+            if (!knownMission(msg)) throw new Error("冒险设置无效。");
+            if (room.state.started) return;
+            room.state.mission = { stage: msg.stage, difficulty: msg.difficulty };
+            publish(room);
           } else if (msg.t === "transport-ready") {
             const to = target(msg.peer);
             if (room.state.started) return;

@@ -1,15 +1,18 @@
-import { Container, Content, Text, withOpacity } from "@pmndrs/uikit";
+import { Container, Content, Text } from "@pmndrs/uikit";
 import { Mesh, MeshBasicMaterial, Shape, ShapeGeometry } from "three";
-import { BoxShadow } from "./box-shadow";
-import { cubicBezier, uiEaseOut } from "./focus-mark";
 import { fade, stack } from "./layer";
 import { balanceLines, breakLines, type GlyphWidths } from "./line-break";
+import { EASE, SNAP } from "./motion";
+import { SlantPlate } from "./slant-plate";
 import type { UiStage } from "./stage";
+import { RADIUS_INNER, ui } from "./tokens";
 
-const easeIn = (t: number) => cubicBezier(t, 0.42, 0, 1, 1);
-/** The text's room: 260 max width less 2 × 14 padding and 2 × 2 frame. */
+/** The text's room (a 260 tip less its padding). */
 const TEXT_WIDTH = 228;
 const TEXT_SIZE = 14;
+const LINE_HEIGHT = 1.45;
+const PADDING_Y = 8;
+const PADDING_X = 14;
 
 /**
  * Lines that fit the tip, broken where Chinese text may break (numbers whole, no line-start
@@ -24,32 +27,27 @@ function tipLines(text: string, font: GlyphWidths): string {
 }
 
 /**
- * ui/Tooltip.tsx `.game-tip`: one short line on a navy plate with a warm inner line and a pointer
- * at its anchor, above the anchor (below when there is no room), never clipped by a window. It fades
- * in over 120ms rising 4px (`game-tip-in`) and out over 100ms (`ui-fade-out`).
+ * One short line on a small upright ink plate (radius 4, a 3px hard shadow) with a
+ * pointer at its anchor, above the anchor (below when there is no room), never clipped by a window.
+ * It fades in over 120ms rising 4px and out over 100ms.
  */
 export class GpuTooltip {
   private readonly box = stack(
     new Container({
       positionType: "absolute",
-      maxWidth: 260,
-      paddingX: 14,
-      paddingY: 8,
-      borderWidth: 2,
-      borderColor: "#0d233f",
-      borderRadius: 8,
-      backgroundColor: "#142f50",
+      paddingY: PADDING_Y,
       display: "none",
     }),
     40,
   );
+  private readonly plate = new SlantPlate(this.box, { fill: ui.ink, upright: true }, RADIUS_INNER);
   private readonly text = stack(
     new Text({
       text: "",
       fontSize: TEXT_SIZE,
       fontWeight: 700,
-      color: "#ffffff",
-      lineHeight: 1.45,
+      color: ui.white,
+      lineHeight: LINE_HEIGHT,
       textAlign: "center",
       flexShrink: 1,
       // UIKit's word wrapper measures a line and then breaks it again inside that same width
@@ -67,10 +65,6 @@ export class GpuTooltip {
     keepAspectRatio: false,
     depthTest: false,
   });
-  private readonly shadow = new BoxShadow(8, [
-    { y: 3, blur: 0, color: "#0d233f", alpha: 1 },
-    { y: 4, blur: 10, color: "#0d233f", alpha: 0.22 },
-  ]);
   private readonly stage: UiStage;
   private readonly motion = { opacity: 0, y: 4 };
   private want: Container | null = null;
@@ -87,48 +81,23 @@ export class GpuTooltip {
 
   constructor(stage: UiStage) {
     this.stage = stage;
-    this.box.add(
-      this.shadow.content,
-      stack(
-        new Container({
-          positionType: "absolute",
-          positionLeft: 0,
-          positionTop: 0,
-          width: "100%",
-          height: "100%",
-          borderWidth: 1,
-          borderColor: withOpacity("#ffd45b", 0.55),
-          borderRadius: 6,
-        }),
-        1,
-      ),
-      this.text,
+    this.plate.set({ depth: 3 });
+    this.box.add(this.plate.content, this.text);
+    // Pointer: an ink triangle.
+    const outer = new Mesh(
+      new ShapeGeometry(new Shape().moveTo(-7, 0).lineTo(7, 0).lineTo(0, -7).closePath()),
+      new MeshBasicMaterial({
+        color: ui.ink,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+      }),
     );
-    // Pointer: a navy-deep triangle with a navy one inset 1px above it.
-    const triangle = (w: number, h: number, color: string, z: number) => {
-      const mesh = new Mesh(
-        new ShapeGeometry(
-          new Shape()
-            .moveTo(-w / 2, 0)
-            .lineTo(w / 2, 0)
-            .lineTo(0, -h)
-            .closePath(),
-        ),
-        new MeshBasicMaterial({ color, transparent: true, depthTest: false, depthWrite: false }),
-      );
-      mesh.position.z = z;
-      return mesh;
-    };
-    const outer = triangle(18, 9, "#0d233f", 0),
-      inner = triangle(12, 6, "#142f50", 0.01);
-    outer.position.y = -1;
-    this.arrow.add(outer, inner);
+    this.arrow.add(outer);
     this.arrow.notifyAncestorsChanged();
     this.arrow.abortSignal.addEventListener("abort", () => {
-      for (const mesh of [outer, inner]) {
-        mesh.geometry.dispose();
-        mesh.material.dispose();
-      }
+      outer.geometry.dispose();
+      outer.material.dispose();
     });
     this.box.add(stack(this.arrow, 1));
     stage.root.add(this.box);
@@ -158,7 +127,7 @@ export class GpuTooltip {
       { opacity: anchor ? 1 : 0, y: anchor ? 0 : this.motion.y },
       anchor ? 120 : 100,
       () => this.stage.invalidate(),
-      anchor ? uiEaseOut : easeIn,
+      anchor ? EASE : SNAP,
     );
   }
 
@@ -175,7 +144,9 @@ export class GpuTooltip {
     const font = this.text.fontSignal.value;
     if (font && this.laid !== this.raw) {
       this.laid = this.raw;
-      this.text.setProperties({ text: tipLines(this.raw, font) });
+      const lines = tipLines(this.raw, font);
+      this.text.setProperties({ text: lines });
+      this.box.setProperties({ paddingX: PADDING_X, maxWidth: TEXT_WIDTH + 2 * PADDING_X });
     }
     if (!this.want && this.motion.opacity === 0) this.anchor = null;
     const target = this.anchor;
@@ -224,7 +195,7 @@ export class GpuTooltip {
         transformTranslateY: 0,
       });
       this.arrow.setProperties({
-        positionLeft: tipSize[0] - 2 - 4,
+        positionLeft: tipSize[0] - 2 - 6,
         // Within the band where the tip and its target overlap (a lifted tip points low).
         positionTop:
           Math.min(Math.max(middle - y, 14, top - y + 6), tipSize[1] - 14, bottom - y - 6) - 5,
@@ -242,10 +213,10 @@ export class GpuTooltip {
       positionTop: below ? bottom + 10 : above,
       transformTranslateY: below ? -this.motion.y : this.motion.y,
     });
-    // ::before at top: 100% of the padding box (inside the 2px frame), centred on the anchor.
+    // Centred on the anchor, just past the plate's edge.
     this.arrow.setProperties({
-      positionLeft: arrowX - 9 - 2,
-      positionTop: below ? -10 : tipSize[1] - 4 - 1,
+      positionLeft: arrowX - 9,
+      positionTop: below ? -10 + 1 : tipSize[1] - 1,
       transformRotateZ: 0,
       transformScaleY: below ? -1 : 1,
     });
@@ -254,7 +225,7 @@ export class GpuTooltip {
   dispose(): void {
     this.stage.motion.cancel(this.motion);
     this.box.removeFromParent();
-    this.shadow.dispose();
+    this.plate.dispose();
     this.box.dispose();
   }
 }

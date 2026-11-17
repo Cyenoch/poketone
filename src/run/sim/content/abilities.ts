@@ -80,6 +80,19 @@ const abilitiesTable = {
       { stat: "damage", op: "mul", value: [1.08, 1.35, 1.7], when: "physical" },
     ],
   }),
+  synchronize: ability("synchronize", "同步", {
+    modifiers: [
+      { stat: "cooldown", op: "mul", value: [0.94, 0.9, 0.86] },
+      { stat: "dashCharges", op: "add", value: [1, 1, 2] },
+    ],
+  }),
+  sturdy: ability("sturdy", "结实", {
+    modifiers: [
+      { stat: "maxHp", op: "pct", value: [0.1, 0.15, 0.2] },
+      { stat: "armor", op: "add", value: [12, 16, 20] },
+      { stat: "damage", op: "mul", value: [1.1, 1.2, 1.3], when: "ground" },
+    ],
+  }),
 };
 
 export type AbilityId = keyof typeof abilitiesTable;

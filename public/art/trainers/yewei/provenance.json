@@ -1,0 +1,30 @@
+{
+  "styleVersion": "trainer-cel-summer-v2",
+  "source": "assets/concepts/original-trainers/yewei/runtime-summer-v2.png",
+  "sourceSha256": "8b7b8199b57770c0d0a7e8f72e77828a76d2867c4ba5462be42e970228ded3bd",
+  "cleanSource": "assets/concepts/original-trainers/yewei/runtime-summer-v2-clean.png",
+  "cleanSourceSha256": "1228d362e2690b303273e0dc2793ee6c7932feb419178329e8ca4d9951db081f",
+  "generation": "assets/concepts/original-trainers/runtime-summer-v2-generation.json",
+  "requestId": "yewei",
+  "process": "prepare.py: alpha >= 224 is opaque core; retain source alpha only within its 1px dilation, discard alpha < 16; edge RGB from nearest opaque neighbor; save clean PNG; lobby alpha bbox; authored cut-in/head crops; Lanczos resize; square bottom padding for cut-in/portrait; #142f50 silhouettes retain alpha; RGB cleared under alpha 0; lossless WebP",
+  "outputs": [
+    {
+      "file": "lobby.webp",
+      "crop": [110, 14, 948, 1524],
+      "size": [777, 1400],
+      "sha256": "a8de7be3e233dcdc7f23b5863c1bed0c39b499d39f36b1bd2deb75e80632fc62"
+    },
+    {
+      "file": "cutin.webp",
+      "crop": [85, 0, 970, 800],
+      "size": [768, 768],
+      "sha256": "23df29fdd0542af873044b1736a38456a27646b397941180001e08fa3c4260e9"
+    },
+    {
+      "file": "portrait.webp",
+      "crop": [285, 0, 705, 420],
+      "size": [256, 256],
+      "sha256": "0bf181facbcffed9d48a857797f002fbf7cf47208e9d16604cd36e6d5482ead1"
+    }
+  ]
+}

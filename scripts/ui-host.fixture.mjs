@@ -108,13 +108,16 @@ class Toast extends Screen {
     return -1;
   }
 }
+const released = [];
 await mock.module(source("ui/gpu/fonts.ts"), () => ({
   uiFonts: () => ({
     families: {},
     readyNow: (target) => !target.wait,
     ready: async (target) => target.wait,
-    release: noop,
+    release: (target) => released.push(target),
     prefetch: noop,
+    pagesOf: () => [],
+    registry: { pages: new Map() },
   }),
 }));
 await mock.module(source("audio/engine.ts"), () => ({
@@ -126,6 +129,41 @@ await mock.module(source("audio/engine.ts"), () => ({
 }));
 await mock.module(source("ui/gpu/app-shell.ts"), () => ({ GpuShell: Shell }));
 await mock.module(source("ui/gpu/toast.ts"), () => ({ GpuToast: Toast }));
+const launchers = [];
+/** Its wordmark's font page (null: in at once). */
+let launcherFont = null;
+await mock.module(source("ui/gpu/launcher.ts"), () => ({
+  GpuLauncher: class {
+    stage = stage();
+    progress = [];
+    wordmark = [];
+    bar = { set: (value) => this.progress.push(value) };
+    exiting = false;
+    disposed = false;
+    constructor() {
+      launchers.push(this);
+      if (launcherFont) this.stage.wait = launcherFont.promise;
+    }
+    // The exit is over on the frame after it starts.
+    update() {
+      return this.exiting;
+    }
+    get gone() {
+      return this.exiting;
+    }
+    exit() {
+      this.exiting = true;
+    }
+    resize() {}
+    setPartner() {}
+    showWordmark(shown) {
+      this.wordmark.push({ shown, disposed: this.disposed });
+    }
+    dispose() {
+      this.disposed = true;
+    }
+  },
+}));
 await mock.module(source("ui/gpu/lobby.ts"), () => ({ GpuLobby: Screen }));
 await mock.module(source("ui/gpu/lab.ts"), () => ({ GpuLab: Screen }));
 await mock.module(source("ui/gpu/settings-dialog.ts"), () => ({ SettingsDialog: Dialog }));
@@ -150,7 +188,9 @@ const { createGpuAppHost } = await import("../src/ui/gpu/app-host.ts");
 const { ActionInput } = await import("../src/platform/input.ts");
 const { images } = await import("../src/prepare/images.ts");
 
-async function setup() {
+/** `boot`: the screen the launcher covers; `part`: the run it also waits for; `handoff`: false
+ *  leaves the launcher up for the scenario. */
+async function setup({ boot = new Screen(), part, handoff = true } = {}) {
   let events, ui, world;
   const errors = [],
     notes = [],
@@ -238,6 +278,24 @@ async function setup() {
     host.update((state = { ...state, ...next }));
   }
   update({});
+  // Boot as the session does it: the lobby registered under the launcher, the opening run held.
+  const unregisterBoot = host.registerScreen(boot);
+  if (part) host.hold(part, "fixture");
+  let launched = false;
+  void host.launched.then(() => (launched = true));
+  const pump = async (frames, until = () => false) => {
+    for (let i = 0; i < frames && !until(); i++) {
+      ui.advance(16);
+      ui.draw();
+      await flush();
+    }
+  };
+  if (handoff) {
+    // Its needs in, the launcher leaves by itself; scenarios then register their own screens.
+    await pump(50, () => launched && launchers.at(-1).disposed);
+    assert.ok(launchers.at(-1).disposed, "the launcher leaves once the first screen is in");
+    unregisterBoot();
+  }
   function run() {
     const hud = Object.assign(new Screen(), {
       inputBlocked: false,
@@ -278,6 +336,8 @@ async function setup() {
     update,
     run,
     events: () => events,
+    launched: () => launched,
+    pump,
     frame: () => {
       ui.advance(50);
       ui.draw();
@@ -302,9 +362,68 @@ async function setup() {
 }
 
 const scenario = process.argv[2];
-const s = await setup();
+const compile = deferred();
+const options = {
+  "launch-waits-lobby": {
+    handoff: false,
+    // The lobby's programs compile asynchronously and take a while.
+    boot: Object.assign(new Screen(), {
+      stage: Object.assign(stage(), {
+        compileAsync(renderer) {
+          renderer.info.programs.push({});
+          return compile.promise;
+        },
+      }),
+    }),
+  },
+  "launch-progress-cancelled": {
+    // The opening run's part, cancelled after a tenth of its work.
+    part: {
+      state: "cancelled",
+      settled: Promise.resolve("cancelled"),
+      setLane: noop,
+      progress: () => ({
+        network: { done: 1, total: 10, bytes: 0, bytesTotal: null },
+        cpu: { done: 0, total: 0 },
+        gpu: { done: 0, total: 0 },
+      }),
+    },
+  },
+  "dispose-during-boot": { handoff: false },
+}[scenario];
+if (scenario === "dispose-during-boot") launcherFont = deferred();
+const s = await setup(options);
 try {
-  if (scenario === "codex-resumed-run") {
+  if (scenario === "launch-waits-lobby") {
+    await s.pump(30);
+    assert.equal(s.launched(), false, "the launcher waits for the lobby's programs");
+    assert.equal(
+      launchers[0].disposed,
+      false,
+      "the launcher still covers a lobby that cannot draw",
+    );
+    compile.resolve();
+    await s.pump(10, () => launchers[0].disposed);
+    assert.ok(s.launched() && launchers[0].disposed, "the launcher leaves once the lobby can draw");
+  } else if (scenario === "launch-progress-cancelled") {
+    assert.ok(launchers[0].progress.length > 0);
+    assert.ok(
+      Math.max(...launchers[0].progress) < 0.5,
+      "a cancelled part counts the work it did, not all of it",
+    );
+  } else if (scenario === "dispose-during-boot") {
+    const [launcher] = launchers;
+    s.host.dispose();
+    assert.ok(launcher.disposed);
+    assert.ok(released.includes(launcher.stage), "its wordmark's font page is released");
+    launcherFont.resolve();
+    await flush();
+    assert.deepEqual(
+      launcher.wordmark.filter((call) => call.disposed),
+      [],
+      "a page arriving after the host went never touches the disposed launcher",
+    );
+  } else if (scenario === "codex-resumed-run") {
     s.run();
     s.host.openCodex();
     s.key("Escape");
@@ -319,14 +438,13 @@ try {
     await flush();
     assert.ok(s.host.inspect().codex, "the new pause can still open the codex");
   } else if (scenario.startsWith("codex-")) {
-    const unregister =
-      scenario === "codex-replaced-run" ? s.run() : s.host.registerScreen(new Screen());
+    // Outside a run the 图鉴 is a page (app session); the window opens over a paused run only.
+    const unregister = s.run();
     s.host.openCodex();
     // Finish the entire cover/commit/reveal before the import's continuation gets to run.
     s.update({ busy: true, transition: "cover" });
     unregister();
-    if (scenario === "codex-lab") s.host.registerScreen(new Screen());
-    else s.run();
+    s.run();
     s.update({ busy: false, transition: "idle" });
     await flush();
     assert.equal(
@@ -419,10 +537,12 @@ try {
     scene.setLayout({
       width: 1280,
       height: 800,
-      podium: { x: 40, y: 500, w: 400, h: 140 },
-      feet: { x: 240, y: 550 },
+      slab: 560,
+      trainer: { x: 250, y: 96, h: 1060, right: 527 },
+      feet: { x: 665, y: 532 },
+      rx: 200,
+      heroW: 260,
       heroH: 300,
-      column: { x: 860, y: 300, w: 392, h: 476 },
     });
     try {
       scene.show("charmander", "fire");

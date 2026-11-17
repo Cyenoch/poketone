@@ -44,6 +44,8 @@ import { PSYBEAM, VINE, ROCKFALL } from "../sim/content/params/enemy-skills";
 import { Decals } from "./vfx/decals";
 import { lineShotLooks, lineAreaLooks, lineBurstLooks } from "./vfx/lines";
 import { dreamReturn, shadowPhase } from "./vfx/ghost";
+import { psyshock } from "./vfx/psychic";
+import { aftershocks } from "./vfx/rock";
 import { starters } from "../sim/content/lines/index";
 import { defaultAreaLook, defaultShotLook } from "./vfx/defaults";
 import {
@@ -346,10 +348,11 @@ export class Vfx {
     const fx = this.fx;
     switch (event.t) {
       case "hit":
-        if (event.confirmedContact) break;
+        if (event.confirmedContact || event.move === "hypnosis") break;
         common.hit(fx, event.x, event.z, event.crit);
         break;
       case "contact":
+        if (event.move === "hypnosis") break;
         common.hit(fx, event.x, event.z, false);
         break;
       case "death":
@@ -366,7 +369,9 @@ export class Vfx {
         break;
       }
       case "chain":
-        chain(fx, event.points, event.lift);
+        if (event.type === "psychic") psyshock(fx, event.points);
+        else if (event.type === "ground") aftershocks(fx, event.points);
+        else chain(fx, event.points, event.lift);
         break;
       case "impact":
         // Shared terrain dust also serves hostile shots; the projectile event owns the move beat.
@@ -603,11 +608,14 @@ export class Vfx {
         x += area.dirX * reach;
         z += area.dirZ * reach;
       }
-      if (area.delay <= 0 && !track.struck) {
+      // The sim returns on the tick that consumes the last delay. Its tickTimer only advances
+      // when the attack actually runs, so a charged impact must wait for that following tick.
+      const active = area.delay <= 0 && (track.delay <= 0 || area.tickTimer !== 0);
+      if (active && !track.struck) {
         track.struck = true;
         look.strike?.(this.fx, area, x, z);
       }
-      const charge = track.delay > 0 ? Math.min(1, 1 - area.delay / track.delay) : 1;
+      const charge = active ? 1 : Math.min(0.999, 1 - area.delay / track.delay);
       look.live?.(this.fx, area, x, z, charge);
     }
     sweep(this.areas, this.frame, this.releaseArea);

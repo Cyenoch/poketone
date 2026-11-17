@@ -2274,6 +2274,8 @@ function partnerList(track: Track): Partner[] {
     faceZ: 1,
     cooldown: 0,
     guard: 0,
+    target: null,
+    returning: false,
   }));
 }
 

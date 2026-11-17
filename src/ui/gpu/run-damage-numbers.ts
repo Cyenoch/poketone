@@ -11,6 +11,7 @@ import { reactionNames } from "../../run/labels";
 import type { ReactionId } from "../../run/sim/content/reactions";
 import { cubicBezier } from "./focus-mark";
 import type { UiStage } from "./stage";
+import { ui } from "./tokens";
 import { UiShaderMaterial } from "./ui-shader";
 
 type Font = NonNullable<Text["fontSignal"]["value"]>;
@@ -44,8 +45,8 @@ interface FloatingNumber {
 }
 
 /**
- * The run's floating combat text (`.run-number`): white numbers on a 1px navy stroke with a 2px
- * navy drop and a soft navy glow; crits gold with an orange glow, a tilt and a longer pop;
+ * The run's floating combat text (`.run-number`): white numbers on a 1px ink stroke with a 2px
+ * ink drop and a soft ink glow; crits gold with an orange glow, a tilt and a longer pop;
  * resisted hits grey and small; ice-blue words mark an evade or reaction at its world position.
  * Size grows with the hit on a log curve. Each number pops from 2.1×
  * (280 / 340ms), arcs up and drifts, and fades over its last 35%. Every glyph of every number is one
@@ -99,7 +100,7 @@ export class GpuDamageNumbers {
         atlasEm: { value: 48 },
         pageSizes: { value: [new Vector2(1, 1), new Vector2(1, 1)] },
         // sRGB components: the shader mixes in sRGB, as CSS paints, then converts once.
-        navy: { value: new Color().setRGB(13 / 255, 35 / 255, 63 / 255) },
+        navy: { value: new Color(ui.ink).convertLinearToSRGB() },
       },
       vertexShader: `
         attribute vec2 numberAnchor;

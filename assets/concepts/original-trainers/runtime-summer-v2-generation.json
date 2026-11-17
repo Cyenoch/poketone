@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "styleVersion": "trainer-cel-summer-v2",
+  "tool": "magpie-image.generate_image",
+  "modelSelection": "Magpie configured default; model argument omitted",
+  "parameters": { "size": "1024x1536", "quality": "high", "background": "transparent", "n": 1 },
+  "seed": null,
+  "cost": "Not reported by the tool",
+  "actualSize": [1024, 1536],
+  "review": "All four complete adult summer figures inspected on light and dark plain backgrounds. Original RGBA files preserve generated alpha defects; prepare.py removes low-alpha background haze and decontaminates the narrow antialiased edge. Clean PNGs and 14 WebP outputs include matching lobby/cutin/portrait identities and two Xiaqing silhouettes. Output-specific source hashes, sizes and crops are recorded in public/art/trainers/<id>/provenance.json. This is asset acceptance, not whole-UI or device acceptance.",
+  "promptTemplate": "runtime-summer-v2-prompt.txt",
+  "promptAssembly": "Trim the template trailing newline, append two newlines, then characterBrief. References and output are relative to this directory.",
+  "requests": [
+    {
+      "id": "chengxi",
+      "jobId": "image-38907-33",
+      "actualModel": "ash/gpt-image-2.5-sunburst",
+      "referenceImages": ["chengxi/turnaround-summer-v2.png"],
+      "output": "chengxi/runtime-summer-v2.png",
+      "sha256": "77534840adb7ff1409347c2eb263c06c153e57adc03c5c3e8174727271ca2672",
+      "referenceSha256": "fdcac432cd6bf36a032fc55d76739ec2d869ec656aaef5fa27d4de4aabc3fc80",
+      "characterBrief": "CHENGXI: cheerful, pretty eighteen-year-old woman, warm ivory skin, luminous teal eyes and bright friendly smile. TWO long high midnight-blue ponytails, coral-red swallowtail ribbon on each, tiny brass compass-star pin at HER LEFT temple. Opaque white sleeveless sailor-inspired fitted summer top with teal collar and edging and a short coral chest ribbon; high-waisted sea-teal pleated short skirt with narrow navy under-hem, hidden opaque safety shorts. Smooth thin WHITE thigh-high stockings, plain top with one narrow teal stripe; white and teal low-top sneakers. Circular brass-and-teal tide compass on HER LEFT hip, compact cream map pouch at center back belt. Bare arms and shoulders. Match the approved sheet exactly; keep her youthful cute adult face and light summer outfit.",
+      "crops": { "cutin": [20, 0, 1000, 800], "portrait": [300, 0, 720, 420] }
+    },
+    {
+      "id": "yewei",
+      "jobId": "image-38907-32",
+      "actualModel": "ash/gpt-image-2.5-sunburst",
+      "referenceImages": ["yewei/turnaround-summer-v2.png"],
+      "output": "yewei/runtime-summer-v2.png",
+      "sha256": "8b7b8199b57770c0d0a7e8f72e77828a76d2867c4ba5462be42e970228ded3bd",
+      "referenceSha256": "44e222cdda29989a37f2d4d29e4f6b16fdb395268ce9a6d54592fc7156c3b316",
+      "characterBrief": "YEWEI: beautiful eighteen-year-old young adult woman, fresh cool-ivory face, grey-green almond eyes and a subtle self-assured smile. Cool composed older-sister aura through posture only; her face is youthful. Long ink-violet hair to waist/hips with softly curled ends, side-swept bangs, ONE silver crescent clip on HER LEFT temple, a matching pair of small amethyst drop earrings. Deep mulberry sleeveless fitted short A-line summer dress, small folded collar, shallow V neckline, sage trim, slim waist belt. Thin SHEER BLACK PANTYHOSE with skin visible beneath smoky fabric, black low-block-heel Mary Jane shoes. ONE pair of compact cream-purple listening headphones rests around her neck, exactly two earcups joined by one band. Small cream-mulberry recorder pouch on HER RIGHT hip. Correct the sheet's ambiguous headphone study: wear only one complete pair around her neck, neither hand touches them. Bare arms. No coat, scarf, sleeves, leggings or heavy businesswear.",
+      "crops": { "cutin": [85, 0, 970, 800], "portrait": [285, 0, 705, 420] }
+    },
+    {
+      "id": "shuoye",
+      "jobId": "image-38907-34",
+      "actualModel": "ash/gpt-image-2.5-sunburst",
+      "referenceImages": ["shuoye/turnaround-summer-v2.png"],
+      "output": "shuoye/runtime-summer-v2.png",
+      "sha256": "cc9388b10b3c1ce8bb2d7bdcdb56788cde6bc0f38e71f289954192acc2843088",
+      "referenceSha256": "fa78af859623faffd7ca34370362788789abe3e1967e9b068353da675abed360",
+      "characterBrief": "SHUOYE: exceptionally handsome fresh-faced eighteen-year-old young adult man, refined East Asian anime face, slate-blue eyes, a confident relaxed grin, clean-shaven, lean athletic frame. Tousled blue-black hair, ONE broad silver-white forelock on HIS RIGHT side, amber-lens sunglasses perched on top of his head, eyes unobstructed. Thin cream-white SHORT-SLEEVE open camp-collar summer shirt with ochre-gold collar and cuffs, slate-navy fitted tank underneath. Charcoal tailored utility SHORTS ending clearly above his knees, low ankle socks, white/navy low-top sneakers. Small mint diagnostic watch on HIS LEFT wrist, compact cream tool pouch on HIS RIGHT hip. Bare forearms and lower legs. Match the approved youthful leading-man face and breezy summer design; no rugged older face, bulky bodybuilder muscles, long trousers or boots.",
+      "crops": { "cutin": [100, 0, 960, 750], "portrait": [235, 0, 655, 420] }
+    },
+    {
+      "id": "xiaqing",
+      "jobId": "image-38907-37",
+      "actualModel": "ash/gpt-image-2.5-sunburst",
+      "referenceImages": ["xiaqing/turnaround-summer-v3.png"],
+      "output": "xiaqing/runtime-summer-v2.png",
+      "sha256": "d32b177494cd07b78a70ff9e85d69acc9af788b2c35face4cffe6d1124d2abe2",
+      "referenceSha256": "f35f30595dff9b35ff2a5679af5376166bf08625370f47d4c99e9a9214eb7b5f",
+      "characterBrief": "XIAQING: a beautiful eighteen-year-old adult woman with a warm girl-next-door smile, fair ivory skin, honey-brown eyes and softly curvy natural adult proportions. Long chestnut hair in a loose low side ponytail on HER RIGHT, white daisy flower clip above its tie, pearl stud earrings. Thin secure shoulder straps, a fitted opaque peach cropped camisole with the reference's low sweetheart neckline, shaped tailoring and fully covered chest. Bare midriff and navel above fitted white high-waisted short-shorts with a neat folded hem and full pelvic and buttock coverage. White-mint low wedge sandals, mint bead bracelet on HER LEFT wrist, small cream pouch and tiny flower charm on HER LEFT hip. Match the supplied revised summer sheet exactly, including its neckline, exposed waist, long legs and warm approachable expression. All garment fabric is opaque with full coverage of private areas; no wardrobe malfunction or transparent clothing. Her right hand holds the Pokeball, her left gestures openly toward her partner. Keep the youthful face and daisy clearly readable.",
+      "crops": { "cutin": [0, 0, 1024, 800], "portrait": [260, 0, 680, 420] },
+      "silhouette": true
+    }
+  ]
+}

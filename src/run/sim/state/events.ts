@@ -11,7 +11,7 @@ import type { BuffCue } from "../content/triggers";
 export type RunEvent =
   /** Co-op presence: a teammate lost or regained their connection, or left the run. */
   | { t: "peer"; player: PlayerId; state: "offline" | "online" | "left" }
-  | { t: "contact"; x: number; z: number; by: PlayerId; type: ElementType }
+  | { t: "contact"; x: number; z: number; by: PlayerId; type: ElementType; move: MoveId | null }
   | {
       t: "hit";
       x: number;
@@ -21,6 +21,8 @@ export type RunEvent =
       weak: boolean;
       /** The element of what hit, so the hit sounds like the move. */
       type: ElementType;
+      /** The move's contact style; null for ultimates, partners and item damage. */
+      move: MoveId | null;
       /** The player whose move, ultimate or partner landed it. */
       by: PlayerId;
       /** Collision feedback has already played; this event supplies the confirmed number. */

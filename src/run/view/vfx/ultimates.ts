@@ -11,6 +11,7 @@ import { timeline } from "../../sim/ultimates/index";
 import { Decal } from "./decals";
 import { dracoCast } from "./dragon";
 import { lineUltColour, lineUltPulse } from "./lines";
+import { rockAura, rockCast } from "./rock";
 import { flicker, perFrame, rand, skyTop, spray, type Echo, type Fx } from "./fx";
 import type { Rgb } from "./gl";
 import { groundArc } from "./line-shapes";
@@ -213,6 +214,10 @@ const DIM_ALPHA = 0.7;
  * spiralling up. Vertical and brief, so it never reads as a hitbox; the pulses that follow are.
  */
 export function ultCast(fx: Fx, ultimate: UltimateId, x: number, z: number): void {
+  if (ultimate === "rockslide-quake") {
+    rockCast(fx, x, z);
+    return;
+  }
   const [colour, core] = ultColour[ultimate];
   const h = fx.ground.heightAt(x, z);
   fx.echoes.add(drawCastColumn, 0.6, x, h, z, ULTIMATES.indexOf(ultimate));
@@ -286,6 +291,10 @@ export function drawCastAura(fx: Fx, aura: CastAura, x: number, z: number, mine:
   if (k <= 0) return;
   // Only the local caster's field dims: a partner's ultimate must not darken this player's view.
   if (mine) fx.decals.put(Decal.glow, x, z, DIM_RADIUS).tint(ink, DIM_ALPHA * k, ink, 0);
+  if (aura.ultimate === "rockslide-quake") {
+    rockAura(fx, x, z, k);
+    return;
+  }
   fx.decals.put(Decal.glow, x, z, 1.9).tint(colour, 0.7 * k, core, 1);
   const spin = fx.time * 2.2;
   for (let i = 0; i < 3; i++) {

@@ -13,6 +13,7 @@ import {
   BASE_PARTNER_SLOTS,
   CAPTURE_CHANCE,
   GUARD,
+  PARTNER,
 } from "../src/run/sim/content/params/partners.ts";
 import { TERRAIN_HALF } from "../src/run/sim/terrain.ts";
 import { apply } from "../src/run/sim/status.ts";
@@ -168,6 +169,55 @@ test("a partner's shot needs a clear line: a wall between it and the enemy stops
   };
   assert.ok(hits(false) > 0);
   assert.equal(hits(true), 0);
+});
+
+test("a partner fights the enemy nearest its owner, not the one nearest itself", () => {
+  const w = world();
+  const player = quiet(w);
+  player.x = player.px = 0;
+  player.z = player.pz = 0;
+  const [partner] = capture(w, "rattata", 1);
+  partner.x = partner.px = 5;
+  partner.z = partner.pz = 0;
+  const besideOwner = spawnEnemy(w, "caterpie", -2, 1.5);
+  const besidePartner = spawnEnemy(w, "caterpie", 5.8, 0);
+  for (const enemy of [besideOwner, besidePartner]) {
+    enemy.hp = enemy.maxHp = 1e6;
+    enemy.speed = 0;
+  }
+  w.events = [];
+  for (let tick = 0; tick < 30 * 4; tick++) stepWorld(w, []);
+  assert.ok(besideOwner.hp < besideOwner.maxHp, "the enemy at the owner's side was fought");
+  assert.equal(besidePartner.hp, besidePartner.maxHp);
+});
+
+test("a partner past its roam follows back without fighting, then fights again", () => {
+  const w = world();
+  const player = quiet(w);
+  player.x = player.px = 0;
+  player.z = player.pz = 0;
+  const [partner] = capture(w, "rattata", 1);
+  partner.x = partner.px = -(PARTNER.roam + 1.5);
+  partner.z = partner.pz = 0;
+  // In range of the owner, and right next to the partner's way back.
+  const enemy = spawnEnemy(w, "caterpie", -PARTNER.range + 0.5, 0.6);
+  enemy.hp = enemy.maxHp = 1e6;
+  enemy.speed = 0;
+  const flips = [];
+  let struckWhileFar = false;
+  w.events = [];
+  for (let tick = 0; tick < 30 * 6; tick++) {
+    const was = partner.returning;
+    stepWorld(w, []);
+    if (partner.returning !== was) flips.push(partner.returning);
+    const attacked = w.events.some((e) => e.t === "partner-attack");
+    if (attacked && Math.hypot(partner.x, partner.z) > PARTNER.rejoin && flips.length < 2)
+      struckWhileFar = true;
+    w.events = [];
+  }
+  assert.deepEqual(flips, [true, false], "returns once, rejoins once, no flicker");
+  assert.equal(struckWhileFar, false);
+  assert.ok(enemy.hp < enemy.maxHp, "fights again after rejoining");
 });
 
 test("runs with partners fighting stay deterministic", () => {

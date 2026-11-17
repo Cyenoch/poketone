@@ -96,6 +96,7 @@ test("unreadable native pick falls back with a diagnostic while the progress fil
     assert.deepEqual(loaded.settings, save.settings);
     assert.deepEqual(validPick(save.progress, loaded.pick), {
       starter: "charmander",
+      trainer: "chengxi",
       difficulty: 0,
       stage: "forest",
     });

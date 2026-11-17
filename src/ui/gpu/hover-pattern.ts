@@ -10,13 +10,13 @@ const probe = new Color();
 
 /**
  * DESIGN.md `fx-hover` ink for a surface, tone on tone: a dark face takes a faint white, the yellow
- * face gold, any other light face a pale blue. Each stays near 1.2:1 against its fill.
+ * face gold, any other light face a faint ink. Each stays near 1.2:1 against its fill.
  */
 function inkFor(surface: ColorRepresentation): { ink: string; alpha: number } {
   probe.set(surface).getHSL(hsl);
   if (hsl.l < 0.45) return { ink: "#ffffff", alpha: 0.16 };
   if (hsl.s > 0.6 && hsl.h > 0.08 && hsl.h < 0.17) return { ink: "#b48129", alpha: 0.34 };
-  return { ink: "#2165a4", alpha: 0.18 };
+  return { ink: "#16161d", alpha: 0.1 };
 }
 
 /**

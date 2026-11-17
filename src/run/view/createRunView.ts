@@ -55,8 +55,10 @@ import { statusTint } from "./vfx/status";
 import type { PropLook } from "./stageThemes";
 import { zoneTheme } from "./zoneThemes";
 import { createLandmark } from "./landmark";
+import { createExitPortal } from "./exitPortal";
 import { zoneDef } from "../sim/currentZone";
 import { playerRings } from "./player-rings";
+import { Deployment } from "./deployment";
 
 const dummy = new Object3D();
 const tint = new Color();
@@ -132,6 +134,7 @@ export interface RunView {
    * back (`createRun`'s warm under the loading cover).
    */
   warmSet(on: boolean): void;
+  setDeployment(elapsedMs: number | null): void;
   dispose(): void;
 }
 
@@ -370,6 +373,9 @@ export function* createRunView(
   );
   scene.add(landmark.root);
   disposables.push(landmark);
+  const exitPortal = createExitPortal(ground);
+  scene.add(exitPortal.root);
+  disposables.push(exitPortal);
 
   yield;
   // Swarm enemies: one instanced draw per species, blob shadows instead of shadow casting.
@@ -454,11 +460,15 @@ export function* createRunView(
    * Mounts every form of the line at construction, the inactive ones hidden: their materials and
    * programs exist from the start (the run warm compiles them), and evolving is a visibility swap.
    */
-  function mountLine(models: PlayerModels, group: Group): Map<FormId, MountedForm> {
+  function mountLine(
+    models: PlayerModels,
+    group: Group,
+    isSelf: boolean,
+  ): Map<FormId, MountedForm> {
     return new Map(
       [...models].map(([form, model]) => {
         const mounted = {
-          rig: mountRig(group, model, wind),
+          rig: mountRig(group, model, wind, isSelf),
           holder: model.holder,
           head: model.model.root.getObjectByName("Head"),
         };
@@ -480,7 +490,7 @@ export function* createRunView(
     if (!models) throw new Error(`玩家 ${player.id} 的模型没有载入。`);
     const group = new Group();
     scene.add(group);
-    const forms = mountLine(models, group);
+    const forms = mountLine(models, group, player.id === local);
     return {
       player,
       forms,
@@ -492,10 +502,14 @@ export function* createRunView(
     };
   });
   const self = avatars.find((avatar) => avatar.player.id === local);
+  const dragBone = (index: number) => avatars[index]!.rig.drag;
+  const deployment = new Deployment(avatars, ground);
+  scene.add(deployment.root);
+  disposables.push(deployment);
   if (!self) throw new Error(`本地玩家 ${local} 不在这一局。`);
   const player = self.player;
   const avatar = self.group;
-  const identities = playerRings(world);
+  const identities = playerRings(world, local);
   scene.add(identities.root);
   disposables.push(identities);
   /** Each drawn player's muzzle this frame, by player id. */
@@ -834,10 +848,12 @@ export function* createRunView(
       frameEnemies(alpha, yaw, hitClock, dt);
       frameStations(dt);
       landmark.update(world, elapsed);
+      exitPortal.update(world, elapsed);
       for (const body of avatars)
         frameAvatar(body, alpha, dt, remotePlayerSpeeds?.get(body.player.id));
+      deployment.frame(yaw);
       identities.update(alpha, dt);
-      footprints?.update(alpha);
+      footprints?.update(alpha, dragBone);
       vfx.update(world, alpha, dt, yaw, player, muzzles);
 
       cameraTarget.lerp(avatar.position, Math.min(1, dt * 6));
@@ -862,8 +878,12 @@ export function* createRunView(
       return [(projected.x * 0.5 + 0.5) * width, (-projected.y * 0.5 + 0.5) * height];
     },
     warmSet(on) {
+      deployment.root.visible = on || deployment.elapsed !== null;
       for (const body of avatars)
         for (const [form, mounted] of body.forms) mounted.holder.visible = on || form === body.form;
+    },
+    setDeployment(elapsedMs) {
+      deployment.elapsed = elapsedMs;
     },
     releaseUploads() {
       releaseUploads(scene);

@@ -1,0 +1,382 @@
+{
+  "createdAt": "2026-11-17",
+  "generator": "Tripo CLI, TRIPO_CLIENT_APP=claude",
+  "model": "v3.1-20260211",
+  "parameters": {
+    "smart_low_poly": true,
+    "face_limit": 1000
+  },
+  "workflow": "Recovered the interrupted batch history; no pending multiview tasks existed. Reused existing official artwork and split reference sheets. Verified absolute image paths in dry-run (front, left, back, right, 40 credits). Tripo multiview_to_model \u2192 rig-psychic-rock.py \u2192 bun run assets:game player-<form>.",
+  "referenceSheetOrigin": "Preserved sheets from the interrupted implementation; no new image generation. The original image-generation task IDs were not recorded.",
+  "creditsTotal": 420,
+  "creditsThisResume": 240,
+  "creditsPriorRejected": 180,
+  "rigAnimationCredits": 0,
+  "tasks": [
+    {
+      "asset": "abra",
+      "taskId": "7d7fe7df-f4b9-45c9-b0bb-5fc83bdc8f36",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "status": "shipped",
+      "record": "assets/characters/abra/generation/tripo-out/tripo-out/abra-player-multiview-7d7fe7df/task.json"
+    },
+    {
+      "asset": "abra",
+      "taskId": "ff840bf7-0059-450f-be5b-d2758d289575",
+      "type": "text_to_model",
+      "credits": 30,
+      "status": "rejected",
+      "reason": "Earlier interrupted implementation passed unresolved relative image paths as prompt text; this is a text_to_model result, not the intended multiview source. Preserved and not reused.",
+      "record": "assets/characters/abra/rejected/text-prompt-not-multiview/tripo-out/tripo-out/abra-player-mv-ff840bf7/task.json"
+    },
+    {
+      "asset": "kadabra",
+      "taskId": "943c7142-1946-4720-9500-d64c90abb464",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "status": "shipped",
+      "record": "assets/characters/kadabra/generation/tripo-out/tripo-out/kadabra-player-multiview-943c7142/task.json"
+    },
+    {
+      "asset": "kadabra",
+      "taskId": "ffeb8e34-2082-4286-bb71-ad8ac7ee4483",
+      "type": "text_to_model",
+      "credits": 30,
+      "status": "rejected",
+      "reason": "Earlier interrupted implementation passed unresolved relative image paths as prompt text; this is a text_to_model result, not the intended multiview source. Preserved and not reused.",
+      "record": "assets/characters/kadabra/rejected/text-prompt-not-multiview/tripo-out/tripo-out/kadabra-player-mv-ffeb8e34/task.json"
+    },
+    {
+      "asset": "alakazam",
+      "taskId": "33836285-7346-4a84-b37c-43404dd46915",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "status": "shipped",
+      "record": "assets/characters/alakazam/generation/tripo-out/tripo-out/alakazam-player-multiview-33836285/task.json"
+    },
+    {
+      "asset": "alakazam",
+      "taskId": "a4df3da0-74f8-4eaa-a96e-6e6883c804d8",
+      "type": "text_to_model",
+      "credits": 30,
+      "status": "rejected",
+      "reason": "Earlier interrupted implementation passed unresolved relative image paths as prompt text; this is a text_to_model result, not the intended multiview source. Preserved and not reused.",
+      "record": "assets/characters/alakazam/rejected/text-prompt-not-multiview/tripo-out/tripo-out/alakazam-player-mv-a4df3da0/task.json"
+    },
+    {
+      "asset": "geodude",
+      "taskId": "7fe129a3-7955-427e-a259-bed604f8f891",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "status": "shipped",
+      "record": "assets/characters/geodude/generation/tripo-out/tripo-out/geodude-player-multiview-7fe129a3/task.json"
+    },
+    {
+      "asset": "geodude",
+      "taskId": "dbe61596-0422-40f3-acc8-bc99682b5da6",
+      "type": "text_to_model",
+      "credits": 30,
+      "status": "rejected",
+      "reason": "Earlier interrupted implementation passed unresolved relative image paths as prompt text; this is a text_to_model result, not the intended multiview source. Preserved and not reused.",
+      "record": "assets/characters/geodude/rejected/text-prompt-not-multiview/tripo-out/tripo-out/geodude-player-mv-dbe61596/task.json"
+    },
+    {
+      "asset": "graveler",
+      "taskId": "ff34ca0d-eb17-4308-a156-3f80754e54af",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "status": "shipped",
+      "record": "assets/characters/graveler/generation/tripo-out/tripo-out/graveler-player-multiview-ff34ca0d/task.json"
+    },
+    {
+      "asset": "graveler",
+      "taskId": "bfc49155-0cb6-49fe-a71a-85b1673f6d61",
+      "type": "text_to_model",
+      "credits": 30,
+      "status": "rejected",
+      "reason": "Earlier interrupted implementation passed unresolved relative image paths as prompt text; this is a text_to_model result, not the intended multiview source. Preserved and not reused.",
+      "record": "assets/characters/graveler/rejected/text-prompt-not-multiview/tripo-out/tripo-out/graveler-player-mv-bfc49155/task.json"
+    },
+    {
+      "asset": "golem",
+      "taskId": "c6ba2cfd-2ec5-4346-8a13-ee3d3711cd43",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "status": "shipped",
+      "record": "assets/characters/golem/generation/tripo-out/tripo-out/golem-player-multiview-c6ba2cfd/task.json"
+    },
+    {
+      "asset": "golem",
+      "taskId": "b8405e5e-c1e2-49a6-befc-dc9edcb8e07c",
+      "type": "text_to_model",
+      "credits": 30,
+      "status": "rejected",
+      "reason": "Earlier interrupted implementation passed unresolved relative image paths as prompt text; this is a text_to_model result, not the intended multiview source. Preserved and not reused.",
+      "record": "assets/characters/golem/rejected/text-prompt-not-multiview/tripo-out/tripo-out/golem-player-mv-b8405e5e/task.json"
+    }
+  ],
+  "processing": "Blender 5.3.0; regional weights with at most four influences, one mesh and material per player, 1024px base color, no player decimation or compression. Shared planted-foot IK and clip keying from rig-new-lines.py. Five bipeds use 0.8s runs, all idle clips are 2.4s. Geodude uses a 1s hovering run covering 2.6 model heights. Full soles are rigid to the solved foot bones; idle remains planted. Graveler lower hands lift clear of the ground; Golem shell stays off leg weights. Kadabra tail underside opening capped, detached whisker roots attached to the muzzle. Three missing spoon bowls/stems added to Kadabra/Alakazam, rigid to their hands and using source silver texels. Abra/Kadabra tails bind to TailCarrier for the existing runtime spring.",
+  "calibration": "Exported clips measured with assets/measure-run-clip.py; hand-authored run speeds use stride / planted share / duration \u00d7 form height. Lifts additionally cover quarter-frame minima (Graveler 0.01 covers the low fingers between frames). All six face +X, using the existing -PI/2 runtime yaw.",
+  "license": "Pok\u00e9mon fan assets; character rights belong to their respective owners. Official artwork via PokeAPI/sprites. Generated source subject to Tripo terms. No official affiliation or character IP license claimed; see README.md.",
+  "assets": [
+    {
+      "form": "abra",
+      "reference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/63.png",
+      "referenceSheet": "assets/characters/abra/generation/sheet.jpg",
+      "referenceSheetSha256": "60413d7a8f1fe8574e247f5a0130f581cebbf51a52b2fd220fb3c6e0498fd29d",
+      "views": [
+        {
+          "path": "assets/characters/abra/generation/split/v-front.png",
+          "sha256": "1abc48782eb283dd639dd3d44e058551b1e08278bb3642de61ab0f63a38f0fa1"
+        },
+        {
+          "path": "assets/characters/abra/generation/split/v-left.png",
+          "sha256": "bdd2e216990b022d0cebfab7742a059f312c2918809f988117f58b46b27fa65b"
+        },
+        {
+          "path": "assets/characters/abra/generation/split/v-back.png",
+          "sha256": "360230c9604b0a99c2ae9c0ba67727ee5fd1de63e18334ec2670e9ab1659299b"
+        },
+        {
+          "path": "assets/characters/abra/generation/split/v-right.png",
+          "sha256": "b78f70a68f8bfffa141a5247c410a82bf8a0027ce7fb83101ff840881b82c822"
+        }
+      ],
+      "source": "assets/characters/abra/generation/tripo-out/tripo-out/abra-player-multiview-7d7fe7df/model.glb",
+      "sourceSha256": "db61696917932e5b2000f88c6a022a0d49eb7002a6e32de93bb7d297602664fc",
+      "preparedSource": "assets/characters/abra/blender/model.glb",
+      "preparedSourceSha256": "890d917ebe0535959fc49da37faaef19fd0450a56bf865b26846aad5555077ef",
+      "output": "public/models/abra.glb",
+      "outputSha256": "4a03b895073ba0c0bdbbacc42983d32640411a20824af9d8ff717ebd98665487",
+      "bytes": 342488,
+      "triangles": 2268,
+      "texture": 1024,
+      "rig": {
+        "form": "abra",
+        "bones": 14,
+        "vertices": 3477,
+        "triangles": 2268,
+        "runSeconds": 0.8,
+        "runCycles": 1,
+        "plantedSpeedPerHeight": 1.6666666666666667,
+        "credits": 0
+      }
+    },
+    {
+      "form": "kadabra",
+      "reference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/64.png",
+      "referenceSheet": "assets/characters/kadabra/generation/sheet.jpg",
+      "referenceSheetSha256": "98f3445b7efb3360a1e486bf6c7d4e42c08c0c8cff1573a5ec3883783420e1d9",
+      "views": [
+        {
+          "path": "assets/characters/kadabra/generation/split/v-front.png",
+          "sha256": "28346b6319c639bfe00644028d18f19ca48105a628faea8b61b30c2c53ae7b15"
+        },
+        {
+          "path": "assets/characters/kadabra/generation/split/v-left.png",
+          "sha256": "e7296b4600b637ee5f04d81408cc1a37502bac4c733f45a9e8d87346bd4a5174"
+        },
+        {
+          "path": "assets/characters/kadabra/generation/split/v-back.png",
+          "sha256": "7955cf80534d362200c6f7c40b67796a52e592d5ea1c8b032312c6bcfd8415cd"
+        },
+        {
+          "path": "assets/characters/kadabra/generation/split/v-right.png",
+          "sha256": "f75eb59d28e9f17c247abbbf4d10df0288af7603e9ed2f74cfb2663d447a1fb6"
+        }
+      ],
+      "source": "assets/characters/kadabra/generation/tripo-out/tripo-out/kadabra-player-multiview-943c7142/model.glb",
+      "sourceSha256": "7b2af97336ff22a59e60b67dd348b3ce615bf15474b0a37b77fd59afe72fdd69",
+      "preparedSource": "assets/characters/kadabra/blender/model.glb",
+      "preparedSourceSha256": "88b470c295a7564ac2ab216d7a22cc8ad33be9157e591ec147c9b67bcd3e0d7d",
+      "output": "public/models/kadabra.glb",
+      "outputSha256": "2669a33f2499f212cb490271608510657cebea08b786c816edeed9c532424120",
+      "bytes": 390324,
+      "triangles": 2489,
+      "texture": 1024,
+      "rig": {
+        "form": "kadabra",
+        "bones": 14,
+        "vertices": 3598,
+        "triangles": 2489,
+        "runSeconds": 0.8,
+        "runCycles": 1,
+        "plantedSpeedPerHeight": 1.5999999999999999,
+        "credits": 0
+      }
+    },
+    {
+      "form": "alakazam",
+      "reference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/65.png",
+      "referenceSheet": "assets/characters/alakazam/generation/sheet.jpg",
+      "referenceSheetSha256": "61e90c46728e6391f4fa61cba66ddcdd41669ada09410f412e77909683f6a55c",
+      "views": [
+        {
+          "path": "assets/characters/alakazam/generation/split/v-front.png",
+          "sha256": "c926e848968de9c83f643c3a1a247b3c703b0ac0ead51545d37ce43ce07e182a"
+        },
+        {
+          "path": "assets/characters/alakazam/generation/split/v-left.png",
+          "sha256": "3ca8255b43c6fa8a78cc5df8059608536bca8c8ccde6c6dcab466e7a61784e54"
+        },
+        {
+          "path": "assets/characters/alakazam/generation/split/v-back.png",
+          "sha256": "346009d65de0eb338710dbd9357d45b97924d1850ebc6e55ceace15a1c2a2eec"
+        },
+        {
+          "path": "assets/characters/alakazam/generation/split/v-right.png",
+          "sha256": "2fa7347b67b57fff80af9e1c2e01081b96478a65853753f6df76f2bf67fe249e"
+        }
+      ],
+      "source": "assets/characters/alakazam/generation/tripo-out/tripo-out/alakazam-player-multiview-33836285/model.glb",
+      "sourceSha256": "bd1f47016f14c87ca21c3b514e762432d6c2ade6755d884e5a6c568dd9984ac8",
+      "preparedSource": "assets/characters/alakazam/blender/model.glb",
+      "preparedSourceSha256": "6eb4bb899b5df69883112c0afd801d58915f5d8aa328bbc6f2b435235e217177",
+      "output": "public/models/alakazam.glb",
+      "outputSha256": "fc2e63fcbf2d8038a4e5592ca1d25655cfd4a7f4514e36f4fe08cb67e300d801",
+      "bytes": 368640,
+      "triangles": 2239,
+      "texture": 1024,
+      "rig": {
+        "form": "alakazam",
+        "bones": 13,
+        "vertices": 3541,
+        "triangles": 2239,
+        "runSeconds": 0.8,
+        "runCycles": 1,
+        "plantedSpeedPerHeight": 1.7,
+        "credits": 0
+      }
+    },
+    {
+      "form": "geodude",
+      "reference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/74.png",
+      "referenceSheet": "assets/characters/geodude/generation/sheet.jpg",
+      "referenceSheetSha256": "e23fb36a41455a5264eac73b29934a59ec533f6bbc82935cb711a6bef38d2e5d",
+      "views": [
+        {
+          "path": "assets/characters/geodude/generation/split/v-front.png",
+          "sha256": "c2b80d08d30696501a5a7d5aa17249599fe5203b368fb299919918645d1e7709"
+        },
+        {
+          "path": "assets/characters/geodude/generation/split/v-left.png",
+          "sha256": "1762550dc29698b5bca1c49f3464c71391ed533d2aed1cff1e26d6ee8894e5f7"
+        },
+        {
+          "path": "assets/characters/geodude/generation/split/v-back.png",
+          "sha256": "c536b38d3105abe7637b5382fb4cdaace6c0ce7ae28db57913c8554613599fb5"
+        },
+        {
+          "path": "assets/characters/geodude/generation/split/v-right.png",
+          "sha256": "6d62fda34c1f1bf16d2363360037c689ee9431a52593a70c6afe91fbc3089877"
+        }
+      ],
+      "source": "assets/characters/geodude/generation/tripo-out/tripo-out/geodude-player-multiview-7fe129a3/model.glb",
+      "sourceSha256": "4ee22da01ab10f1de8fcd5335afa4c5b65050984e9373f64d1ee077495609b35",
+      "preparedSource": "assets/characters/geodude/blender/model.glb",
+      "preparedSourceSha256": "bc2c403141e12b59a30f25243671c400c53694e6196b2be86519b71f268c0b85",
+      "output": "public/models/geodude.glb",
+      "outputSha256": "e75caf6a224474992249ab9203d3aec9a159c3daf384a68c524d3460a2c2265a",
+      "bytes": 264048,
+      "triangles": 2462,
+      "texture": 1024,
+      "rig": {
+        "form": "geodude",
+        "bones": 5,
+        "vertices": 3369,
+        "triangles": 2462,
+        "runSeconds": 1.0,
+        "runCycles": 1,
+        "plantedSpeedPerHeight": 2.6,
+        "credits": 0
+      }
+    },
+    {
+      "form": "graveler",
+      "reference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/75.png",
+      "referenceSheet": "assets/characters/graveler/generation/sheet.jpg",
+      "referenceSheetSha256": "104007c82657cedeec75009df5c557639c277936d759b71d299241ed9d8d3ce5",
+      "views": [
+        {
+          "path": "assets/characters/graveler/generation/split/v-front.png",
+          "sha256": "4dadbf57dc8127ba4610d87063fad3292395dc773925171cd0d4157136da1197"
+        },
+        {
+          "path": "assets/characters/graveler/generation/split/v-left.png",
+          "sha256": "45c92f00f7c412924836e15f8af4cdabfe8c7a3d8512edf026c1bef14ba5cb5f"
+        },
+        {
+          "path": "assets/characters/graveler/generation/split/v-back.png",
+          "sha256": "94e5683ff0e5282dbbba5a0ed80175f8150416bd88258b98e5a098726f2fe49f"
+        },
+        {
+          "path": "assets/characters/graveler/generation/split/v-right.png",
+          "sha256": "08a104f8d81c16392feca21599580992f5f3cc71d911a0a467d3ae986fc801ff"
+        }
+      ],
+      "source": "assets/characters/graveler/generation/tripo-out/tripo-out/graveler-player-multiview-ff34ca0d/model.glb",
+      "sourceSha256": "928561c9669c83ee468458e1e258e6e8c05b913c3a563d2f16aca5f5d66d1c20",
+      "preparedSource": "assets/characters/graveler/blender/model.glb",
+      "preparedSourceSha256": "7620bd8d6ad46686233400e92f8358c143c2829c56e2c9e2dea9d261f47a9062",
+      "output": "public/models/graveler.glb",
+      "outputSha256": "4ffe8b65ffd0225b02edd5d53bfc37361a7942e1348fd60257c2dc7287260528",
+      "bytes": 302644,
+      "triangles": 1956,
+      "texture": 1024,
+      "rig": {
+        "form": "graveler",
+        "bones": 15,
+        "vertices": 3382,
+        "triangles": 1956,
+        "runSeconds": 0.8,
+        "runCycles": 1,
+        "plantedSpeedPerHeight": 1.3970588235294117,
+        "credits": 0
+      }
+    },
+    {
+      "form": "golem",
+      "reference": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/76.png",
+      "referenceSheet": "assets/characters/golem/generation/sheet.jpg",
+      "referenceSheetSha256": "cb62c338fa05f24ea1964aa534a01add2743f8eb93030bc1106e28942df4e0a3",
+      "views": [
+        {
+          "path": "assets/characters/golem/generation/split/v-front.png",
+          "sha256": "96bb7f8188863dc3f236c0c729e0f505c68575d90bef87b894f977f9ea802f38"
+        },
+        {
+          "path": "assets/characters/golem/generation/split/v-left.png",
+          "sha256": "869f46fa20187767a32abce3cbb9fea8d3a39e843ae795f4b8cc13b29bd625e9"
+        },
+        {
+          "path": "assets/characters/golem/generation/split/v-back.png",
+          "sha256": "d41a17f94a0ced67c92b06ae67feb3888136d02a5e47eb5564556bac81c3b315"
+        },
+        {
+          "path": "assets/characters/golem/generation/split/v-right.png",
+          "sha256": "d0d5d922d3caaf67e2e55910454eba389a7e92fd56d3ae356324c8c5d4f41a0c"
+        }
+      ],
+      "source": "assets/characters/golem/generation/tripo-out/tripo-out/golem-player-multiview-c6ba2cfd/model.glb",
+      "sourceSha256": "e59db240025c4c13c90e812bdb17652ace6880484d57f39914f92ea8c6c15308",
+      "preparedSource": "assets/characters/golem/blender/model.glb",
+      "preparedSourceSha256": "a6de4e8da8886b6349e0c3209d9b1ea82b99b020dbea9c5194a71d81e43b9e40",
+      "output": "public/models/golem.glb",
+      "outputSha256": "d17826864857f8c6ad3494b715f8a0979c2e2702cf0fe52b05095c304bf0c29d",
+      "bytes": 373044,
+      "triangles": 2190,
+      "texture": 1024,
+      "rig": {
+        "form": "golem",
+        "bones": 11,
+        "vertices": 3627,
+        "triangles": 2190,
+        "runSeconds": 0.8,
+        "runCycles": 1,
+        "plantedSpeedPerHeight": 1.534090909090909,
+        "credits": 0
+      }
+    }
+  ]
+}

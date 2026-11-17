@@ -11,10 +11,11 @@ import {
 import { images } from "../../prepare/images";
 import type { ElementType } from "../../run/sim/content/elements";
 import { crispLineGlsl } from "./crisp-line";
-import { themeGrain, typeColors } from "./run-theme";
+import { typeColors } from "./run-theme";
+import { HARD_SHADOW, RADIUS, RADIUS_INNER, SLANT, ui } from "./tokens";
 
 /**
- * GPU paint for the choice window (run-screen.css `.run-card`, `.choice-banner`, `.game-button`).
+ * GPU paint for the choice cards.
  * Every surface draws its CSS box-shadows, outlines and decorations outside its own layout box by
  * enlarging its quad in the vertex shader (like box-shadow.ts), so nothing here adds scrollable
  * overflow, and each one draws in its own element's layer: a card's glow covers its neighbour the
@@ -69,6 +70,9 @@ export const cardFaces: ReadonlySet<ElementType> = new Set<ElementType>([
   "fighting",
   "poison",
   "flying",
+  "psychic",
+  "rock",
+  "ground",
 ]);
 
 /** Card art (public/art/cards), loaded once per overlay layer so a deal never shows an empty face. */
@@ -99,6 +103,10 @@ const prelude = `
   vec3 toLinear(vec3 c){return sRGBTransferEOTF(vec4(c,1.)).rgb;}
   vec3 toSrgb(vec3 c){return sRGBTransferOETF(vec4(c,1.)).rgb;}
   void over(inout vec4 acc,vec3 ink,float alpha){acc=vec4(ink*alpha,alpha)+acc*(1.-alpha);}
+  vec3 softLight(vec3 b,vec3 s){
+    vec3 d=mix(sqrt(b),((16.*b-12.)*b+4.)*b,step(b,vec3(.25)));
+    return mix(b+(2.*s-1.)*(d-b),b-(1.-2.*s)*b*(1.-b),step(s,vec3(.5)));
+  }
 `;
 
 /** A quad drawn `reach` px beyond its layout box; `boxPoint` is CSS px from the box's top-left. */
@@ -188,7 +196,6 @@ interface ShadowLayer {
   alpha: number;
 }
 const none: ShadowLayer = { y: 0, blur: 0, spread: 0, ink: "#000000", alpha: 0 };
-const windowShadow: ShadowLayer = { y: 12, blur: 32, spread: 0, ink: "#0d233f", alpha: 0.25 };
 function writeLayers(layers: ShadowLayer[], shape: Vector3[], ink: Vector4[]): void {
   layers.forEach((layer, i) => {
     shape[i]!.set(layer.y, layer.blur, layer.spread);
@@ -197,22 +204,15 @@ function writeLayers(layers: ShadowLayer[], shape: Vector3[], ink: Vector4[]): v
   });
 }
 
-/** The item flap's lower edge: a half-ellipse (border-radius 0 0 50% 50% / 0 0 14px 14px). */
-const flapDistance = `
-  float flap(vec2 q,float a,float cy,float w){
-    if(q.y<cy)return max(-q.y,max(-q.x,q.x-w));
-    vec2 uv=vec2((q.x-a)/a,(q.y-cy)/14.);float f=length(uv);
-    vec2 g=vec2(uv.x/a,uv.y/14.)/max(f,1e-4);
-    return (f-1.)/max(length(g),1e-4);
-  }
-`;
-
-/** The card's face, header band, frame, box-shadows (rarity glow, pick flash) and outlines. */
+/**
+ * The card (2026-11 redesign): a paper face tinted by the card art (soft-light), a slanted type
+ * plate across the head's left (cut at −14°) carrying the kind chip, a rim in the rarity colour
+ * (ink for training and new moves), the hard shadow, the epic/legendary glow and legendary sweep,
+ * the pick's white ring and type glow, the banish dashes and a white keyboard focus ring.
+ */
 export class ChoiceCardSurface extends BoxSurface {
   private readonly values: {
     veil: { value: number };
-    fx: { value: Vector2 };
-    fxOn: { value: number };
     sweep: { value: number };
     focusRing: { value: number };
     banish: { value: number };
@@ -224,33 +224,24 @@ export class ChoiceCardSurface extends BoxSurface {
     const { kind, tone } = style;
     const type = style.type ? typeColors[style.type] : null;
     const toneHex = toneColor(style);
-    const face = kind === "move" ? type!.soft : kind === "item" ? "#f3e3c3" : "#e3e8ee";
-    // Rarity glows on move and item cards alike (the item keeps its leather face and frame).
+    const face = kind === "move" ? type!.soft : kind === "item" ? "#f6eedd" : ui.mist;
+    const plate = kind === "move" ? type!.type : kind === "item" ? ui.ink : "#5d7389";
     const rated = kind === "move" || kind === "item";
+    const rim = rated && tone in rarityTones ? toneHex : ui.ink;
     const legendary = rated && tone === "legendary";
-    const common = kind === "move" && tone === "common";
-    const fade =
-      kind !== "move"
-        ? 0
-        : tone === "common"
-          ? 0.72
-          : tone === "epic"
-            ? 0.22
-            : tone === "legendary"
-              ? 0.06
-              : 0.5;
+    const tint = tone === "legendary" ? 0.75 : tone === "epic" ? 0.6 : tone === "rare" ? 0.5 : 0.38;
     const base: ShadowLayer[] =
       rated && tone === "epic"
-        ? [windowShadow, { y: 0, blur: 14, spread: 1, ink: toneHex, alpha: 0.6 }, none]
+        ? [none, { y: 0, blur: 14, spread: 1, ink: toneHex, alpha: 0.6 }, none]
         : legendary
           ? [
-              windowShadow,
+              none,
               { y: 0, blur: 0, spread: 2, ink: "#ffffff", alpha: 1 },
               { y: 0, blur: 22, spread: 3, ink: toneHex, alpha: 0.7 },
             ]
-          : [windowShadow, none, none];
+          : [none, none, none];
     const picked: ShadowLayer[] = [
-      windowShadow,
+      none,
       { y: 0, blur: 0, spread: 4, ink: "#ffffff", alpha: 1 },
       { y: 0, blur: 26, spread: 8, ink: type?.type ?? toneHex, alpha: 0.8 },
     ];
@@ -261,14 +252,11 @@ export class ChoiceCardSurface extends BoxSurface {
     writeLayers(base, shapeA, inkA);
     writeLayers(picked, shapeB, inkB);
     if (legendary) {
-      // 0 0 0 2px color-mix(in srgb, var(--tone) 70%, #fff)
       const ring = mixHex(toneHex, "#ffffff", 0.7);
       inkA[1]!.set(ring.x, ring.y, ring.z, 1);
     }
     const values = {
       veil: { value: 0 },
-      fx: { value: new Vector2() },
-      fxOn: { value: 0 },
       sweep: { value: -1.3 },
       focusRing: { value: 0 },
       banish: { value: 0 },
@@ -279,116 +267,67 @@ export class ChoiceCardSurface extends BoxSurface {
     const uniforms = {
       ...values,
       face: { value: srgb(face) },
-      tone: { value: srgb(toneHex) },
-      typeInk: { value: srgb(type?.type ?? toneHex) },
+      plateInk: { value: srgb(plate) },
+      rimInk: { value: srgb(rim) },
       shapeA: { value: shapeA },
       inkA: { value: inkA },
       shapeB: { value: shapeB },
       inkB: { value: inkB },
     };
-    const radius = kind === "item" ? 4 : 10;
-    const frameInk =
-      kind === "item" ? "vec3(.290196,.196078,.094118)" : "vec3(.078431,.184314,.313725)";
-    const band =
-      kind === "move"
-        ? `if(pb.y<band){col=pb.y<5.?tone:typeInk;col=mix(col,navy,step(band-2.,pb.y));}`
-        : kind === "train"
-          ? `if(pb.y<band){vec2 bs=vec2(ps.x,band);float L=(bs.x+bs.y)*.70710678;
-              float m=mod(dot(pb-bs*.5,vec2(-.70710678))+L*.5,16.);
-              float stripe=smoothstep(7.5,8.5,m)*(1.-smoothstep(15.5,16.,m));
-              col=mix(vec3(.364706,.450980,.537255),vec3(.431373,.517647,.6),stripe);
-              col=mix(col,navy,step(band-2.,pb.y));}`
-          : `
-            float fh=band+6.,a=ps.x*.5,cy=fh-14.;
-            float flapIn=1.-smoothstep(-aa,aa,flap(pb,a,cy,ps.x));
-            float flapUp=1.-smoothstep(-aa,aa,flap(pb+vec2(0.,2.),a,cy,ps.x));
-            float flapDown=1.-smoothstep(-aa,aa,flap(pb-vec2(0.,2.),a,cy,ps.x));
-            col=mix(col,vec3(.290196,.196078,.094118),(1.-flapIn)*flapDown*.25);
-            vec3 flapInk=${tone === "legendary" ? "vec3(.878431,.603922,.070588)" : "vec3(.611765,.415686,.2)"};
-            float r=length(pb-vec2(a,fh-9.));
-            vec4 rivet=vec4(1.,.878431,.541176,1.);
-            rivet=mix(rivet,vec4(.352941,.227451,.078431,1.),smoothstep(3.,3.5,r));
-            rivet.a*=1.-smoothstep(5.,5.5,r);
-            flapInk=mix(flapInk,rivet.rgb,rivet.a);
-            flapInk=mix(flapInk,vec3(.290196,.196078,.094118),1.-flapUp);
-            col=mix(col,flapInk,flapIn);
-            float sd=sdRoundBox(pb-ps*.5,ps*.5-4.,2.);
-            float seam=smoothstep(-2.-aa,-2.+aa,sd)*(1.-smoothstep(-aa,aa,sd));
-            seam*=step(mod(perimeter(pb-ps*.5,ps*.5-5.,1.),10.),6.);
-            col=mix(col,vec3(.352941,.227451,.078431),seam*.55);`;
     super(
       `card-${kind}-${tone}`,
       64,
       uniforms,
       `
-      vec3 navy=vec3(.078431,.184314,.313725);
-      float radius=${radius}.;
+      float radius=${RADIUS}.;
       float d=sdRoundBox(c,h,radius);
+      over(acc,vec3(0.),${HARD_SHADOW.alpha}*(1.-pick)*(1.-smoothstep(-aa,aa,sdRoundBox(c-vec2(${HARD_SHADOW.offset}.),h,radius))));
       for(int i=2;i>=0;i--){
         vec3 g=mix(shapeA[i],shapeB[i],pick);vec4 ink=mix(inkA[i],inkB[i],pick);
         float cover=shadowCover(sdRoundBox(c-vec2(0.,g.x),h,radius)-g.z,g.y,aa)*ink.a;
         over(acc,ink.a>0.?ink.rgb/ink.a:vec3(0.),cover);
       }
       acc*=smoothstep(-aa,aa,d);
-      over(acc,vec3(1.,.831373,.356863),focusRing*smoothstep(3.-aa,3.+aa,d)*(1.-smoothstep(6.-aa,6.+aa,d)));
+      over(acc,vec3(1.),focusRing*smoothstep(3.-aa,3.+aa,d)*(1.-smoothstep(6.-aa,6.+aa,d)));
       float dashIn=crispLine(2.,2.*aa),dashOut=dashIn+crispLine(3.,2.*aa);
       float dash=smoothstep(dashIn-aa,dashIn+aa,d)*(1.-smoothstep(dashOut-aa,dashOut+aa,d));
       dash*=step(mod(perimeter(c,h+3.5,radius+3.5),15.),9.);
       over(acc,vec3(.658824,.196078,.262745),banish*dash);
       vec2 pb=p-vec2(frame),ps=boxSize-2.*frame;
-      float artSize=${legendary ? "ps.y*1.16" : "max(ps.x,ps.y)"};
-      vec2 artUv=(pb-ps*.5)/artSize+.5;
+      vec2 artUv=(pb-ps*.5)/max(ps.x,ps.y)+.5;
       vec3 art=toSrgb(texture2D(map,vec2(artUv.x,1.-artUv.y)).rgb);
-      ${
-        common
-          ? `float l=dot(art,vec3(.3,.59,.11));vec3 lc=face+(l-dot(face,vec3(.3,.59,.11)));
-             float n=min(lc.r,min(lc.g,lc.b)),x=max(lc.r,max(lc.g,lc.b));
-             if(n<0.)lc=l+(lc-l)*l/(l-n);if(x>1.)lc=l+(lc-l)*(1.-l)/(x-l);art=lc;`
-          : ""
-      }
-      vec3 col=mix(art,face,${fade.toFixed(2)});
-      col=mix(col,vec3(1.),.45*veil);
-      vec2 tile=mod(pb-fx,vec2(84.,42.));
-      float balls=0.;
-      for(int i=0;i<3;i++){
-        vec2 q=tile-(i==0?vec2(21.,21.):i==1?vec2(63.,0.):vec2(63.,42.));
-        float rings=min(abs(length(q)-13.),abs(length(q)-4.4))-1.;
-        float bar=max(abs(q.y)-1.,max(4.5-abs(q.x),abs(q.x)-13.));
-        balls=max(balls,1.-smoothstep(-aa,aa,min(rings,bar)));
-      }
-      col=mix(col,navy,balls*.1*fxOn);
+      vec3 col=mix(face,softLight(face,art),${tint.toFixed(2)});
+      col=mix(col,vec3(1.),.3*veil);
       ${
         legendary
-          ? `float sw=ps.x*.45;float xl=pb.x-sweep*sw+.249328*(pb.y-ps.y*.5);
+          ? `float sw=ps.x*.45;float xl=pb.x-sweep*sw+${SLANT.toFixed(6)}*(pb.y-ps.y*.5);
              float t=dot(vec2(xl,pb.y)-vec2(sw,ps.y)*.5,vec2(.984808,.173648))/(sw*.984808+ps.y*.173648)+.5;
              col=mix(col,vec3(1.),.6*max(0.,1.-abs(t*2.-1.))*step(0.,xl)*step(xl,sw));`
           : ""
       }
-      ${band}
+      // The head's slanted plate: from the left edge to a −14° cut, the card art over its colour.
+      float plateRight=clamp(ps.x*.46,52.,150.)+(band-pb.y)*${SLANT.toFixed(6)};
+      float inPlate=(1.-smoothstep(-aa,aa,pb.x-plateRight))*(1.-smoothstep(-aa,aa,pb.y-band));
+      vec3 plateCol=mix(plateInk,softLight(plateInk,art),.85);
+      col=mix(col,plateCol,inPlate);
       float inner=sdRoundBox(c,h-frame,max(radius-frame,0.));
-      col=mix(col,${frameInk},smoothstep(-aa,aa,inner));
+      col=mix(col,rimInk,smoothstep(-aa,aa,inner));
       float inside=1.-smoothstep(-aa,aa,d);
       acc=vec4(col*inside,inside)+acc*(1.-inside);
     `,
-      kind === "item" ? flapDistance : "",
     );
     // The art rides in the material's own map slot (its sampler is `map`), so a context-loss release
     // of the stage sees the textures cards hold; ChoiceArt.releaseUploads covers the rest.
     this.material.map = art.get(kind === "move" ? style.type! : kind);
     this.values = values;
   }
-  /** Header band height and frame width for the current layout (run-screen.css `--band`, `--frame`). */
+  /** Head plate height and rim width for the current layout. */
   setMetrics(band: number, frame: number): void {
     this.values.band.value = band;
     this.values.frame.value = frame;
   }
   setVeil(veil: number): void {
     this.values.veil.value = veil;
-  }
-  /** The drifting Poké Ball layer (`--card-fx`): shown while lit, offset in px. */
-  setPattern(on: boolean, x: number, y: number): void {
-    this.values.fxOn.value = on ? 1 : 0;
-    this.values.fx.value.set(x, y);
   }
   setSweep(position: number): void {
     this.values.sweep.value = position;
@@ -399,13 +338,13 @@ export class ChoiceCardSurface extends BoxSurface {
   setBanish(on: boolean): void {
     this.values.banish.value = on ? 1 : 0;
   }
-  /** 0–1 toward the pick keyframe's ring and type glow. */
+  /** 0–1 toward the pick's ring and type glow. */
   setPick(amount: number): void {
     this.values.pick.value = amount;
   }
 }
 
-/** `.run-card__icon` plate: the move's round type plate or the item's stitched pocket. */
+/** The card's icon plate: the move's round type plate, the item's paper pocket; ink rims. */
 export class ChoiceIconPlate extends BoxSurface {
   constructor(kind: "move" | "item", type: ElementType | null) {
     const ink = type ? typeColors[type].type : "#92b8d1";
@@ -413,7 +352,7 @@ export class ChoiceIconPlate extends BoxSurface {
       `icon-${kind}`,
       2,
       {
-        plateEdge: { value: mixHex(ink, "#142f50", 0.7) },
+        plateEdge: { value: mixHex(ink, ui.ink, 0.55) },
         plateTint: { value: mixHex(ink, "#ffffff", 0.28) },
       },
       kind === "move"
@@ -423,166 +362,16 @@ export class ChoiceIconPlate extends BoxSurface {
            float edge=crispLine(2.,2.*aa);
            col=mix(col,plateEdge,smoothstep(-edge-aa,-edge+aa,d));
            over(acc,col,1.-smoothstep(-aa,aa,d));`
-        : `float r=c.y<0.?2.:12.;float d=sdRoundBox(c,h,r);
-           float inside=1.-smoothstep(-aa,aa,d);
-           over(acc,vec3(1.,.980392,.933333),.9*inside);
+        : `float d=sdRoundBox(c,h,${RADIUS_INNER}.);
+           vec3 col=vec3(1.);
            float edge=crispLine(2.,2.*aa);
-           float line=smoothstep(-edge-aa,-edge+aa,d)*inside*step(mod(perimeter(c,h-1.,max(r-1.,0.)),10.),6.);
-           over(acc,vec3(.541176,.352941,.149020),line);`,
+           col=mix(col,${glslHex(ui.ink)},smoothstep(-edge-aa,-edge+aa,d));
+           over(acc,col,1.-smoothstep(-aa,aa,d));`,
     );
   }
 }
 
-/** `.choice-banner__plate`: face, theme grain, sheen, light inner ring, frame, base and drop shadow. */
-export class ChoiceBannerPlate extends BoxSurface {
-  private readonly values: {
-    frame: { value: number };
-    depth: { value: number };
-    drop: { value: number };
-  };
-  constructor(theme: ElementType | "chest", face: string, light: string) {
-    const grain = themeGrain(theme);
-    const values = { frame: { value: 3 }, depth: { value: 5 }, drop: { value: 1 } };
-    super(
-      `banner-${grain.kind}`,
-      64,
-      {
-        ...values,
-        face: { value: srgb(face) },
-        light: { value: srgb(light) },
-        grainInk: { value: srgb(grain.color) },
-      },
-      `
-      vec3 deep=vec3(.050980,.137255,.247059);
-      float d=sdRoundBox(c,h,8.);
-      over(acc,deep,.25*drop*shadowCover(sdRoundBox(c-vec2(0.,12.),h,8.),32.,aa));
-      over(acc,deep,shadowCover(sdRoundBox(c-vec2(0.,depth),h,8.),0.,aa));
-      acc*=smoothstep(-aa,aa,d);
-      vec2 pb=p-vec2(frame),ps=boxSize-2.*frame;
-      vec3 col=face;
-      {vec2 p=pb;float grain=0.;${grain.glsl}col=mix(col,grainInk,grain);}
-      col=mix(col,vec3(1.),.48*(1.-clamp(pb.y/(ps.y*.52),0.,1.)));
-      float inner=sdRoundBox(c,h-frame,8.-frame);
-      col=mix(col,light,.7*smoothstep(-2.-aa,-2.+aa,inner));
-      col=mix(col,deep,smoothstep(-aa,aa,inner));
-      float inside=1.-smoothstep(-aa,aa,d);
-      acc=vec4(col*inside,inside)+acc*(1.-inside);`,
-    );
-    this.values = values;
-  }
-  /** Frame width, hard base depth, and whether the window drop shadow shows (desktop only). */
-  setMetrics(frame: number, depth: number, drop: boolean): void {
-    this.values.frame.value = frame;
-    this.values.depth.value = depth;
-    this.values.drop.value = drop ? 1 : 0;
-  }
-}
-
-/** `.choice-banner__tail`: a framed swallowtail, darker toward the fold under the plate. */
-export class ChoiceBannerTail extends BoxSurface {
-  private readonly values: { frame: { value: number }; notch: { value: number } };
-  constructor(side: "start" | "end", face: string, deep: string) {
-    const values = { frame: { value: 3 }, notch: { value: 14 } };
-    super(
-      `tail-${side}`,
-      0,
-      { ...values, face: { value: srgb(face) }, deep: { value: srgb(deep) } },
-      `
-      // x measured from the notched end, so both sides share one shape.
-      vec2 q=vec2(${side === "start" ? "p.x" : "boxSize.x-p.x"},p.y);
-      float slope=sqrt(1.+pow(2.*notch/boxSize.y,2.));
-      float outer=min(min(q.y,boxSize.y-q.y),min(boxSize.x-q.x,(q.x-notch*(1.-abs(q.y/boxSize.y*2.-1.)))/slope));
-      vec2 iq=q-vec2(frame),ib=boxSize-2.*frame;
-      float innerD=min(min(iq.y,ib.y-iq.y),min(ib.x-iq.x,(iq.x-notch*(1.-abs(iq.y/ib.y*2.-1.)))/slope));
-      vec3 col=deep;
-      col=mix(col,face,.45*(1.-clamp(iq.y/(ib.y*.7),0.,1.)));
-      col=mix(col,vec3(.050980,.137255,.247059),.5*clamp((iq.x/ib.x-.5)/.5,0.,1.));
-      col=mix(vec3(.050980,.137255,.247059),col,smoothstep(-aa,aa,innerD));
-      over(acc,col,smoothstep(-aa,aa,outer));`,
-    );
-    this.values = values;
-  }
-  setMetrics(frame: number, notch: number): void {
-    this.values.frame.value = frame;
-    this.values.notch.value = notch;
-  }
-}
-
-/** `.choice-banner__sparks i`: a four-point star with a 3px glow in the banner's light colour. */
-export class ChoiceSpark extends BoxSurface {
-  constructor(fill: string, glow: string) {
-    super(
-      "spark",
-      6,
-      { fill: { value: srgb(fill) }, glow: { value: srgb(glow) } },
-      `
-      vec2 v[8];
-      v[0]=vec2(.5,0.);v[1]=vec2(.61,.39);v[2]=vec2(1.,.5);v[3]=vec2(.61,.61);
-      v[4]=vec2(.5,1.);v[5]=vec2(.39,.61);v[6]=vec2(0.,.5);v[7]=vec2(.39,.39);
-      float dd=1e9;float s=1.;
-      for(int i=0,j=7;i<8;j=i,i++){
-        vec2 a=v[i]*boxSize,b=v[j]*boxSize,e=b-a,w=p-a;
-        vec2 k=w-e*clamp(dot(w,e)/dot(e,e),0.,1.);dd=min(dd,dot(k,k));
-        bvec3 cnd=bvec3(p.y>=a.y,p.y<b.y,e.x*w.y>e.y*w.x);
-        if(all(cnd)||all(not(cnd)))s*=-1.;
-      }
-      float d=s*sqrt(dd);
-      over(acc,glow,shadowCover(d,3.,aa));
-      over(acc,fill,1.-smoothstep(-aa,aa,d));`,
-    );
-  }
-}
-
-/** `.game-button--small` plate: fill, frame, sheen (or the disabled hatch), bevel, base and drop. */
-export class ChoiceButtonSkin extends BoxSurface {
-  private readonly values: {
-    fill: { value: Vector3 };
-    border: { value: Vector3 };
-    base: { value: Vector3 };
-    depth: { value: number };
-    press: { value: number };
-    hatch: { value: number };
-  };
-  constructor() {
-    const values = {
-      fill: { value: srgb("#e9f4fb") },
-      border: { value: srgb("#142f50") },
-      base: { value: srgb("#0d233f") },
-      depth: { value: 2 },
-      press: { value: 0 },
-      hatch: { value: 0 },
-    };
-    super(
-      "button",
-      16,
-      values,
-      `
-      float d=sdRoundBox(c,h,8.);
-      over(acc,vec3(.050980,.137255,.247059),.24*shadowCover(sdRoundBox(c-vec2(0.,depth+3.),h,8.),6.,aa));
-      over(acc,base,step(.01,depth)*shadowCover(sdRoundBox(c-vec2(0.,depth),h,8.),0.,aa));
-      acc*=smoothstep(-aa,aa,d);
-      vec2 pb=p-2.,ps=boxSize-4.;
-      vec3 col=fill;
-      float stripe=step(mod((pb.x+pb.y)*.70710678,9.),4.);
-      col=mix(col,vec3(1.),hatch*.5*stripe);
-      col=mix(col,vec3(1.),(1.-hatch)*(1.-press)*.48*(1.-clamp(pb.y/(ps.y*.52),0.,1.)));
-      col=mix(col,vec3(1.),(1.-press)*.62*(1.-step(2.,pb.y)));
-      col=mix(col,vec3(.050980,.137255,.247059),(1.-press)*.12*step(ps.y-2.,pb.y));
-      col=mix(col,vec3(.050980,.137255,.247059),press*.18*(1.-step(3.,pb.y)));
-      col=mix(col,border,smoothstep(-aa,aa,sdRoundBox(c,h-2.,6.)));
-      float inside=1.-smoothstep(-aa,aa,d);
-      acc=vec4(col*inside,inside)+acc*(1.-inside);`,
-    );
-    this.values = values;
-  }
-  setPaint(fill: Vector3, border: Vector3, base: Vector3, hatch: boolean): void {
-    this.values.fill.value.copy(fill);
-    this.values.border.value.copy(border);
-    this.values.base.value.copy(base);
-    this.values.hatch.value = hatch ? 1 : 0;
-  }
-  setDepth(depth: number, press: number): void {
-    this.values.depth.value = depth;
-    this.values.press.value = press;
-  }
+function glslHex(hex: string): string {
+  const c = srgb(hex);
+  return `vec3(${c.x.toFixed(4)},${c.y.toFixed(4)},${c.z.toFixed(4)})`;
 }

@@ -436,6 +436,66 @@
         0
       ]
     },
+    "cast-psychic": {
+      "files": [
+        "sfx/cast-psychic-1.flac",
+        "sfx/cast-psychic-2.flac"
+      ],
+      "hitMs": [
+        195,
+        205
+      ]
+    },
+    "hit-psychic": {
+      "files": [
+        "sfx/hit-psychic-1.flac",
+        "sfx/hit-psychic-2.flac"
+      ],
+      "hitMs": [
+        15,
+        20
+      ]
+    },
+    "cast-rock": {
+      "files": [
+        "sfx/cast-rock-1.flac",
+        "sfx/cast-rock-2.flac"
+      ],
+      "hitMs": [
+        5,
+        0
+      ]
+    },
+    "hit-rock": {
+      "files": [
+        "sfx/hit-rock-1.flac",
+        "sfx/hit-rock-2.flac"
+      ],
+      "hitMs": [
+        0,
+        5
+      ]
+    },
+    "cast-ground": {
+      "files": [
+        "sfx/cast-ground-1.flac",
+        "sfx/cast-ground-2.flac"
+      ],
+      "hitMs": [
+        15,
+        0
+      ]
+    },
+    "hit-ground": {
+      "files": [
+        "sfx/hit-ground-1.flac",
+        "sfx/hit-ground-2.flac"
+      ],
+      "hitMs": [
+        10,
+        40
+      ]
+    },
     "hit-fighting": {
       "files": [
         "sfx/hit-fighting-1.flac",

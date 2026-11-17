@@ -196,6 +196,7 @@ export class OwnerSimulation {
                   z: effect.z,
                   by: player.id,
                   type: effect.hit.type,
+                  move: effect.hit.move,
                 });
             },
           },

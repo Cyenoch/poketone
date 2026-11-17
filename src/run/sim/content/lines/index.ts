@@ -9,6 +9,8 @@ import { squirtle } from "./squirtle";
 import { gastly } from "./gastly";
 import { dratini } from "./dratini";
 import { machop } from "./machop";
+import { abra } from "./abra";
+import { geodude } from "./geodude";
 
 /** Evolution stage: an index into `LineDef.stages`; 0 is the starting form. */
 export type Stage = number;
@@ -58,7 +60,17 @@ export interface LineDef<Id extends string = StarterId, F extends string = FormI
   stages: readonly [EvolveStage<F> & { at: 1 }, ...LineStage<F>[]];
 }
 
-const linesTable = { charmander, bulbasaur, squirtle, pikachu, gastly, dratini, machop };
+const linesTable = {
+  charmander,
+  bulbasaur,
+  squirtle,
+  pikachu,
+  gastly,
+  dratini,
+  machop,
+  abra,
+  geodude,
+};
 
 export type StarterId = keyof typeof linesTable;
 export type FormId = Extract<
@@ -115,4 +127,6 @@ export const starterOrder: readonly StarterId[] = [
   "gastly",
   "dratini",
   "machop",
+  "abra",
+  "geodude",
 ];

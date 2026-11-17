@@ -1,0 +1,30 @@
+{
+  "source": "assets/concepts/original-trainers/shuoye/cutin-source.png",
+  "sourceSha256": "b0cd4836862e59a0f9db8e7dbbeb543f5ad6a99427e2937674a0ead165085460",
+  "generation": "assets/concepts/original-trainers/shuoye/cutin-generation.json",
+  "process": "prepare.py: preserve source alpha, remove alpha < 8 speckles, fixed head crop, Lanczos resize, transparent padding, lossless WebP",
+  "outputs": [
+    {
+      "file": "cutin.webp",
+      "crop": [26, 14, 1229, 1239],
+      "size": [768, 768],
+      "sha256": "8a09438762b85104da9e2d1fd406edc45fcdc1f1cfb0ba17d0d8210b9da54f64"
+    },
+    {
+      "file": "portrait.webp",
+      "crop": [326, 0, 915, 689],
+      "size": [256, 256],
+      "sha256": "1676e8218e43090dd96b0d566ab593dbec09f0566911f1d00c93effa6c004ac0"
+    },
+    {
+      "file": "lobby.webp",
+      "source": "assets/concepts/original-trainers/shuoye/lobby-source.png",
+      "sourceSha256": "3a5f4246f736bfe3df697b872a268bddc585eff357c7a1cbbee252331f3b1753",
+      "generation": "assets/concepts/original-trainers/shuoye/lobby-generation.json",
+      "process": "alpha < 8 -> 0, alpha >= 248 -> 255, alpha bbox crop, Lanczos resize to long side <= 1400, clear RGB under alpha 0, lossless WebP",
+      "crop": [87, 18, 954, 1518],
+      "size": [809, 1400],
+      "sha256": "1d2b7699bb1e8703664ef2967ab968dd05cbdd98d2a29a18dc6c9e5bc6142d96"
+    }
+  ]
+}

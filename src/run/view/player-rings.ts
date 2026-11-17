@@ -5,11 +5,14 @@ import {
   Group,
   Mesh,
   MeshBasicMaterial,
+  NotEqualStencilFunc,
   OctahedronGeometry,
   RingGeometry,
 } from "three";
 import { playerColors } from "../../ui/player-colors";
 import { COOP } from "../sim/content/params/coop";
+import { SELF_INK } from "./outline";
+import type { PlayerId } from "../sim/state/entities";
 import type { World } from "../sim/state/world";
 import { heightAt, type Terrain } from "../sim/terrain";
 
@@ -55,19 +58,34 @@ function overlay(color: string, opacity = 1, additive = false): MeshBasicMateria
  * player's body is hidden, so their seat is marked by a rescue-reach ring, a light column and a
  * floating gem in the seat colour; all of it is read-only presentation of `alive`.
  */
-export function playerRings(world: World) {
+export function playerRings(world: World, local: PlayerId) {
   const root = new Group();
-  const rings = world.players.map((_, slot) => {
+  // Alone there is no seat to tell apart: the ring takes the player's own warm yellow (outline.ts).
+  const solo = world.players.length === 1;
+  const rings = world.players.map((player, slot) => {
     const group = new Group();
+    // The local player's ring draws over the swarm and every effect: inside a crowd the body and its
+    // outline are covered, and this ring is what still says where you stand.
+    const self = player.id === local;
+    const layer = (inner: number, outer: number, color: string, order: number) => {
+      const material = new MeshBasicMaterial({ color, depthWrite: false, toneMapped: false });
+      // Over the swarm, but never across the player's own visible body (marked in the stencil by
+      // playerRig.ts), so the ring still reads as lying behind their feet.
+      if (self)
+        Object.assign(material, {
+          transparent: true,
+          depthTest: false,
+          stencilWrite: true,
+          stencilRef: 1,
+          stencilFunc: NotEqualStencilFunc,
+        });
+      const mesh = new Mesh(new RingGeometry(inner, outer, 48).rotateX(-Math.PI / 2), material);
+      if (self) mesh.renderOrder = 60 + order;
+      return mesh;
+    };
     const layers = [
-      new Mesh(
-        new RingGeometry(0.66, 0.87, 48).rotateX(-Math.PI / 2),
-        new MeshBasicMaterial({ color: INK, depthWrite: false, toneMapped: false }),
-      ),
-      new Mesh(
-        new RingGeometry(0.7, 0.83, 48).rotateX(-Math.PI / 2),
-        new MeshBasicMaterial({ color: playerColors[slot]!, depthWrite: false, toneMapped: false }),
-      ),
+      layer(0.66, 0.87, INK, 0),
+      layer(0.7, 0.83, solo ? SELF_INK : playerColors[slot]!, 1),
     ];
     group.add(...layers);
     root.add(group);
@@ -98,7 +116,6 @@ export function playerRings(world: World) {
     root.add(beacon);
     return { group, layers, beacon, reach, ripple, column, gem, gemRim };
   });
-  root.visible = world.players.length > 1;
   let clock = 0;
   return {
     root,

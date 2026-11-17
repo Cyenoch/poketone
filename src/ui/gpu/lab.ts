@@ -1,7 +1,7 @@
 import { FullscreenIcon } from "./fullscreen-icon";
 import { isNavigationDirection, type NavigationAction } from "../../platform/input";
 import { revealInScroller } from "./scroll-reveal";
-import { Container, Content, Image, Text, withOpacity, type FontFamilies } from "@pmndrs/uikit";
+import { Container, Content, Image, Text, type FontFamilies } from "@pmndrs/uikit";
 import { Matrix4, Mesh, PlaneGeometry, Vector2, Vector3, type Texture } from "three";
 import { getAudio } from "../../audio/engine";
 import { labTerms } from "../../run/glossary";
@@ -14,24 +14,29 @@ import { rarityNames } from "../../run/sim/upgrades";
 import { itemIcon } from "../../screens/runArt";
 import { rarityTones } from "./run-choice-surface";
 import { rarityTag } from "./tag";
-import { BoxShadow, OutlineRing } from "./box-shadow";
-import { CURRENCY_ICON, GpuCurrency } from "./currency";
+import { OutlineRing } from "./box-shadow";
+import { CURRENCY_ICON } from "./currency";
+import { CardFace } from "./dialog-surface";
 import { gridStep } from "./grid-nav";
-import { uiEaseOut } from "./focus-mark";
 import { GameButton } from "./game-button";
 import { GrayscaleImageMaterial, setGrayscale } from "./grayscale-image";
-import { HoverPattern } from "./hover-pattern";
 import { createMenuIcon } from "./icons";
 import { InnerScreenFrame } from "./inner-screen";
 import { fade, stack } from "./layer";
-import { RunButtonSurface } from "./run-overlays-surface";
-import { clipMain, clipVertex, HatchFill, InsetShade, RadialFace } from "./screen-parts";
-import { SegmentFace } from "./segment-face";
+import { EASE, LIFT, POP, SNAP, stagger } from "./motion";
+import { clipMain, clipVertex } from "./screen-parts";
+import { SegmentFace, segmentTray } from "./segment-face";
 import { ellipsize } from "./text-fit";
 import { UiStage } from "./stage";
 import { GpuTooltip } from "./tooltip";
 import { UiShaderMaterial } from "./ui-shader";
 import type { UiInsets } from "./viewport";
+import { HARD_SHADOW, RADIUS, RADIUS_INNER, srgb, ui } from "./tokens";
+
+const glsl = (hex: string) => {
+  const c = srgb(hex);
+  return `vec3(${c.x.toFixed(4)},${c.y.toFixed(4)},${c.z.toFixed(4)})`;
+};
 
 export interface LabCallbacks {
   buy(id: LabId): void;
@@ -66,17 +71,10 @@ const sections: readonly { id: SectionId; name: string; items: readonly LabId[] 
   },
 ];
 
-const NAVY = "#142f50",
-  NAVY_DEEP = "#0d233f",
-  INK = "#142f50",
-  MUTED = "#536b82",
-  SURFACE = "#e9f4fb",
-  YELLOW = "#ffd45b",
-  SUCCESS = "#287a58",
-  // `color-mix(in srgb, var(--success) 14%, var(--surface))`
-  MAXED_FACE = "#cee3e4";
 const LONG_PRESS_MS = 450;
 const prices = new Intl.NumberFormat("zh-CN");
+/** Tiles that slide in one after another when a section opens; the rest come with the last. */
+const STAGGERED_TILES = 12;
 
 /** `当前 → 下一级`; level 0 shows only the next value, a maxed item only its current one. */
 function effect(item: LabItem, level: number): [string, string | null] {
@@ -105,10 +103,11 @@ interface Control {
 }
 
 /**
- * screens/Lab.tsx on the GPU (DESIGN.md › 研究所): the top line with the 星星沙子 balance, the section tabs,
- * and a board window whose upgrade tiles fill it three to a row (two where three would be too narrow). A tile is the buy button: icon,
- * name, level pips, `stat now → next` and its price (gold, hatched when short, success when maxed).
- * 系统 adds the 档案库, every item as a toggle that strikes it out of runs.
+ * The 研究所 (DESIGN.md › 研究所): the top line with the title plate and the 星星沙子 balance, the
+ * section segments, and the upgrade tiles on the paper ground, three to a row (two where three
+ * would be too narrow). A tile is the buy button: icon, name, level pips, `stat now → next` and its
+ * price (ball red when it can be bought, mist when short, success when maxed). 系统 adds the 档案库,
+ * every item as a toggle that strikes it out of runs.
  */
 export class GpuLab {
   readonly stage = new UiStage();
@@ -116,25 +115,22 @@ export class GpuLab {
   readonly minLayout = { width: 760, height: 320 };
   private readonly callbacks: LabCallbacks;
   private readonly frame: InnerScreenFrame;
-  private readonly balance: GpuCurrency;
+  private readonly balance: Balance;
   private readonly body = new Container({ flexGrow: 1, minHeight: 0, flexDirection: "column" });
-  private readonly tabs = new Container({ flexDirection: "row", flexShrink: 0 });
-  private readonly board = new Container({
-    flexGrow: 1,
-    minHeight: 0,
-    flexDirection: "column",
-    borderColor: NAVY_DEEP,
-    borderRadius: 10,
-  });
+  private readonly tabs: Container;
   private readonly content = new Container({
     flexGrow: 1,
     minHeight: 0,
     flexDirection: "column",
     overflow: "scroll",
     scrollbarWidth: 3,
-    scrollbarColor: NAVY,
+    scrollbarColor: ui.muted,
   });
-  private readonly boardFace = new BoardFace();
+  /**
+   * The scrolled sheet: it clips the tiles' faces (their shadows reach past the tile) so they
+   * never widen the scroll; its padding keeps lifts, shadows and focus rings inside the clip.
+   */
+  private sheet = new Container();
   private readonly tooltip: GpuTooltip;
   private fixed: Control[] = [];
   private controls: Control[] = [];
@@ -155,42 +151,29 @@ export class GpuLab {
   private tipPress: { index: number; at: number; x: number; y: number; fired: boolean } | null =
     null;
   private elapsed = 0;
+  private entrance: { x: number; opacity: number }[] = [];
 
-  constructor(fonts: FontFamilies, backdrop: Texture, progress: Progress, callbacks: LabCallbacks) {
+  /** `_backdrop`: the host's lobby art, no longer drawn here (the frame draws the paper ground). */
+  constructor(
+    fonts: FontFamilies,
+    _backdrop: Texture,
+    progress: Progress,
+    callbacks: LabCallbacks,
+  ) {
     this.callbacks = callbacks;
     this.progress = progress;
-    this.stage.root.setProperties({ fontFamilies: fonts, flexDirection: "column", color: INK });
+    this.stage.root.setProperties({ fontFamilies: fonts, flexDirection: "column", color: ui.ink });
     this.tooltip = new GpuTooltip(this.stage);
-    this.frame = new InnerScreenFrame(this.stage, backdrop, "研究所");
-    this.balance = new GpuCurrency(this.stage);
+    this.frame = new InnerScreenFrame(this.stage, "研究所");
+    this.balance = new Balance(this.stage);
     this.balance.set(progress.stardust);
     this.frame.extra.add(this.balance.root);
     this.stage.root.add(this.frame.topline, this.frame.body);
     this.frame.body.add(this.body);
-    this.body.add(this.tabs, this.board);
-    const boardShadow = new BoxShadow(10, [
-      { y: 5, blur: 0, color: NAVY_DEEP, alpha: 1 },
-      { y: 12, blur: 32, color: NAVY_DEEP, alpha: 0.25 },
-    ]);
-    this.disposables.push(boardShadow, this.boardFace);
-    this.board.add(
-      boardShadow.content,
-      this.boardFace.content,
-      stack(
-        new Container({
-          positionType: "absolute",
-          positionLeft: 0,
-          positionTop: 0,
-          width: "100%",
-          height: "100%",
-          borderWidth: 1,
-          borderRadius: 7,
-          borderColor: YELLOW,
-        }),
-        3,
-      ),
-      stack(this.content, 1),
-    );
+    const tray = segmentTray();
+    this.tabs = tray.tray;
+    this.disposables.push(tray);
+    this.body.add(stack(this.content, 1));
     this.fixed.push(
       this.keyControl("back", this.frame.back, () => {
         getAudio().sfx("ui-back");
@@ -202,18 +185,18 @@ export class GpuLab {
       }),
     );
     this.fullscreen = new GameButton(this.stage, {
-      tone: "navy",
+      tone: "secondary",
       size: "small",
       square: true,
       icon: this.fullscreenIcon,
     });
     this.fullscreen.panel.setProperties({ display: "none" });
-    this.frame.topline.add(this.fullscreen.panel);
+    this.frame.topline.add(stack(this.fullscreen.panel, 1));
     this.fullscreenControl = this.keyControl("fullscreen", this.fullscreen, () =>
       this.toggleFullscreen?.(),
     );
     this.buildTabs();
-    this.buildSection();
+    this.buildSection(true);
   }
 
   private readonly fullscreen: GameButton;
@@ -256,36 +239,12 @@ export class GpuLab {
   private tabControls: Control[] = [];
   private readonly tabFaces: SegmentFace[] = [];
 
-  /** The section SegmentedControl: its legend only names it for screen readers, so none shows. */
+  /** The section segments on their ink tray (placed by `resize`: own row, or the top line). */
   private buildTabs(): void {
-    const tray = this.tabs;
-    tray.setProperties({
-      width: "100%",
-      gap: 4,
-      padding: 4,
-      borderWidth: 2,
-      borderColor: NAVY,
-      borderRadius: 10,
-      backgroundColor: NAVY_DEEP,
-    });
-    // inset 0 3px 0 rgb(0 0 0 / 35%): the tray's lip.
-    tray.add(
-      new Container({
-        positionType: "absolute",
-        positionLeft: 0,
-        positionTop: 0,
-        width: "100%",
-        height: 3,
-        borderTopLeftRadius: 8,
-        borderTopRightRadius: 8,
-        backgroundColor: withOpacity("#000000", 0.35),
-      }),
-    );
     for (const entry of sections) {
       const face = new SegmentFace(this.stage, entry.name);
       this.tabFaces.push(face);
-      face.panel.setProperties({ flexGrow: 1, flexBasis: 0, minWidth: 0 });
-      tray.add(face.panel);
+      this.tabs.add(stack(face.panel, 1));
       this.disposables.push(face);
       const control: Control = {
         kind: "tab",
@@ -295,7 +254,7 @@ export class GpuLab {
         activate: () => {
           if (this.section === entry.id) return;
           this.section = entry.id;
-          this.buildSection();
+          this.buildSection(true);
         },
         paint: (state) =>
           face.paint({ ...state, checked: this.section === entry.id, locked: false }),
@@ -308,31 +267,67 @@ export class GpuLab {
 
   // ── Board ──────────────────────────────────────────────────────────────────────────────────
 
+  private grid = new Container();
   private tileRows: Container[] = [];
   private column = 0;
   /** Tiles to a row: three while a tile keeps its values clear of the price, else two. */
   private columns = 3;
+  /** The open section's columns: two for a short section, else `columns`. */
+  private gridColumns = 3;
+  /** The tile rows grow into the sheet's free height (no 档案库 below them). */
+  private fills = true;
   private readonly tiles: Control[] = [];
 
-  private buildSection(): void {
+  /** Rebuilds the open section; `animate` slides its tiles in one after another (45ms apart). */
+  private buildSection(animate = false): void {
     for (const control of this.sectionControls) control.dispose();
     for (const part of this.sectionParts.splice(0)) part.dispose();
-    for (const child of this.content.children.slice()) {
-      child.removeFromParent();
-      (child as { dispose?: () => void }).dispose?.();
-    }
+    for (const state of this.entrance) this.stage.motion.cancel(state);
+    this.sheet.removeFromParent();
+    this.sheet.dispose();
+    this.sheet = new Container({
+      flexDirection: "column",
+      flexGrow: 1,
+      flexShrink: 0,
+      overflow: "hidden",
+      paddingTop: 10,
+      paddingBottom: 14,
+      paddingX: 10,
+    });
+    this.content.add(this.sheet);
     this.sectionControls = [];
     this.tiles.length = 0;
+    this.sized = [];
+    this.archiveItems = [];
+    this.archiveLegend = null;
     this.tileRows = [];
     this.column = 0;
+    // A new section starts at its top; a rebuild in place (columns, archive slots) keeps the scroll.
+    if (animate) this.content.scrollPosition.value = [0, 0];
     const current = sections.find((entry) => entry.id === this.section)!;
-    // `columns` to a row, filled from the top; the last row keeps its column widths. `.lab-tiles`:
-    // rows 8 apart (`gap: space-2 space-3`), at every size.
-    const grid = new Container({ flexDirection: "column", flexShrink: 0, gap: 8 });
-    this.content.add(grid);
-    for (let i = 0; i < current.items.length; i += this.columns) {
-      const row = new Container({ flexDirection: "row", flexShrink: 0 });
-      for (let j = 0; j < this.columns; j++) {
+    const slots = archiveSlots(this.progress);
+    const archived = this.section === "system" && slots > 0;
+    // A short section takes two wide columns; rows grow into the free height (up to a cap) and the
+    // block sits centred, so the sheet is never a strip of cards over empty paper. With the 档案库
+    // below, the tiles keep their natural height and the sheet scrolls.
+    this.gridColumns = Math.min(this.columns, current.items.length <= 4 ? 2 : 3);
+    this.fills = !archived;
+    this.sheet.setProperties({ justifyContent: archived ? "flex-start" : "center" });
+    // `columns` to a row, filled from the top; the last row keeps its column widths.
+    const grid = new Container({
+      flexDirection: "column",
+      flexShrink: 0,
+      flexGrow: archived ? 0 : 1,
+    });
+    this.grid = grid;
+    this.sheet.add(grid);
+    for (let i = 0; i < current.items.length; i += this.gridColumns) {
+      const row = new Container({
+        flexDirection: "row",
+        flexShrink: 0,
+        flexGrow: archived ? 0 : 1,
+      });
+      for (let j = 0; j < this.gridColumns; j++) {
         const id = current.items[i + j];
         if (id) row.add(this.tile(labItem(id)));
         else row.add(new Container({ flexGrow: 1, flexBasis: 0, minWidth: 0 }));
@@ -340,15 +335,32 @@ export class GpuLab {
       this.tileRows.push(row);
       grid.add(row);
     }
-    const slots = archiveSlots(this.progress);
-    if (this.section === "system" && slots > 0) this.content.add(this.archive(slots));
+    if (archived) this.sheet.add(this.archive(slots));
     this.controls = [...this.fixed, ...this.tabControls, ...this.sectionControls];
     this.focused = Math.min(this.focused, this.controls.length - 1);
     this.applySizes();
     this.repaint();
+    const moving = this.tiles.slice(0, STAGGERED_TILES).map((tile) => tile.panel);
+    this.entrance = moving.map(() => ({ x: 0, opacity: 1 }));
+    if (!animate) return;
+    for (const [i, state] of this.entrance.entries()) {
+      const panel = moving[i]!;
+      this.stage.motion.enter(
+        state,
+        { x: -60, opacity: 0 },
+        { x: 0, opacity: 1 },
+        380,
+        () => {
+          fade(panel, state.opacity).setProperties({ transformTranslateX: state.x });
+          this.stage.invalidate();
+        },
+        EASE,
+        stagger(i),
+      );
+    }
   }
 
-  /** `.lab-tile`: one raised plate per upgrade; the whole plate buys the next level. */
+  /** One upright card per upgrade; the whole card buys the next level. */
   private tile(item: LabItem): Container {
     const panel = new Container({
       flexDirection: "row",
@@ -356,131 +368,99 @@ export class GpuLab {
       flexGrow: 1,
       flexBasis: 0,
       minWidth: 0,
-      borderWidth: 2,
-      borderColor: NAVY,
-      borderRadius: 8,
     });
-    const shadow = new BoxShadow(8, [{ y: 3, blur: 0, color: NAVY_DEEP, alpha: 1 }]);
-    const plate = new RunButtonSurface();
-    // `:active`: `inset 0 3px 0 rgb(13 35 63 / 14%)` in place of the base.
-    const pressShade = new InsetShade(3, NAVY_DEEP, 0.14, 6);
-    fade(pressShade.content, 0);
-    const pattern = new HoverPattern(this.stage.motion, () => this.stage.invalidate(), SURFACE);
-    const ring = new OutlineRing(8, "#2165a4", 3, 3);
+    const face = new CardFace(panel, { fill: ui.white });
+    const ring = new OutlineRing(RADIUS, ui.ink, 2.5, 3);
     ring.content.setProperties({ display: "none" });
     const well = stack(
-      new Container({ flexShrink: 0, alignItems: "center", justifyContent: "center" }),
+      new Container({
+        flexShrink: 0,
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: RADIUS_INNER,
+        backgroundColor: ui.mist,
+      }),
       1,
     );
-    const wellFace = new RadialFace({
-      at: [0.5, 0.4],
-      inner: "#ffffff",
-      middle: "#d8effb",
-      mid: 0.75,
-      radius: 8,
-      ring: { width: 1.5, color: "#92b8d1" },
-    });
-    well.add(
-      wellFace.content,
-      stack(new Image({ src: `/art/icons/lab/${item.id}.webp`, width: "86%", height: "86%" }), 1),
-    );
+    well.add(new Image({ src: `/art/icons/lab/${item.id}.webp`, width: "86%", height: "86%" }));
     const body = stack(
-      new Container({ flexDirection: "column", flexGrow: 1, minWidth: 0, gap: 2 }),
+      new Container({ flexDirection: "column", flexGrow: 1, minWidth: 0, gap: 4 }),
       1,
     );
-    const top = new Container({ flexDirection: "row", alignItems: "flex-end", gap: 12 });
-    const name = new Text({ text: item.name, fontWeight: 800, lineHeight: 1.2, color: INK });
+    const top = new Container({ flexDirection: "row", alignItems: "center", gap: 12 });
+    const name = new Text({ text: item.name, fontWeight: 900, lineHeight: 1.2, color: ui.ink });
     name.setProperties({ flexGrow: 1, flexShrink: 1, minWidth: 0, whiteSpace: "pre" });
     const pips = new PipStrip(item.max);
     const pipBox = new Container({ flexShrink: 0 });
     pipBox.add(pips.content);
     top.add(name, pipBox);
-    const bottom = new Container({ flexDirection: "row", alignItems: "flex-start", gap: 12 });
+    const bottom = new Container({ flexDirection: "row", alignItems: "flex-end", gap: 12 });
+    // The effect leads the card: its stat small above, the value (now → next) large.
     const effectRow = new Container({
-      flexDirection: "row",
+      flexDirection: "column",
       alignItems: "flex-start",
-      gap: 4,
+      gap: 0,
       flexGrow: 1,
       minWidth: 0,
     });
-    const stat = new Text({ text: item.stat, fontWeight: 700, color: MUTED, lineHeight: 1.2 });
+    const stat = new Text({ text: item.stat, fontWeight: 700, color: ui.muted, lineHeight: 1.2 });
     stat.setProperties({ flexShrink: 0 });
-    // `.lab-tile__effect`. A partly bought upgrade's now → next can be wider than its column at the
-    // smallest scale: it wraps between the two (「+24%」/「→ +32%」), the arrow kept with its value.
-    const value = new Text({ text: "", fontWeight: 800, color: INK, lineHeight: 1.2 });
-    const next = new Text({ text: "", fontWeight: 800, color: INK, lineHeight: 1.2 });
-    // Each is one unbreakable unit (uikit's keep-all never wraps): 「→ +N」 broke at its space when
-    // its column was narrower. The row wraps whole units.
+    // A partly bought upgrade's now → next can be wider than its column at the smallest scale: it
+    // wraps between the two (「+24%」/「→ +32%」), the arrow kept with its value.
+    const value = new Text({ text: "", fontWeight: 900, color: ui.ink, lineHeight: 1.2 });
+    const next = new Text({ text: "", fontWeight: 900, color: ui.ink, lineHeight: 1.2 });
+    // Each is one unbreakable unit (uikit's keep-all never wraps): the row wraps whole units.
     value.setProperties({ wordBreak: "keep-all", flexShrink: 0 });
     next.setProperties({ wordBreak: "keep-all", flexShrink: 0, display: "none" });
     const values = new Container({
       flexDirection: "row",
       flexWrap: "wrap",
-      gapColumn: 4,
-      flexGrow: 1,
+      gapColumn: 6,
+      alignSelf: "stretch",
       flexShrink: 1,
       minWidth: 0,
     });
     values.add(value, next);
     effectRow.add(stat, values);
-    // `.lab-tile__price`: gold when affordable, hatched when short, a success chip when maxed.
+    // The price: ball red when it can be bought, mist when short, success when maxed.
     const price = new Container({
       flexDirection: "row",
       alignItems: "center",
+      justifyContent: "center",
       gap: 4,
-      minHeight: 28,
       paddingLeft: 4,
-      paddingRight: 8,
-      borderWidth: 2,
-      borderRadius: 8,
+      paddingRight: 9,
+      borderRadius: RADIUS_INNER,
       flexShrink: 0,
     });
-    const priceSheen = new RunButtonSurface();
-    const priceHatch = new HatchFill(0.5, 6);
-    const priceShadow = new BoxShadow(8, [{ y: 2, blur: 0, color: NAVY_DEEP, alpha: 1 }]);
-    const coin = stack(
-      new Image({
-        src: CURRENCY_ICON,
-        width: 20,
-        height: 20,
-        flexShrink: 0,
-        panelMaterialClass: GrayscaleImageMaterial,
-      }),
-      1,
-    );
+    const coin = new Image({
+      src: CURRENCY_ICON,
+      width: 22,
+      height: 22,
+      flexShrink: 0,
+      panelMaterialClass: GrayscaleImageMaterial,
+    });
     const check = createMenuIcon("check");
-    check.setProperties({ width: 16, height: 16, color: "#ffffff" });
-    const amount = stack(new Text({ text: "", fontWeight: 800, lineHeight: 1.2 }), 1);
-    price.add(priceShadow.content, priceSheen.content, priceHatch.content);
-    price.add(coin, stack(check, 1), amount);
-    // The plate is as wide as its coin and amount, centred under the pips (the column is the
+    check.setProperties({ width: 16, height: 16, color: ui.white, marginLeft: 4 });
+    const amount = new Text({ text: "", fontWeight: 900, lineHeight: 1.2 });
+    price.add(coin, check, amount);
+    // The chip is as wide as its coin and amount, centred under the pips (the column is the
     // pips' width): never stretched to the gauge.
     const priceSlot = new Container({
       flexDirection: "row",
       justifyContent: "center",
-      alignItems: "flex-start",
+      alignItems: "center",
       flexShrink: 0,
     });
     priceSlot.add(price);
     bottom.add(effectRow, priceSlot);
     body.add(top, bottom);
-    panel.add(shadow.content, plate.content, pressShade.content, pattern.content);
-    panel.add(well, body, stack(ring.content, 3));
-    this.sectionParts.push(
-      shadow,
-      plate,
-      pressShade,
-      pattern,
-      ring,
-      wellFace,
-      pips,
-      priceSheen,
-      priceHatch,
-      priceShadow,
-    );
+    panel.add(face.content, well, body, stack(ring.content, 3));
+    this.sectionParts.push(face, ring, pips);
     const level = () => this.progress.lab[item.id] ?? 0;
     const lock = () => labLock(item, level(), this.progress.stardust);
-    const pose = { y: 0, press: 0, depth: 3 };
+    const pose = { lift: 0 };
+    let target = "";
     const control: Control = {
       kind: "tile",
       panel,
@@ -499,59 +479,44 @@ export class GpuLab {
         const cost = nextCost(item, now);
         const state = cost === null ? "maxed" : lock() ? "short" : "ready";
         ring.content.setProperties({ display: focused && focusVisible ? "flex" : "none" });
-        pattern.setFocused(hovered || (focused && focusVisible));
-        panel.setProperties({ backgroundColor: state === "maxed" ? MAXED_FACE : SURFACE });
+        face.set({ fill: state === "maxed" ? ui.mist : ui.white });
         pips.set(now);
         const [current, following] = effect(item, now);
         value.setProperties({ text: current });
         next.setProperties({ text: following ?? "", display: following ? "flex" : "none" });
         amount.setProperties({
           text: cost === null ? "满级" : prices.format(cost),
-          color: state === "maxed" ? "#ffffff" : state === "short" ? "#3e566d" : NAVY_DEEP,
+          color: state === "short" ? ui.muted : ui.white,
         });
         coin.setProperties({ display: cost === null ? "none" : "flex" });
         setGrayscale(coin, state === "short" ? 0.7 : 0);
         check.setProperties({ display: cost === null ? "flex" : "none" });
         price.setProperties({
-          borderColor: state === "maxed" ? SUCCESS : state === "short" ? "#9fb5c7" : NAVY,
-          backgroundColor: state === "maxed" ? SUCCESS : state === "short" ? "#d0dfeb" : YELLOW,
+          backgroundColor: state === "maxed" ? ui.success : state === "short" ? ui.mist : ui.ball,
         });
-        priceSheen.content.setProperties({ display: state === "ready" ? "flex" : "none" });
-        priceShadow.content.setProperties({ display: state === "ready" ? "flex" : "none" });
-        priceHatch.content.setProperties({ display: state === "short" ? "flex" : "none" });
-        // Hover lifts a buyable tile 2px onto a 5px base; a press sinks it onto the base.
-        const lift = state === "ready" && hovered && !pressed;
-        const press = state === "ready" && pressed;
+        // A buyable tile lifts 3px under the pointer and sinks 1px when pressed.
+        const lift = state !== "ready" ? 0 : pressed ? -LIFT.press : hovered ? LIFT.hover : 0;
+        const key = `${lift}`;
+        if (key === target) return;
+        const duration = target === "" ? 0 : LIFT.ms;
+        target = key;
         this.stage.motion.animate(
           pose,
-          { y: press ? 3 : lift ? -2 : 0, press: press ? 1 : 0, depth: press ? 0 : lift ? 5 : 3 },
-          press ? 60 : 140,
+          { lift },
+          duration,
           () => {
-            panel.setProperties({
-              transformTranslateY: pose.y,
-              transformScaleX: 1 + 0.006 * pose.press,
-              transformScaleY: 1 - 0.02 * pose.press,
-            });
-            shadow.set([
-              { y: pose.depth, blur: 0, color: NAVY_DEEP, alpha: pose.depth > 0 ? 1 : 0 },
-            ]);
-            fade(pressShade.content, pose.press);
+            panel.setProperties({ transformTranslateY: -pose.lift });
+            face.set({ depth: HARD_SHADOW.offset + pose.lift });
             this.stage.invalidate();
           },
-          uiEaseOut,
+          SNAP,
         );
       },
-      update: (deltaMs) => {
-        pressShade.update();
+      update: () => {
         const fitted = ellipsize(name, item.name);
         if (fitted !== undefined && fitted !== name.properties.value.text)
           name.setProperties({ text: fitted });
-        plate.update();
-        priceSheen.update();
-        priceHatch.update();
-        wellFace.update();
         pips.update();
-        pattern.update(deltaMs);
       },
       dispose: () => this.stage.motion.cancel(pose),
     };
@@ -570,6 +535,9 @@ export class GpuLab {
       pips,
       top,
       bottom,
+      body,
+      price,
+      coinSize: (size) => coin.setProperties({ width: size, height: size }),
     });
     return panel;
   }
@@ -586,36 +554,34 @@ export class GpuLab {
     pips: PipStrip;
     top: Container;
     bottom: Container;
+    body: Container;
+    price: Container;
+    coinSize(size: number): void;
   }[] = [];
 
   private archiveItems: Container[] = [];
   private archiveLegend: Text | null = null;
 
-  /** `.lab-archive`: every item as a toggle, in rows by card tier (the 图鉴's order: about 120
-   *  items read as four short shelves, not one long run); archived ones are struck out of runs. */
+  /** The 档案库: every item as a toggle, in rows by card tier (about 120 items read as four short
+   *  shelves, not one long run); archived ones are struck out of runs. */
   private archive(slots: number): Container {
     const plate = new Container({
       flexDirection: "column",
       alignItems: "flex-start",
-      gap: 8,
-      paddingY: 8,
-      paddingX: 12,
-      borderWidth: 2,
-      borderColor: NAVY,
-      borderRadius: 8,
-      backgroundColor: SURFACE,
+      gap: 10,
+      marginTop: 16,
+      paddingY: 12,
+      paddingX: 14,
       flexShrink: 0,
     });
-    const sheen = new RunButtonSurface();
-    const shadow = new BoxShadow(8, [{ y: 3, blur: 0, color: NAVY_DEEP, alpha: 1 }]);
-    plate.add(shadow.content, sheen.content);
-    this.sectionParts.push(sheen, shadow);
+    const card = new CardFace(plate, { fill: ui.white });
+    plate.add(card.content);
+    this.sectionParts.push(card);
     this.archiveLegend = stack(
-      new Text({ text: "", fontSize: 16, fontWeight: 800, color: INK, marginRight: 8 }),
+      new Text({ text: "", fontSize: 16, fontWeight: 900, letterSpacing: 1, color: ui.ink }),
       1,
     );
     plate.add(this.archiveLegend);
-    this.archiveItems = [];
     const shelves = rarityNames.map((name, rarity) => {
       const shelf = new Container({
         flexDirection: "row",
@@ -629,30 +595,11 @@ export class GpuLab {
     });
     for (const id of Object.keys(items) as ItemId[]) {
       const button = stack(
-        new Container({
-          alignItems: "center",
-          justifyContent: "center",
-          borderWidth: 2,
-          borderColor: NAVY,
-          borderRadius: 8,
-          flexShrink: 0,
-        }),
+        new Container({ alignItems: "center", justifyContent: "center", flexShrink: 0 }),
         1,
       );
-      const face = new RadialFace({
-        at: [0.5, 0.38],
-        inner: "#ffffff",
-        middle: "#d8effb",
-        mid: 0.72,
-        outer: "#bcd8ea",
-        radius: 6,
-        ring: { width: 2, color: "#eef5fa" },
-      });
-      const buttonShadow = new BoxShadow(8, [{ y: 2, blur: 0, color: NAVY_DEEP, alpha: 1 }]);
-      // Archived: `inset 0 3px 0 rgb(0 0 0 / 35%)`, a sunk socket.
-      const lip = new InsetShade(3, "#000000", 0.35, 6);
-      const pattern = new HoverPattern(this.stage.motion, () => this.stage.invalidate(), SURFACE);
-      const ring = new OutlineRing(8, YELLOW, 3, 2);
+      const face = new CardFace(button, { fill: ui.white, border: { color: ui.line, width: 2 } });
+      const ring = new OutlineRing(RADIUS, ui.ink, 2.5, 3);
       ring.content.setProperties({ display: "none" });
       const icon = stack(
         new Image({
@@ -663,34 +610,28 @@ export class GpuLab {
         }),
         1,
       );
-      // The strike: a warm bar across the socket.
+      // The strike: a white bar across the archived slot.
       const strike = stack(
         new Container({
           positionType: "absolute",
           positionLeft: "46%",
-          positionTop: "18%",
+          positionTop: "14%",
           width: "8%",
-          height: "64%",
+          height: "72%",
           borderRadius: 2,
-          backgroundColor: YELLOW,
+          backgroundColor: ui.white,
           transformRotateZ: -45,
         }),
         2,
       );
-      button.add(
-        buttonShadow.content,
-        face.content,
-        lip.content,
-        pattern.content,
-        icon,
-        strike,
-        stack(ring.content, 3),
-      );
+      button.add(face.content, icon, strike, stack(ring.content, 3));
       shelves[items[id].rarity]!.add(button);
       this.archiveItems.push(button);
-      this.sectionParts.push(face, buttonShadow, lip, pattern, ring);
+      this.sectionParts.push(face, ring);
       const on = () => this.progress.archive.includes(id);
       const full = () => !on() && this.progress.archive.length >= slots;
+      const pose = { lift: 0 };
+      let target = "";
       const control: Control = {
         kind: "archive",
         panel: button,
@@ -707,34 +648,42 @@ export class GpuLab {
             on() ? archived.filter((other) => other !== id) : [...archived, id],
           );
         },
-        paint: ({ hovered, focused, focusVisible }) => {
-          const pressed = on();
-          ring.content.setProperties({ display: focused && focusVisible ? "flex" : "none" });
-          // Archived is its picked state: lit like a hovered slot, inked for the sunk navy socket.
-          pattern.setSurface(pressed ? NAVY : SURFACE);
-          pattern.setFocused((pressed || hovered || (focused && focusVisible)) && !full());
-          face.content.setProperties({ display: pressed ? "none" : "flex" });
-          button.setProperties({
-            backgroundColor: pressed ? NAVY : undefined,
-            borderColor: pressed ? NAVY_DEEP : NAVY,
+        paint: ({ hovered, focused, focusVisible, pressed }) => {
+          const archived = on();
+          const keyed = focused && focusVisible;
+          ring.content.setProperties({ display: keyed ? "flex" : "none" });
+          face.set({
+            fill: archived ? ui.ink : ui.white,
+            border: archived ? ui.ink : hovered && !full() ? ui.ink : ui.line,
           });
-          buttonShadow.content.setProperties({ display: pressed ? "none" : "flex" });
-          fade(icon, pressed ? 0.4 : 1);
-          setGrayscale(icon, pressed ? 1 : 0);
-          lip.content.setProperties({ display: pressed ? "flex" : "none" });
-          strike.setProperties({ display: pressed ? "flex" : "none" });
+          fade(icon, archived ? 0.4 : 1);
+          setGrayscale(icon, archived ? 1 : 0);
+          strike.setProperties({ display: archived ? "flex" : "none" });
           fade(button, full() ? 0.45 : 1);
+          const lift = full() ? 0 : pressed ? -LIFT.press : hovered ? LIFT.hover : 0;
+          const key = `${lift}`;
+          if (key === target) return;
+          const duration = target === "" ? 0 : LIFT.ms;
+          target = key;
+          this.stage.motion.animate(
+            pose,
+            { lift },
+            duration,
+            () => {
+              button.setProperties({ transformTranslateY: -pose.lift });
+              face.set({ depth: 2 + pose.lift });
+              this.stage.invalidate();
+            },
+            SNAP,
+          );
         },
-        update: (deltaMs) => {
-          face.update();
-          lip.update();
-          pattern.update(deltaMs);
-        },
-        dispose: () => {},
+        update: () => {},
+        dispose: () => this.stage.motion.cancel(pose),
       };
+      face.set({ depth: 2 });
       this.sectionControls.push(control);
     }
-    for (const shelf of shelves) if (shelf.children.length > 1) plate.add(shelf);
+    for (const shelf of shelves) if (shelf.children.length > 1) plate.add(stack(shelf, 1));
     return plate;
   }
 
@@ -774,47 +723,69 @@ export class GpuLab {
   private applySizes(): void {
     const c = this.compact;
     for (const face of this.tabFaces) face.fitTouch();
-    this.content.setProperties({ gap: c ? 8 : 12, padding: c ? 8 : 12 });
-    for (const row of this.tileRows) row.setProperties({ gap: c ? 8 : 12 });
+    const gap = c ? 8 : 12;
+    // Filling the sheet, a card grows its icon and effect with it (most with two columns).
+    const size = !this.fills ? 0 : this.gridColumns === 2 ? 2 : 1;
+    this.grid.setProperties({ gap: c ? 10 : 16, justifyContent: "center" });
+    for (const row of this.tileRows)
+      row.setProperties({ gap: c ? 10 : 16, maxHeight: this.fills ? (c ? 150 : 200) : undefined });
     for (const part of this.sized) {
       part.panel.setProperties({
-        minHeight: c ? 60 : 72,
-        gap: c ? 8 : 12,
-        paddingY: c ? 4 : 8,
-        paddingLeft: c ? 4 : 8,
-        paddingRight: c ? 8 : 12,
+        minHeight: c ? 76 : 112,
+        gap: c ? 12 : [18, 20, 26][size],
+        paddingY: c ? 10 : 16,
+        paddingLeft: c ? 10 : 16,
+        paddingRight: c ? 12 : 20,
       });
-      part.well.setProperties({ width: c ? 40 : 56, height: c ? 40 : 56 });
-      part.name.setProperties({ fontSize: c ? 15 : 18 });
-      for (const text of [part.stat, part.value, part.next, part.amount])
-        text.setProperties({ fontSize: c ? 13 : 15 });
-      part.top.setProperties({ gap: c ? 8 : 12 });
-      part.bottom.setProperties({ gap: c ? 8 : 12 });
+      const well = c ? [52, 72, 80][size]! : [80, 100, 144][size]!;
+      part.well.setProperties({ width: well, height: well });
+      part.name.setProperties({ fontSize: c ? [16, 17, 18][size] : [20, 22, 24][size] });
+      part.stat.setProperties({ fontSize: c ? 12 : 14 });
+      for (const text of [part.value, part.next])
+        text.setProperties({ fontSize: c ? [17, 19, 21][size] : [22, 24, 28][size] });
+      part.amount.setProperties({ fontSize: c ? 14 : 17 });
+      part.price.setProperties({ minHeight: c ? 28 : 34 });
+      part.coinSize(c ? 22 : 26);
+      part.body.setProperties({ gap: c ? 4 : 8 });
+      part.top.setProperties({ gap });
+      part.bottom.setProperties({ gap });
       part.pips.setCompact(c);
-      part.pipBox.setProperties({
-        width: part.pips.width(),
-        height: c ? 10 : 12,
-      });
-      // Grid column `auto` shared with the pips: the column is at least as wide as the gauge.
+      part.pipBox.setProperties({ width: part.pips.width(), height: c ? 10 : 12 });
+      // The price column is at least as wide as the gauge above it.
       part.priceSlot.setProperties({ minWidth: part.pips.width() });
     }
-    for (const button of this.archiveItems)
-      button.setProperties({ width: c ? 34 : 40, height: c ? 34 : 40 });
+    const slot = Math.max(c ? 44 : 48, this.stage.viewport.minTarget);
+    for (const button of this.archiveItems) button.setProperties({ width: slot, height: slot });
   }
 
   resize(width: number, height: number, scale: number, safe: UiInsets): void {
     this.stage.resize(width, height, scale, safe);
     const v = this.stage.viewport;
-    this.compact = v.height <= 480 && v.width > v.height;
-    const edge = this.compact ? 16 : 28;
-    this.frame.resize(this.compact);
+    // A short landscape host (a phone): the UI scale keeps its logical height near the desktop's.
+    const compact = height <= 480 && width > height;
+    // Short landscape: the segments join the top line, the tiles get the height back.
+    if (compact !== this.compact || !this.tabs.parent) {
+      this.tabs.removeFromParent();
+      if (compact) this.frame.extra.add(stack(this.tabs, 1));
+      else this.body.add(stack(this.tabs, 1));
+      this.content.removeFromParent();
+      this.body.add(stack(this.content, 1));
+    }
+    this.compact = compact;
+    const edge = compact ? 16 : 28;
+    this.frame.resize(compact);
+    this.frame.extra.setProperties({ gap: compact ? 12 : 18 });
+    this.balance.setCompact(compact);
+    this.tabs.setProperties({ alignSelf: "flex-start", marginBottom: compact ? 0 : 6 });
+    // The sheet's own padding keeps lifts and rings in; the body edge lines up with the top line.
+    const inset = 10;
     this.body.setProperties({
-      gap: this.compact ? 8 : 12,
-      paddingLeft: Math.max(edge, v.safeArea.left),
-      paddingRight: Math.max(edge, v.safeArea.right),
-      paddingBottom: Math.max(this.compact ? 12 : 20, v.safeArea.bottom),
+      gap: compact ? 0 : 10,
+      paddingLeft: Math.max(edge, v.safeArea.left) - inset,
+      paddingRight: Math.max(edge, v.safeArea.right) - inset,
+      paddingBottom: Math.max(compact ? 4 : 12, v.safeArea.bottom),
     });
-    this.board.setProperties({ borderWidth: this.compact ? 2 : 3 });
+    this.tabs.setProperties({ marginLeft: compact ? 0 : inset });
     const columns = this.fitColumns(
       v.width - 2 * Math.max(edge, v.safeArea.left, v.safeArea.right),
     );
@@ -828,16 +799,14 @@ export class GpuLab {
   }
 
   /**
-   * Three tiles to a row when each is wide enough for its well, pips-wide price and a
-   * partly bought `stat now / → next` (the values wrap between the two), else two. Measured at the
-   * widest values today (「伤害 +12% / → +16%」): a full-size tile needs 300 (320 with room for
-   * longer values), a compact one 200 (1280×800 at 150% gives 248, 1440×900 283, phones 225–240).
+   * Three tiles to a row when each is wide enough for its well, pips-wide price and a partly
+   * bought `stat now / → next` (the values wrap between the two), else two. A full-size tile needs
+   * 320, a compact one 220.
    */
-  private fitColumns(boardWidth: number): number {
+  private fitColumns(sheetWidth: number): number {
     const c = this.compact;
-    const inner = boardWidth - 2 * (c ? 2 : 3) - 2 * (c ? 8 : 12);
-    const tile = (inner - 2 * (c ? 8 : 12)) / 3;
-    return tile >= (c ? 200 : 320) ? 3 : 2;
+    const tile = (sheetWidth - 2 * (c ? 8 : 12)) / 3;
+    return tile >= (c ? 220 : 320) ? 3 : 2;
   }
 
   // ── Input ──────────────────────────────────────────────────────────────────────────────────
@@ -862,6 +831,9 @@ export class GpuLab {
         !this.contains(this.content, x, y)
       )
         continue;
+      // A tile still sliding in (under half shown) is not there to press yet.
+      const entering = this.entrance[this.tiles.indexOf(control)];
+      if (entering && entering.opacity < 0.5) continue;
       if (this.contains(control.panel, x, y)) return i;
     }
     return -1;
@@ -1046,14 +1018,13 @@ export class GpuLab {
     this.tooltip.show(text ? control!.panel : null, text);
     this.tooltip.update();
     this.frame.update();
-    this.boardFace.update();
     // `grid-template-columns: repeat(columns, minmax(0, 1fr))`: every column an equal share of the
-    // board, so a short last row keeps the widths above it (flex growth let content widen it).
+    // sheet, so a short last row keeps the widths above it (flex growth let content widen it).
     // From the content box as laid out (before edges snap), so the columns and gaps fill it exactly.
-    const inner = this.content.node.layoutInner.value?.[0];
+    const inner = this.sheet.node.layoutInner.value?.[0];
     if (inner !== undefined) {
-      const gap = this.compact ? 8 : 12;
-      const n = this.columns;
+      const gap = this.compact ? 10 : 16;
+      const n = this.gridColumns;
       const column = Math.max(0, (inner - (n - 1) * gap) / n);
       if (column !== this.column) {
         this.column = column;
@@ -1088,64 +1059,9 @@ export class GpuLab {
 }
 
 /**
- * `.lab-board`'s face: ice under `repeating-linear-gradient(-55deg, rgb(20 47 80 / 3%) 0 2px,
- * transparent 2px 8px)`, with `inset 0 4px 8px rgb(13 35 63 / 12%)` along the top.
- */
-class BoardFace {
-  readonly content = new Content({
-    positionType: "absolute",
-    positionLeft: 0,
-    positionTop: 0,
-    width: "100%",
-    height: "100%",
-    keepAspectRatio: false,
-    depthTest: false,
-  });
-  private readonly geometry = new PlaneGeometry(1, 1);
-  private readonly material = new UiShaderMaterial("lab-board", {
-    uniforms: { boardSize: { value: new Vector2(1, 1) }, opacity: { value: 1 } },
-    vertexShader: `
-      varying vec2 boardUv;
-      void main() { boardUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
-    fragmentShader: `
-      uniform vec2 boardSize;
-      uniform float opacity;
-      varying vec2 boardUv;
-      vec3 toLinear(vec3 c) { return mix(c / 12.92, pow((c + .055) / 1.055, vec3(2.4)), step(.04045, c)); }
-      float roundBox(vec2 p, vec2 h, float r) { vec2 q = abs(p) - h + r; return length(max(q, 0.)) + min(max(q.x, q.y), 0.) - r; }
-      void main() {
-        vec2 p = vec2(boardUv.x, 1. - boardUv.y) * boardSize;
-        float aa = .5 * max(fwidth(p.x), fwidth(p.y));
-        float box = roundBox(p - boardSize * .5, boardSize * .5, 7.);
-        vec3 col = vec3(.847, .937, .984);
-        float m = mod(dot(p, vec2(.819152, .573576)), 8.);
-        col = mix(col, vec3(.078, .184, .314), .03 * (1. - smoothstep(2. - aa, 2. + aa, m)));
-        col = mix(col, vec3(.051, .137, .247), .12 * exp(-p.y / 5.));
-        gl_FragColor = vec4(toLinear(col), opacity * (1. - smoothstep(-aa, aa, box)));
-        #include <colorspace_fragment>
-      }`,
-  });
-
-  constructor() {
-    this.content.add(new Mesh(this.geometry, this.material));
-    this.content.notifyAncestorsChanged();
-  }
-
-  update(): void {
-    const s = this.content.size.value;
-    if (s) this.material.uniforms.boardSize.value.set(s[0], s[1]);
-  }
-
-  dispose(): void {
-    this.content.dispose();
-    this.geometry.dispose();
-    this.material.dispose();
-  }
-}
-
-/**
- * `.lab-tile__pips`: one 9 × 12 cell per level (7 × 10 when compact) with 3px (2px) gaps; a bought
- * level is a gold segment with a navy ring, one still to buy a small recessed slate dot.
+ * The level gauge: one 9 × 12 cell per level (7 × 10 when compact) with 3px (2px) gaps; a bought
+ * level is an ink bar, one still to buy a small line-coloured dot, so an empty gauge reads as a
+ * track, never as a row of blank boxes.
  */
 class PipStrip {
   readonly content = new Content({
@@ -1203,16 +1119,11 @@ class PipStrip {
           vec3 col;
           float d;
           if (i < lit) {
-            // A bought level: a gold segment in a navy ring.
             d = roundBox(q, cell * .5, 2.);
-            vec3 face = t < .55 ? mix(vec3(1., .902, .561), vec3(1., .831, .357), t / .55) : mix(vec3(1., .831, .357), vec3(.949, .71, .165), (t - .55) / .45);
-            col = mix(face, vec3(.078, .184, .314), smoothstep(-1.5 - aa, -1.5 + aa, d));
+            col = ${glsl(ui.ink)};
           } else {
-            // A level still to buy: a small dot sunk into the plate (shaded at its top edge), so an
-            // empty gauge reads as a track, never as a row of blank boxes.
-            float r = cell.x * .36;
-            d = length(q) - r;
-            col = mix(vec3(.333, .443, .553), vec3(.659, .757, .839), smoothstep(-r, r, q.y));
+            d = length(q) - cell.x * .32;
+            col = ${glsl(ui.line)};
           }
           gl_FragColor = vec4(toLinear(col), opacity * (1. - smoothstep(-aa, aa, d)));
           #include <colorspace_fragment>
@@ -1247,5 +1158,68 @@ class PipStrip {
     this.content.dispose();
     this.geometry.dispose();
     this.material.dispose();
+  }
+}
+
+/** The 星星沙子 balance: the coin and the banked amount on an upright ink chip; it pops on change. */
+class Balance {
+  readonly root = new Container({
+    flexDirection: "row",
+    alignItems: "center",
+    flexShrink: 0,
+    borderRadius: RADIUS,
+  });
+  private readonly face = new CardFace(this.root, { fill: ui.ink });
+  private readonly coin = stack(new Image({ src: CURRENCY_ICON, flexShrink: 0 }), 1);
+  private readonly amount = stack(
+    new Text({ text: "", fontWeight: 900, color: ui.white, lineHeight: 1.2 }),
+    1,
+  );
+  private readonly pose = { scale: 1 };
+  private readonly stage: UiStage;
+  private value: number | null = null;
+
+  constructor(stage: UiStage) {
+    this.stage = stage;
+    this.face.set({ depth: 2 });
+    this.root.add(this.face.content, this.coin, this.amount);
+  }
+
+  setCompact(compact: boolean): void {
+    this.root.setProperties({
+      height: compact ? 36 : 44,
+      gap: compact ? 4 : 6,
+      paddingLeft: compact ? 4 : 6,
+      paddingRight: compact ? 10 : 14,
+    });
+    this.coin.setProperties({ width: compact ? 26 : 32, height: compact ? 26 : 32 });
+    this.amount.setProperties({ fontSize: compact ? 16 : 19 });
+  }
+
+  set(value: number): void {
+    if (value === this.value) return;
+    const first = this.value === null;
+    this.value = value;
+    this.amount.setProperties({ text: prices.format(value) });
+    if (first) return;
+    this.stage.motion.enter(
+      this.pose,
+      { scale: 1.25 },
+      { scale: 1 },
+      240,
+      () => {
+        this.amount.setProperties({
+          transformScaleX: this.pose.scale,
+          transformScaleY: this.pose.scale,
+        });
+        this.stage.invalidate();
+      },
+      POP,
+    );
+  }
+
+  dispose(): void {
+    this.stage.motion.cancel(this.pose);
+    this.face.dispose();
   }
 }

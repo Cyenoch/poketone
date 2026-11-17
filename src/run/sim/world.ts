@@ -23,7 +23,7 @@ import { updateShield } from "./hurt";
 import { fire } from "./triggers/index";
 import { forget, interact, placeStations } from "./stations";
 import { STATION_REACH } from "./content/params/stations";
-import { sweepClearedField, interactAtLandmark } from "./zones";
+import { sweepClearedField, interactInZone } from "./zones";
 import { applyChoice, banishKey, newMoveState, offerKey, rollChoices } from "./upgrades";
 import { TICK, type World } from "./state/world";
 import type { Command } from "./state/commands";
@@ -172,7 +172,7 @@ export function createWorld(config: RunConfig): World {
     stations: [],
     spawn: { credit: 0, pressure: 0.5, pool: [], fired: [], anchor: -1 },
     bossId: null,
-    zone: { index: 0, tick: 0, phase: "active" },
+    zone: { index: 0, tick: 0, phase: "active", exit: null },
     rampage: false,
     events: [],
   };
@@ -353,12 +353,12 @@ export function applyCommand(world: World, command: Command): void {
         return;
       }
       if (startRescue(world, player)) return;
-      if (world.players.length > 1 && interactAtLandmark(world, player)) return;
+      if (world.players.length > 1 && interactInZone(world, player)) return;
       if (world.players.length > 1 && player.pending.length > 0 && !player.dialog) {
         player.choosing = true;
         return;
       }
-      if (!interactAtLandmark(world, player)) interact(world, player);
+      if (!interactInZone(world, player)) interact(world, player);
       return;
     case "reroll": {
       const pending = player.pending[0];

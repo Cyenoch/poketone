@@ -205,7 +205,8 @@ for prop in json.loads((ASSETS / "props/map-props.json").read_text()):
     MODELS[prop] = (f"props/{prop}/blender/model.glb", f"props/{prop}.glb", None, 256)
 
 # Prefix build keys because these species also have independent swarm assets.
-for form in ("gastly", "haunter", "gengar", "dratini", "dragonair", "dragonite", "machop", "machoke", "machamp"):
+for form in ("gastly", "haunter", "gengar", "dratini", "dragonair", "dragonite", "machop", "machoke", "machamp",
+             "abra", "kadabra", "alakazam", "geodude", "graveler", "golem"):
     MODELS[f"player-{form}"] = (f"characters/{form}/blender/model.glb", f"{form}.glb", None, 1024)
 
 
@@ -904,7 +905,9 @@ def build(name):
         bpy.context.scene.render.fps = 30
     bpy.ops.import_scene.gltf(filepath=str(source))
     # glTF's bone display widget is not part of the asset or its triangle budget.
-    for obj in [o for o in bpy.context.scene.objects if o.type == "MESH" and o.hide_render]:
+    widgets = {bone.custom_shape for rig in bpy.context.scene.objects if rig.type == "ARMATURE"
+               for bone in rig.pose.bones if bone.custom_shape is not None}
+    for obj in [o for o in bpy.context.scene.objects if o.type == "MESH" and (o.hide_render or o in widgets)]:
         bpy.data.objects.remove(obj, do_unlink=True)
     meshes = [o for o in bpy.context.scene.objects if o.type == "MESH"]
     before = sum(triangles(o) for o in meshes)

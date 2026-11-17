@@ -2,9 +2,11 @@ import { starterUnlocked, unlockedDifficulty, type Progress } from "./run/progre
 import { difficulties, type Difficulty } from "./run/sim/content/difficulties";
 import { starterOrder, type StarterId } from "./run/sim/content/lines/index";
 import type { StageId } from "./run/sim/content/stages/index";
+import { DEFAULT_TRAINER, isTrainerId, trainerUnlocked, type TrainerId } from "./trainers";
 
 /** The lobby's last pick: a per-browser preference, outside the exported save. */
 export interface LobbyPick {
+  trainer: TrainerId;
   starter: StarterId;
   difficulty: Difficulty;
   stage: StageId;
@@ -26,8 +28,9 @@ export function loadPick(): Partial<LobbyPick> {
 
 export function parsePick(value: unknown): Partial<LobbyPick> {
   if (typeof value !== "object" || value === null) return {};
-  const { starter, difficulty, stage } = value as Record<string, unknown>;
+  const { starter, difficulty, stage, trainer } = value as Record<string, unknown>;
   return {
+    trainer: isTrainerId(trainer) ? trainer : undefined,
     starter: starterOrder.includes(starter as StarterId) ? (starter as StarterId) : undefined,
     difficulty:
       typeof difficulty === "number" && difficulties[difficulty]
@@ -57,5 +60,9 @@ export function validPick(progress: Progress, pick: Partial<LobbyPick>): LobbyPi
       ? pick.difficulty
       : 0;
   const stage = pick.stage && playableStages.includes(pick.stage) ? pick.stage : playableStages[0]!;
-  return { starter, difficulty, stage };
+  const trainer =
+    isTrainerId(pick.trainer) && trainerUnlocked(progress, pick.trainer)
+      ? pick.trainer
+      : DEFAULT_TRAINER;
+  return { starter, difficulty, stage, trainer };
 }

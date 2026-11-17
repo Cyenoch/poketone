@@ -5,7 +5,7 @@ import { revivePlayer } from "./rescue";
 import { COOP } from "./content/params/coop";
 import { PARTNER_BEHIND } from "./content/params/environment";
 import { stageDefs } from "./content/stages/index";
-import { atLandmark, zoneDef } from "./currentZone";
+import { atExit, atLandmark, zoneDef } from "./currentZone";
 import { primeEnemyNav, summonGuardian } from "./director";
 import { formOf } from "./evolution";
 import { generateMap, MapGenError } from "./mapgen/index";
@@ -22,11 +22,12 @@ const SIM_STREAM = 0x73696d00;
 /** A zone's map retries this many derived seeds before the stage's map spec counts as broken. */
 const FIELD_ATTEMPTS = 8;
 
-/** What interacting at the landmark does now, or null when it does nothing. */
-export function landmarkAction(world: World, player: Player): "summon" | "leave" | null {
-  if (!player.alive || !atLandmark(world, player)) return null;
-  if (world.zone.phase === "active" && world.bossId === null) return "summon";
-  if (world.zone.phase === "cleared") return "leave";
+/** What interacting here does now: summon at the landmark, leave at the exit, or null. */
+export function zoneAction(world: World, player: Player): "summon" | "leave" | null {
+  if (!player.alive) return null;
+  if (world.zone.phase === "active" && world.bossId === null && atLandmark(world, player))
+    return "summon";
+  if (world.zone.phase === "cleared" && atExit(world, player)) return "leave";
   return null;
 }
 
@@ -41,12 +42,12 @@ export function canLeave(world: World): boolean {
 }
 
 /**
- * The interact command at the landmark: summons the guardian, or, once it has fallen, leaves the
- * zone. True when the landmark took the command.
+ * The interact command at the landmark summons the guardian; at the exit it opened by falling, it
+ * leaves the zone. True when either took the command.
  */
-export function interactAtLandmark(world: World, player: Player): boolean {
+export function interactInZone(world: World, player: Player): boolean {
   if (isFrozen(world)) return false;
-  const action = landmarkAction(world, player);
+  const action = zoneAction(world, player);
   if (action === "summon") {
     summonGuardian(world, player);
     return true;
@@ -122,6 +123,8 @@ export function installField(world: World, field: Field): void {
     const back = formOf(owner).radius + PARTNER_BEHIND;
     partner.x = partner.px = owner.x - owner.faceX * back;
     partner.z = partner.pz = owner.z - owner.faceZ * back;
+    partner.target = null;
+    partner.returning = false;
   }
 }
 
@@ -132,7 +135,11 @@ export function prepareZone(world: World): Field & { stage: StageId; zone: numbe
   const destination = nextField(world);
   if (!destination) throw new Error("塔顶已是路线终点，不能准备下一关。");
   const { stage, zone } = destination;
-  const next = { ...world, stage, zone: { index: zone, tick: 0, phase: "active" as const } };
+  const next = {
+    ...world,
+    stage,
+    zone: { index: zone, tick: 0, phase: "active" as const, exit: null },
+  };
   return { ...assembleField(next, zoneSeed(next, zone)), stage, zone };
 }
 
@@ -165,7 +172,7 @@ export function enterZone(world: World, prepared: Field & { stage: StageId; zone
     player.ult.elapsed = -1;
     player.ult.crossed = [];
   }
-  world.zone = { index: zone, tick: 0, phase: "active" };
+  world.zone = { index: zone, tick: 0, phase: "active", exit: null };
   world.spawn = { credit: 0, pressure: 0.5, pool: [], fired: [], anchor: -1 };
   world.bossId = null;
   world.rampage = false;

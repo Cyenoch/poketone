@@ -4,6 +4,8 @@ import { starters } from "../src/run/sim/content/lines/index.ts";
 import { spawnEnemy } from "../src/run/sim/director.ts";
 import { evolve, formOf } from "../src/run/sim/evolution.ts";
 import { EnemyGrid } from "../src/run/sim/grid.ts";
+import { damagePlayer } from "../src/run/sim/hurt.ts";
+import { DASH_COOLDOWN, DASH_TIME } from "../src/run/sim/content/params/player.ts";
 import { playerStats } from "../src/run/sim/stats.ts";
 import { TERRAIN_HALF } from "../src/run/sim/terrain.ts";
 import { TICK } from "../src/run/sim/state/world.ts";
@@ -83,7 +85,7 @@ test("maturity raises the stage but keeps the form; the next stage evolves", () 
 });
 
 test("new player lines keep their build through both evolutions and can finish each ultimate tier", () => {
-  for (const starter of ["gastly", "dratini", "machop"]) {
+  for (const starter of ["gastly", "dratini", "machop", "abra", "geodude"]) {
     const w = world(starter);
     w.map.terrain = flatTerrain();
     w.map.obstacles = [];
@@ -123,6 +125,99 @@ test("an evolution move is offered only once its stage is reached", () => {
   assert.ok(evolve(player));
   assert.ok(offered(first, 50), "stage 1 adds the first evolution move at high weight");
   assert.ok(!offered(second, 300), "the second waits for stage 2");
+});
+
+test("psychic and rock cards respect kit levels and both evolution stages", () => {
+  for (const starter of ["abra", "geodude"]) {
+    const player = world(starter).players[0];
+    const { kit, evolutionMoves, stages } = starters[starter];
+    const offered = () => {
+      const rng = createRng(9);
+      const seen = new Set();
+      for (let i = 0; i < 300; i++)
+        for (const choice of rollChoices(rng, player, "level"))
+          if (choice.kind === "move") seen.add(choice.move);
+      return seen;
+    };
+    const expectMoves = (expected) =>
+      assert.deepEqual(
+        offered(),
+        new Set(expected),
+        `${starter} L${player.level} stage ${player.stage}`,
+      );
+    expectMoves([]);
+    player.level = 2;
+    expectMoves([kit[1]]);
+    player.level = stages[1].at - 1;
+    expectMoves([kit[1]]);
+    player.level = stages[1].at;
+    expectMoves([kit[1], kit[2]]);
+    assert.ok(evolve(player));
+    expectMoves([kit[1], kit[2], evolutionMoves[0]]);
+    player.level = 39;
+    expectMoves([kit[1], kit[2], evolutionMoves[0]]);
+    player.level = 40;
+    expectMoves([...kit.slice(1), evolutionMoves[0]]);
+    player.level = stages[2].at;
+    expectMoves([...kit.slice(1), evolutionMoves[0]]);
+    assert.ok(evolve(player));
+    expectMoves([...kit.slice(1), ...evolutionMoves]);
+    applyChoice(player, { kind: "move", move: evolutionMoves[1] });
+    expectMoves([...kit.slice(1), evolutionMoves[0]]);
+  }
+});
+
+test("Abra chains two protective dashes and recharges each spent charge separately", () => {
+  const w = world("abra");
+  const player = w.players[0];
+  player.invulnerable = 0;
+  const dash = { t: "dash", player: 0 };
+  const casts = () => w.events.filter((event) => event.t === "dash").length;
+  const hp = player.hp;
+  for (let i = 0; i < 3; i++) {
+    stepWorld(w, [dash]);
+    assert.equal(damagePlayer(w, player, 10), false, "the dash protects against hits");
+  }
+  assert.equal(casts(), 2, "the third press cannot extend an exhausted chain");
+  assert.equal(player.dashes, 0);
+  assert.equal(player.hp, hp);
+  for (let i = 0; i < Math.ceil(DASH_TIME / TICK); i++) stepWorld(w, []);
+  assert.equal(damagePlayer(w, player, 10), true, "protection ends with the dash");
+  assert.ok(player.hp < hp);
+  while (w.time < DASH_COOLDOWN - TICK) {
+    stepWorld(w, [dash]);
+    assert.equal(casts(), 2, "spent charges remain unavailable before recharge");
+  }
+  for (let i = 0; i < 2; i++) stepWorld(w, []);
+  assert.equal(player.dashes, 1, "one cooldown restores only one charge");
+  assert.ok(player.dashCooldown > DASH_COOLDOWN - 3 * TICK);
+  stepWorld(w, [dash]);
+  assert.equal(casts(), 3, "the returned charge is immediately usable");
+  assert.equal(player.dashes, 0);
+  for (let i = 0; i < Math.ceil((2 * DASH_COOLDOWN) / TICK) + 2; i++) stepWorld(w, []);
+  assert.equal(player.dashes, 2, "all charges eventually recover");
+  assert.equal(player.dashCooldown, 0);
+});
+
+test("Abra evolutions preserve spent dashes and Alakazam's extra charge joins the recharge queue", () => {
+  const w = world("abra");
+  const player = w.players[0];
+  const dash = { t: "dash", player: 0 };
+  for (const stage of starters.abra.stages.slice(1)) {
+    while (player.dashes > 0) stepWorld(w, [dash]);
+    const cooldown = player.dashCooldown;
+    player.level = stage.at;
+    assert.ok(evolve(player));
+    assert.equal(player.dashes, 0, "evolving does not refund spent charges");
+    assert.equal(player.dashCooldown, cooldown, "the running recharge is preserved");
+    const capacity = player.stage === 1 ? 2 : 3;
+    for (let i = 0; i < Math.ceil((capacity * DASH_COOLDOWN) / TICK) + 2; i++) stepWorld(w, []);
+    assert.equal(player.dashes, capacity, `${stage.form.id} restores its full chain`);
+    assert.equal(player.dashCooldown, 0);
+    const before = w.events.filter((event) => event.t === "dash").length;
+    for (let i = 0; i <= capacity; i++) stepWorld(w, [dash]);
+    assert.equal(w.events.filter((event) => event.t === "dash").length - before, capacity);
+  }
 });
 
 test("a move never goes past level 8", () => {

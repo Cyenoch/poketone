@@ -15,7 +15,7 @@ export function createBallMark() {
         if(worldY < clipBottom || worldY > clipTop) discard;
         vec2 p=(vUv-.5)*24.; float r=length(p); float aa=.5*fwidth(r);
         float coverage=1.-smoothstep(11.75-aa,11.75+aa,r);
-        vec3 ink=vec3(.051,.137,.247); vec3 color=p.y>0.?vec3(.659,.196,.263):vec3(1.);
+        vec3 ink=vec3(.0863,.0863,.1137); vec3 color=p.y>0.?vec3(.9098,.2235,.1725):vec3(1.);
         float rim=smoothstep(9.25-aa,9.25+aa,r);
         float stripe=1.-smoothstep(1.25-aa,1.25+aa,abs(p.y));
         color=mix(color,ink,max(rim,stripe));

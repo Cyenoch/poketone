@@ -5,13 +5,14 @@ import test from "node:test";
 
 // Drawing substitutes stay in a separate process, never replacing modules in other UI tests.
 for (const scenario of [
-  "codex-lab",
-  "codex-run",
   "codex-replaced-run",
   "codex-resumed-run",
   "settings-save-input",
   "lobby-retry",
   "backdrop-url",
+  "launch-waits-lobby",
+  "launch-progress-cancelled",
+  "dispose-during-boot",
 ])
   test(`real GPU host/lobby lifecycle: ${scenario}`, () => {
     const run = spawnSync(

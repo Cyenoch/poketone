@@ -1,0 +1,27 @@
+{
+  "dry_run": true,
+  "valid": true,
+  "input": "golem/generation/split/v-front.png golem/generation/split/v-left.png golem/generation/split/v-back.png golem/generation/split/v-right.png",
+  "model": "v3.1-20260211",
+  "model_reason": "explicit --model",
+  "steps": [
+    {
+      "name": "text-to-model",
+      "endpoint": "/v3/generation/text-to-model",
+      "task_type": "text_to_model",
+      "payload": {
+        "prompt": "golem/generation/split/v-front.png golem/generation/split/v-left.png golem/generation/split/v-back.png golem/generation/split/v-right.png",
+        "smart_low_poly": true,
+        "face_limit": 1500,
+        "model": "v3.1-20260211"
+      }
+    }
+  ],
+  "pending_uploads": [],
+  "deliverables": ["GLB"],
+  "candidates": 1,
+  "warnings": [],
+  "errors": [],
+  "generation_credits_estimate": 30,
+  "cost_notes": ["estimated generation cost: 30 credits (official list price)"]
+}

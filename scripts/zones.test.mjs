@@ -274,6 +274,8 @@ function clearZone(world) {
   killEnemy({ world, grid: new EnemyGrid() }, boss, player);
   stepWorld(world, []);
   answerAll(world);
+  player.x = world.zone.exit.x;
+  player.z = world.zone.exit.z;
 }
 
 test("the guardian is summoned once at the landmark; its fall clears the field and the co-op exit carries queued cards", () => {
@@ -295,22 +297,29 @@ test("the guardian is summoned once at the landmark; its fall clears the field a
   assert.equal(world.enemies.filter((enemy) => enemy.boss).length, 1);
 
   world.pickups.push({ id: world.nextId++, kind: "xp", value: 1, x: 40, z: 40, magnet: false });
-  killEnemy(
-    { world, grid: new EnemyGrid() },
-    world.enemies.find((e) => e.boss),
-    player,
-  );
+  // Kited away from the altar, the guardian falls where a teammate stands.
+  const boss = world.enemies.find((e) => e.boss);
+  const fall = { x: world.players[1].x, z: world.players[1].z };
+  Object.assign(boss, fall);
+  killEnemy({ world, grid: new EnemyGrid() }, boss, player);
   stepWorld(world, []);
   assert.equal(world.zone.phase, "cleared");
+  assert.deepEqual(world.zone.exit, fall, "the exit opens where the guardian fell");
   assert.equal(world.enemies.length + world.projectiles.length + world.hazards.length, 0);
   assert.ok(
     world.pickups.some((pickup) => pickup.x === 40 && pickup.magnet),
     "distant pickups begin flying instead of being silently credited",
   );
   answerAll(world);
-  // Optional co-op choices travel to the next zone instead of holding the team hostage.
+  // The altar no longer leads anywhere; the exit does.
   player.x = pad.x;
   player.z = pad.z;
+  assert.ok(Math.hypot(pad.x - fall.x, pad.z - fall.z) > 3, "the fall is away from the altar");
+  stepWorld(world, [{ t: "interact", player: 0 }]);
+  assert.equal(world.zone.phase, "cleared");
+  // Optional co-op choices travel to the next zone instead of holding the team hostage.
+  player.x = fall.x;
+  player.z = fall.z;
   const pendingId = world.nextId++;
   world.players[1].pending.push({ id: pendingId, source: "level", options: [] });
   stepWorld(world, [{ t: "interact", player: 0 }]);
@@ -367,6 +376,8 @@ test("the next map keeps every player's growth and resets the field, clock and g
     faceZ: 1,
     cooldown: 1,
     guard: 0,
+    target: null,
+    returning: false,
   });
   world.stations.find((station) => station.kind === "bill").used = [0];
   const stations = world.stations.map(({ id, kind, used }) => [id, kind, used]);
@@ -380,7 +391,7 @@ test("the next map keeps every player's growth and resets the field, clock and g
   enterZone(world, prepareZone(world));
 
   assert.equal(world.stage, "desert");
-  assert.deepEqual(world.zone, { index: 0, tick: 0, phase: "active" });
+  assert.deepEqual(world.zone, { index: 0, tick: 0, phase: "active", exit: null });
   assert.equal(world.time, time, "the run clock carries on");
   assert.equal(world.nextId, nextId, "ids keep counting from where they were");
   assert.notDeepEqual(Array.from(world.map.terrain.heights.slice(0, 64)), terrain, "a new map");
@@ -553,7 +564,7 @@ test("entering the tower carries growth, installs its walls and ends only at its
       assert.equal(world.nav, oldNav);
       enterZone(world, prepared);
       assert.equal(world.stage, "tower");
-      assert.deepEqual(world.zone, { index: 0, tick: 0, phase: "active" });
+      assert.deepEqual(world.zone, { index: 0, tick: 0, phase: "active", exit: null });
       assert.equal(
         world.map.terrain.walls.template,
         stageDefs.tower.zones[0].map.templates[0].id,
@@ -627,7 +638,7 @@ test("guardian clear attracts field drops visibly and shares each reward once fo
       z: 40,
       magnet: false,
     }));
-    clearZone(world);
+    clearZone(world, world.players[0].x, world.players[0].z);
     sweepClearedField(world);
     assert.equal(world.pickups.length, 4, "clear starts flight, not instant credit");
     assert(world.pickups.every((p) => p.magnet));
@@ -657,8 +668,7 @@ test("guardian clear attracts field drops visibly and shares each reward once fo
 
 test("leaving during absorption settles remaining rewards without waiting and carries queued choices", async () => {
   const { clearZone } = await import("../src/run/sim/currentZone.ts");
-  const { canLeave, interactAtLandmark, sweepClearedField } =
-    await import("../src/run/sim/zones.ts");
+  const { canLeave, interactInZone, sweepClearedField } = await import("../src/run/sim/zones.ts");
   for (const count of [1, 4]) {
     const world = createWorld({
       stage: "forest",
@@ -674,10 +684,10 @@ test("leaving during absorption settles remaining rewards without waiting and ca
       { id: world.nextId++, kind: "chest", value: 1, x: 40, z: 40, magnet: false },
       { id: world.nextId++, kind: "stardust", value: 7, x: 40, z: 40, magnet: false },
     ];
-    clearZone(world);
+    clearZone(world, p.x, p.z);
     sweepClearedField(world);
     assert(canLeave(world), "in-flight drops do not gate departure");
-    assert(interactAtLandmark(world, p));
+    assert(interactInZone(world, p));
     assert.equal(world.zone.phase, "transitioning");
     assert.equal(world.pickups.length, 0);
     assert(world.players.every((p) => p.stardust === 7 && p.pending.length === 1));

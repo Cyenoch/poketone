@@ -1,0 +1,14 @@
+{
+  "createdAt": "2026-11-17",
+  "assets": ["abra", "geodude"],
+  "ultimates": { "abra": "psychic-field", "geodude": "rockslide-quake" },
+  "generator": "Magpie generate_image, ash/gpt-image-2.5-sunburst",
+  "generationRecords": "assets/icons/source/psychic-rock-generation.json",
+  "generationId": "image-38907-18",
+  "source": "assets/icons/source/ultimates-psychic-rock.png",
+  "grid": [2, 2],
+  "cells": ["abra", "geodude", null, null],
+  "output": "public/art/icons/ultimates/<cell>.webp",
+  "processing": "assets/icons/prepare-psychic-rock.py: remove beige background pixels within summed RGB distance <30 from (244,239,229), including enclosed gaps between pillars and rocks; border flood-fill tolerance 38, trim, 8% square padding, Lanczos to 128x128, WebP q88. Spare gray stars unused.",
+  "rights": "Generated for a noncommercial Pokémon fan project; not licensed as standalone open art."
+}

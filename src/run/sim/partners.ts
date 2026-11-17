@@ -1,13 +1,13 @@
 // 支援队伍: a defeated elite (头目 most often) may join its killer as a partner for the rest of the run.
-// Partners follow their owner, fight the swarm (never the guardian: that fight stays the player's) with
-// their species' own attack shape and obey the same terrain, nav and cover rules as everything else;
-// they never block the player and have no HP. 护主: when the swarm lands a touch on the owner, a ready
-// partner shields the owner for a moment. Numbers and reasons:
+// Partners fight the swarm within a range around their owner (never the guardian: that fight stays the
+// player's), the enemy nearest the owner first, with their species' own attack shape; a partner that
+// strays past `PARTNER.roam` follows its owner back before fighting again. They obey the same terrain,
+// nav and cover rules as everything else, never block the player and have no HP. 护主: when the swarm
+// lands a touch on the owner, a ready partner shields the owner for a moment. Numbers and reasons:
 // openspec/specs/combat-builds/spec.md「研究所」「同伴」, model: docs/BALANCE.md「支援队伍」.
 
 import { currentStats, itemRule } from "./stats";
 import { enemies as enemyDefs, type EnemyDef } from "./content/enemies";
-import { nearest } from "./archetypes/kit";
 import { damageEnemy, findPlayer, type Ctx } from "./combat";
 import { enemyScaling } from "./director";
 import { zoneClock, zonesOf } from "./content/params/zones";
@@ -85,6 +85,8 @@ export function capture(world: World, elite: Enemy, killer: Player): void {
     faceZ: elite.faceZ,
     cooldown: PARTNER_ATTACK[styleOf(enemyDefs[elite.species])].every,
     guard: 0,
+    target: null,
+    returning: false,
   };
   world.partners.push(partner);
   const name = enemyDefs[elite.species].name;
@@ -108,7 +110,7 @@ export function guard(world: World, owner: Player): void {
   for (const candidate of world.partners) {
     if (candidate.owner !== owner.id || candidate.guard > 0) continue;
     const d = hypot(candidate.x - owner.x, candidate.z - owner.z);
-    if (d < best && d <= PARTNER.leash && chaseable(world, candidate, owner)) {
+    if (d < best && d <= PARTNER.range && chaseable(world, candidate, owner)) {
       best = d;
       partner = candidate;
     }
@@ -145,37 +147,44 @@ export function updatePartners(ctx: Ctx, dt: number): void {
     if (!owner.alive) continue;
     partner.cooldown = Math.max(0, partner.cooldown - dt);
     partner.guard = Math.max(0, partner.guard - dt);
-    if (hypot(owner.x - partner.x, owner.z - partner.z) > PARTNER.regroup) {
+    const apart = hypot(owner.x - partner.x, owner.z - partner.z);
+    if (apart > PARTNER.regroup) {
       partner.x = partner.px = owner.x;
       partner.z = partner.pz = owner.z;
+      partner.target = null;
+      partner.returning = false;
+      continue;
+    }
+    partner.returning = apart > (partner.returning ? PARTNER.rejoin : PARTNER.roam);
+    if (partner.returning) {
+      partner.target = null;
+      follow(world, partner, owner, slotOf(world, partner), dt);
       continue;
     }
     const def = enemyDefs[partner.species];
     const style = styleOf(def);
     const attack = PARTNER_ATTACK[style];
-    if (style === "shot") {
+    const eye =
+      style === "shot"
+        ? heightAt(world.map.terrain, partner.x, partner.z) + eyeLift(partner)
+        : null;
+    const target = pickTarget(world, partner, owner, eye);
+    partner.target = target?.id ?? null;
+    if (!target) {
       follow(world, partner, owner, slotOf(world, partner), dt);
-      const eye = heightAt(world.map.terrain, partner.x, partner.z) + eyeLift(partner);
-      const target = nearest(
-        world,
-        partner.x,
-        eye,
-        partner.z,
-        PARTNER.shotCandidates,
-        attack.reach,
-      ).find((enemy) => !enemy.boss);
-      if (target && leashed(owner, target) && partner.cooldown <= 0) {
+      continue;
+    }
+    const gap =
+      hypot(target.x - partner.x, target.z - partner.z) - target.radius - partnerRadius(partner);
+    if (style === "shot") {
+      const stop = attack.reach * PARTNER.shotStop;
+      if (gap > stop)
+        step(world, partner, target.x, target.z, Math.min(gap - stop, PARTNER.speed * dt));
+      else follow(world, partner, owner, slotOf(world, partner), dt);
+      if (gap <= attack.reach && partner.cooldown <= 0) {
         face(partner, target);
         strike(ctx, partner, owner, target, style);
       }
-      continue;
-    }
-    const target = closestInLeash(world, partner, owner);
-    const gap = target
-      ? hypot(target.x - partner.x, target.z - partner.z) - target.radius - partnerRadius(partner)
-      : Infinity;
-    if (!target || !chaseable(world, partner, target)) {
-      follow(world, partner, owner, slotOf(world, partner), dt);
       continue;
     }
     face(partner, target);
@@ -232,22 +241,48 @@ function slotOf(world: World, partner: Partner): number {
   return index;
 }
 
-function leashed(owner: Player, enemy: Enemy): boolean {
-  return hypot(enemy.x - owner.x, enemy.z - owner.z) <= PARTNER.leash;
-}
+const ranked: Enemy[] = [];
 
-function closestInLeash(world: World, partner: Partner, owner: Player): Enemy | undefined {
-  let best: Enemy | undefined;
-  let bestD = Infinity;
+/**
+ * The enemy to fight: within `PARTNER.range` of the owner, nearest the owner first, and one the
+ * partner can get at (a shooter, from `eye`, needs a clear line of sight; a walker a walkable line).
+ * The current target stays until a reachable one is `PARTNER.retarget` nearer the owner, so two
+ * enemies at nearly the same distance don't swap the partner's heading every tick.
+ */
+function pickTarget(
+  world: World,
+  partner: Partner,
+  owner: Player,
+  eye: number | null,
+): Enemy | undefined {
+  const reachable = (enemy: Enemy) =>
+    eye === null ? chaseable(world, partner, enemy) : sees(world, partner.x, eye, partner.z, enemy);
+  const limit = PARTNER.range * PARTNER.range;
+  let kept: Enemy | undefined;
+  ranked.length = 0;
   for (const enemy of world.enemies) {
-    if (enemy.hp <= 0 || enemy.boss || !targetable(enemy) || !leashed(owner, enemy)) continue;
-    const d = (enemy.x - partner.x) ** 2 + (enemy.z - partner.z) ** 2;
-    if (d < bestD) {
-      bestD = d;
-      best = enemy;
-    }
+    if (enemy.hp <= 0 || enemy.boss || !targetable(enemy)) continue;
+    const d = (enemy.x - owner.x) ** 2 + (enemy.z - owner.z) ** 2;
+    if (!(d <= limit)) continue;
+    if (enemy.id === partner.target) kept = enemy;
+    let at = ranked.length;
+    // Equal distances keep world.enemies order.
+    while (at > 0 && d < (ranked[at - 1]!.x - owner.x) ** 2 + (ranked[at - 1]!.z - owner.z) ** 2)
+      at--;
+    if (at >= PARTNER.candidates) continue;
+    if (ranked.length < PARTNER.candidates) ranked.push(enemy);
+    for (let i = ranked.length - 1; i > at; i--) ranked[i] = ranked[i - 1]!;
+    ranked[at] = enemy;
   }
-  return best;
+  if (kept && reachable(kept)) {
+    const keep = hypot(kept.x - owner.x, kept.z - owner.z) - PARTNER.retarget;
+    for (const enemy of ranked) {
+      if (enemy === kept || hypot(enemy.x - owner.x, enemy.z - owner.z) >= keep) break;
+      if (reachable(enemy)) return enemy;
+    }
+    return kept;
+  }
+  return ranked.find(reachable);
 }
 
 /** Flyers go straight; walkers only charge along a line they could walk. */

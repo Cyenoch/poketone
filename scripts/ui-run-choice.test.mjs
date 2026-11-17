@@ -56,6 +56,11 @@ const fonts = {
   "Poketone UI": { 500: font, 700: font, 800: font },
   "Poketone Display": { 400: font },
 };
+/** Every font page already resident: the trainer band commits its strings at once. */
+const glyphs = {
+  pagesFor: () => new Set(),
+  registry: { resident: () => true, acquire: () => ({ result: Promise.resolve(), release() {} }) },
+};
 const callbacks = {
   send() {},
   resume() {},
@@ -251,14 +256,19 @@ test("dock keys keep combat bindings and reuse reroll, defer, pick guard and sin
 test("opening co-op cards keeps a held touch turn and the skill controls available", async () => {
   const turns = [],
     skills = [];
-  const hud = new GpuRunHud(fonts, "charmander", {
-    pause() {},
-    stats() {},
-    interact() {},
-    turn: (direction) => turns.push(direction),
-    dash: () => skills.push("dash"),
-    ultimate: () => skills.push("ultimate"),
-  });
+  const hud = new GpuRunHud(
+    fonts,
+    "charmander",
+    {
+      pause() {},
+      stats() {},
+      interact() {},
+      turn: (direction) => turns.push(direction),
+      dash: () => skills.push("dash"),
+      ultimate: () => skills.push("ultimate"),
+    },
+    glyphs,
+  );
   try {
     hud.setCoarsePointer(true);
     hud.resize(844, 390, 0.8, safe);
