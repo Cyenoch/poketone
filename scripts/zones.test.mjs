@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 import { killEnemy } from "../src/run/sim/combat.ts";
 import { EnemyGrid } from "../src/run/sim/grid.ts";
-import { enterZone, prepareZone } from "../src/run/sim/zones.ts";
+import { enterZone, prepareZone, zoneAction } from "../src/run/sim/zones.ts";
 import { createWorld, isFrozen, stepWorld } from "../src/run/sim/world.ts";
 import { stageDefs } from "../src/run/sim/content/stages/index.ts";
 import { STAGE_ROUTE } from "../src/run/sim/content/campaign.ts";
@@ -23,6 +23,10 @@ import {
 import { damagePlayer } from "../src/run/sim/hurt.ts";
 import { fireBeat } from "../src/run/sim/beats.ts";
 import { TICK } from "../src/run/sim/state/world.ts";
+import { formOf } from "../src/run/sim/evolution.ts";
+import { xpForLevel } from "../src/run/sim/stats.ts";
+import { stationHere } from "../src/run/sim/stations.ts";
+import { STATION_REACH } from "../src/run/sim/content/params/stations.ts";
 
 const landmark = (world) => world.map.pads.find((pad) => pad.tag === "landmark");
 
@@ -328,6 +332,44 @@ test("the guardian is summoned once at the landmark; its fall clears the field a
   assert.equal(world.pickups.length, 0, "departure settles remaining drops");
   assert.ok(isFrozen(world));
   assert.equal(world.outcome, "playing");
+});
+
+test("guardian rewards can evolve a player without letting the exit steal station interactions", () => {
+  const world = createWorld({
+    stage: "forest",
+    seed: 11,
+    difficulty: 0,
+    players: [{ starter: "geodude" }],
+  });
+  const player = world.players[0];
+  const station = world.stations.find((entry) => entry.kind === "hypno");
+  const pad = landmark(world);
+  Object.assign(player, {
+    level: 27,
+    xpNext: xpForLevel(27),
+    xp: xpForLevel(27) - 1,
+    x: pad.x,
+    z: pad.z,
+  });
+  stepWorld(world, [{ t: "interact", player: player.id }]);
+  const boss = world.enemies.find((entry) => entry.id === world.bossId);
+  assert.ok(boss);
+  Object.assign(boss, { x: station.x + 3.9, z: station.z, hp: 0 });
+  killEnemy({ world, grid: new EnemyGrid() }, boss, player);
+  Object.assign(player, world.zone.exit);
+  for (let i = 0; i < 120 && player.stage === 0; i++) stepWorld(world, []);
+  assert.equal(player.stage, 1, "the guardian's normal XP pickups evolve the player");
+  answerAll(world);
+  player.cardHold = 0;
+  Object.assign(player, {
+    x: station.x + station.radius + formOf(player).radius + STATION_REACH - 0.01,
+    z: station.z,
+  });
+  assert.equal(stationHere(world, player), station);
+  assert.equal(zoneAction(world, player), null);
+  stepWorld(world, [{ t: "interact", player: player.id }]);
+  assert.ok(player.dialog, "the station opens instead of leaving the field");
+  assert.equal(world.zone.phase, "cleared");
 });
 
 test("a guardian nobody summoned comes on its own with the final swarm", () => {

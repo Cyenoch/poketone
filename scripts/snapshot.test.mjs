@@ -207,8 +207,13 @@ if (isMainThread) {
       [(value) => (value.navigation.layers[1].mobility = "ground"), /顺序与快照不符/],
       [(value) => (value.navigation.clock = Infinity), /不是有限数/],
       [(value) => (value.version += 1), /快照格式/],
+      [(value) => (value.version -= 1), /快照格式/],
       [(value) => delete value.spawn.pressure, /快照增援压力无效/],
       [(value) => (value.spawn.pressure = 2), /快照增援压力无效/],
+      [(value) => delete value.zone.exit, /快照出口无效/],
+      [(value) => (value.zone.exit = { x: 0 }), /快照出口无效/],
+      [(value) => (value.zone.phase = "cleared"), /快照出口无效/],
+      [(value) => (value.zone.exit = { x: 0, z: 0 }), /快照出口无效/],
     ]) {
       const invalid = structuredClone(snapshot);
       mutate(invalid);

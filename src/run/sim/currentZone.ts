@@ -9,7 +9,7 @@ import type { Player } from "./state/entities";
 import { hypot } from "./math";
 import { mobilityClasses } from "./content/mobility";
 import { EXIT_RADIUS, EXIT_SEARCH } from "./content/params/campaign";
-import { formOf } from "./evolution";
+import { stageBodies } from "./mapgen/playable";
 import { STATION_REACH } from "./content/params/stations";
 import { bodyFits, routeReach } from "./nav/reach";
 import { cellAt, DIR_LENGTH, DIR_X, DIR_Z } from "./nav/grid";
@@ -31,7 +31,7 @@ export function isLastZone(world: World): boolean {
   return world.zone.index === stageDefs[world.stage].zones.length - 1;
 }
 
-/** The map's landmark pad: the guardian's altar, then the exit. Every stage's map spec has one. */
+/** The map's guardian altar. Every stage's map spec has one. */
 export function landmarkOf(world: World): Pad {
   const pad = world.map.pads.find((candidate) => candidate.tag === "landmark");
   if (!pad) throw new Error(`关卡 ${world.stage} 的地图没有守卫地标。`);
@@ -72,8 +72,8 @@ function exitSpot(world: World, x: number, z: number): { x: number; z: number } 
   const home = [cellAt(nav.grid, pad.x, pad.z)];
   const out = routeReach(nav, ground, home, false);
   const back = routeReach(nav, ground, home, true);
-  let body = 0;
-  for (const player of world.players) body = Math.max(body, formOf(player).radius);
+  // Guardian loot can evolve players after placement; keep every reachable form clear of stations.
+  const body = stageBodies(stageDefs[world.stage]).playerMax;
   const edge = ARENA_HALF - body;
   const fits = (cx: number, cz: number) => {
     if (Math.abs(cx) > edge || Math.abs(cz) > edge) return false;

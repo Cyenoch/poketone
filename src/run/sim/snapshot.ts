@@ -3,10 +3,10 @@
 // commands, steps exactly like the host's.
 import type { GeneratedMap } from "./mapgen/index";
 import { navContinuation, restoreNav, type NavContinuation } from "./nav/index";
-import type { World } from "./state/world";
+import { ARENA_HALF, type World } from "./state/world";
 
 /** Snapshot format; bumped when the snapshot's dynamic state shape changes. */
-export const SNAPSHOT_VERSION = 4;
+export const SNAPSHOT_VERSION = 5;
 
 /** Static map and runtime navigation; snapshots carry only the nav's continuation facts. */
 type MapFields = "map" | "nav";
@@ -52,6 +52,22 @@ export function restoreWorld(map: GeneratedMap, snapshot: WorldSnapshot): World 
   const pressure = dynamic.spawn?.pressure;
   if (typeof pressure !== "number" || pressure < 0 || pressure > 1)
     throw new Error(`快照增援压力无效：${pressure}`);
+  const zone = dynamic.zone;
+  const exit = zone?.exit;
+  if (
+    !zone ||
+    !Object.hasOwn(zone, "exit") ||
+    (exit !== null &&
+      (typeof exit !== "object" ||
+        Array.isArray(exit) ||
+        typeof exit.x !== "number" ||
+        typeof exit.z !== "number" ||
+        Object.keys(exit).length !== 2 ||
+        Math.abs(exit.x) > ARENA_HALF ||
+        Math.abs(exit.z) > ARENA_HALF)) ||
+    (zone.phase === "active" ? exit !== null : exit === null)
+  )
+    throw new Error(`快照出口无效（${dynamic.stage}，${zone?.phase}）。`);
   return { map, nav: restoreNav(map.terrain, navigation), ...dynamic };
 }
 
