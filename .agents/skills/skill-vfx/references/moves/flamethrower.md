@@ -10,7 +10,8 @@ Signature traits
 Reference game: flame particles along the cone, growing with √(area/7); occasional smoke and
 small dark puffs near the end.
 
-Sim: cone length 2.3, half-angle 0.55 rad, life 1.1 s, ticks 0.2 s, follows the player.
+Sim: cone length 4.5, half-angle 0.55 rad, life 1.1 s, ticks 0.2 s, follows the player and turns each sim step toward the nearest aimable target; keep the last heading when none is in range.
 
-Keep: a stream that starts narrow at the mouth and fans to the hitbox edge. Avoid: particles
-growing far past the fan (the old 3.6× grow overshot the far edge; now 2.6×), a bright ground fill.
+Recipe (`fire.ts` `flamethrower.live`): one fire-jet beam volume (BEAM style 4: banded cartoon noise, white-hot core, orange body, dark-red ink edge) from the mouth (`Mouth` passed in by `vfx.ts`) to `area.length`, half-width `length·sin(CONE.angle)` so it fills the hitbox wedge; yaw is smoothed per area so the sim's per-tick re-aim doesn't snap. 0.09 s grow-in; over the last 0.2 s the jet detaches from the mouth and erodes (volume `erode` param) instead of fading to a pale sheet. Plus flame tongues across the wedge, tip smoke, embers, a faint sector ground light; `strike` adds a mouth bloom and spray. Hits get the fire-tinted shared hit flash.
+
+Keep: a stream that starts narrow at the mouth and fans to the hitbox edge. Avoid: an opaque white fill (v1), a translucent gel sheet (v2), uniform alpha fade at the end.

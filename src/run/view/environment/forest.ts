@@ -52,6 +52,27 @@ export function forestStone(material: MeshLambertMaterial): void {
   });
 }
 
+/**
+ * The boulders' painted moss is a near-neon yellow-green: settle it toward the turf's deep moss and
+ * keep its value, so the cap reads as moss on stone instead of a highlight.
+ */
+export function forestRockMoss(material: MeshLambertMaterial): void {
+  patchShader(material, "forest-rock-moss", (shader) => {
+    shader.fragmentShader = inject(shader.fragmentShader, "forest-rock-moss", {
+      "#include <color_fragment>": `#include <color_fragment>
+        {
+          vec3 c=diffuseColor.rgb;
+          float top=max(c.r,max(c.g,c.b)), low=min(c.r,min(c.g,c.b));
+          // Saturated yellow-to-green with blue the weakest channel; grey and brown stone stay.
+          float moss=smoothstep(0.35,0.6,(top-low)/max(top,1e-3))*step(c.b,min(c.r,c.g))
+            *smoothstep(0.55,0.75,c.g/max(c.r,1e-3));
+          float value=dot(c,vec3(0.299,0.587,0.114));
+          diffuseColor.rgb=mix(c,vec3(0.36,0.52,0.17)*value*1.25,moss*0.85);
+        }`,
+    });
+  });
+}
+
 /** Sparse, world-rooted fireflies/spores in tree shade; no particle simulation or render target. */
 export function forestMotes(world: World, wind: WindUniforms) {
   const night = zoneDef(world).atmosphere === "night";

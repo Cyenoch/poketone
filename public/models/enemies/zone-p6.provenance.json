@@ -54,7 +54,8 @@
       "textureSize": 512,
       "facingYawPi": -0.5,
       "faceLimit": 1000,
-      "note": "Decimated to 1300, not 900: at 900 the tail fan tore UV seams into white flecks. Nine tails form one closed fan behind the body, so the footprint is deep; proposed height 1.3, radius 0.6."
+      "note": "Decimated to 1300, not 900: at 900 the tail fan tore UV seams into white flecks. Nine tails form one closed fan behind the body, so the footprint is deep; proposed height 1.3, radius 0.6.",
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     },
     {
       "id": "hitmonchan",

@@ -49,7 +49,8 @@
       "bytes": 51328,
       "triangles": 899,
       "textureSize": 512,
-      "facingYawPi": -0.5
+      "facingYawPi": -0.5,
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     },
     {
       "id": "nidoran-f",
@@ -65,7 +66,8 @@
       "bytes": 86828,
       "triangles": 900,
       "textureSize": 512,
-      "facingYawPi": -0.5
+      "facingYawPi": -0.5,
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     },
     {
       "id": "nidoran-m",
@@ -113,7 +115,8 @@
       "bytes": 77712,
       "triangles": 900,
       "textureSize": 512,
-      "facingYawPi": -0.5
+      "facingYawPi": -0.5,
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     },
     {
       "id": "growlithe",
@@ -129,7 +132,8 @@
       "bytes": 98148,
       "triangles": 900,
       "textureSize": 512,
-      "facingYawPi": -0.5
+      "facingYawPi": -0.5,
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     },
     {
       "id": "butterfree",
@@ -161,7 +165,8 @@
       "bytes": 89992,
       "triangles": 900,
       "textureSize": 512,
-      "facingYawPi": -0.5
+      "facingYawPi": -0.5,
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     },
     {
       "id": "raticate",
@@ -257,7 +262,8 @@
       "bytes": 74632,
       "triangles": 900,
       "textureSize": 512,
-      "facingYawPi": 0.5
+      "facingYawPi": 0.5,
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     },
     {
       "id": "fearow",
@@ -305,7 +311,8 @@
       "bytes": 84192,
       "triangles": 900,
       "textureSize": 512,
-      "facingYawPi": -0.5
+      "facingYawPi": -0.5,
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     },
     {
       "id": "electrode",
@@ -321,7 +328,8 @@
       "bytes": 67168,
       "triangles": 899,
       "textureSize": 512,
-      "facingYawPi": -0.75
+      "facingYawPi": -0.75,
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     },
     {
       "id": "golem",
@@ -337,7 +345,8 @@
       "bytes": 94700,
       "triangles": 900,
       "textureSize": 512,
-      "facingYawPi": -0.5
+      "facingYawPi": -0.5,
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     }
   ]
 }

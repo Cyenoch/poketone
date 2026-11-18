@@ -1,0 +1,18 @@
+{
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "field-sites/fishing/generation/tripo-out/tripo-out/poketone-fishing-mv-3047cd8c/model.glb",
+  "tripoSourceSha256": "b6a0bc1af1f531e54e1f363152e4bce03c848abda7b1c8cb4e5315d0ed4c996c",
+  "tripoTask": "3047cd8c-7738-4bd9-b793-1bd5abf16eba",
+  "tripoType": "multiview_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 2870,
+  "dimensions": [0.8767, 0.8376, 0.9609],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "086b3536201d8bfcdf4211405945c905233c573c9eea2485c08da6bdbe79b148"
+}

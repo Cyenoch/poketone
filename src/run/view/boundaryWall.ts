@@ -1,14 +1,16 @@
 import {
   BufferAttribute,
   BufferGeometry,
-  Color,
   DoubleSide,
   Mesh,
   ShaderMaterial,
   Vector2,
+  Vector3,
 } from "three";
 import { heightAt, type Terrain } from "../sim/terrain";
 import { ARENA_HALF } from "../sim/state/world";
+import { NOISE_GLSL } from "./environment/noise";
+import { rgb } from "./vfx/gl";
 
 /** Distance from the edge at which the warning starts to appear. */
 const REVEAL = 9;
@@ -30,23 +32,35 @@ void main() {
 `;
 
 const fragmentShader = /* glsl */ `
+${NOISE_GLSL}
 uniform vec2 uPlayer;
 uniform float uTime;
-uniform vec3 uStripe;
-uniform vec3 uBase;
+uniform vec3 uTint;
 varying vec3 vWorld;
 varying float vAlong;
 varying float vUp;
 void main() {
   // Only the stretch of wall near the player shows; its ends fade out with distance.
-  float near = 1.0 - smoothstep(1.5, ${REVEAL.toFixed(1)}, distance(vWorld.xz, uPlayer));
-  float rise = pow(1.0 - vUp, 1.2);
-  float stripe = step(0.5, fract((vAlong + vWorld.y) * 0.55 - uTime * 0.35));
-  float glow = smoothstep(0.35, 0.0, vUp);
-  vec3 color = mix(uBase, uStripe, stripe);
-  float alpha = near * (rise * mix(0.32, 0.78, stripe) + glow * 0.5);
+  float reach = distance(vWorld.xz, uPlayer);
+  float near = 1.0 - smoothstep(1.5, ${REVEAL.toFixed(1)}, reach);
+  // A curtain of light rising from the ground: dense at the foot, thinning upward, with soft veils
+  // drifting up through it, so the edge reads as a barrier without hazard markings.
+  float body = pow(1.0 - vUp, 1.5);
+  float rise = vWorld.y - uTime * 0.7;
+  float veil = envNoise(vec2(vAlong * 0.32, rise * 0.45)) * envNoise(vec2(vAlong * 0.85 + 5.3, rise * 0.9 + 2.1));
+  // Slow flickering columns of light give the curtain an energy grain along its length.
+  float column = smoothstep(0.55, 1.0, envNoise(vec2(vAlong * 1.4, uTime * 0.4)));
+  float rim = 1.0 - smoothstep(0.0, 0.07, vUp);
+  // Where the player presses closest the curtain brightens, so it answers the push.
+  float contact = 1.0 - smoothstep(0.0, 3.5, reach);
+  // Seen edge-on (standing at the wall it runs away from) the band would collapse into a bright line.
+  vec3 facing = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
+  float broadside = smoothstep(0.1, 0.35, abs(dot(facing, normalize(cameraPosition - vWorld))));
+  float alpha = near * broadside
+    * (body * (0.26 + 0.45 * veil + 0.25 * column + 0.2 * contact) + rim * 0.85);
   if (alpha < 0.01) discard;
-  gl_FragColor = vec4(color + glow * 0.25, alpha);
+  vec3 color = mix(uTint, vec3(1.0), rim * 0.7 + column * 0.3 + veil * 0.2);
+  gl_FragColor = vec4(color, alpha);
 }
 `;
 
@@ -57,10 +71,10 @@ export interface BoundaryWall {
 }
 
 /**
- * Vertical warning band on the invisible arena edge. Hidden until the player is within REVEAL of an
+ * Soft light curtain, in the stage's `edge` tint, on the invisible arena edge. Hidden until the player is within REVEAL of an
  * edge; then only the nearby stretch fades in. The base follows the terrain (baked once; the map is static).
  */
-export function createBoundaryWall(terrain: Terrain): BoundaryWall {
+export function createBoundaryWall(terrain: Terrain, tint: string): BoundaryWall {
   const edge = ARENA_HALF + INSET;
   const segments = Math.ceil(edge * 2);
   const positions: number[] = [];
@@ -101,8 +115,7 @@ export function createBoundaryWall(terrain: Terrain): BoundaryWall {
     uniforms: {
       uPlayer: { value: new Vector2() },
       uTime: { value: 0 },
-      uStripe: { value: new Color("#ffd45b") },
-      uBase: { value: new Color("#173f70") },
+      uTint: { value: new Vector3(...rgb(tint)) },
     },
     transparent: true,
     depthWrite: false,

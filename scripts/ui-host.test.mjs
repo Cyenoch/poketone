@@ -13,6 +13,7 @@ for (const scenario of [
   "launch-waits-lobby",
   "launch-progress-cancelled",
   "dispose-during-boot",
+  "portrait-fullscreen",
 ])
   test(`real GPU host/lobby lifecycle: ${scenario}`, () => {
     const run = spawnSync(

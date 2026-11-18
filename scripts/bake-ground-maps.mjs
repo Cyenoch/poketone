@@ -1,12 +1,12 @@
 // Tileable stylised material maps, authored here; no downloaded or generated-image sources.
+// Painted biome grounds are made by scripts/paint-ground-maps.mjs instead.
 // RGBA detail: tangent normal XY, relief height B, fine grain A. All channels are linear data.
 import sharp from "sharp";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 const out = new URL("../public/textures/ground/", import.meta.url);
 mkdirSync(out, { recursive: true });
-const size = 256,
-  tau = Math.PI * 2;
+const size = 256;
 const hash = (x, y) => {
   let n = Math.imul(x + 391, 374761393) ^ Math.imul(y + 117, 668265263);
   n = Math.imul(n ^ (n >>> 13), 1274126177);
@@ -30,14 +30,7 @@ function noise(x, y, n) {
 const materials = {
   grass: { color: [105, 128, 68], contrast: 0.1, relief: 0.3 },
   soil: { color: [149, 122, 87], contrast: 0.14, relief: 0.4 },
-  sand: { color: [201, 175, 127], contrast: 0.055, relief: 0.32 },
-  sandstone: { color: [190, 143, 100], contrast: 0.17, relief: 0.6 },
   rock: { color: [136, 139, 146], contrast: 0.13, relief: 0.5 },
-  snow: { color: [192, 207, 221], contrast: 0.045, relief: 0.22 },
-  ice: { color: [127, 164, 185], contrast: 0.09, relief: 0.3 },
-  basalt: { color: [88, 84, 87], contrast: 0.14, relief: 0.5 },
-  ash: { color: [128, 119, 113], contrast: 0.055, relief: 0.25 },
-  stone: { color: [137, 132, 147], contrast: 0.08, relief: 0.35 },
 };
 const manifest = {
   generator: "bun scripts/bake-ground-maps.mjs",
@@ -55,23 +48,8 @@ for (const [kind, m] of Object.entries(materials)) {
       const u = x / size,
         v = y / size,
         n = noise(u, v, 4),
-        fine = noise(u, v, 32),
-        warp = noise(u, v, 8);
-      let h = n * 0.65 + noise(u, v, 12) * 0.35;
-      if (kind === "sand" || kind === "snow")
-        h = 0.5 + 0.22 * Math.sin(tau * (v * 8 + Math.sin(u * tau) * 0.45 + warp * 0.25)) + 0.1 * n;
-      if (kind === "sandstone")
-        h = 0.5 + 0.23 * Math.sin(tau * (v * 7 + n * 0.25)) + 0.12 * noise(u, v, 16);
-      if (kind === "ice")
-        h =
-          0.4 +
-          0.3 * n +
-          0.15 * Math.pow(Math.abs(Math.sin(tau * (u * 4 + Math.sin(v * tau) * 0.25))), 12);
-      if (kind === "basalt")
-        h =
-          0.4 +
-          0.18 * Math.sin(tau * (u * 5 + Math.sin(v * tau * 2) * 0.4 + n * 0.35)) +
-          0.18 * noise(u, v, 16);
+        fine = noise(u, v, 32);
+      const h = n * 0.65 + noise(u, v, 12) * 0.35;
       heights[y * size + x] = h;
       grains[y * size + x] = fine;
     }

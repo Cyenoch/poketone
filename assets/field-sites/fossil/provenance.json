@@ -1,0 +1,18 @@
+{
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "field-sites/fossil/generation/tripo-out/tripo-out/poketone-fossil-mv-300ec686/model.glb",
+  "tripoSourceSha256": "b8604e7e68a32008db065cda5490bf694d0dee09fc746fde084eda8451ecab89",
+  "tripoTask": "300ec686-d053-449c-9820-9e76232bf09b",
+  "tripoType": "multiview_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 2628,
+  "dimensions": [1.0, 0.5851, 0.3757],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "c627dda71a0ed7503e3691f934acc21f82c62a54b0413ef541b4f5bf17e44ee9"
+}

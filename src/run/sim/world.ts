@@ -35,6 +35,7 @@ import {
   refreshStats,
   xpForLevel,
 } from "./stats";
+import { chargeSurrounded, creditHostileLoss } from "./ultimates/crisis";
 import { fireUltimate, newUltState, updateUltimate } from "./ultimates/index";
 import { updatePartners } from "./partners";
 import { updateShield } from "./hurt";
@@ -188,6 +189,7 @@ export function createPlayer(
     training: { dmg: 0, hp: 0, speed: 0, area: 0, cd: 0 },
     tradeHp: 1,
     ult: newUltState(),
+    crisis: { startTick: 0, spent: 0, lastTick: null },
     tmCase: false,
     dialog: null,
     kills: 0,
@@ -642,8 +644,12 @@ function updatePlayer(ctx: Ctx, player: Player, dt: number): void {
   if (stats.regen > 0) heal(player, stats.regen * dt);
   updateShield(ctx.world, player, dt);
   // Poison wears you down but never finishes you, matching the series' field rule.
-  if (drain > 0 && player.ult.protection <= 0)
-    player.hp = Math.max(DRAIN_FLOOR, player.hp - drain * dt);
+  if (drain > 0 && player.ult.protection <= 0) {
+    const before = player.hp;
+    player.hp = Math.max(DRAIN_FLOOR, before - drain * dt);
+    creditHostileLoss(player, ctx.world.tick, before - player.hp, stats.maxHp);
+  }
+  chargeSurrounded(ctx, player);
   if (player.rescue || !owned) return;
   updateMoves(ctx, player, dt);
   fire(ctx, player, "tick", { dt });

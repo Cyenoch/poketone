@@ -1,11 +1,19 @@
 {
-  "generator": "assets/props/build-map-props.py",
-  "seed": 529070226,
-  "source": "Original scripted geometry; no external assets",
-  "triangles": 120,
-  "materials": 1,
-  "vertexColors": true,
-  "units": "metres",
-  "sha256": "9af61d4d91bfb2e9fd33da3fea1644d9fd2f599ea04e4a9e31fcafd518928350",
-  "tripoCredits": 0
+  "set": "coast-beach",
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "props/coast-beach/generation/tripo-out/tripo-out/poketone-coast-beach-1990af59/model.glb",
+  "tripoSourceSha256": "81e9db937f1145a8b2e9a6ee4fadac4685f822c7abfe22608a719e9272f66879",
+  "tripoTask": "1990af59-ecb2-4cf0-9a60-301b3c82d9dc",
+  "tripoType": "image_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 502,
+  "dimensions": [0.2407, 0.1898, 0.1879],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "4cce1c85e0029465b6d879b6c62f98caa54dc0b46d08d69055188082c579e2ce"
 }

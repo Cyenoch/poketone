@@ -1,0 +1,37 @@
+{
+  "dry_run": true,
+  "valid": true,
+  "input": "assets/enemies/primeape/generation-v2/split/v-front.png assets/enemies/primeape/generation-v2/split/v-left.png assets/enemies/primeape/generation-v2/split/v-back.png assets/enemies/primeape/generation-v2/split/v-right.png",
+  "model": "v3.1-20260211",
+  "model_reason": "explicit --model",
+  "steps": [
+    {
+      "name": "multiview-to-model",
+      "endpoint": "/v3/generation/multiview-to-model",
+      "task_type": "multiview_to_model",
+      "payload": {
+        "inputs": [
+          { "front": "<upload:assets/enemies/primeape/generation-v2/split/v-front.png>" },
+          { "left": "<upload:assets/enemies/primeape/generation-v2/split/v-left.png>" },
+          { "back": "<upload:assets/enemies/primeape/generation-v2/split/v-back.png>" },
+          { "right": "<upload:assets/enemies/primeape/generation-v2/split/v-right.png>" }
+        ],
+        "smart_low_poly": true,
+        "face_limit": 1000,
+        "model": "v3.1-20260211"
+      }
+    }
+  ],
+  "pending_uploads": [
+    "assets/enemies/primeape/generation-v2/split/v-front.png",
+    "assets/enemies/primeape/generation-v2/split/v-left.png",
+    "assets/enemies/primeape/generation-v2/split/v-back.png",
+    "assets/enemies/primeape/generation-v2/split/v-right.png"
+  ],
+  "deliverables": ["GLB"],
+  "candidates": 1,
+  "warnings": [],
+  "errors": [],
+  "generation_credits_estimate": 40,
+  "cost_notes": ["estimated generation cost: 40 credits (official list price)"]
+}

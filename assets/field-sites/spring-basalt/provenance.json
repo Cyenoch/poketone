@@ -1,0 +1,22 @@
+{
+  "regrade": ["#1e1a1c", "#4a4246", "#8a7c78"],
+  "repaint": {
+    "water": ["#1f7f8c", "#8fe6e0"]
+  },
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "field-sites/spring/generation/tripo-out/tripo-out/poketone-spring-mv-01da319c/model.glb",
+  "tripoSourceSha256": "624cb31808349a387507420dc71371f7575dd64714560824d4cf2d0db97aaee0",
+  "tripoTask": "01da319c-a1a9-4bfa-aa56-afed6c1942ca",
+  "tripoType": "multiview_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 3456,
+  "dimensions": [0.998, 0.9883, 0.5499],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "04a41c0e5cae7fee1eee2732e180ccc462dbb3dfc9d7624fe6ea52033fcb9d93"
+}

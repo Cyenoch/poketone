@@ -12,7 +12,7 @@ import { fxMaterial } from "../vfx/gl";
 import { latticeHash } from "./noise";
 import { WIND_GLSL, type WindUniforms } from "./wind";
 
-/** Sparse, world-rooted shafts. The sun sets their tilt; the camera only turns their thin cross-section. */
+/** Sparse shafts slanting past tree crowns (open maps have none). The sun sets their tilt; the camera only turns their thin cross-section. */
 export function createSunlight(
   terrain: Terrain,
   obstacles: readonly Obstacle[],
@@ -33,9 +33,6 @@ export function createSunlight(
         z = tree.z - 0.6;
       roots.push(x, heightAt(terrain, x, z) + 0.08, z, 0.7 + latticeHash(731, i, 2) * 1.1);
     }
-    if (!trees.length)
-      for (let x = -36; x <= 36; x += 24)
-        for (let z = -36; z <= 36; z += 24) roots.push(x, heightAt(terrain, x, z) + 0.08, z, 1.1);
   }
   geometry.setAttribute("aLight", new InstancedBufferAttribute(new Float32Array(roots), 4));
   // Explicit normal avoids three treating this shader-only plane as flat-shaded geometry.

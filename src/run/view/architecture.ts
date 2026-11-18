@@ -13,19 +13,31 @@ export const slabGlsl = (look: ArchitectureLook) => /* glsl */ `
   float wear=envNoise(vTerrainWorld.xz*19.0)*0.014;
   float mortar=1.0-smoothstep(${(look.joint * 0.5).toFixed(4)},${(look.joint * 0.5 + 0.018).toFixed(4)},min(slabEdge.x,slabEdge.y)-wear);
   float slabSeed=envHash(slabCell);
-  float slabTone=mix(0.82,1.13,slabSeed);
+  float slabTone=mix(0.78,1.12,slabSeed);
   float patina=envNoise(vTerrainWorld.xz*0.27);
-  vec3 stoneTint=mix(vec3(0.97,0.98,1.02),vec3(1.05,1.015,0.96),step(0.83,slabSeed));
-  diffuseColor.rgb *= stoneTint*slabTone*mix(0.93,1.04,patina);
+  float slabHue=envHash(slabCell+17.0);
+  vec3 stoneTint=slabHue<0.4?vec3(1.1,1.0,0.84):slabHue<0.7?vec3(0.95,0.96,1.0):slabHue<0.88?vec3(0.94,1.02,0.88):vec3(1.14,0.95,0.86);
+  diffuseColor.rgb *= stoneTint*slabTone*mix(0.86,1.06,patina);
+  // Grime gathers toward the slab joints and in broad damp drifts; moss creeps out of the joints there.
+  float edgeDist=min(slabEdge.x,slabEdge.y);
+  float damp=smoothstep(0.42,0.72,envNoise(vTerrainWorld.xz*0.11+3.7));
+  float grime=(1.0-smoothstep(0.0,0.32,edgeDist))*(0.25+0.5*damp);
+  diffuseColor.rgb *= 1.0-grime*0.35;
+  float mossNoise=envNoise(vTerrainWorld.xz*1.7);
+  float moss=(1.0-smoothstep(0.0,0.06+0.22*damp*mossNoise,edgeDist-wear))*smoothstep(0.35,0.75,damp+mossNoise*0.3);
+  diffuseColor.rgb=mix(diffuseColor.rgb,vec3(0.12,0.17,0.07)*(0.8+0.5*mossNoise),moss*0.85);
+  // A few slabs are sunken, darker and chipped.
+  float sunken=step(0.955,envHash(slabCell+57.0));
+  diffuseColor.rgb *= 1.0-sunken*0.28;
   float bevelWidth=0.065+slabSeed*0.025;
   vec2 bevel=1.0-smoothstep(vec2(${look.joint.toFixed(4)}),vec2(bevelWidth),slabEdge);
   vec2 bevelSide=mix(vec2(1.0),vec2(-1.0),step(vec2(0.5),slabLocal));
   float bevelLight=dot(bevel*bevelSide,vec2(0.12,0.16));
   diffuseColor.rgb *= (1.0+bevelLight*(1.0-mortar))*mix(1.0,0.62,mortar);
   float fracture=abs(slabLocal.x-0.35-slabSeed*0.3-sin(slabLocal.y*5.0+slabSeed*9.0)*0.1);
-  float crack=(1.0-smoothstep(0.002,0.008,fracture))*step(0.93,envHash(slabCell+9.0));
+  float crack=(1.0-smoothstep(0.003,0.011,fracture))*step(0.8,envHash(slabCell+9.0));
   crack*=1.0-smoothstep(0.2,0.8,slabLocal.y);
-  diffuseColor.rgb *= 1.0-crack*0.22;
+  diffuseColor.rgb *= 1.0-crack*0.45;
   vec2 seal=abs(slabLocal-0.5);
   float sealDistance=abs(seal.x+seal.y-0.19);
   float sealAA=max(fwidth(sealDistance),0.003);

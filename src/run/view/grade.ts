@@ -16,6 +16,7 @@ import {
 } from "three";
 import { inject, patchShader } from "./patchShader";
 import type { World } from "../sim/state/world";
+import type { GradeLook } from "./themes/types";
 import { caveLights } from "./routeLook";
 
 /**
@@ -27,18 +28,23 @@ import { caveLights } from "./routeLook";
  * attacks and telegraphs keep their full colour on the calmer ground.
  */
 const GRADE_GLSL = /* glsl */ `
+uniform float uGradeExposure;
+uniform float uGradeGreen;
+uniform vec3 uGradeShade;
+uniform vec3 uGradeLight;
+uniform float uGradeCurve;
 vec3 poketoneGrade( vec3 color ) {
-  color *= 1.25;
+  color *= uGradeExposure;
   float luma = dot( color, vec3( 0.2126, 0.7152, 0.0722 ) );
   // Foliage greens (green clearly leading red and blue) lose a little saturation, just enough to take
   // the lime edge off; calm comes from the warm/cool split and value structure, not from less chroma.
   float green = smoothstep( 0.05, 0.45, ( color.g - max( color.r, color.b ) ) / max( color.g, 1e-4 ) );
-  color = mix( vec3( luma ), color, 1.0 - 0.25 * green );
-  // Split tone: blue-green shade, gold sunlit ground.
-  color *= mix( vec3( 0.8, 0.97, 1.1 ), vec3( 1.07, 1.02, 0.9 ), smoothstep( 0.03, 0.3, luma ) );
+  color = mix( vec3( luma ), color, 1.0 - uGradeGreen * green );
+  // Split tone: the stage's shade and sunlit tints (forest: blue-green shade, gold ground).
+  color *= mix( uGradeShade, uGradeLight, smoothstep( 0.03, 0.3, luma ) );
   // S-curve in a display-like space (sqrt ~ gamma 2): richer darks, a soft shoulder on highlights.
   vec3 p = sqrt( clamp( color, 0.0, 1.0 ) );
-  p = mix( p, p * p * ( 3.0 - 2.0 * p ), 0.5 );
+  p = mix( p, p * p * ( 3.0 - 2.0 * p ), uGradeCurve );
   return p * p;
 }
 `;
@@ -47,6 +53,34 @@ vec3 poketoneGrade( vec3 color ) {
 const FOG_FRAGMENT = inject(ShaderChunk.fog_fragment, "world-fog", {
   "fogColor, fogFactor": "sRGBTransferOETF( vec4( fogColor, 1.0 ) ).rgb, fogFactor",
 });
+
+/** The forest's grade; the lobby and every stage without its own look use it. */
+export const defaultGrade: GradeLook = {
+  exposure: 1.25,
+  green: 0.25,
+  shade: [0.8, 0.97, 1.1],
+  light: [1.07, 1.02, 0.9],
+  curve: 0.5,
+};
+
+/** One set shared by every graded program, so a stage's look is a uniform change, not a recompile. */
+const gradeUniforms = {
+  uGradeExposure: { value: 0 },
+  uGradeGreen: { value: 0 },
+  uGradeShade: { value: new Vector3() },
+  uGradeLight: { value: new Vector3() },
+  uGradeCurve: { value: 0 },
+};
+
+/** The current stage's grade (`defaultGrade` outside a run). */
+export function setWorldGrade(look: GradeLook): void {
+  gradeUniforms.uGradeExposure.value = look.exposure;
+  gradeUniforms.uGradeGreen.value = look.green;
+  gradeUniforms.uGradeShade.value.set(...look.shade);
+  gradeUniforms.uGradeLight.value.set(...look.light);
+  gradeUniforms.uGradeCurve.value = look.curve;
+}
+setWorldGrade(defaultGrade);
 
 const patched = new WeakSet<Material>();
 
@@ -67,6 +101,7 @@ function patchOutput(material: Material, grade: boolean): void {
         "#include <tonemapping_fragment>": "gl_FragColor.rgb = poketoneGrade( gl_FragColor.rgb );",
         "void main() {": `${GRADE_GLSL}\nvoid main() {`,
       });
+      Object.assign(shader.uniforms, gradeUniforms);
     }
     shader.fragmentShader = source;
   });

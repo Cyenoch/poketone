@@ -35,7 +35,7 @@ export function leavePool(world: World, h: Hazard): void {
   if (!h.pool) return;
   addHazard(world, {
     kind: h.pool === "fire" ? "burning-pool" : "acid-pool",
-    source: h.source ?? h.caster,
+    source: h.source,
     x: h.x,
     y: heightAt(world.map.terrain, h.x, h.z),
     z: h.z,
@@ -317,6 +317,7 @@ export const zoneHazards = {
           active: ERUPTION.active,
           radius: ERUPTION.radius,
           dmg: ERUPTION.dmg,
+          source: -1,
           element: "fire",
           pool: "fire",
           poolLife: ERUPTION.poolLife,

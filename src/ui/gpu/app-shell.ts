@@ -1,6 +1,7 @@
 import { Container, Content, Text, type FontFamilies } from "@pmndrs/uikit";
 import {
   Box3,
+  Matrix4,
   Mesh,
   MeshBasicMaterial,
   PlaneGeometry,
@@ -10,6 +11,8 @@ import {
   type Texture,
 } from "three";
 import { images } from "../../prepare/images";
+import { FullscreenIcon } from "./fullscreen-icon";
+import { GameButton } from "./game-button";
 import { SVGLoader } from "three/addons/loaders/SVGLoader.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { stack } from "./layer";
@@ -127,6 +130,13 @@ export class GpuShell {
   private phaseAge = 0;
   private phaseStart = 0;
   private portrait = false;
+  /** On the notice while the page can go fullscreen and isn't: fullscreen, then the landscape lock. */
+  private readonly fullscreen: GameButton;
+  private fullscreenAction: (() => Promise<boolean>) | undefined;
+  /** The browser refused this notice's request: the key stays away until the notice comes back. */
+  private denied = false;
+  private readonly point = new Vector3();
+  private readonly inverse = new Matrix4();
 
   constructor(fonts: FontFamilies) {
     this.stage.root.setProperties({ fontFamilies: fonts });
@@ -244,7 +254,16 @@ export class GpuShell {
         whiteSpace: "pre-line",
       }),
     );
-    this.notice.add(glyph, message);
+    this.fullscreen = new GameButton(this.stage, {
+      tone: "secondary",
+      size: "normal",
+      label: "全屏横屏",
+      icon: new FullscreenIcon(),
+    });
+    this.fullscreen.panel.setProperties({ display: "none" });
+    // The notice's only focus target: keyboard users see the ring Enter / Space act on.
+    this.fullscreen.setFocused(true);
+    this.notice.add(glyph, message, this.fullscreen.panel);
     this.stage.root.add(stack(this.notice, 5));
   }
 
@@ -286,13 +305,80 @@ export class GpuShell {
     if (portrait === this.portrait) return;
     this.portrait = portrait;
     this.notice.setProperties({ display: portrait ? "flex" : "none" });
+    if (!portrait) this.denied = false;
+    this.showKey();
     // The notice was a top-layer dialog, over the transition as well.
     this.showCurtain(this.phase !== "idle" && !portrait);
     this.stage.invalidate();
   }
 
+  /** `action` while the page can still go fullscreen; none hides the notice's button. */
+  setFullscreenAction(action: (() => Promise<boolean>) | undefined): void {
+    if (action === this.fullscreenAction) return;
+    this.fullscreenAction = action;
+    this.showKey();
+  }
+
+  setFocusVisible(visible: boolean): void {
+    this.fullscreen.setFocusVisible(visible);
+    this.stage.invalidate();
+  }
+
+  private get offered(): boolean {
+    return this.portrait && !!this.fullscreenAction && !this.denied;
+  }
+
+  private showKey(): void {
+    this.fullscreen.setPressed(false);
+    this.fullscreen.setHovered(false);
+    this.fullscreen.panel.setProperties({
+      display: this.fullscreenAction && !this.denied ? "flex" : "none",
+    });
+    this.stage.invalidate();
+  }
+
+  /** The notice's one control (0), or -1. */
+  hit(x: number, y: number): number {
+    return this.offered && this.contains(this.fullscreen.panel, x, y) ? 0 : -1;
+  }
+
+  hover(index: number | null): void {
+    this.fullscreen.setHovered(index === 0);
+  }
+
+  setPressed(index: number | null): void {
+    this.fullscreen.setPressed(index === 0);
+  }
+
+  /** Runs inside the press's own event: the browser grants fullscreen only to a user gesture. */
+  activate(): boolean {
+    const action = this.fullscreenAction;
+    if (!this.offered || !action) return false;
+    void action().then((entered) => {
+      if (entered || action !== this.fullscreenAction || !this.portrait) return;
+      this.denied = true;
+      this.showKey();
+    });
+    return true;
+  }
+
+  private contains(panel: Container, x: number, y: number): boolean {
+    const matrix = panel.globalMatrix.value,
+      size = panel.size.value;
+    if (!matrix || !size) return false;
+    this.point
+      .set(
+        x / this.stage.viewport.scale + this.stage.camera.left,
+        this.stage.camera.top - y / this.stage.viewport.scale,
+        0,
+      )
+      .applyMatrix4(this.inverse.copy(matrix).invert());
+    return Math.abs(this.point.x) <= size[0] / 2 && Math.abs(this.point.y) <= size[1] / 2;
+  }
+
   resize(width: number, height: number, scale: number, safeArea: UiInsets): void {
     this.stage.resize(width, height, scale, safeArea);
+    this.fullscreen.fitTouch();
     const v = this.stage.viewport;
     this.notice.setProperties({
       paddingTop: Math.max(32, v.safeArea.top),
@@ -352,6 +438,7 @@ export class GpuShell {
   }
 
   dispose(): void {
+    this.fullscreen.dispose();
     this.geometry.dispose();
     for (const slab of this.slabs) slab.material.dispose();
     this.gauge.dispose();

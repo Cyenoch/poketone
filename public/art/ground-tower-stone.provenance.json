@@ -1,0 +1,10 @@
+{
+  "asset": "ground-tower-stone.jpg",
+  "generator": "Magpie Image, model ash/gpt-image-2.5-sunburst",
+  "createdAt": "2026-11-18",
+  "source": "assets/textures/source/ground-tower-stone.png (1254 px)",
+  "prompts": "docs/ART-PROMPTS.md (ground texture template; see 生成记录)",
+  "processing": "bun scripts/paint-ground-maps.mjs: half-offset border cross-fade (18%) for tiling; 512 px JPEG quality 82; settled in the terrain shader",
+  "use": "stone under the tower's slab grid and on its banks",
+  "rights": "Generated for a noncommercial fan project."
+}

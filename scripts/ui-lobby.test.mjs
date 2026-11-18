@@ -323,7 +323,7 @@ test("the picked partner's bond: title on the scale, the next level on focus, ho
     upload() {},
     resident: () => () => {},
   });
-  const tipText = (lobby) => String(lobby.tooltip.text.properties.value.text ?? "");
+  const tipText = (lobby) => lobby.tooltip.shown;
   const shownTexts = (panel) => {
     const out = [];
     panel.traverse((node) => {
@@ -464,7 +464,7 @@ const pickOf = (starter, trainer = DEFAULT_TRAINER) => ({
   stage: "forest",
   trainer,
 });
-const tipText = (lobby) => String(lobby.tooltip.text.properties.value.text ?? "");
+const tipText = (lobby) => lobby.tooltip.shown;
 
 test("the bond stays the picked partner's: reached from below, its tip follows RB, a long title keeps the chain in the column", async () => {
   installLobbyMocks();
@@ -602,7 +602,7 @@ test("the trainer card names its item and passive; what they do shows on focus, 
         assert.equal(lobby.focused, index, `↑ from the trainer: ${where}`);
         await settle(lobby, 0);
         assert.equal(lobby.tooltip.want, kit.panel, where);
-        assert.ok(tipText(lobby).includes("冷却 90 秒") && tipText(lobby).includes("巧修"), where);
+        assert.ok(tipText(lobby).includes("90 秒") && tipText(lobby).includes("巧修"), where);
         lobby.navigate("down");
         assert.equal(lobby.controls[lobby.focused].kind, "trainer", `↓ back: ${where}`);
         lobby.setFocusVisible(false);

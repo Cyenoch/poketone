@@ -1,5 +1,6 @@
 import {
   type AnimationClip,
+  AnimationMixer,
   Box3,
   type Bone,
   Group,
@@ -48,6 +49,108 @@ export interface InstanceSource {
   material: Material;
   /** Model height in local units after normalisation (base at y = 0). */
   height: number;
+  profile: Profile;
+}
+
+/** Bands of a model's height, bottom up, and directions around its axis, of a `Profile`. */
+export const PROFILE_BANDS = 8;
+export const PROFILE_DIRS = 8;
+/**
+ * A model's silhouette, in model heights, over its rest pose and (players) every pose of its run and idle
+ * clips. Lets overhead marks clear the real silhouette (a tail flame behind the head) instead of a fixed
+ * height.
+ */
+export interface Profile {
+  /**
+   * For each eighth of the height (bottom up) and each of eight directions in model space (k: x = sin,
+   * z = cos of k·45°, +z the facing), how far it reaches that way from its axis, `[band * PROFILE_DIRS + k]`.
+   */
+  reach: Float32Array;
+  /** Each band's reach in its worst direction: a mark that ignores the facing (a crowd's bars). */
+  worst: Float32Array;
+  /** The highest point: 1 at rest, more where a clip raises an ear or a wing over it. */
+  top: number;
+}
+
+function emptyProfile(): Profile {
+  return {
+    reach: new Float32Array(PROFILE_BANDS * PROFILE_DIRS),
+    worst: new Float32Array(PROFILE_BANDS),
+    top: 1,
+  };
+}
+
+const profileDirs = Array.from({ length: PROFILE_DIRS }, (_, k) => [
+  Math.sin((k * 2 * Math.PI) / PROFILE_DIRS),
+  Math.cos((k * 2 * Math.PI) / PROFILE_DIRS),
+]);
+
+function addToProfile(profile: Profile, x: number, y: number, z: number, height: number): void {
+  const band = Math.min(PROFILE_BANDS - 1, Math.max(0, Math.floor((y / height) * PROFILE_BANDS)));
+  for (const [k, [dx, dz]] of profileDirs.entries()) {
+    const at = band * PROFILE_DIRS + k;
+    const reach = (x * dx! + z * dz!) / height;
+    profile.reach[at] = Math.max(profile.reach[at]!, reach);
+    profile.worst[band] = Math.max(profile.worst[band]!, reach);
+  }
+  profile.top = Math.max(profile.top, y / height);
+}
+
+/** Clip poses sampled per clip for a player's profile: enough to catch a run cycle's highest frame. */
+const PROFILE_SAMPLES = 12;
+
+/**
+ * The profile of every mesh under `root`, whose local space has the axis at x = z = 0 and feet on y = 0:
+ * its current pose, then each of `clips` sampled through its length on `animated` (the node the rig's
+ * mixer drives; skinned vertices follow the bones). The pose is put back afterwards.
+ */
+function profileOf(
+  root: Object3D,
+  height: number,
+  animated: Object3D = root,
+  clips: readonly AnimationClip[] = [],
+): Profile {
+  const profile = emptyProfile();
+  const point = new Vector3();
+  const add = () => {
+    root.updateMatrixWorld(true);
+    root.traverse((node) => {
+      if (!(node instanceof Mesh)) return;
+      const positions = node.geometry.getAttribute("position");
+      for (let i = 0; i < positions.count; i++) {
+        node.getVertexPosition(i, point).applyMatrix4(node.matrixWorld);
+        addToProfile(profile, point.x, point.y, point.z, height);
+      }
+    });
+  };
+  add();
+  if (clips.length === 0) return profile;
+  const rest: [Object3D, Vector3, Object3D["quaternion"], Vector3][] = [];
+  root.traverse((node) =>
+    rest.push([node, node.position.clone(), node.quaternion.clone(), node.scale.clone()]),
+  );
+  const mixer = new AnimationMixer(animated);
+  for (const clip of clips) {
+    const action = mixer.clipAction(clip).play();
+    for (let i = 0; i < PROFILE_SAMPLES; i++) {
+      mixer.setTime((clip.duration * i) / PROFILE_SAMPLES);
+      add();
+    }
+    action.stop();
+  }
+  mixer.uncacheRoot(animated);
+  for (const [node, position, quaternion, scale] of rest) {
+    node.position.copy(position);
+    node.quaternion.copy(quaternion);
+    node.scale.copy(scale);
+  }
+  root.updateMatrixWorld(true);
+  return profile;
+}
+
+/** The clip a player rig plays for `wanted` ("run", "idle"): the first whose name contains it. */
+export function pickClip(names: string[], wanted: string[]): string | undefined {
+  return names.find((name) => wanted.some((w) => name.toLowerCase().includes(w)));
 }
 
 export interface PlayerModel {
@@ -59,6 +162,7 @@ export interface PlayerModel {
   model: ModelInstance;
   /** The tail chain `rigTail` added, root first; empty without a `tail` spec. */
   tail: Bone[];
+  profile: Profile;
 }
 
 /** One player's model of every form of its line: each player needs its own copy to mount. */
@@ -111,6 +215,18 @@ export function stageEnemyIds(stage: StageId): EnemyId[] {
 
 /** Field-site prop files (`assets/field-models.provenance.json`). */
 export const siteModelUrl = (model: SiteModel) => `/models/field-sites/${model}.glb`;
+
+/**
+ * A site prop is optional: a file that fails to load is reported and left out, and its site keeps only
+ * its ring (`RunAssets.sites` is partial). Cancellation still rejects.
+ */
+function optionalSiteModel<T>(result: Promise<T>, url: string): Promise<T | undefined> {
+  return result.catch((cause: unknown) => {
+    if (cause instanceof DOMException && cause.name === "AbortError") throw cause;
+    console.error(new Error(`场地模型未载入：${url}`, { cause }));
+    return undefined;
+  });
+}
 /** The props a stage's site pool draws (the Silph Scope reuses the item ball). */
 export function stageSiteModels(stage: StageId): SiteModel[] {
   const kinds: SiteKind[] = [...SITE_POOLS[stage]];
@@ -118,7 +234,8 @@ export function stageSiteModels(stage: StageId): SiteModel[] {
   return [
     ...new Set(
       kinds.flatMap((kind) => {
-        const model = siteModelOf[kind];
+        const model = siteModelOf(kind, stage);
+        if (model === "egg") return ["egg", "egg-nest"] as const;
         return model && model !== "snorlax" ? [model] : [];
       }),
     ),
@@ -521,14 +638,20 @@ const facingYaw: Record<string, number> = {
   "tower-tomb-1": 0,
   "tower-tomb-2": 0,
   "tower-tomb-3": 0,
-  // Scripted field props are authored facing +Z; the Tripo altar keeps the default.
+  // Field props are authored or composed facing +Z; the Tripo altar keeps the default.
   "honey-tree": 0,
+  "palm-honey-tree": 0,
   "item-ball": 0,
   fishing: 0,
   fossil: 0,
   "raid-den": 0,
   spring: 0,
+  "spring-sand": 0,
+  "spring-frost": 0,
+  "spring-basalt": 0,
+  "spring-tower": 0,
   egg: 0,
+  "egg-nest": 0,
   caterpie: (-3 * Math.PI) / 4,
   ekans: Math.PI,
   metapod: -Math.PI / 4,
@@ -885,7 +1008,11 @@ function toInstanceSource(model: LoadedModel, height: number, url: string): Inst
   geometry.translate(-center.x, -box.min.y, -center.z);
   geometry.scale(height / size.y, height / size.y, height / size.y);
   geometry.computeBoundingSphere();
-  return { geometry, material: mesh.material, height };
+  const profile = emptyProfile();
+  const positions = geometry.getAttribute("position");
+  for (let i = 0; i < positions.count; i++)
+    addToProfile(profile, positions.getX(i), positions.getY(i), positions.getZ(i), height);
+  return { geometry, material: mesh.material, height, profile };
 }
 
 /** Bind-pose world position of the hip bone (Tripo biped `Pelvis`, the Bulbasaur line's hand-built `Hip`). */
@@ -924,7 +1051,25 @@ function normalisePlayer(model: ModelInstance, form: FormId, look?: ShinyFormLoo
   facing.add(holder);
   const wrapper = new Group();
   wrapper.add(facing);
-  return { form, holder: wrapper, model, tail: model.tail, look };
+  return {
+    form,
+    holder: wrapper,
+    model,
+    tail: model.tail,
+    look,
+    profile: profileOf(
+      wrapper,
+      height,
+      model.root,
+      ["run", "idle"].flatMap((wanted) => {
+        const name = pickClip(
+          model.animations.map((clip) => clip.name),
+          [wanted],
+        );
+        return model.animations.filter((clip) => clip.name === name);
+      }),
+    ),
+  };
 }
 
 export function shinyMapNeed(form: FormId) {
@@ -964,7 +1109,25 @@ export function runSharedNeeds(stage: StageId): Need[] {
     ...Object.values(theme.props).flatMap((look) => look.models.map(model)),
     ...sceneryFiles(theme).map(({ url }) => model(url)),
     ...Object.values(stationFiles).map((file) => model(file.url)),
-    ...stageSiteModels(stage).map((name) => model(siteModelUrl(name))),
+    ...stageSiteModels(stage).map((name): Need => {
+      const url = siteModelUrl(name);
+      return {
+        key: url,
+        acquire: (lane) => {
+          const handle = models.acquire(url, lane);
+          return {
+            key: handle.key,
+            result: optionalSiteModel(handle.result, url),
+            get network() {
+              return handle.network;
+            },
+            watch: (listener) => handle.watch(listener),
+            setLane: (next) => handle.setLane(next),
+            release: () => handle.release(),
+          };
+        },
+      };
+    }),
     ...[theme.ground.grass, theme.ground.meadow, theme.ground.dirt, theme.ground.cliff].flatMap(
       ({ map, detail }) =>
         [map, detail].map((url): Need => ({
@@ -1066,7 +1229,14 @@ export async function loadRunAssets(
         stationKinds.map((kind) => hold(models.acquire(stationFiles[kind].url, "critical"))),
       ),
       Promise.all(scenery.map(({ url }) => hold(models.acquire(url, "critical")))),
-      Promise.all(siteModels.map((name) => hold(models.acquire(siteModelUrl(name), "critical")))),
+      Promise.all(
+        siteModels.map((name) =>
+          optionalSiteModel(
+            hold(models.acquire(siteModelUrl(name), "critical")),
+            siteModelUrl(name),
+          ),
+        ),
+      ),
       groundMap(theme.ground.grass.map),
       groundMap(theme.ground.meadow.map),
       groundMap(theme.ground.dirt.map),
@@ -1111,7 +1281,12 @@ export async function loadRunAssets(
         (url) => scenery.find((file) => file.url === url)!.height,
       ),
       stations: bake(stationKinds, stationModels, (kind) => stationFiles[kind].height),
-      sites: bake(siteModels, sitePropModels, (name) => siteModelHeight[name]),
+      sites: Object.fromEntries(
+        siteModels.flatMap((name, index) => {
+          const model = sitePropModels[index];
+          return model ? [[name, model.instance(siteModelHeight[name])]] : [];
+        }),
+      ),
       ground: { grass, meadow, dirt, cliff, grassDetail, meadowDetail, dirtDetail, cliffDetail },
       // Shared models and maps are the store's to release on loss; the run owns its skeletons.
       releaseUploads() {

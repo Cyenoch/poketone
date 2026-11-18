@@ -92,6 +92,17 @@ const spore = sprite({
   gravity: -0.4,
   drag: 2,
 });
+const dust = sprite({
+  shape: Shape.glow,
+  life: 0.9,
+  grow: 0.3,
+  from: gold.white,
+  to: powder.lilac,
+  accent: white,
+  add: 1,
+  gravity: -0.6,
+  drag: 2,
+});
 const drop = sprite({
   shape: Shape.drop,
   life: 0.45,
@@ -349,29 +360,54 @@ export function ultPulse(fx: Fx, e: UltPulseEvent, ultimate?: UltimateId): void 
         );
       return;
     case "spores":
+      // Sleep powder settles over the whole disc: a lilac haze with gold dust glinting in it.
       fx.decals.stamp(Decal.ring, x, z, r, 0.25, powder.lilac, 0.65, white, 0.25, 0.045, 1);
-      spray(fx, spore, x, h + 0.5, z, 14, r * 1.6, 0.6, 0.6);
+      fx.decals.stamp(Decal.glow, x, z, r, 0.8, powder.lilac, 0.45, powder.mist, 0.4);
+      scatter(x, z, r, 16, (px, pz) =>
+        fx.sprites.emit(spore, px, h + rand(0.3, 0.8), pz, 0, rand(0, 0.4), 0, rand(0.5, 0.8)),
+      );
+      scatter(x, z, r, 26, (px, pz) =>
+        fx.sprites.emit(dust, px, h + rand(0.2, 1.2), pz, 0, rand(0.2, 0.8), 0, rand(0.06, 0.1)),
+      );
       return;
     case "petals":
-      fx.decals.stamp(Decal.ring, x, z, r, 0.26, powder.pink, 0.75, white, 0.3, 0.045, 1);
-      spray(fx, petal, x, h + 0.6, z, 22, r * 2.2, 1.5, 0.22);
+      // A ring of petals whirling out along the whole edge, over a pink flush of the disc.
+      fx.decals.stamp(Decal.ring, x, z, r, 0.26, powder.pink, 0.85, white, 0.4, 0.06, 1);
+      fx.decals.stamp(Decal.glow, x, z, r, 0.4, powder.pink, 0.4, white, 0.4);
+      rim(x, z, r * 0.95, Math.round(r * 6), (px, pz, a) =>
+        fx.sprites.emit(
+          petal,
+          px,
+          h + rand(0.3, 0.9),
+          pz,
+          -Math.sin(a) * 4 + Math.cos(a) * 1.5,
+          rand(0.5, 2),
+          Math.cos(a) * 4 + Math.sin(a) * 1.5,
+          rand(0.2, 0.3),
+        ),
+      );
       return;
     case "pillar":
+      fx.sprites.emit(flash, x, h + 0.8, z, 0, 0, 0, r * 1.4);
       fx.echoes.add(drawFireRelease, 0.28, x, h, z, r, 1);
       fx.echoes.add(drawFirePillar, 0.55, x, h, z, r);
       return;
     case "ring":
+      // The payoff of a long wind-up: a white-hot flash at the caster, the disc torn open and a
+      // burnt residue left on it, so the hit reads as large as the cast promised.
+      fx.sprites.emit(flash, x, h + 0.6, z, 0, 0, 0, r * 0.4);
       fx.echoes.add(drawFireRelease, 0.42, x, h, z, r, 0.9);
-      rim(x, z, r * 0.92, Math.round(r * 5), (px, pz) =>
+      fx.decals.stamp(Decal.scorch, x, z, r * 0.85, 0.9, fire.soot, 0.35, fire.orange, 0);
+      rim(x, z, r * 0.92, Math.round(r * 7), (px, pz) =>
         fx.sprites.emit(
           rimFlame,
           px,
           fx.ground.heightAt(px, pz) + 0.15,
           pz,
           0,
-          rand(1, 2.5),
+          rand(1.5, 3),
           0,
-          rand(0.28, 0.4),
+          rand(0.32, 0.46),
         ),
       );
       return;
@@ -411,18 +447,21 @@ export function ultPulse(fx: Fx, e: UltPulseEvent, ultimate?: UltimateId): void 
       );
       return;
     case "wave":
+      // A wall of water stands up on the whole disc's edge and breaks outward in foam.
       fx.decals.stamp(Decal.ring, x, z, r, 0.25, water.light, 0.85, water.foam, 0.35, 0.045, 1);
+      fx.decals.stamp(Decal.glow, x, z, r, 0.35, water.light, 0.55, water.foam, 0.5);
       fx.decals.stamp(Decal.ripple, x, z, r, 0.7, water.mid, 0.6, water.foam, 0.3);
-      rim(x, z, r, 22, (px, pz, a) =>
+      fx.echoes.add(drawWaterWall, 0.4, x, h, z, r);
+      rim(x, z, r, Math.round(r * 8), (px, pz, a) =>
         fx.sprites.emit(
           foam,
           px,
-          h + 0.3,
+          h + 0.4,
           pz,
-          Math.cos(a) * 3,
-          rand(0.5, 1.5),
-          Math.sin(a) * 3,
-          rand(0.22, 0.36),
+          Math.cos(a) * 3.5,
+          rand(1.5, 3.5),
+          Math.sin(a) * 3.5,
+          rand(0.26, 0.42),
         ),
       );
       return;
@@ -450,10 +489,12 @@ export function ultPulse(fx: Fx, e: UltPulseEvent, ultimate?: UltimateId): void 
       fx.echoes.add(drawCannon, 0.16, x, r, z, e.dirX, e.dirZ, e.length);
       return;
     case "storm":
-      fx.echoes.add(drawSkyBolt, 0.2, x, h, z, 0.11);
-      fx.decals.stamp(Decal.glow, x, z, r * 1.1, 0.2, electric.yellow, 0.9, white, 1);
-      fx.decals.stamp(Decal.ring, x, z, r, 0.22, electric.yellow, 0.8, white, 0.4, 0.05, 1);
-      spray(fx, spark, x, h + 0.3, z, 6, 4, 3, 0.18);
+      fx.echoes.add(drawSkyBolt, 0.24, x, h, z, 0.18);
+      fx.echoes.add(drawSkyBolt, 0.16, x, h, z, 0.07);
+      fx.sprites.emit(flash, x, h + 0.4, z, 0, 0, 0, r * 0.5);
+      fx.decals.stamp(Decal.glow, x, z, r * 1.3, 0.3, electric.yellow, 1, white, 1);
+      fx.decals.stamp(Decal.ring, x, z, r, 0.26, electric.yellow, 0.9, white, 0.4, 0.06, 1);
+      spray(fx, spark, x, h + 0.3, z, 12, 5, 4, 0.2);
       return;
     case "bolt":
       fx.echoes.add(drawSkyBolt, 0.34, x, h, z, 0.26);
@@ -530,6 +571,21 @@ function rim(
   for (let i = 0; i < n; i++) {
     const a = (i / n) * Math.PI * 2 + rand(-0.1, 0.1);
     at(x + Math.cos(a) * r, z + Math.sin(a) * r, a);
+  }
+}
+
+/** `n` points spread evenly over the disc of radius `r` (area-uniform, not bunched at the centre). */
+function scatter(
+  x: number,
+  z: number,
+  r: number,
+  n: number,
+  at: (x: number, z: number) => void,
+): void {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const d = Math.sqrt(Math.random()) * r;
+    at(x + Math.cos(a) * d, z + Math.sin(a) * d);
   }
 }
 

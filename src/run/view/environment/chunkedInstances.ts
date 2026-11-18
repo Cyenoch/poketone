@@ -6,8 +6,8 @@ const MARGIN = 1.5;
 /**
  * Static ground instances (one vec4 each, y = root height) bucketed into square chunks. The chunks in
  * view and within reach are packed to the front of a single attribute: one draw call per layer. It is
- * repacked (with a margin) only when a visible chunk is missing, so camera shake or a chunk flickering
- * at the frustum edge never re-uploads every frame.
+ * repacked when a visible chunk is missing or a packed one has left the view by more than the margin,
+ * so camera shake or a chunk flickering at the frustum edge never re-uploads every frame.
  */
 export interface ChunkedInstances {
   attribute: InstancedBufferAttribute;
@@ -15,12 +15,16 @@ export interface ChunkedInstances {
   update(frustum: Frustum, eye: Vector3, reach: number): number;
 }
 
-/** `half`: the field spans −half…half on X and Z. `top`: how far an instance can reach above its root. */
+/**
+ * `half`: the field spans −half…half on X and Z. `top`: how far an instance can reach above its root;
+ * `spread`: how far sideways, so a wide or tall model is packed before any of it enters the view.
+ */
 export function chunkInstances(
   values: Float32Array,
   half: number,
   top: number,
   chunkSize: number,
+  spread = 0,
 ): ChunkedInstances {
   const side = Math.ceil((half * 2) / chunkSize);
   const cell = (v: number) => Math.min(side - 1, Math.max(0, Math.floor((v + half) / chunkSize)));
@@ -40,8 +44,8 @@ export function chunkInstances(
     const x = (c % side) * chunkSize - half;
     const z = Math.floor(c / side) * chunkSize - half;
     return new Box3(
-      new Vector3(x, Infinity, z),
-      new Vector3(x + chunkSize, -Infinity, z + chunkSize),
+      new Vector3(x - spread, Infinity, z - spread),
+      new Vector3(x + chunkSize + spread, -Infinity, z + chunkSize + spread),
     );
   });
   for (let i = 0; i < total; i++) {
@@ -67,12 +71,14 @@ export function chunkInstances(
   return {
     attribute,
     update(frustum, eye, reach) {
-      let missing = false;
-      for (let c = 0; c < boxes.length && !missing; c++) {
-        missing =
-          counts[c]! > 0 && !packedChunks.has(c) && inView(c, boxes[c]!, frustum, eye, reach);
+      let stale = false;
+      for (let c = 0; c < boxes.length && !stale; c++) {
+        if (counts[c] === 0) continue;
+        stale = packedChunks.has(c)
+          ? !inView(c, grown[c]!, frustum, eye, reach + MARGIN)
+          : inView(c, boxes[c]!, frustum, eye, reach);
       }
-      if (!missing) return drawn;
+      if (!stale) return drawn;
       packedChunks.clear();
       drawn = 0;
       for (let c = 0; c < boxes.length; c++) {

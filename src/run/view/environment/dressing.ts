@@ -17,6 +17,7 @@ import type { RunAssets } from "../assets";
 import { lambertCopy } from "../materials";
 import { inject, patchShader } from "../patchShader";
 import type { StageTheme } from "../stageThemes";
+import { hasGround } from "./backdrop";
 import { chunkInstances, type ChunkedInstances } from "./chunkedInstances";
 import { shadeUnderClouds } from "./clouds";
 import { GroundChannel, type GroundLayers } from "./ground";
@@ -77,6 +78,7 @@ export function* createDressing(
     const source = assets.scenery[look.model]!;
     const values: number[] = [];
     const put = (x: number, z: number, scale: number) => {
+      if (!hasGround(theme, x, z)) return;
       const light =
         look.light *
         (latticeHash(world.seed, Math.round(x * 20), Math.round(z * 20)) < candleFraction ? 1 : 0);

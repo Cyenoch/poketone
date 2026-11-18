@@ -1,11 +1,18 @@
 {
-  "generator": "assets/props/build-map-props.py",
-  "seed": 2076047034,
-  "source": "Original scripted geometry; no external assets",
-  "triangles": 160,
-  "materials": 1,
-  "vertexColors": true,
-  "units": "metres",
-  "sha256": "f932c17e7f089aad197020f0c211b5373270de1bb689c831971b38c675a28690",
-  "tripoCredits": 0
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "props/coast-landmark/generation/tripo-out/tripo-out/poketone-coast-landmark-mv-6cbde80e/model.glb",
+  "tripoSourceSha256": "2638ec62d0f8ac852fa96b59c1c49d56e5c0de74c39681d636206c9b0d287bcb",
+  "tripoTask": "6cbde80e-8a1b-4c99-b6db-cc024df64b02",
+  "tripoType": "multiview_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 1872,
+  "dimensions": [2.6323, 3.463, 3.3],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "8dbd1164fe0651a17849bf7ec00092bcaa5f66340cc0556601c587c3972d867d"
 }

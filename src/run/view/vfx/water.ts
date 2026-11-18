@@ -163,6 +163,8 @@ export const bubbleShot: ShotLook = {
   fly(fx, shot, x, y, z) {
     const bob = Math.sin(fx.time * 5 + shot.id) * 0.06;
     fx.sprites.draw(bubble, x, y + bob, z, shot.radius * 0.95, 1, 0, 0, 0, seedOf(shot.id));
+    // A wet glint on the ground under each bubble so a volley still reads in a crowd.
+    fx.decals.put(Decal.glow, x, z, shot.radius * 1.3).tint(water.light, 0.5, water.foam, 0.6);
     for (let i = perFrame(fx, 5); i > 0; i--)
       fx.sprites.emit(
         fizz,

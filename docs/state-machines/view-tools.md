@@ -877,7 +877,7 @@
 
 - `src/screens/runArt.ts:1–7`：三个纯URL拼接函数（move/item/station icon），**没有cache、timer、ref或异步状态**。图片的获取/持有不是本文件的机器。
 - 静态theme/config/type：`stageThemes.ts`、`zoneThemes.ts`、`themes/types.ts`、六theme的色/几何/布局/参数大表。六theme的decorate资源接缝已在EV06登记；不能把每个颜色或天气预设当独立FSM。
-- GLSL/材质/几何：`architecture.ts`、`enemyLook.ts`、`materials.ts`、`patchShader.ts`、`terrain.ts`、`walls.ts`、`environment/terrainGeometry.ts`、`environment/noise.ts`、`environment/clouds.ts`、`environment/ice-surface.ts`、`environment/glacier-surface.ts`、`environment/coast-{dressing,landmark,reef}.ts`、`environment/desert-landmark.ts`等。`grade.patched`的一次性WeakSet已单列RV18；材料资源在RV01/RV02/EV06释放。
+- GLSL/材质/几何：`architecture.ts`、`enemyLook.ts`、`materials.ts`、`patchShader.ts`、`terrain.ts`、`walls.ts`、`environment/terrainGeometry.ts`、`environment/noise.ts`、`environment/clouds.ts`、`environment/ice-surface.ts`、`environment/glacier-surface.ts`、`environment/coast-{dressing,reef}.ts`等。`grade.patched`的一次性WeakSet已单列RV18；材料资源在RV01/RV02/EV06释放。
 - 环境解析动画/数据生成：草/花/芦苇顶点与placement细节、太阳池静态geometry、森林/沙尘/海面/雨/塔雾/火山气体shader、lava crust/flow纹理算法、tower stonework纹理。异步分步游标、分块缓存、脚印环、水中单位队列、light-pool筛选和wind时钟已纳入；不按每根草/每滴雨/每次sin phase列对象FSM。
 - VFX sprite specs、颜色表、GLSL形状、flicker/seed/hash、drag reach、每帧rate随机小数、当前轨迹几何：纳入共享pool/renderer使用，不额外登记。完整配方模块矩阵在B节。
 - balance静态排除：`skill.ts` profiles/pick policies，`targets.ts`目标范围，`budget.ts`试算/对比/警告，`coop.ts`固定build分析；`output.ts`除areaTicks以外的volley/cohort闭式求值，`triggers.ts`除setMeasures以外的公式表，`ultimate.ts`timeline折叠均无跨调用生命周期。
@@ -920,11 +920,9 @@
 | [src/run/view/environment/chunkedInstances.ts](../../src/run/view/environment/chunkedInstances.ts) |   90 | EV02                                                      | `40c4ab6c51fc` |
 | [src/run/view/environment/clouds.ts](../../src/run/view/environment/clouds.ts)                     |   37 | 排除：共享风uniform的shader场，关联RV14                   | `35d4093214f3` |
 | [src/run/view/environment/coast-dressing.ts](../../src/run/view/environment/coast-dressing.ts)     |    9 | 排除：纯放置predicate                                     | `88106309d534` |
-| [src/run/view/environment/coast-landmark.ts](../../src/run/view/environment/coast-landmark.ts)     |   21 | 排除：材质patch，资源EV06                                 | `7c6b359af38c` |
 | [src/run/view/environment/coast-reef.ts](../../src/run/view/environment/coast-reef.ts)             |   22 | 排除：材质patch                                           | `51c67347640e` |
 | [src/run/view/environment/coast-weather.ts](../../src/run/view/environment/coast-weather.ts)       |  110 | EV06；雨/闪电解析动画排除                                 | `02d357bc6ac4` |
 | [src/run/view/environment/desert-dust.ts](../../src/run/view/environment/desert-dust.ts)           |   61 | EV06；解析粒子动画排除                                    | `d968fcc43430` |
-| [src/run/view/environment/desert-landmark.ts](../../src/run/view/environment/desert-landmark.ts)   |   26 | 排除：材质patch                                           | `96f44a043d6a` |
 | [src/run/view/environment/dressing.ts](../../src/run/view/environment/dressing.ts)                 |  221 | EV01/EV02/EV03                                            | `6e8fd4f924e3` |
 | [src/run/view/environment/flowers.ts](../../src/run/view/environment/flowers.ts)                   |  175 | EV01；静态geometry/vertex排除                             | `f17996010876` |
 | [src/run/view/environment/foliage.ts](../../src/run/view/environment/foliage.ts)                   |  233 | EV01/EV02                                                 | `ef7af18c2573` |

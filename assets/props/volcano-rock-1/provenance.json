@@ -1,11 +1,24 @@
 {
-  "generator": "assets/props/build-map-props.py",
-  "seed": 2884076519,
-  "source": "Original scripted geometry; no external assets",
-  "triangles": 60,
-  "materials": 1,
-  "vertexColors": true,
-  "units": "metres",
-  "sha256": "52a6268fb098db62d67e3e950092b74d1d539e6fb888fb4172bcdc5c646db656",
-  "tripoCredits": 0
+  "set": "volcano-rocks",
+  "footprint": {
+    "baseSpreadBefore": 0.2714,
+    "target": 0.5647,
+    "xyScale": 2.0805
+  },
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "props/volcano-rocks/generation/tripo-out/tripo-out/poketone-volcano-rocks-f0a1b237/model.glb",
+  "tripoSourceSha256": "ceee3af5ae5c98b9cf665179f5d76334383dfbb389862e17a13d0888538309c1",
+  "tripoTask": "f0a1b237-aca7-478e-8524-54560a7b87cc",
+  "tripoType": "image_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 365,
+  "dimensions": [0.5741, 0.456, 0.3953],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "ac234a1422a128a430672c15abdf46a11a2da3f80248c34ee5b2dde30db48ff4"
 }

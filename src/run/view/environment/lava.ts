@@ -139,66 +139,74 @@ float lavaShore(vec2 p, float depth) {
 }
 `;
 
+/**
+ * Ground beside a pool: a ragged band of cooled grey crust right at the edge, charred rock behind it,
+ * and a warm emissive spill that fades with distance.
+ */
 export const LAVA_BANK = /* glsl */ `
   float lava = surfaceDepth(p).g;
   float lavaDistance = lavaShore(p, lava);
   if (lava <= 0.0 && lavaDistance < 3.0) {
     float roughEdge = texture2D(uLavaCrust, p * 0.16).b;
-    float charred = 1.0 - smoothstep(0.04, 0.2 + roughEdge * 0.35, lavaDistance);
+    float rag = envNoise(p * 1.9) * 0.6 + envNoise(p * 4.3) * 0.4;
+    float charred = 1.0 - smoothstep(0.04, 0.3 + roughEdge * 0.45, lavaDistance);
+    float cooled = (1.0 - smoothstep(0.02, 0.12 + rag * 0.3, lavaDistance)) * smoothstep(0.25, 0.5, rag + roughEdge * 0.3);
     float warmth = (1.0 - smoothstep(0.08, 1.15 + roughEdge * 0.6, lavaDistance))
       * (0.4 + 0.6 * roughEdge);
     diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.022, 0.016, 0.019), charred * 0.85);
-    totalEmissiveRadiance += vec3(0.17, 0.043, 0.002) * warmth * warmth;
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.1, 0.085, 0.08), cooled * 0.8);
+    totalEmissiveRadiance += vec3(0.17, 0.043, 0.002) * warmth * warmth * (1.0 - cooled * 0.6);
   }
 `;
 
+/**
+ * The molten surface: dark crust plates drifting on a current, glowing only through their cracks and
+ * a few open channels. The current is the bank-tangent flow bent by a slow noise field (eddies, not
+ * rails), and a ragged band of dead crust along the shore breaks the pool's outline.
+ */
 export const LAVA_FRAGMENT = /* glsl */ `
 {
   vec2 p = vSurfaceWorld;
   if (surfaceDepth(p).g <= 0.0) discard;
   vec4 flow = texture2D(uLavaFlow, terrainUv(p));
-  vec2 direction = normalize(flow.rg * 2.0 - 1.0);
   float shore = max(0.0, (flow.b - 0.5) * 8.0);
   float t = uWindTime;
+  vec2 swirl = vec2(envNoise(p * 0.11 + 3.7), envNoise(p * 0.11 - 5.1)) - 0.5;
+  vec2 direction = normalize(normalize(flow.rg * 2.0 - 1.0) + swirl * 2.2);
   // Two overlapping advection phases avoid an endless stretch at bends.
-  float phase = fract(t * 0.075), other = fract(t * 0.075 + 0.5);
+  float phase = fract(t * 0.05), other = fract(t * 0.05 + 0.5);
   float blend = abs(phase * 2.0 - 1.0);
-  vec2 shimmer = vec2(sin(p.y * 4.0 + t * 2.0), cos(p.x * 3.0 - t * 1.6)) * 0.012;
-  vec2 uv = p / 16.0 + shimmer;
-  vec4 a = texture2D(uLavaCrust, uv - direction * phase * 0.48);
-  vec4 b = texture2D(uLavaCrust, uv - direction * other * 0.48 + 0.5);
+  vec2 uv = p / 11.0;
+  vec4 a = texture2D(uLavaCrust, uv - direction * phase * 0.3);
+  vec4 b = texture2D(uLavaCrust, uv - direction * other * 0.3 + 0.5);
+  float edge = mix(a.r, b.r, blend);
+  float tone = mix(a.g, b.g, blend);
   float paint = mix(a.b, b.b, blend);
-  float hotCentre = smoothstep(0.4, 1.65, shore);
-  float threshold = mix(0.13, 0.38, hotCentre) + 0.035 * sin(t * 0.5 + paint * 6.0);
-  float edgeA = a.r - threshold, edgeB = b.r - threshold;
-  float edge = mix(edgeA, edgeB, blend);
-  float facePaint = texture2D(uLavaCrust, uv * 1.7 + 0.27).b;
-  // In the hot current only clusters survive. A closed crust on every cell reads as a tiled net.
-  float islands = smoothstep(0.52, 0.78, facePaint + mix(a.g,b.g,blend) * 0.12);
-  float plate = smoothstep(-0.025, 0.025, edge) * mix(1.0, islands, hotCentre * 0.88);
-  float bevel = plate * (1.0 - smoothstep(0.02, 0.14, edge));
-  // Broad painted currents with narrow stretched highlights, not an outlined cell network.
-  float across = dot(p, vec2(direction.y, -direction.x));
-  float streak = sin(across * 3.4 + paint * 9.0 - t * 0.65);
-  float ribbon = smoothstep(0.6, 0.98, streak) * hotCentre;
-  float fold = 0.5 + 0.5 * sin(across * 1.4 + facePaint * 6.0 + t * 0.22);
-  vec3 molten = mix(vec3(0.37, 0.012, 0.002), vec3(0.76, 0.105, 0.004),
-    hotCentre * (0.45 + 0.55 * fold));
-  molten = mix(molten, vec3(1.0, 0.4, 0.035), ribbon * 0.55 + paint * 0.08);
-  vec3 basalt = mix(vec3(0.018, 0.012, 0.018), vec3(0.065, 0.038, 0.04), mix(a.g,b.g,blend));
-  basalt *= 0.7 + 0.55 * facePaint;
-  basalt += vec3(0.12, 0.018, 0.001) * bevel;
-  float bank = 1.0 - smoothstep(0.04, 0.24 + paint * 0.14, shore);
-  vec3 color = mix(molten, basalt, smoothstep(0.12, 0.68, plate));
-  color = mix(color, vec3(0.025, 0.016, 0.02), bank);
-  // Infrequent swelling blisters; phase and size are cell-seeded and never change collision.
+  float fine = mix(texture2D(uLavaCrust, uv * 3.1 - direction * phase * 0.9 + 0.31).r,
+    texture2D(uLavaCrust, uv * 3.1 - direction * other * 0.9 + 0.81).r, blend);
+  float hot = smoothstep(0.5, 2.2, shore);
+  float width = mix(0.05, 0.13, hot) * (0.6 + 0.8 * paint);
+  float crack = 1.0 - smoothstep(width * 0.4, width, edge);
+  float hair = (1.0 - smoothstep(0.015, 0.05, fine)) * hot * 0.55;
+  float channel = smoothstep(0.7, 0.86, envNoise(p * 0.33 - direction * t * 0.05)) * hot;
+  channel *= smoothstep(0.3, 0.6, envNoise(p * 1.4 - direction * t * 0.12));
+  float molten = max(max(crack, hair), channel * 0.9);
+  vec3 crust = mix(vec3(0.014, 0.011, 0.014), vec3(0.055, 0.036, 0.036), tone) * (0.75 + 0.5 * paint);
+  crust += vec3(0.1, 0.018, 0.0) * (1.0 - smoothstep(width, width * 3.5, edge)) * (0.35 + 0.65 * hot);
+  float pulse = 0.85 + 0.15 * sin(t * 0.9 + paint * 7.0);
+  vec3 melt = mix(vec3(0.5, 0.05, 0.004), vec3(1.0, 0.42, 0.04), smoothstep(0.55, 1.0, molten) * pulse);
+  vec3 color = mix(crust, melt, molten);
+  float rag = envNoise(p * 1.3) * 0.6 + envNoise(p * 3.7) * 0.4;
+  float rim = 1.0 - smoothstep(0.08, 0.3 + rag * 0.8, shore);
+  color = mix(color, vec3(0.026, 0.019, 0.021) + vec3(0.12, 0.02, 0.0) * crack * 0.35, rim);
+  // Infrequent swelling blisters in the open channels; phase and size are cell-seeded.
   vec2 cell = floor(p / 2.7), local = fract(p / 2.7) - 0.5;
   float seed = envHash(cell), age = fract(t * 0.16 + seed * 13.0);
   float bubble = (1.0 - smoothstep(0.018, 0.045, abs(length(local) - age * 0.095)))
-    * smoothstep(0.55, 0.7, age) * (1.0 - smoothstep(0.78, 0.88, age)) * step(0.82,seed) * hotCentre * (1.0 - plate);
+    * smoothstep(0.55, 0.7, age) * (1.0 - smoothstep(0.78, 0.88, age)) * step(0.82, seed) * channel;
   color = mix(color, vec3(1.0, 0.66, 0.07), bubble * 0.65);
   diffuseColor.rgb = vec3(0.0);
-  totalEmissiveRadiance = color * (0.88 + 0.04 * sin(t * 1.1 + paint * 4.0));
+  totalEmissiveRadiance = color;
 }
 `;
 

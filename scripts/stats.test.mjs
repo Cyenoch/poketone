@@ -140,6 +140,14 @@ function hit(ctx, player, enemy, type, move = null) {
   return before - enemy.hp;
 }
 
+test("a card picked while the world stays frozen (another card queued) shows in the live stats at once", () => {
+  const [player] = field("bulbasaur").players;
+  const before = currentStats(player).maxHp;
+  applyChoice(player, { kind: "item", item: "hp-up" });
+  assert.equal(currentStats(player).maxHp, playerStats(player).maxHp);
+  assert.ok(currentStats(player).maxHp > before, "the HP bar and HUD read the new max HP");
+});
+
 test("茂盛和激流只在低 HP 时强化对应属性；切换隐藏栏位立即停用", () => {
   for (const [line, type, move, item, lowHpMultiplier] of [
     ["bulbasaur", "grass", "razor-leaf", "miracle-seed", 1.5],

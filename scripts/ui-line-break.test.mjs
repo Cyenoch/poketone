@@ -23,6 +23,23 @@ test("card lines break between CJK characters but never inside a signed number o
   }
 });
 
+test("a figure keeps its unit, and a short aside stays whole", () => {
+  const text = "受到伤害时回复生命（每 45 秒一次），冰冻 1.5 秒";
+  for (let width = 90; width <= 300; width += 5) {
+    const lines = breakLines(text, width, 15, font).split("\n");
+    for (const held of ["每 45 秒", "1.5 秒"])
+      assert.ok(
+        lines.some((line) => line.includes(held)),
+        `${width}: ${JSON.stringify(lines)}`,
+      );
+    if (width >= 150)
+      assert.ok(
+        lines.some((line) => line.includes("（每 45 秒一次）")),
+        `${width}: ${JSON.stringify(lines)}`,
+      );
+  }
+});
+
 test("a title that must wrap never leaves a one-character last line", () => {
   for (const title of ["凸凸头盔", "火焰旋涡", "吃剩的东西", "招式学习器盒"]) {
     const lines = balanceLines(title, 15 * (title.length - 1), 15, font).split("\n");
@@ -47,4 +64,19 @@ test("a line never starts with a slash separator", () => {
   for (let width = 120; width <= 400; width += 10)
     for (const line of breakLines(text, width, 10, font).split("\n"))
       assert.doesNotMatch(line, /^\//, `${width}: ${line}`);
+});
+
+test("rich text picks out whole figures, and crests only a type named as a type", async () => {
+  const { markTypes, richRuns } = await import("../src/ui/gpu/rich-text.ts");
+  const runs = richRuns(markTypes("火属性伤害 +30%，冰冻 1.5 秒，-7% 冷却"));
+  assert.deepEqual(
+    runs.filter((run) => run.kind !== "text").map((run) => [run.kind, run.text]),
+    [
+      ["type", "火"],
+      ["figure", "+30%"],
+      ["figure", "1.5"],
+      ["figure", "-7%"],
+    ],
+  );
+  assert.equal(runs.map((run) => run.text).join(""), "火属性伤害 +30%，冰冻 1.5 秒，-7% 冷却");
 });

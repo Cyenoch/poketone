@@ -15,7 +15,13 @@ import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
 import { soundStart, untilNextBeat } from "../src/audio/schedule.ts";
-import { AMBIENCE_NAMES, createAudio, SFX_NAMES } from "../src/audio/engine.ts";
+import {
+  AMBIENCE_NAMES,
+  createAudio,
+  MENU_TRACKS,
+  RUN_TRACKS,
+  SFX_NAMES,
+} from "../src/audio/engine.ts";
 import { playFieldEvent, syncFieldAmbience } from "../src/audio/field-events.ts";
 import { installResources } from "../src/platform/resources.ts";
 import { installRuntime } from "../src/platform/runtime.ts";
@@ -225,7 +231,12 @@ test("cancelled music cannot silence or replace an immediate replay of the same 
   installResources({
     read: async (url) =>
       url === "/audio/bank.json"
-        ? Response.json({ music: { menu: { file: "menu.aac", bpm: 120 } } })
+        ? Response.json({
+            music: {
+              menu: { file: "menu.aac", bpm: 120 },
+              "menu-2": { file: "menu-2.aac", bpm: 120 },
+            },
+          })
         : new Response("encoded music"),
   });
   const audio = createAudio();
@@ -551,6 +562,170 @@ test("ambience failure reports its file once, stays silent until a new wish, and
     assert.equal(h.sources.length, 1);
   } finally {
     console.error = originalError;
+    await h.audio.dispose();
+  }
+});
+
+test("menu and run music each rotate through every track without repeating one in a row", async () => {
+  const music = Object.fromEntries(
+    [...MENU_TRACKS, ...RUN_TRACKS, "boss"].map((name) => [
+      name,
+      { file: `music/${name}.m4a`, bpm: 120 },
+    ]),
+  );
+  const h = audioHost({ bank: { sfx: {}, music, ambience: {} } });
+  const heard = [];
+  /** Wishes, then decodes the track that wish fetched and checks that it is the one playing. */
+  const play = async (wish, duration = 60) => {
+    h.audio.music.play(wish);
+    await flushAudio();
+    const name = h.reads.at(-1).match(/music\/(.+)\.m4a$/)[1];
+    h.finish(h.decodes.length - 1, name, duration);
+    await flushAudio();
+    assert.equal(h.sources.at(-1).buffer.name, name);
+    heard.push(name);
+  };
+  try {
+    for (let visit = 0; visit < RUN_TRACKS.length; visit++) {
+      await play("menu");
+      await play("run");
+    }
+    assert.deepEqual(heard, [
+      "menu",
+      "run-1",
+      "menu-2",
+      "run-2",
+      "menu",
+      "run-3",
+      "menu-2",
+      "run-4",
+    ]);
+
+    // A lobby left idle turns to the other menu track after one pass.
+    await play("menu", 1);
+    assert.equal(heard.at(-1), "menu");
+    h.advance(1);
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+    await flushAudio();
+    assert.ok(h.reads.at(-1).endsWith("music/menu-2.m4a"));
+  } finally {
+    await h.audio.dispose();
+  }
+});
+
+/** Drives a music host: wishes, then settles the fetch it caused (decode `duration`, or fail). */
+function musicRig(options) {
+  const music = Object.fromEntries(
+    [...MENU_TRACKS, ...RUN_TRACKS, "boss"].map((name) => [
+      name,
+      { file: `music/${name}.m4a`, bpm: 120 },
+    ]),
+  );
+  const h = audioHost({ bank: { sfx: {}, music, ambience: {} }, ...options });
+  const play = async (wish, { duration = 60, fail = false } = {}) => {
+    const before = h.decodes.length;
+    h.audio.music.play(wish);
+    await flushAudio();
+    if (h.decodes.length === before) return;
+    const name = h.reads.at(-1).match(/music\/(.+)\.m4a$/)[1];
+    if (fail) h.decodes.at(-1).reject(new Error(`${name} is corrupt`));
+    else h.finish(h.decodes.length - 1, name, duration);
+    await flushAudio();
+  };
+  /** Sources that would sound at the current time: still wired up and not yet stopped. */
+  const audible = () =>
+    h.sources.filter(
+      (source) => source.connections.length > 0 && source.stopAt > h.context.currentTime,
+    );
+  return { h, play, audible };
+}
+
+test("a track that fails to load fades the previous screen out and the playlist's next entry plays", async () => {
+  const { h, play, audible } = musicRig();
+  h.audio.onError(() => {});
+  try {
+    await play("run", { duration: 120 });
+    const run = h.sources.at(-1);
+    await play("menu", { fail: true });
+    h.finish(h.decodes.length - 1, "menu-2");
+    await flushAudio();
+    assert.notEqual(run.stopAt, Infinity, "the run track does not loop under the lobby");
+    h.advance(2);
+    assert.equal(h.sources.at(-1).buffer.name, "menu-2");
+    assert.equal(audible().length, 1);
+  } finally {
+    await h.audio.dispose();
+  }
+});
+
+test("screens switched while muted leave one track, which is the only one that plays on resume", async () => {
+  const { h, play, audible } = musicRig();
+  try {
+    await play("run");
+    await play("boss"); // the run track is now fading out under the boss track
+    h.audio.setEnabled(false);
+    await flushAudio();
+    for (const wish of ["menu", "run", "menu", "run", "menu"]) await play(wish);
+    h.audio.setEnabled(true);
+    await flushAudio();
+    h.advance(0.4);
+    assert.deepEqual(
+      audible().map((source) => source.buffer.name),
+      [h.sources.at(-1).buffer.name],
+    );
+    assert.ok(h.sources.at(-1).buffer.name.startsWith("menu"));
+  } finally {
+    await h.audio.dispose();
+  }
+});
+
+test("a context interrupted without a gesture is resumed by the next gesture, even one that plays no sound", async () => {
+  const h = audioHost({ bank: { sfx: {}, music: {}, ambience: {} } });
+  try {
+    await flushAudio();
+    h.context.state = "interrupted";
+    h.context.onstatechange();
+    h.activate();
+    await flushAudio();
+    assert.equal(h.context.state, "running");
+  } finally {
+    await h.audio.dispose();
+  }
+});
+
+test("a playlist that fails entirely stays silent until a new request plays", async () => {
+  const { h, play, audible } = musicRig();
+  h.audio.onError(() => {});
+  try {
+    await play("menu", { fail: true });
+    h.decodes.at(-1).reject(new Error("menu-2 is corrupt")); // the playlist's other entry
+    await flushAudio();
+    h.audio.music.play("menu"); // the same wish repeated does not refetch
+    await flushAudio();
+    assert.equal(h.decodes.length, 2);
+    assert.equal(audible().length, 0);
+    await play("run");
+    assert.deepEqual(
+      audible().map((source) => source.buffer.name),
+      ["run-1"],
+    );
+  } finally {
+    await h.audio.dispose();
+  }
+});
+
+test("a boss switch cancelled as the pass ends leaves the run track rotating", async () => {
+  const { h, play } = musicRig();
+  try {
+    await play("run", { duration: 1 });
+    h.advance(1);
+    h.audio.music.play("boss");
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+    await play("run", { duration: 1 });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    await flushAudio();
+    assert.ok(h.reads.at(-1).endsWith("music/run-2.m4a"));
+  } finally {
     await h.audio.dispose();
   }
 });

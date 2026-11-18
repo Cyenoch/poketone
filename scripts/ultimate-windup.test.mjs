@@ -13,7 +13,16 @@ import {
   timeline,
   updateUltimate,
 } from "../src/run/sim/ultimates/index.ts";
-import { ULT_INVULNERABLE, ULT_WINDUP } from "../src/run/sim/content/params/ultimates.ts";
+import { spawnEnemy } from "../src/run/sim/director.ts";
+import { chargeSurrounded } from "../src/run/sim/ultimates/crisis.ts";
+import { damageEnemy, heal } from "../src/run/sim/combat.ts";
+import { OwnerSimulation, ownerGrant, ownerState } from "../src/network/owner.ts";
+import {
+  ULT_CHARGE,
+  ULT_CRISIS as C,
+  ULT_INVULNERABLE,
+  ULT_WINDUP,
+} from "../src/run/sim/content/params/ultimates.ts";
 import { starters } from "../src/run/sim/content/lines/index.ts";
 import { damagePlayer, weatherDamagePlayer } from "../src/run/sim/hurt.ts";
 import { apply, find, slowed, sustain } from "../src/run/sim/status.ts";
@@ -255,4 +264,149 @@ test("entering the next field cancels preparation and protection without refund"
   ticks(w, 90);
   assert.equal(count(w, "ult-release"), 0);
   assert.equal(count(w, "ult-pulse"), 0);
+});
+
+test("a safe or threshold crowd gives only base charge; a visible elite tips the balance", () => {
+  const w = fixture(),
+    p = w.players[0];
+  ticks(w, 30);
+  close(p.ult.charge, ULT_CHARGE.time);
+  assert.equal(p.crisis.lastTick, null);
+  const context = ctx(w);
+  const enemies = Array.from({ length: C.threshold }, () => spawnEnemy(w, "rattata", p.x, p.z));
+  spawnEnemy(w, "rattata", p.x + C.radius + 1, p.z, true);
+  context.grid.rebuild(w.enemies);
+  chargeSurrounded(context, p);
+  close(p.ult.charge, ULT_CHARGE.time);
+  enemies[0].elite = true;
+  chargeSurrounded(context, p);
+  close(p.ult.charge, ULT_CHARGE.time + C.perBody * (C.eliteWeight - 1));
+  assert.equal(p.crisis.lastTick, w.tick);
+});
+
+test("crisis credits only HP actually lost after a shield, without spending damage credit", () => {
+  const w = fixture(),
+    p = w.players[0],
+    maxHp = p.hp;
+  p.shield = 12;
+  damagePlayer(w, p, 5);
+  assert.equal(p.ult.charge, 0);
+  p.invulnerable = 0;
+  const room = p.ult.room;
+  damagePlayer(w, p, 20);
+  assert.ok(p.hp < maxHp);
+  close(p.ult.charge, (C.perHpBar * (maxHp - p.hp)) / maxHp);
+  assert.equal(p.ult.room, room);
+  const before = p.hp,
+    charge = p.ult.charge;
+  apply(p, "poison", 5, 0, -1);
+  stepWorld(w, []);
+  assert.ok(p.hp < before);
+  close(p.ult.charge - charge, (C.perHpBar * (before - p.hp)) / maxHp + TICK * ULT_CHARGE.time);
+});
+
+test("weather and Flare Blitz recoil remove real HP without awarding crisis charge", () => {
+  const w = fixture(),
+    p = w.players[0];
+  const hp = p.hp;
+  weatherDamagePlayer(w, p, 5);
+  close(p.hp, hp - 5);
+  const enemy = spawnEnemy(w, "rattata", p.x, p.z);
+  p.ult.room = 0;
+  damageEnemy(ctx(w), enemy, {
+    owner: p,
+    move: "flare-blitz",
+    type: "fire",
+    dmg: 1,
+    crit: 0,
+    knock: 0,
+    statusChance: 0,
+    fromX: p.x,
+    fromZ: p.z,
+    recoil: true,
+  });
+  assert.ok(p.hp < hp - 5);
+  assert.equal(p.ult.charge, 0);
+  assert.equal(p.crisis.lastTick, null);
+});
+
+test("restored healing and encirclement share the same finite crisis window", () => {
+  const w = fixture(),
+    p = w.players[0],
+    maxHp = p.hp;
+  w.tick = 30;
+  for (let n = 0; n < 8; n++) spawnEnemy(w, "rattata", p.x, p.z);
+  const crowd = ctx(w);
+  crowd.grid.rebuild(w.enemies);
+  chargeSurrounded(crowd, p);
+  assert.ok(p.ult.charge > 0);
+  damagePlayer(w, p, maxHp / 2);
+  const copy = restoreWorld(w.map, JSON.parse(JSON.stringify(snapshotWorld(w))));
+  for (const run of [w, copy]) {
+    const seat = run.players[0];
+    for (let i = 0; i < 3; i++) {
+      heal(seat, maxHp);
+      seat.invulnerable = 0;
+      damagePlayer(run, seat, maxHp / 2);
+    }
+    close(seat.ult.charge, C.cap);
+    const stamped = seat.crisis.lastTick;
+    run.tick += Math.round(C.windowSeconds / TICK) - 1;
+    seat.invulnerable = 0;
+    damagePlayer(run, seat, 1);
+    close(seat.ult.charge, C.cap);
+    assert.equal(seat.crisis.lastTick, stamped);
+    run.tick++;
+    seat.invulnerable = 0;
+    damagePlayer(run, seat, 1);
+    assert.ok(seat.ult.charge > C.cap);
+    assert.equal(seat.crisis.lastTick, run.tick);
+  }
+  assert.deepEqual(snapshotWorld(copy), snapshotWorld(w));
+});
+
+test("a remote player's crowd is settled once by the host and reaches its owner", () => {
+  const w = fixture(["bulbasaur", "bulbasaur"]),
+    [host, remote] = w.players;
+  host.x = remote.x + C.radius + 4;
+  for (let n = 0; n < 4; n++) spawnEnemy(w, "rattata", remote.x, remote.z);
+  remote.invulnerable = 5;
+  w.tick = 29;
+  const owner = new OwnerSimulation(w, remote.id, -2e12),
+    before = ownerState(remote);
+  owner.advance(w, [], 1, false);
+  const predicted = owner.player.ult.charge;
+  close(predicted, ULT_CHARGE.time);
+  stepSharedWorld(w, []);
+  assert.equal(host.crisis.lastTick, null);
+  close(remote.ult.charge, C.perBody);
+  owner.sync(remote, [ownerGrant(before, remote, 1)], false, w.time);
+  close(owner.player.ult.charge, predicted + C.perBody);
+  assert.equal(owner.player.crisis.lastTick, w.tick);
+});
+
+test("a hit that fills the crisis window keeps a restorable snapshot", () => {
+  const w = fixture(),
+    p = w.players[0],
+    maxHp = p.hp;
+  w.tick = 30;
+  let spent = 0;
+  for (let i = 0; i < 18; i++) spent += 0.01;
+  p.crisis = { startTick: w.tick, spent, lastTick: w.tick };
+  damagePlayer(w, p, maxHp * 0.9);
+  assert.ok(p.crisis.spent <= C.cap);
+  restoreWorld(w.map, JSON.parse(JSON.stringify(snapshotWorld(w))));
+});
+
+test("a crowd put to sleep does not count as encirclement", () => {
+  const w = fixture(),
+    p = w.players[0];
+  w.tick = 30;
+  const crowd = Array.from({ length: 8 }, () => spawnEnemy(w, "rattata", p.x, p.z));
+  for (const enemy of crowd) apply(enemy, "sleep", 5, 0, -1);
+  const context = ctx(w);
+  context.grid.rebuild(w.enemies);
+  chargeSurrounded(context, p);
+  assert.equal(p.ult.charge, 0);
+  assert.equal(p.crisis.lastTick, null);
 });

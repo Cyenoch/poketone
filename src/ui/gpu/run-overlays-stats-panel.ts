@@ -12,12 +12,13 @@ import {
 import { formDefs, type FormId, type StarterId } from "../../run/sim/content/lines/index";
 import { abilities, abilityForSlot } from "../../run/sim/content/abilities";
 import { conditionTags } from "../../run/sim/content/effects";
+import { typeNames, type ElementType } from "../../run/sim/content/elements";
 import { armorFactor, type StatKey, type StatLine } from "../../run/sim/stats";
 import type { PlayerSheet } from "../../run/createRun";
 import { statTerms } from "../../run/glossary";
 import type { RunOverlayControl } from "./run-overlays-control";
 import { type ChoiceArt } from "./run-choice-surface";
-import { typeColors } from "./run-theme";
+import { themeColors, typeColors } from "./run-theme";
 import { portraitSrc } from "./ball";
 import type { RuleId } from "../../run/sim/content/rules";
 import { RuleChips, ruleTip } from "./challenge-rules";
@@ -27,7 +28,8 @@ import { cubicBezier } from "./focus-mark";
 import { stack } from "./layer";
 import { breakLines } from "./line-break";
 import type { UiStage } from "./stage";
-import { gameTag, typeTag } from "./tag";
+import { gameTag } from "./tag";
+import { typeTag } from "./type-icon";
 import { segmentTray, SegmentFace } from "./segment-face";
 import { ui } from "./tokens";
 import {
@@ -131,6 +133,7 @@ export class GpuStatsContent {
   private readonly battle: GpuBattlePage;
   private readonly tabs: Tab[] = [];
   private readonly tray: { dispose(): void };
+  private readonly typeTags: { dispose(): void }[] = [];
   private page = 0;
   private readonly onPage: () => void;
   /** Details, laid over the frame (absolute in it), never clipped by the scrolling groups. */
@@ -151,6 +154,8 @@ export class GpuStatsContent {
   private readonly shadows: BoxShadow[] = [];
   private readonly stage: UiStage;
   private readonly type: string;
+  /** Modified values and source amounts: the theme's deep step. */
+  private readonly figure: string;
   private readonly inverse = new Matrix4();
   private readonly point = new Vector3();
   private focusVisible = false;
@@ -167,6 +172,7 @@ export class GpuStatsContent {
     const element = def.types[0]!;
     const tone = typeColors[element];
     this.type = tone.type;
+    this.figure = themeColors(element).deep;
     this.surface = new StatsHeaderSurface(art.get(element), tone.soft, tone.type);
     this.header = new Container({
       minHeight: 56,
@@ -193,7 +199,11 @@ export class GpuStatsContent {
       }),
       1,
     );
-    for (const type of def.types) chips.add(typeTag(type));
+    for (const type of def.types) {
+      const tag = typeTag(type, 11);
+      this.typeTags.push(tag);
+      chips.add(tag.tag);
+    }
     chips.add(
       gameTag(`Lv ${state.level}`, lightTone),
       gameTag(abilities[abilityForSlot(def.abilities, state.abilitySlot)].name, lightTone),
@@ -205,7 +215,7 @@ export class GpuStatsContent {
     this.tray = strip;
     for (const [index, name] of PAGES.entries()) strip.tray.add(this.tab(index, name));
     this.header.add(stack(strip.tray, 1));
-    this.battle = new GpuBattlePage(state.build, stage, () => this.page === 0);
+    this.battle = new GpuBattlePage(state.build, stage, () => this.page === 0, this.figure);
     this.controls.push(...this.battle.controls);
     for (const [i, chip] of this.ruleChips.chips.entries()) {
       if (!state.rules.includes(chip.id)) continue;
@@ -244,7 +254,9 @@ export class GpuStatsContent {
       let index = 0;
       for (const key of group.keys) {
         const line = state.build.sheet[key];
-        if (statDefs[key].optional && line.value === 0 && line.sources.length === 0) continue;
+        // An optional stat shows once something moved it off its base.
+        if (statDefs[key].optional && line.sources.length === 0 && line.value === line.base)
+          continue;
         list.add(this.row(line, col, index++));
       }
       this.statsPage.add(box);
@@ -382,7 +394,9 @@ export class GpuStatsContent {
     const name = this.text(def.name, "name", tone);
     name.setProperties({ flexGrow: 1, flexShrink: 1, whiteSpace: "pre" });
     const value = new Container({ flexDirection: "row", alignItems: "flex-end", flexShrink: 0 });
-    value.add(this.text(formatStat(def.unit, shownValue(line)), "value", tone));
+    value.add(
+      this.text(formatStat(def.unit, shownValue(line)), "value", base ? MUTED : this.figure),
+    );
     if (def.suffix) {
       const suffix = this.text(def.suffix, "caption", MUTED);
       suffix.setProperties({ fontWeight: 700, marginLeft: 2, marginBottom: 1 });
@@ -497,7 +511,13 @@ export class GpuStatsContent {
     );
     const item = (kind: string, off: boolean, parts: (Container | Text)[]) => {
       const color = kind === "evolution" ? this.type : kindColors[kind as keyof typeof kindColors];
-      const li = new Container({ flexDirection: "row", alignItems: "center", gap: 4 });
+      // An item wraps whole: squeezed, its text would draw over the next one.
+      const li = new Container({
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        flexShrink: 0,
+      });
       li.add(
         new Container({
           width: 8,
@@ -512,19 +532,28 @@ export class GpuStatsContent {
       );
       sources.add(li);
     };
-    const words = (label: string, amount: string, off: boolean) => {
+    const words = (label: string, amount: string, off: boolean, figure = this.figure) => {
       const name = this.text(label, "body", off ? MUTED : INK);
-      const value = this.text(amount, "body", off ? MUTED : INK);
+      const value = this.text(amount, "body", off ? MUTED : figure);
       name.setProperties({ lineHeight: 1.5, whiteSpace: "pre" });
       value.setProperties({ fontWeight: 800, lineHeight: 1.5, whiteSpace: "pre" });
       return [name, value];
     };
-    if (line.base !== 0) item("base", false, words("基础", formatStat(def.unit, line.base), false));
+    if (line.base !== 0)
+      item("base", false, words("基础", formatStat(def.unit, line.base), false, INK));
     for (const source of bySource(line.sources)) {
       const off = !source.active;
       const parts: (Container | Text)[] = [];
       for (const key of [source.when, source.requires]) {
         if (!key) continue;
+        // A type condition (火属性) is the type's tag; the rest are plain badges.
+        if (key in typeNames) {
+          // Off, it mutes like the badges below.
+          const tag = typeTag(key as ElementType, 11, true, off ? { face: ui.mist, ink: INK } : {});
+          this.typeTags.push(tag);
+          parts.push(tag.tag);
+          continue;
+        }
         const condition = gameTag(conditionTags[key], {
           size: "badge",
           face: off ? ui.mist : INK,
@@ -609,7 +638,8 @@ export class GpuStatsContent {
     this.border = compact ? 2 : 3;
     const sizes = panelTextSizes(compact);
     for (const { node, role } of this.texts) node.setProperties({ fontSize: sizes[role] });
-    this.battle.resize(compact);
+    // Phone landscape (under 560 tall) keeps the strip to one line so the lists keep their room.
+    this.battle.resize(compact, compact || this.stage.viewport.height < 560);
     for (const tab of this.tabs) tab.face.fitTouch();
     this.header.setProperties({ minHeight: compact ? 48 : 56 });
     // Rows are touch targets: the viewport's minimum at every scale (44 host px).
@@ -700,6 +730,7 @@ export class GpuStatsContent {
     }
     for (const tab of this.tabs) tab.face.dispose();
     this.ruleChips.dispose();
+    for (const tag of this.typeTags) tag.dispose();
     this.tray.dispose();
     for (const shadow of this.shadows) shadow.dispose();
     this.surface.dispose();

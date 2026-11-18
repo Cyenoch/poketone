@@ -179,7 +179,7 @@ test("co-op cards leave the center and touch corners open, with persistent 44px 
       }
       for (const card of overlays.content.cards)
         assert.equal(
-          card.lines.map((line) => line.properties.value.text.replace(/\s/g, "")).join(""),
+          card.lines.map((line) => line.value.replace(/\s/g, "")).join(""),
           card.copy.lines.join("").replace(/\s/g, ""),
           "long effects remain complete in the scrollable card row",
         );

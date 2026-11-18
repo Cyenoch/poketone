@@ -1,6 +1,7 @@
 // A hit on a player. Nothing it imports reaches the skill registry, so the enemy skill modules can deal
 // damage without importing combat.ts (combat → partners → skills/index would close a load-order loop).
 
+import { creditHostileLoss } from "./ultimates/crisis";
 import { chance } from "./rng";
 import { ABILITY_PARAMS } from "./content/abilities";
 import type { ElementType } from "./content/elements";
@@ -85,7 +86,7 @@ export function damagePlayer(
   player: Player,
   raw: number,
   type: ElementType = "normal",
-  attacker?: Enemy,
+  attacker?: Enemy | "environment",
 ): boolean {
   if (!player.alive || player.ult.protection > 0 || player.invulnerable > 0 || player.dashTime > 0)
     return false;
@@ -99,13 +100,17 @@ export function damagePlayer(
     raw * weatherMultiplier(world, type) * armorFactor(stats.armor) * stats.damageTaken;
   const soaked = Math.min(player.shield, amount);
   player.shield -= soaked;
+  const hpBefore = player.hp;
   player.hp -= amount - soaked;
+  if (attacker !== "environment")
+    creditHostileLoss(player, world.tick, hpBefore - Math.max(0, player.hp), stats.maxHp);
   player.invulnerable = PLAYER_IFRAMES;
   player.hurt = 0.25;
   player.lastHurt = world.time;
   world.events.push({ t: "player-hit", player: player.id, amount });
   if (
     attacker &&
+    attacker !== "environment" &&
     attacker.hp > 0 &&
     currentAbility(player) === "cursed-body" &&
     chance(world.rng, ABILITY_PARAMS.cursedBody.chance)

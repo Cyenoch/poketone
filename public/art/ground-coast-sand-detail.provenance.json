@@ -1,0 +1,10 @@
+{
+  "asset": "ground-coast-sand-detail.png",
+  "generator": "Magpie Image, model ash/gpt-image-2.5-sunburst",
+  "createdAt": "2026-11-18",
+  "source": "assets/textures/source/ground-coast-sand.png (1254 px)",
+  "prompts": "docs/ART-PROMPTS.md (ground texture template; see 生成记录)",
+  "processing": "bun scripts/paint-ground-maps.mjs: derived from the albedo luminance at 256 px: RG tangent normal XY, B relief, A grain; linear data (NoColorSpace)",
+  "use": "inland beach sand and its grain on the coast",
+  "rights": "Generated for a noncommercial fan project."
+}

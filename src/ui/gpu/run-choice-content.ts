@@ -31,12 +31,14 @@ import {
   type CardKind,
   type ChoiceCardStyle,
 } from "./run-choice-surface";
+import { RichText } from "./rich-text";
 import { themeColors } from "./run-theme";
-import { rarityTag, slantTag, typeTag } from "./tag";
+import { rarityTag, slantTag } from "./tag";
+import { crestSrc, typeTag } from "./type-icon";
 import { SlantPlate } from "./slant-plate";
 import { UprightPlate } from "./run-overlays-surface";
 import { HARD_SHADOW, RADIUS_INNER, slantOf, ui } from "./tokens";
-import { balanceLines, breakLines, textWidth } from "./line-break";
+import { balanceLines, textWidth } from "./line-break";
 import { createMenuIcon } from "./icons";
 import { ROUTE_REWARD } from "../../run/sim/content/params/route";
 import { actionTerms } from "../../run/glossary";
@@ -140,7 +142,7 @@ function choiceCopy(choice: Choice, theme: ElementType, evolution: number): Copy
         chipless: true,
         title: ability.name,
         lines: abilityText(ability, evolution).split("；"),
-        icon: `/art/icons/crests/${theme}.webp`,
+        icon: crestSrc(theme),
       };
     }
     case "move": {
@@ -279,7 +281,8 @@ interface Card {
   head: Container;
   title: Text;
   tagRow: Container | null;
-  lines: Text[];
+  boosts: { dispose(): void } | null;
+  lines: RichText[];
   kind: Container;
   /** The kind chip's word; narrow dock cards keep only its glyph. */
   kindLabel: Component;
@@ -716,27 +719,22 @@ export class GpuChoiceContent {
       // CJK titles break between any two characters, as the browser breaks them.
       title.setProperties({ flexShrink: 1, wordBreak: "keep-all", whiteSpace: "pre" });
       head.add(icon, title);
-      let tagRow: Container | null = null;
+      let tagRow: Container | null = null,
+        boosts: { tag: Container; dispose(): void } | null = null;
       if (copy.tag) {
         const tag = rarityTag(copy.tag, toneColor(copy));
         tagRow = stack(new Container({ flexDirection: "row", flexShrink: 0, gap: 4 }), 1);
         tagRow.add(tag);
-        if (copy.boosts) tagRow.add(typeTag(copy.boosts));
+        if (copy.boosts) tagRow.add((boosts = typeTag(copy.boosts, 11)).tag);
       }
-      const lines = copy.lines.map((line) => {
-        const text = stack(this.text(line, 15, ui.ink, 700), 1);
-        text.setProperties({
-          width: "100%",
-          flexShrink: 0,
-          wordBreak: "keep-all",
-          whiteSpace: "pre",
-        });
-        return text;
-      });
+      const figure = themeColors(this.state.theme).deep;
+      const lines = copy.lines.map(
+        (line) => new RichText(line, { ink: ui.ink, figure, weight: 700 }),
+      );
       if (!copy.chipless) panel.add(kind);
       panel.add(key, head);
       if (tagRow) panel.add(tagRow);
-      for (const line of lines) panel.add(line);
+      for (const line of lines) panel.add(stack(line.panel, 1));
       this.cardsBox.add(panel);
       this.cards.push({
         choice,
@@ -748,6 +746,7 @@ export class GpuChoiceContent {
         head,
         title,
         tagRow,
+        boosts,
         lines,
         kind,
         kindLabel: label,
@@ -767,6 +766,10 @@ export class GpuChoiceContent {
     }
   }
 
+  private linesReady(): boolean {
+    return this.cards.every((card) => card.lines.every((line) => line.ready));
+  }
+
   private layoutCards(m: Metrics, width: number): void {
     const n = this.cards.length;
     const gap = 12;
@@ -774,7 +777,7 @@ export class GpuChoiceContent {
     this.cardsBox.setProperties({ gap });
     const font = this.cards[0]?.title.fontSignal.value;
     // Texts are broken by measured glyph widths (line-break.ts); until the atlas is in, retry.
-    if (!font) this.layoutKey = "";
+    if (!font || !this.linesReady()) this.layoutKey = "";
     const inner = cardWidth - 2 * (m.frame + (m.compact ? 12 : 16));
     for (const card of this.cards) {
       // Short landscape puts the icon beside the title, as the original does, when the title fits
@@ -844,13 +847,13 @@ export class GpuChoiceContent {
         positionTop: m.frame + Math.ceil((m.band - 21) / 2),
         paddingLeft: 0,
       });
-      card.lines.forEach((line, i) =>
-        line.setProperties({
-          text: font ? breakLines(card.copy.lines[i]!, inner, m.line, font) : card.copy.lines[i]!,
-          fontSize: m.line,
-          lineHeight: m.compact ? 1.35 : lineHeight(m.line, lineBox(m.line)),
-        }),
-      );
+      for (const line of card.lines)
+        line.layout(
+          inner,
+          m.line,
+          m.compact ? 1.35 : lineHeight(m.line, lineBox(m.line)),
+          "always",
+        );
     }
   }
 
@@ -1264,7 +1267,7 @@ export class GpuChoiceContent {
       detail = compactHeader ? 14 : 15;
     const inner = cardWidth - 2 * padX;
     const font = this.cards[0]?.title.fontSignal.value;
-    if (!font) this.layoutKey = "";
+    if (!font || !this.linesReady()) this.layoutKey = "";
     for (const card of this.cards) {
       card.surface.setMetrics(band, frame);
       card.panel.setProperties({
@@ -1309,15 +1312,8 @@ export class GpuChoiceContent {
         positionTop: frame + Math.ceil((band - 21) / 2),
         paddingLeft: 0,
       });
-      card.lines.forEach((line, index) =>
-        line.setProperties({
-          text: font
-            ? breakLines(card.copy.lines[index]!, inner, detail, font)
-            : card.copy.lines[index]!,
-          fontSize: detail,
-          lineHeight: lineHeight(detail, Math.round(detail * 1.3)),
-        }),
-      );
+      for (const line of card.lines)
+        line.layout(inner, detail, lineHeight(detail, Math.round(detail * 1.3)), "always");
     }
     this.stage.invalidate();
   }
@@ -1630,6 +1626,7 @@ export class GpuChoiceContent {
       this.stage.motion.cancel(card.veil);
       card.surface.dispose();
       card.plate?.dispose();
+      card.boosts?.dispose();
       this.keycaps.delete(card.key);
       this.disposeTree(card.panel);
     }

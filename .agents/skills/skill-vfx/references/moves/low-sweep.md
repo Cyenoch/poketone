@@ -7,7 +7,7 @@
 ## 设计
 
 - 意图 / 签名：低位腿扫、尘环、地面速度弧。
-- 模拟几何与时序：r 2.8，life .65 s，每 .3 s tick，跟随玩家。数值以 `src/run/sim/content/moves.ts` 与对应 archetype 为准，画面读取实例。
+- 模拟几何与时序：r 4，life .65 s，每 .3 s tick，跟随玩家。数值以 `src/run/sim/content/moves.ts` 与对应 archetype 为准，画面读取实例。
 - 阶段：低位起手 → 完整圆界和旋转扫弧 → 最后 150 ms 收束。
 - 保留与避让：高度 .15 u，14 dust/s；范围按 radius，慢速异常由已有状态反馈承担。
 - 分层：既有贴花 / ribbon / 精灵；龙光束另用既有 beam volume。没有新材质、纹理或绘制批次。

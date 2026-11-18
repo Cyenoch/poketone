@@ -47,6 +47,8 @@ export const Shape = {
   gem: 21,
   /** Inked hypnotic disc: two spiral arms of body over accent around a pale eye; turn it with spin. */
   spiral: 22,
+  /** Inked heart (the partner bond): a pale highlight on its upper left lobe. */
+  heart: 23,
 } as const;
 
 /** A particle or sprite recipe. Sizes are half-extents in world units, scaled by the size passed in. */
@@ -407,6 +409,19 @@ vec4 spiral(vec2 p) {
   return layer(c, smoothstep(1.0, 0.94, r), 0.0);
 }
 
+vec4 heart(vec2 p) {
+  // Two lobes over a point: the classic implicit heart, scaled to the sprite square.
+  vec2 q = vec2(abs(p.x) * 1.05, p.y * 1.1 + 0.18);
+  float k = q.x * q.x + q.y * q.y - 0.42;
+  float d = k * k * k - q.x * q.x * q.y * q.y * q.y * 0.9;
+  float aa = max(fwidth(d), 1e-4);
+  float a = smoothstep(aa, -aa, d);
+  float rim = smoothstep(-0.012, -0.0015, d);
+  float light = smoothstep(0.22, 0.05, length(p - vec2(-0.3, 0.28)));
+  vec3 c = mix(vBody.rgb, vAccent.rgb, light);
+  return layer(mix(c, INK, rim * 0.85), a, 0.0);
+}
+
 void main() {
   float shape = mod(vMeta.x, ${BLUE_SHAPE}.0);
   float age = vMeta.y;
@@ -436,7 +451,8 @@ void main() {
   else if (shape < 19.5) c = scale(p);
   else if (shape < 20.5) c = rock(p, seed);
   else if (shape < 21.5) c = gem(p, add);
-  else c = spiral(p);
+  else if (shape < 22.5) c = spiral(p);
+  else c = heart(p);
   c *= vBody.a;
   if (vMeta.x > ${BLUE_SHAPE - 0.5}) c.rgb = blueFlame(c.rgb);
   if (c.r + c.g + c.b + c.a < 0.004) discard;

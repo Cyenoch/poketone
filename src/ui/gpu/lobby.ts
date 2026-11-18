@@ -22,7 +22,7 @@ import {
   XIAQING_UNLOCK_KILLS,
   type TrainerId,
 } from "../../trainers";
-import { formatTime, typeNames } from "../../run/labels";
+import { formatTime } from "../../run/labels";
 import { difficultyLock, starterLock } from "../../run/locks";
 import { ruleAvailable, starterUnlocked, type Progress } from "../../run/progress";
 import { ruleIds, totalDanger, type RuleId } from "../../run/sim/content/rules";
@@ -52,9 +52,10 @@ import { segmentTray, SegmentFace } from "./segment-face";
 import { UiStage } from "./stage";
 import { slantTag } from "./tag";
 import { HARD_SHADOW, slantOf, ui } from "./tokens";
-import { GpuTooltip } from "./tooltip";
+import { GpuTooltip, type TipContent } from "./tooltip";
 import { TrainerKit } from "./trainer-kit";
 import type { UiInsets } from "./viewport";
+import { typeTag } from "./type-icon";
 
 export interface LobbyState {
   progress: Progress;
@@ -162,7 +163,7 @@ interface Control {
   panel: Container;
   /** Roster, trainer, link or difficulty position. */
   index: number;
-  tip(): string | null;
+  tip(): TipContent | null;
   locked(): boolean;
   activate(): void;
   paint(state: PaintState): void;
@@ -1139,15 +1140,7 @@ export class GpuLobby {
     else this.chain.add(this.bondMeter.panel);
     this.bondMeter.set(this.progress.bonds[shown] ?? 0);
     // The type tag (crest + name), then the best record on desktop.
-    const tag = slantTag(
-      typeNames[type],
-      { face: ui.ink, size: this.compact ? 12 : 14 },
-      new Image({
-        src: `/art/icons/crests/${type}.webp`,
-        width: this.compact ? 14 : 16,
-        height: this.compact ? 14 : 16,
-      }),
-    );
+    const tag = typeTag(type, this.compact ? 12 : 14);
     this.partnerParts.push(tag);
     this.meta.add(tag.tag);
     const record = this.progress.best[shown];
@@ -2096,7 +2089,7 @@ export class GpuLobby {
 
   private tipFor(index: number): {
     panel: Container | null;
-    text: string;
+    text: TipContent;
     locked: boolean;
     column: boolean;
   } {
@@ -2144,8 +2137,8 @@ export class GpuLobby {
     this.tooltip.show(
       tip.text ? tip.panel : null,
       tip.text,
-      tip.column ? "left" : "auto",
-      tip.column ? this.column : null,
+      tip.column ? "left" : tip.panel === this.trainerKit.panel ? "right" : "auto",
+      tip.column ? this.column : tip.panel === this.trainerKit.panel ? this.trainerBox : null,
       [this.prev.panel, this.next.panel],
     );
     this.tooltip.update();

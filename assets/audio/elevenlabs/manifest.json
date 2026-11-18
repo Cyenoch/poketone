@@ -1155,6 +1155,58 @@
       },
       "ship": "run-3"
     },
+    "music-run-F4": {
+      "kind": "loop",
+      "bpm": 128,
+      "startSec": 0,
+      "loopBars": 46,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 96,
+        "instrumental": true
+      },
+      "node": "fnqQAVD1If5MkWSdqpDd",
+      "prompt": "Instrumental bright adventure route theme for a monster-collecting video game, C major, 128 BPM, in the style of a cheerful JRPG overworld with a lively live band and strings, like hopping along a sunny hillside path where something might rustle in the grass at any moment. Curious, adventurous and optimistic with a thread of gentle suspense, lively but not intense, not a battle track. Start with just a bouncy syncopated bass guitar and light drums with snare taps and a tambourine for four bars, then bring in warm off-beat string chords and a soft horn pad, then at about 0:10 a clarinet and a muted trumpet together play a catchy, singable hook of four bars that starts on a high note, skips down in a playful zigzag and then climbs back up in a short syncopated run that lands on a bright held note, answered by violins. Around 0:28 a short, light bridge lifts to a hopeful chord change with a rising string line and a touch of gentle suspense, staying bright and full, then at 0:38 the hook returns with the full band and warm brass. At about 0:55 the violins take the hook while the clarinet adds a cheerful answering line over the same bouncy groove, then at 1:12 the hook returns once more on clarinet and muted trumpet with the full band, and it settles back to the opening bass and drums groove by the end so it can loop. Warm, polished, clean production, no distorted guitars, no taiko, no rock drums, no vocals, no marimba, no glockenspiel, no repetitive plucked ostinato.",
+      "takes": [
+        {
+          "file": "music-run-F4-1.mp3",
+          "generationId": "nRI9Ssrkl0rlEOCMMfuH"
+        }
+      ],
+      "pick": ["music-run-F4-1.mp3"],
+      "note": "Fourth in-run track, added against listening fatigue (2026-11-18): same F route band, mood and light bridge, but a clarinet + muted trumpet lead, a falling-zigzag hook, C major and 128 BPM so it is told apart from run-1..3. One take, as the user asked. Fades out from ~89 s; the 46-bar loop ends before it.",
+      "spend": {
+        "credits": 1439.68,
+        "date": "2026-11-18"
+      },
+      "ship": "run-4"
+    },
+    "music-menu-F2": {
+      "kind": "loop",
+      "bpm": 96,
+      "startSec": 0,
+      "loopBars": 27,
+      "model": "eleven_music_v2_5",
+      "params": {
+        "duration_seconds": 70,
+        "instrumental": true
+      },
+      "node": "pc2uQc8svM9nspUzVRJa",
+      "prompt": "Instrumental warm welcoming title screen theme for a monster-collecting video game, D major, 96 BPM, in the style of a cheerful JRPG with a live band and orchestra, like a cosy hometown morning before setting out. Warm, gentle and hopeful, calm but with a sense of a journey about to begin. Start with just soft piano chords and a gentle string pad for four bars, then at about 0:10 a warm clarinet plays a catchy, singable main melody that gently sways up and down by small steps and ends each phrase with a soft upward lift, joined by a light bouncy bass and soft brushed drums, with a French horn answering between phrases. Then at 0:30 the melody is taken by an oboe and violins with fuller warm strings and a lifted chord change, and it returns to the opening piano and pad by the end so it can loop. Polished, clean, warm production, no vocals, no marimba, no glockenspiel, no repetitive plucked ostinato.",
+      "takes": [
+        {
+          "file": "music-menu-F2-1.mp3",
+          "generationId": "pabypMjtk6yCHR8bIngP"
+        }
+      ],
+      "pick": ["music-menu-F2-1.mp3"],
+      "note": "Second lobby track, alternating with music-menu-F (2026-11-18, against listening fatigue): piano + string pad intro, clarinet then oboe lead with a stepwise swaying hook, D major 96 BPM. One take, as the user asked. Quiet intro to ~19 s, no fade-out.",
+      "spend": {
+        "credits": 1049.77,
+        "date": "2026-11-18"
+      },
+      "ship": "menu-2"
+    },
     "tell": {
       "kind": "sfx",
       "tier": "small",

@@ -7,7 +7,7 @@
 ## 设计
 
 - 意图 / 签名：尾扫水弧、鞭状弯曲、水滴。
-- 模拟几何与时序：长度 2.5，半角 1.2，life .22 s；追加 count 在 i×.12 s 交替前后。数值以 `src/run/sim/content/moves.ts` 与对应 archetype 为准，画面读取实例。
+- 模拟几何与时序：长度 4.4，半角 1.2，life .22 s；追加 count 在 i×.12 s 交替前后。数值以 `src/run/sim/content/moves.ts` 与对应 archetype 为准，画面读取实例。
 - 阶段：落地首帧起 360 ms 回声：扇形水面 + 两道水带 → 前 35% 粗水鞭横扫，外半段甩出泡沫 → 后段收束。
 - 保留与避让：沿实际 direction 扫；不覆盖另一半身后，升级 count 才出现反向扇形。
 - 分层：既有贴花 / ribbon / 精灵；水鞭在 strike 回声中绘制（sim active 仅 .22 s，live 太短看不到）。

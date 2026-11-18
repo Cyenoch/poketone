@@ -136,7 +136,12 @@ vec4 shade() {
 }
 `;
 
-/** Beams: 0 sun core, 1 sun halo, 2 water torrent, 3 water spray shell. */
+/**
+ * Beams: 0 sun core, 1 sun halo, 2 water torrent, 3 water spray shell, 4 fire jet. The jet is a flattened
+ * body as wide as the fan's tip, eroded by `erode` as it ends; only a wedge widening from the mouth (|x| < mix(0.14, 1, along)) burns,
+ * so it covers a cone's hitbox from above: a white-hot core along the axis and at the mouth, A at the
+ * body, B with a dark-red ink rim at the ragged edges, tongues racing out and breaking up at the tip.
+ */
 const BEAM = /* glsl */ `
 vec4 shade() {
   float f = fresnel();
@@ -144,6 +149,26 @@ vec4 shade() {
   float l = along * vLen;
   float ends = smoothstep(0.0, 0.012, along) * smoothstep(1.0, 0.93, along);
   float style = vP.x;
+  if (style > 3.5) {
+    float across = vObj.x / mix(0.14, 1.0, along);
+    vec3 o = vec3(across * 3.0, l * 0.9 - uTime * 12.0, vP.y * 7.0);
+    float v = noise3(o) * 0.7 + noise3(o * 2.3) * 0.3
+      + (1.0 - abs(across)) * 0.3 + smoothstep(0.3, 0.0, along) * 0.35 - 0.06
+      - smoothstep(0.75, 1.05, abs(across)) * 0.6 - smoothstep(0.7, 1.0, along) * 0.3 - vP.z * 0.7;
+    float body = smoothstep(0.44, 0.5, v);
+    float core = smoothstep(0.6, 0.66, v);
+    float hot = smoothstep(0.8, 0.86, v + (1.0 - along) * 0.12);
+    float ink = smoothstep(0.37, 0.43, v) * (1.0 - body);
+    // Faster, finer licks inside the body: darker red tongues and lighter flares so it isn't flat orange.
+    float lick = noise3(vec3(across * 5.0, l * 2.2 - uTime * 20.0, vP.y * 5.0 + uTime * 3.0));
+    float deep = smoothstep(0.58, 0.64, lick) * (1.0 - core);
+    float flare = smoothstep(0.62, 0.68, 1.0 - lick) * body * (1.0 - hot);
+    vec3 c = mix(mix(vB.rgb, vA.rgb, core), vec3(1.0, 0.97, 0.84), hot);
+    c = mix(c, vec3(0.86, 0.22, 0.05), deep * 0.75);
+    c = mix(c, vec3(1.0, 0.86, 0.42), flare * 0.6);
+    vec4 flame = over(layer(c, body * 0.92, core * 0.45), layer(vec3(0.5, 0.07, 0.03), ink * 0.85, 0.0));
+    return flame * smoothstep(0.0, 0.03, along);
+  }
   if (style < 0.5) {
     float pulse = 0.85 + 0.15 * sin(l * 1.3 - uTime * 30.0);
     return layer(mix(vA.rgb, vec3(1.0), 1.0 - f), ends * pulse * (1.0 - f * 0.5), 0.85);
@@ -264,8 +289,11 @@ export class Volume {
     this.count = 0;
   }
 
-  /** `style` picks the look inside the shader; `fade` scales the whole instance. */
-  add(matrix: Matrix4, a: Rgb, fade: number, b: Rgb, style: number, seed = 0): void {
+  /**
+   * `style` picks the look inside the shader; `fade` scales the whole instance; `erode` (0 → 1) eats a
+   * style's shape away where it supports it (the fire jet).
+   */
+  add(matrix: Matrix4, a: Rgb, fade: number, b: Rgb, style: number, seed = 0, erode = 0): void {
     if (this.count >= this.mesh.instanceMatrix.count) return;
     const i = this.count++;
     this.mesh.setMatrixAt(i, matrix);
@@ -282,6 +310,7 @@ export class Volume {
     d[o + 7] = flame.blue ? 1 : 0;
     d[o + 8] = style;
     d[o + 9] = seed;
+    d[o + 10] = erode;
   }
 
   end(): void {

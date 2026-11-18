@@ -49,6 +49,8 @@ export type RunEvent =
       move: MoveId | null;
       /** The player whose move, ultimate or partner landed it. */
       by: PlayerId;
+      /** The struck enemy's id (view only: numbers on one enemy merge). */
+      enemy?: number;
       /** Collision feedback has already played; this event supplies the confirmed number. */
       confirmedContact?: boolean;
     }
@@ -59,7 +61,8 @@ export type RunEvent =
   | { t: "down"; player: PlayerId }
   /** A hit on `player` was evaded (evasion stat): no damage. */
   | { t: "evade"; player: PlayerId }
-  | { t: "death"; x: number; z: number; species: EnemyId; elite: boolean }
+  /** `id`: the defeated enemy, when there was one (presentation only: the view replays its last pose). */
+  | { t: "death"; x: number; z: number; species: EnemyId; elite: boolean; id?: number }
   | { t: "reaction"; x: number; z: number; reaction: ReactionId }
   | {
       t: "banner";

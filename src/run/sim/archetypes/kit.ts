@@ -80,7 +80,7 @@ export interface Zone {
   /** Enemy search radius around the centre; the larger of radius and length when absent. */
   reach?(a: Area): number;
   /** Every tick, before the delay runs out (a beam clips to cover). */
-  track?(world: World, a: Area, ground: number): void;
+  track?(world: World, a: Area, ground: number, owner: Player): void;
   /** Every tick after the delay, before the hit (a vortex pulls). */
   hold?(ctx: Ctx, a: Area, dt: number): void;
   /** After every area has ticked, once its life ran out (a vortex collapses into a burst). */

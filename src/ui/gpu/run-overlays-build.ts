@@ -9,11 +9,12 @@ import { OutlineRing } from "./box-shadow";
 import { CURRENCY_ICON } from "./currency";
 import { cubicBezier } from "./focus-mark";
 import { stack } from "./layer";
-import { breakLines } from "./line-break";
+import { RichText } from "./rich-text";
+import { typeTag } from "./type-icon";
 import type { RunOverlayControl } from "./run-overlays-control";
 import { typeColors } from "./run-theme";
 import type { UiStage } from "./stage";
-import { gameTag, typeTag } from "./tag";
+import { gameTag } from "./tag";
 import { ui } from "./tokens";
 
 /** The redesign's ink scale under the build panel's names; YELLOW is the lit row's wash. */
@@ -48,9 +49,10 @@ interface Row {
 }
 
 /**
- * 战况: the run's figures in a row of tiles, then the moves by damage dealt (share bar in the move's
- * type colour, share, damage per second, cooldown) beside the items with their effect at the level
- * held. Rows are focusable so a pad or keyboard can scroll the page; they do nothing.
+ * 战况: the run's figures on one strip, then the moves by damage dealt (type crest, share bar in the
+ * move's type colour, share, damage per second, cooldown) beside the items with their effect at the
+ * level held. Figures in the facts and effects take `figure` (the theme's deep step). Rows are
+ * focusable so a pad or keyboard can scroll the page; they do nothing.
  */
 export class GpuBattlePage {
   readonly root = new Container({
@@ -62,27 +64,35 @@ export class GpuBattlePage {
   readonly controls: RunOverlayControl[] = [];
   private readonly texts: { node: Text; role: TextRole }[] = [];
   private readonly rows: Row[] = [];
-  private readonly tiles: Container[] = [];
+  private readonly figures: Container;
+  private readonly cells: Container[] = [];
   private readonly icons: { node: Container; size: [number, number] }[] = [];
+  private readonly typeTags: { dispose(): void }[] = [];
   private readonly columns: Container;
-  /** Item effects, rebroken to their column's width once it is known. */
-  private readonly wrapped: { node: Text; text: string; box: Container; width: number }[] = [];
+  /** Move facts (one line) and item effects (broken to their column's width once it is known). */
+  private readonly rich: { text: RichText; role: TextRole; box: Container | null }[] = [];
   private readonly stage: UiStage;
   private focusVisible = false;
   private compact = false;
 
-  constructor(build: PlayerSheet, stage: UiStage, enabled: () => boolean) {
+  constructor(build: PlayerSheet, stage: UiStage, enabled: () => boolean, figure: string) {
     this.stage = stage;
     const total = build.moves.reduce((sum, move) => sum + move.damage, 0);
     const perSecond = (damage: number) => (build.time > 0 ? damage / build.time : 0);
 
-    const figures = new Container({ flexDirection: "row", gap: 8, flexShrink: 0 });
-    figures.add(
-      this.tile("用时", formatTime(build.time)),
-      this.tile("击败", String(build.kills)),
-      this.tile("招式伤害", bigNumber(total)),
-      this.tile("每秒伤害", bigNumber(perSecond(total))),
-      this.tile("星星沙子", String(build.stardust), CURRENCY_ICON),
+    this.figures = new Container({
+      flexDirection: "row",
+      alignItems: "center",
+      flexShrink: 0,
+      borderRadius: 8,
+      backgroundColor: YELLOW,
+    });
+    this.figures.add(
+      this.cell("用时", formatTime(build.time)),
+      this.cell("击败", String(build.kills)),
+      this.cell("招式伤害", bigNumber(total)),
+      this.cell("每秒伤害", bigNumber(perSecond(total))),
+      this.cell("星星沙子", String(build.stardust), CURRENCY_ICON),
     );
 
     this.columns = new Container({ flexDirection: "row", gap: 16, flexShrink: 0 });
@@ -96,7 +106,9 @@ export class GpuBattlePage {
       name.setProperties({ flexShrink: 1, whiteSpace: "pre" });
       const damage = this.text(bigNumber(move.damage), "value", INK);
       damage.setProperties({ marginLeft: "auto" });
-      head.add(name, typeTag(def.type), levelTag(move.level), damage);
+      const mark = typeTag(def.type, 11, false);
+      this.typeTags.push(mark);
+      head.add(name, mark.tag, levelTag(move.level), damage);
       const bar = new Container({
         width: "100%",
         height: 6,
@@ -112,15 +124,14 @@ export class GpuBattlePage {
           backgroundColor: typeColors[def.type].type,
         }),
       );
-      const facts = this.text(
-        `${decimal(share * 100)}% · 每秒 ${bigNumber(perSecond(move.damage))} · 冷却 ${move.cd.toFixed(1)}秒`,
-        "caption",
-        MUTED,
+      const facts = new RichText(
+        `${decimal(share * 100)}% · 每秒 ${bigNumber(perSecond(move.damage))} · 冷却 ${move.cd.toFixed(1)} 秒`,
+        { ink: MUTED, figure, weight: 700 },
       );
-      facts.setProperties({ whiteSpace: "pre" });
+      this.rich.push({ text: facts, role: "caption", box: null });
       // The bar has its own full-width line, so every row's track is the same length.
       const info = new Container({ flexDirection: "column", gap: 4, flexGrow: 1, minWidth: 0 });
-      info.add(head, bar, facts);
+      info.add(head, bar, facts.panel);
       panel.add(stack(this.icon(moveIcon(move.id), [40, 32]), 1), stack(info, 1));
     }
 
@@ -132,12 +143,10 @@ export class GpuBattlePage {
       const name = this.text(def.name, "name", INK);
       name.setProperties({ flexShrink: 1, whiteSpace: "pre" });
       head.add(name, levelTag(held.level));
-      const text = itemEffect(held.id, held.level);
-      const effect = this.text(text, "body", INK);
-      effect.setProperties({ fontWeight: 600, lineHeight: 1.4, whiteSpace: "pre" });
+      const effect = new RichText(itemEffect(held.id, held.level), { ink: INK, figure });
       const info = new Container({ flexDirection: "column", gap: 2, flexGrow: 1, minWidth: 0 });
-      info.add(head, effect);
-      this.wrapped.push({ node: effect, text, box: info, width: 0 });
+      info.add(head, effect.panel);
+      this.rich.push({ text: effect, role: "body", box: info });
       panel.add(stack(this.icon(itemIcon(held.id), [32, 28]), 1), stack(info, 1));
     }
     if (build.items.length === 0) {
@@ -145,7 +154,7 @@ export class GpuBattlePage {
       none.setProperties({ paddingX: 8, paddingY: 12 });
       itemList.list.add(none);
     }
-    this.root.add(figures, this.columns);
+    this.root.add(this.figures, this.columns);
   }
 
   private text(text: string, role: TextRole, color: string): Text {
@@ -179,9 +188,10 @@ export class GpuBattlePage {
     return node;
   }
 
-  /** A figure: the number large, its name small under it (the stardust one carries the coin). */
-  private tile(label: string, value: string, icon?: string): Container {
-    const tile = new Container({
+  /** A figure on the strip: the number large, its name small under it (stardust carries the coin);
+   *  a hairline parts it from the one before. */
+  private cell(label: string, value: string, icon?: string): Container {
+    const cell = new Container({
       flexGrow: 1,
       flexBasis: 0,
       minWidth: 0,
@@ -189,18 +199,16 @@ export class GpuBattlePage {
       alignItems: "flex-start",
       gap: 2,
       paddingY: 8,
-      paddingX: 12,
-      borderRadius: 8,
-      backgroundColor: "#ffffff",
-      borderWidth: 1,
+      paddingX: 14,
+      borderLeftWidth: this.cells.length > 0 ? 1 : 0,
       borderColor: withOpacity(LINE, 0.7),
     });
     const line = new Container({ flexDirection: "row", alignItems: "center", gap: 4 });
-    if (icon) line.add(new Image({ src: icon, width: 24, height: 24, marginLeft: -4 }));
+    if (icon) line.add(new Image({ src: icon, width: 22, height: 22, marginLeft: -3 }));
     line.add(this.text(value, "figure", NAVY_DEEP));
-    tile.add(line, this.text(label, "caption", MUTED));
-    this.tiles.push(tile);
-    return tile;
+    cell.add(line, this.text(label, "caption", MUTED));
+    this.cells.push(cell);
+    return cell;
   }
 
   private section(name: string, grow: number): { list: Container; count: number } {
@@ -293,7 +301,8 @@ export class GpuBattlePage {
     this.paint();
   }
 
-  resize(compact: boolean): void {
+  /** `inline`: the figure strip on one line (name beside number), for short screens. */
+  resize(compact: boolean, inline = compact): void {
     this.compact = compact;
     const sizes = panelTextSizes(compact);
     for (const { node, role } of this.texts) node.setProperties({ fontSize: sizes[role] });
@@ -301,27 +310,33 @@ export class GpuBattlePage {
       const side = size[compact ? 1 : 0];
       node.setProperties({ width: side, height: side });
     }
-    for (const tile of this.tiles)
-      tile.setProperties({ paddingY: compact ? 4 : 8, paddingX: compact ? 8 : 12 });
+    for (const cell of this.cells)
+      cell.setProperties({
+        flexDirection: inline ? "row" : "column",
+        alignItems: inline ? "center" : "flex-start",
+        gap: inline ? 6 : 2,
+        paddingY: inline ? 6 : 8,
+        paddingX: inline ? 10 : 14,
+      });
     this.root.setProperties({ gap: compact ? 8 : 12 });
     this.columns.setProperties({ gap: compact ? 12 : 16 });
     for (const row of this.rows)
       row.panel.setProperties({ minHeight: this.stage.viewport.minTarget });
-    for (const entry of this.wrapped) entry.width = 0;
   }
 
-  /** Breaks each item effect to its column once the column's width is known or changes. */
+  /** Lays out the facts, and breaks each item effect to its column once its width is known. */
   afterLayout(): void {
-    const size = panelTextSizes(this.compact).body;
-    for (const entry of this.wrapped) {
-      const font = entry.node.fontSignal.value;
-      if (!font) continue;
-      const width = Math.floor(entry.box.size.value?.[0] ?? 0);
-      if (width <= 0 || width === entry.width) continue;
-      entry.width = width;
-      entry.node.setProperties({ text: breakLines(entry.text, width, size, font) });
-      this.stage.invalidate();
+    const sizes = panelTextSizes(this.compact);
+    let changed = false;
+    for (const { text, role, box } of this.rich) {
+      const width = box ? Math.floor(box.size.value?.[0] ?? 0) : Infinity;
+      if (width <= 0) continue;
+      changed =
+        (role === "body"
+          ? text.layout(width, sizes.body, 1.4, "always")
+          : text.layout(width, sizes[role], 1.2)) || changed;
     }
+    if (changed) this.stage.invalidate();
   }
 
   dispose(): void {
@@ -329,6 +344,7 @@ export class GpuBattlePage {
       this.stage.motion.cancel(row.lit);
       row.ring.dispose();
     }
+    for (const tag of this.typeTags) tag.dispose();
     const parts: { dispose(): void }[] = [];
     this.root.traverse((node) => {
       if (node instanceof Component) parts.push(node);
@@ -338,5 +354,11 @@ export class GpuBattlePage {
 }
 
 function levelTag(level: number): Container {
-  return gameTag(`Lv ${level}`, { size: "badge", face: NAVY_DEEP, ink: "#ffffff" });
+  // A light fact badge (as in the panel header), so the dark type chip beside it leads.
+  return gameTag(`Lv ${level}`, {
+    size: "badge",
+    face: "#ffffff",
+    ink: NAVY_DEEP,
+    ring: { color: NAVY_DEEP, width: 1.5 },
+  });
 }

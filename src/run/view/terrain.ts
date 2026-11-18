@@ -22,6 +22,7 @@ import { groundGlsl, sandGlsl, type GroundUniforms } from "./environment/ground"
 import { LAVA_BANK, LAVA_FRAGMENT, LAVA_GLSL } from "./environment/lava";
 import { terrainGeometry } from "./environment/terrainGeometry";
 import { NOISE_GLSL } from "./environment/noise";
+import { BACKDROP_REACH, backdropHeight, type BackdropLook } from "./environment/backdrop";
 import { SEA_FRAGMENT, SEA_LIGHT, SEA_OUTGOING, seaGlsl } from "./environment/sea";
 import { WIND_GLSL, type WindUniforms } from "./environment/wind";
 import { inject, patchShader } from "./patchShader";
@@ -99,12 +100,16 @@ export function conformToTerrain(material: Material, uniforms: TerrainUniforms, 
   });
 }
 
-const BAYER = "float[16](0.,8.,2.,10.,12.,4.,14.,6.,3.,11.,1.,9.,15.,7.,13.,5.)";
-
+/**
+ * Water and lava depth (metres, negative above the surface): the sim's grid inside the terrain square,
+ * the backdrop's ground past it out to `BACKDROP_REACH`, on the terrain's sample spacing.
+ */
 export const SURFACE_GLSL = /* glsl */ `
 uniform sampler2D uSurfaceDepth;
 vec2 surfaceDepth(vec2 p) {
-  return texture2D(uSurfaceDepth, terrainUv(p)).rg;
+  const float reach = ${BACKDROP_REACH.toFixed(1)};
+  float samples = 2.0 * reach * uTerrainRect.y + 1.0;
+  return texture2D(uSurfaceDepth, ((p + reach) * uTerrainRect.y + 0.5) / samples).rg;
 }
 `;
 
@@ -120,11 +125,12 @@ export function ditherFade(material: Material): void {
       "#include <begin_vertex>": "#include <begin_vertex>\nvFade = aFade;",
     });
     shader.fragmentShader = inject(shader.fragmentShader, key, {
-      "#include <common>": `#include <common>\nvarying float vFade;\nconst float bayer4[16] = ${BAYER};`,
+      "#include <common>": "#include <common>\nvarying float vFade;",
       "void main() {": /* glsl */ `void main() {
         if (vFade < 0.999) {
-          ivec2 cell = ivec2(mod(gl_FragCoord.xy, 4.0));
-          if ((bayer4[cell.x + cell.y * 4] + 0.5) / 16.0 > vFade) discard;
+          // Interleaved gradient noise: a fine, blue-noise-like screen door without the 4x4 Bayer grid.
+          float threshold = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+          if (threshold > vFade) discard;
         }`,
     });
   });
@@ -340,6 +346,37 @@ const terrainNormalGlsl = (look: StageTheme["ground"]) => /* glsl */ `
 `;
 
 /**
+ * The sim's water and lava depths, padded out to `BACKDROP_REACH`. Past the terrain the water depth is
+ * taken under the backdrop's ground, the same height the skirt draws, so the sea plane, its shoreline
+ * and the beach shading agree with the sea bed everywhere; nothing past the terrain holds lava.
+ */
+function surfaceDepths(terrain: Terrain, look: BackdropLook | undefined, seed: number) {
+  const { samples: inner, resolution, surface } = terrain;
+  const pad = Math.round((BACKDROP_REACH - TERRAIN_HALF) * resolution);
+  const samples = inner + pad * 2;
+  const sea = surface?.liquids.find((liquid) => liquid.kind === "water");
+  const depths = new Uint16Array(samples * samples * 2);
+  const dry = DataUtils.toHalfFloat(-1);
+  for (let j = 0; j < samples; j++)
+    for (let i = 0; i < samples; i++) {
+      const ti = i - pad;
+      const tj = j - pad;
+      const k = (j * samples + i) * 2;
+      if (ti >= 0 && tj >= 0 && ti < inner && tj < inner) {
+        depths[k] = DataUtils.toHalfFloat(surface?.water.values[tj * inner + ti] ?? -1);
+        depths[k + 1] = DataUtils.toHalfFloat(surface?.lava.values[tj * inner + ti] ?? -1);
+        continue;
+      }
+      const x = -BACKDROP_REACH + i / resolution;
+      const z = -BACKDROP_REACH + j / resolution;
+      const ground = look ? backdropHeight(terrain, look, seed, x, z) : undefined;
+      depths[k] = sea && ground !== undefined ? DataUtils.toHalfFloat(sea.level - ground) : dry;
+      depths[k + 1] = dry;
+    }
+  return { depths, samples };
+}
+
+/**
  * Stylised terraces from the heightmap and the baked ground layers: grass and meadow wherever ground
  * walkers can go, earth banks exactly where they cannot, occlusion in hollows and at bank feet, and an
  * ink line where an edge falls away from the camera. Height reads through light, shadow, line and
@@ -352,21 +389,12 @@ export function createTerrainMesh(
   wind: WindUniforms,
   theme: StageTheme,
   scenery: RunAssets["scenery"],
+  seed: number,
 ): TerrainMesh {
   const size = TERRAIN_HALF * 2;
   const geometry = terrainGeometry(terrain);
-  const depths = new Uint16Array(terrain.heights.length * 2);
-  for (let i = 0; i < terrain.heights.length; i++) {
-    depths[i * 2] = DataUtils.toHalfFloat(terrain.surface?.water.values[i] ?? -1);
-    depths[i * 2 + 1] = DataUtils.toHalfFloat(terrain.surface?.lava.values[i] ?? -1);
-  }
-  const surfaceTexture = new DataTexture(
-    depths,
-    terrain.samples,
-    terrain.samples,
-    RGFormat,
-    HalfFloatType,
-  );
+  const { depths, samples } = surfaceDepths(terrain, theme.backdrop, seed);
+  const surfaceTexture = new DataTexture(depths, samples, samples, RGFormat, HalfFloatType);
   surfaceTexture.magFilter = surfaceTexture.minFilter = LinearFilter;
   surfaceTexture.wrapS = surfaceTexture.wrapT = ClampToEdgeWrapping;
   surfaceTexture.needsUpdate = true;
@@ -423,8 +451,10 @@ ${terrainNormalGlsl(theme.ground)}`,
       : undefined;
   if (walls) mesh.add(walls.group);
   const planes = (terrain.surface?.liquids ?? []).map((liquid) => {
-    const planeGeometry = new PlaneGeometry(size, size).rotateX(-Math.PI / 2);
     const lava = liquid.kind === "lava";
+    // The sea runs on over the backdrop's shelf, out into the fog.
+    const span = lava ? size : BACKDROP_REACH * 2;
+    const planeGeometry = new PlaneGeometry(span, span).rotateX(-Math.PI / 2);
     // Water is see-through in the shallows: drawn after the opaque scene without writing depth, and
     // before the decals and telegraphs (render order), which stay on top of it.
     const planeMaterial = lava

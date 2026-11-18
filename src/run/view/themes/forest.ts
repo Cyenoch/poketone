@@ -1,15 +1,54 @@
+import { defaultGrade } from "../grade";
 import type { StageTheme } from "./types";
-import { forestGround, forestMotes, forestMushroom, forestStone } from "../environment/forest";
+import {
+  forestGround,
+  forestMotes,
+  forestMushroom,
+  forestRockMoss,
+  forestStone,
+} from "../environment/forest";
 import { zoneDef } from "../../sim/currentZone";
 export const forest: StageTheme = {
   id: "forest",
+  grade: defaultGrade,
   patchTerrain: forestGround,
   decorate({ scene, world, wind }) {
     const motes = forestMotes(world, wind);
     scene.add(motes.mesh);
     return motes;
   },
+  drift: [
+    {
+      shape: "leaf",
+      count: 70,
+      color: [0.42, 0.55, 0.18],
+      alpha: 1,
+      size: [0.198, 0.308],
+      height: [0.4, 4],
+      rise: -1.2,
+      life: 7,
+      speed: 1.1,
+      carry: 4,
+      flutter: 1.8,
+      clear: 0.15,
+    },
+    {
+      shape: "leaf",
+      count: 30,
+      color: [0.95, 0.78, 0.82],
+      alpha: 1,
+      size: [0.132, 0.176],
+      height: [0.3, 3],
+      rise: -0.8,
+      life: 6,
+      speed: 1.2,
+      carry: 4,
+      flutter: 2.2,
+      clear: 0.15,
+    },
+  ],
   loadingArt: "/art/loading-forest.webp",
+  edge: "#86e4ff",
   haze: {
     color: "#93a69c",
     near: 24,
@@ -192,6 +231,7 @@ export const forest: StageTheme = {
     },
     rock: {
       models: [1, 2, 3].map((i) => `/models/props/forest-rock-${i}.glb`),
+      patchMaterial: forestRockMoss,
       sway: null,
       flat: false,
       tint: 1,
@@ -206,6 +246,25 @@ export const forest: StageTheme = {
       drawScale: 1,
       castShadow: true,
     },
+  },
+  backdrop: {
+    rise: 0.16,
+    cap: 4,
+    hills: 3,
+    hillSize: 16,
+    layers: [
+      { kind: "bush", band: [0, 5], spacing: 2.4, cover: 0.5, scale: [1, 1.6] },
+      { kind: "tree", band: [0.5, 8], spacing: 3.4, cover: 0.55, scale: [1, 1.4] },
+      { kind: "pine", band: [0.5, 10], spacing: 2.4, cover: 0.85, scale: [1.1, 1.7] },
+      {
+        kind: "pine",
+        band: [10, 30],
+        spacing: 3,
+        cover: 0.8,
+        scale: [1.5, 2.3],
+        tint: [0.82, 0.9, 0.92],
+      },
+    ],
   },
   minimap: {
     land: [

@@ -1,11 +1,18 @@
 {
-  "generator": "assets/props/build-map-props.py",
-  "seed": 1654093074,
-  "source": "Original scripted geometry; no external assets",
-  "triangles": 140,
-  "materials": 1,
-  "vertexColors": true,
-  "units": "metres",
-  "sha256": "d61e08b2686c8996fb289f2dad68cde24f8177d6f666a799d8ad8ff6d0ccf358",
-  "tripoCredits": 0
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "props/tower-landmark/generation/tripo-out/tripo-out/poketone-tower-landmark-mv-46ffcdf2/model.glb",
+  "tripoSourceSha256": "f950a02ec4e65651bcfba6a0133f855ae60fff88b88eeb9c5ba97b3a2b0d1454",
+  "tripoTask": "46ffcdf2-8341-473f-9b04-0e6a541a06d0",
+  "tripoType": "multiview_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 1922,
+  "dimensions": [2.4238, 1.7571, 2.1],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "158f2d353dcb924016c51bb76858a13ebd070af6205ffc87bb03c6c3980614aa"
 }

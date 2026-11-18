@@ -411,12 +411,12 @@ const STARTERS = Object.keys(starters);
 const SEEDS = [61, 11];
 const BUILD_SEEDS = {
   "abra/1": 5,
-  "abra/2": 5,
+  "abra/2": 11,
   "gastly/1": 11,
-  "gastly/2": 5,
+  "gastly/2": 7,
   "pikachu/1": 5,
   "dratini/0": 5,
-  "squirtle/0": 61,
+  "squirtle/0": 5,
   "squirtle/2": 7,
 };
 
@@ -458,10 +458,10 @@ const CASES = [
         ...(full ? { ticks: SOLO_ROUTE.length * 2 * STAGE_TICKS } : {}),
         ...([
           "solo/squirtle/d2/s7",
-          "solo/squirtle/d0/s61",
+          "solo/squirtle/d0/s5",
           "solo/pikachu/d0/s61",
           "solo/abra/d1/s5",
-          "solo/abra/d2/s5",
+          "solo/abra/d2/s11",
         ].includes(name)
           ? { ticks: SOLO_ROUTE.length * 2 * STAGE_TICKS }
           : {}),

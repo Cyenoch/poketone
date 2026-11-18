@@ -253,7 +253,7 @@ function formEntry(line: StarterId, form: FormId): CodexEntry {
     tags: [def.role],
     art: { kind: "portrait", form },
     model: { kind: "form", id: form },
-    summary: `${self.types.map((type) => typeNames[type]).join(" / ")} · ${def.role}`,
+    summary: `${typeWords(self.types)} · ${def.role}`,
     blocks: [
       {
         kind: "stats",
@@ -279,7 +279,7 @@ function formEntry(line: StarterId, form: FormId): CodexEntry {
       { kind: "stats", title: "特性", rows: abilityRows(line, form) },
       {
         kind: "stats",
-        title: `终极技 · ${typeNames[ultimate.type]}`,
+        title: `终极技 · ${typeWords([ultimate.type])}`,
         rows: ultimate.names.map((name, stage) => ({ label: stageNote(line, stage), value: name })),
       },
       {
@@ -418,7 +418,7 @@ function moveEntry(id: MoveId): CodexEntry {
     types: [move.type],
     tags: [...new Set([archetypeNames[move.archetype], ...(move.fusion ? ["融合"] : [])])],
     art: { kind: "move", move: id },
-    summary: `${typeNames[move.type]} · ${archetypeNames[move.archetype]} · 伤害 ${number(move.dmg)} / ${seconds(move.cd)}`,
+    summary: `${typeWords([move.type])} · ${archetypeNames[move.archetype]} · 伤害 ${number(move.dmg)} / ${seconds(move.cd)}`,
     blocks,
   };
 }
@@ -829,7 +829,7 @@ function enemyEntry(id: EnemyId): CodexEntry {
     tags: guardian ? ["守卫"] : skill ? [skill.name] : [],
     art: { kind: "model" },
     model: { kind: "enemy", id },
-    summary: `${enemy.types.map((type) => typeNames[type]).join(" / ")}${skill ? ` · ${skill.name}` : ""}`,
+    summary: `${typeWords(enemy.types)}${skill ? ` · ${skill.name}` : ""}`,
     blocks: [
       {
         kind: "stats",
@@ -969,7 +969,7 @@ export function researchedEntry(dex: Progress["dex"], entry: CodexEntry, id: Ene
     return {
       ...entry,
       tags: entry.tags.filter((tag) => tag === "守卫"),
-      summary: entry.types.map((type) => typeNames[type]).join(" / "),
+      summary: typeWords(entry.types),
       blocks: [maps, tasks],
     };
   const [numbers, ...rest] = entry.blocks;
@@ -1114,6 +1114,11 @@ function reactionLines(id: ReactionId): string[] {
   return out;
 }
 
+/** Types named as types (「火属性 / 飞行属性」): text shown by RichText leads each with its crest. */
+function typeWords(types: readonly ElementType[]): string {
+  return types.map((type) => `${typeNames[type]}属性`).join(" / ");
+}
+
 function reactionEntry(id: ReactionId): CodexEntry {
   const reaction = reactions[id];
   const trigger = `${typeNames[reaction.trigger]}属性命中`;
@@ -1121,14 +1126,14 @@ function reactionEntry(id: ReactionId): CodexEntry {
     key: reactionKey(id),
     name: reactionNames[id],
     types: [reaction.trigger],
-    tags: [`${statuses[reaction.primed].name} + ${typeNames[reaction.trigger]}`],
+    tags: [statuses[reaction.primed].name],
     art: { kind: "mark" },
     summary: `${statuses[reaction.primed].name}的敌人被${trigger}`,
     blocks: [
       {
         kind: "refs",
         title: "触发",
-        refs: [{ key: statusKey(reaction.primed), note: `的敌人被${trigger}` }],
+        refs: [{ key: statusKey(reaction.primed), note: "的敌人被命中" }],
       },
       { kind: "lines", title: "效果", lines: reactionLines(id) },
       {

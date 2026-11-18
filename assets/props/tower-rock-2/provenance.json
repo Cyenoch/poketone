@@ -1,11 +1,19 @@
 {
-  "generator": "assets/props/build-map-props.py",
-  "seed": 998977334,
-  "source": "Original scripted geometry; no external assets",
-  "triangles": 160,
-  "materials": 1,
-  "vertexColors": true,
-  "units": "metres",
-  "sha256": "81f09964c5b95140a8493a53412d68d2edbb231c27d9fa50a62bd081ebbc2c80",
-  "tripoCredits": 0
+  "set": "tower-rocks",
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "props/tower-rocks/generation/tripo-out/tripo-out/poketone-tower-rocks-9a291936/model.glb",
+  "tripoSourceSha256": "945222f154a7a013082f7ae383dab80ea9a76c237ba303047caec20f743a9427",
+  "tripoTask": "9a291936-26bb-49f2-a359-a51cdc6c03f1",
+  "tripoType": "image_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 660,
+  "dimensions": [0.2818, 0.2779, 0.3405],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "dad6a634ca6ac53bb916c513c5c0841e196b979b5e3b7cdea27318c101bf80f9"
 }

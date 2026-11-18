@@ -1,11 +1,18 @@
 {
-  "generator": "assets/props/build-map-props.py",
-  "seed": 3596355875,
-  "source": "Original scripted geometry; no external assets",
-  "triangles": 92,
-  "materials": 1,
-  "vertexColors": true,
-  "units": "metres",
-  "sha256": "0a4b80b14722643b403f93100c17589f84dc6fee172534ca50b766684dbe1d91",
-  "tripoCredits": 0
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "props/glacier-landmark/generation/tripo-out/tripo-out/poketone-glacier-landmark-mv-b59679d8/model.glb",
+  "tripoSourceSha256": "21ec782ad17e9504771dda26244075421b97180c986e936ec4a784d12f5d3914",
+  "tripoTask": "b59679d8-9712-433f-a092-bc67399daffb",
+  "tripoType": "multiview_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 1558,
+  "dimensions": [2.6323, 3.5959, 2.8],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "650f2c54e95e12559bfceef566fff3053b638260470fa39111b72a4c8cec3feb"
 }

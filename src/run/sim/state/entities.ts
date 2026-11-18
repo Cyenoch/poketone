@@ -1,3 +1,4 @@
+import type { CrisisCharge } from "../ultimates/crisis";
 import type { AssistItem, TrainerId } from "../content/trainers";
 import type { AreaKind } from "../archetypes/index";
 import type { AbilityId } from "../content/abilities";
@@ -214,6 +215,8 @@ export interface Player {
   /** Permanent for this run; each accepted Gengar trade multiplies the remaining max HP. */
   tradeHp: number;
   ult: UltState;
+  /** Host-owned even for a remote caster. */
+  crisis: CrisisCharge;
   /** 招式学习器盒 owned: move level cap 10, fusion star cap +1. */
   tmCase: boolean;
   /** The station dialog open for this player (freezes the world like a card), or null. */
@@ -409,7 +412,7 @@ export interface Hazard {
   rise: number;
   /** Enemy whose wind-up this is (-1: none); a caster killed or put to sleep before it lands cancels it. */
   caster: number;
-  /** Enemy that dealt the damage, retained after a wind-up detaches from its caster. */
+  /** Enemy that dealt the damage, retained after detaching; −1 for an environmental eruption. */
   source?: number;
 }
 

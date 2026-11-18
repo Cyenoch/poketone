@@ -56,6 +56,7 @@ import {
   type TrainerCue,
 } from "./trainer-cues";
 import { DEPLOYMENT_MS } from "./view/deployment";
+import { EVOLVE_SWAP_MS } from "./view/bodyGlow";
 import { COOP } from "./sim/content/params/coop";
 import { DASH_COOLDOWN } from "./sim/content/params/player";
 import { forgetRefund, forgettableItem, stationHere } from "./sim/stations";
@@ -76,6 +77,7 @@ import type { StageId } from "./sim/content/stages/index";
 import { getAudio, RUN_SOUNDS, type SfxName } from "../audio/engine";
 import { playFieldEvent, syncFieldAmbience } from "../audio/field-events";
 import { createBoundaryWall, type BoundaryWall } from "./view/boundaryWall";
+import { stageThemes } from "./view/stageThemes";
 import { createDebugOverlay, type DebugOverlay } from "./view/debug/layers";
 import { applyWorldOutput, createGrade } from "./view/grade";
 import { createHealthBars, type HealthBars } from "./view/healthBars";
@@ -151,7 +153,7 @@ export interface RunSnapshot {
   dashes: number;
   dashMax: number;
   /** The guardian in the fight: its name, HP and max HP. */
-  boss: { name: string; hp: number; max: number } | null;
+  boss: { name: string; type: ElementType; hp: number; max: number } | null;
   pending: PendingChoice | null;
   pendingCount: number;
   rescueProgress: number | null;
@@ -176,6 +178,8 @@ export interface RunSnapshot {
   stardust: number;
   /** Ultimate charge 0 → 1; `casting` while one plays out. */
   ult: number;
+  /** Simulation seconds of this seat's last actual crisis credit; compare with `time`. */
+  ultCrisisAt: number | null;
   casting: boolean;
   ultWindup: number;
   ultProtection: number;
@@ -451,8 +455,6 @@ const PLEDGE_FIELD_SOUND = {
 } as const satisfies Record<Extract<RunEvent, { t: "pledge" }>["result"], SfxName>;
 /** A formation older than the cue (late network delivery) is old news: it stays silent. */
 const PLEDGE_CUE_WINDOW_MS = 600;
-/** The evolve light column opens after the 0.3 s freeze, about 90 ms into its life. */
-const EVOLVE_KEY_MS = 390;
 
 /** The stage the evolve event reached needs a trade (a confirmed swap or a spent linking cord). */
 function isTradeEvolution(starter: StarterId, stage: Stage): boolean {
@@ -504,7 +506,12 @@ function snapshot(
     dashes: player.dashes,
     dashMax: stats.dashCharges,
     boss: boss
-      ? { name: enemyDefs[boss.species].name, hp: Math.max(0, boss.hp), max: boss.maxHp }
+      ? {
+          name: enemyDefs[boss.species].name,
+          type: enemyDefs[boss.species].types[0]!,
+          hp: Math.max(0, boss.hp),
+          max: boss.maxHp,
+        }
       : null,
     pending: cardShown(player) ? player.pending[0]! : null,
     pendingCount: player.pending.length,
@@ -535,6 +542,7 @@ function snapshot(
     itemSlots: itemSlots(player),
     stardust: Math.floor(player.stardust),
     ult: player.ult.charge,
+    ultCrisisAt: player.crisis.lastTick === null ? null : player.crisis.lastTick * TICK,
     casting: player.ult.elapsed >= 0,
     ultWindup: player.ult.elapsed < 0 ? 0 : Math.max(0, ULT_WINDUP - player.ult.elapsed),
     ultProtection: player.ult.protection,
@@ -993,7 +1001,7 @@ export function createRun(
         case "hit":
           // Only this player's damage floats; a partner's numbers belong on their screen.
           if (view && event.by === PLAYER)
-            hud.numbers.spawn(event.x, event.z, event.amount, event.crit, event.weak);
+            hud.numbers.spawn(event.x, event.z, event.amount, event.crit, event.weak, event.enemy);
           if (event.confirmedContact) break;
           {
             const hit = HIT_SOUND[event.type] ?? "hit";
@@ -1086,7 +1094,7 @@ export function createRun(
             isTradeEvolution(world.players[PLAYER]!.starter, event.stage)
               ? "trade-evolve"
               : "evolve",
-            { keyMs: EVOLVE_KEY_MS },
+            { keyMs: EVOLVE_SWAP_MS },
           );
           notify(event, evolveBanner(world.players[PLAYER]!.starter, event.stage), "reward");
           speak(trainers[trainerFor(PLAYER)].evolve, network?.eventAgeMs(event) ?? 0);
@@ -1358,7 +1366,12 @@ export function createRun(
     const viewYaw = subject === self ? yaw : subject.viewYaw;
     boundary?.update(subject.x, subject.z, frozen ? 0 : dt);
     debug?.update(world);
-    healthBars?.update(world, alpha, frozen ? 0 : simDt);
+    healthBars?.update(world, PLAYER, frozen ? 0 : simDt, {
+      camera: view.camera,
+      enemies: view.drawn.enemies,
+      players: view.drawn.players,
+      events,
+    });
     minimap?.update(world, alpha, viewYaw, frozen ? 0 : dt, subjectId);
     compass?.update(world, alpha, viewYaw, frozen ? 0 : dt, subjectId);
     hud.updateIndicators(world, PLAYER, view.camera, alpha, dt);
@@ -1536,7 +1549,7 @@ export function createRun(
     }
     view = built;
     callbacks.onLoadProgress?.(0.7);
-    boundary = createBoundaryWall(world.map.terrain);
+    boundary = createBoundaryWall(world.map.terrain, stageThemes[world.stage].edge);
     view.scene.add(boundary.mesh, grade.vignette, healthBars!.mesh);
     const base = await drive(bakeMap(world), { live: () => !disposed });
     if (disposed) {

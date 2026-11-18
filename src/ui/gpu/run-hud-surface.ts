@@ -57,7 +57,8 @@ export class RunHudSurface {
     hudLead: { value: 0 },
     /** HP: tick positions along the bar (0–1); a negative one is not drawn. */
     hudTicks: { value: new Vector3(0.25, 0.5, 0.75) },
-    /** HP: a heal's bright leading cap; XP: the level beat's flash (both 1 → 0). */
+    /** HP: a heal's bright leading cap; XP: the level beat's flash; ultimate: a crisis gain's
+     *  flash (all 1 → 0). */
     hudGlow: { value: 0 },
     /** HP: the shield's share of the bar along its top; negative draws none. */
     hudShield: { value: -1 },
@@ -188,6 +189,9 @@ export class RunHudSurface {
         }
         float ring=step(.79,r)*step(r,.95);
         vec3 arc=mix(${TRACK},hudColor,step(angle,hudFill));
+        // Crisis charge (hudGlow 1 → 0): the arc just gained from hudTrail flashes white, the rest
+        // of the fill brightens with it.
+        arc=mix(arc,vec3(1.),hudGlow*step(angle,hudFill)*(.3+.7*step(hudTrail,angle)));
         c=mix(c,arc,ring);
         c=mix(c,${INK},step(.95,r));
         ${glyph === 2 ? `${glyphs}c=mix(c,vec3(1.),clamp(ink,0.,1.)*(.55+.45*hudReady));` : ""}

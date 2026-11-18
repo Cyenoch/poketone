@@ -10,7 +10,7 @@ const sizeOf = (path) =>
 test("the idle lane admits the measured small models and nothing larger", async () => {
   for (const path of [
     "enemies/caterpie.glb",
-    "enemies/geodude.glb",
+    "enemies/rattata.glb",
     "props/hypno.glb",
     "props/bill-machine.glb",
   ]) {

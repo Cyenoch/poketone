@@ -7,7 +7,7 @@
 ## 设计
 
 - 意图 / 签名：竖劈掌刃 + 拳形、末击碎石。
-- 模拟几何与时序：length 2.6，half-angle .8，count 3；delay .08+i×.14，active .16 s。数值以 `src/run/sim/content/moves.ts` 与对应 archetype 为准，画面读取实例。
+- 模拟几何与时序：length 4.5，half-angle .8，count 3；delay .08+i×.14，active .16 s。数值以 `src/run/sim/content/moves.ts` 与对应 archetype 为准，画面读取实例。
 - 阶段：每拳 80 ms 拳形前摇 → 落拳 320 ms 回声（扇形、扫带、竖刃、拳）→ 末拳碎石与裂纹。
 - 保留与避让：普通拳只三枚小火花，末拳才有碎片；裂纹完全在扇形内。
 - 分层：新增 fist 拳形精灵；其余为既有贴花 / ribbon / 精灵 / ORB。

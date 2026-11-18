@@ -21,9 +21,15 @@ export const chain: ArchetypeDef = {
       points.push(current.x, current.z);
       const from: Enemy = current;
       const centre = enemyFeet(terrain, from) + enemyHeight(from) / 2;
-      current = nearest(world, from.x, centre, from.z, CHAIN.candidates, p.area).find(
+      current = nearest(
+        world,
+        from.x,
+        centre,
+        from.z,
+        1,
+        p.area,
         (enemy) => !struck.includes(enemy),
-      );
+      )[0];
     }
     world.events.push({ t: "chain", points, type: def.type });
     for (const enemy of struck)

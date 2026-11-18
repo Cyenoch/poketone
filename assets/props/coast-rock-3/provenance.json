@@ -1,11 +1,24 @@
 {
-  "generator": "assets/props/build-map-props.py",
-  "seed": 3579957827,
-  "source": "Original scripted geometry; no external assets",
-  "triangles": 160,
-  "materials": 1,
-  "vertexColors": true,
-  "units": "metres",
-  "sha256": "d3538def36e5ffb898951f1960cea7bfe0f61755eda03ccb6be72ecd751a5315",
-  "tripoCredits": 0
+  "set": "coast-rocks",
+  "footprint": {
+    "baseSpreadBefore": 0.5497,
+    "target": 0.5647,
+    "xyScale": 1.0274
+  },
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "props/coast-rocks/generation/tripo-out/tripo-out/poketone-coast-rocks-7724edd9/model.glb",
+  "tripoSourceSha256": "092d79dd0a323f42b6f03c9a1bf479224ce40c7fd8552075a7442734d69125e6",
+  "tripoTask": "7724edd9-67c2-4f31-8e1e-0b241da6b80a",
+  "tripoType": "image_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 588,
+  "dimensions": [0.2815, 0.3016, 0.2798],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "a7e642ee5d274977023eb3230da149a2a8327847b70c04e8fd7f9e34e41b63ee"
 }

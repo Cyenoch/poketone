@@ -863,6 +863,14 @@
     "run-3": {
       "file": "music/run-3.m4a",
       "bpm": 124
+    },
+    "run-4": {
+      "file": "music/run-4.m4a",
+      "bpm": 128
+    },
+    "menu-2": {
+      "file": "music/menu-2.m4a",
+      "bpm": 96
     }
   },
   "ambience": {

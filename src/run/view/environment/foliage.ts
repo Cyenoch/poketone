@@ -13,12 +13,14 @@ import {
 import { TERRAIN_HALF, type Terrain } from "../../sim/terrain";
 import { inject, patchShader } from "../patchShader";
 import { TERRAIN_GLSL, type TerrainUniforms } from "../terrain";
+import { hasGround } from "./backdrop";
 import { chunkInstances, type ChunkedInstances } from "./chunkedInstances";
 import { shadeUnderClouds } from "./clouds";
 import { flowerGeometry, flowerVertex, placeFlowers } from "./flowers";
 import { grassGeometry, grassVertex, placeGrass } from "./grass";
 import { groundGlsl, type GroundLayers, type GroundUniforms } from "./ground";
 import { NOISE_GLSL } from "./noise";
+import { pebbleGeometry, pebbleVertex, placePebbles } from "./pebbles";
 import { placeReeds, reedGeometry, reedVertex } from "./reeds";
 import type { GeneratedMap } from "../../sim/mapgen/index";
 import { WIND_GLSL, type WindUniforms } from "./wind";
@@ -136,7 +138,7 @@ export interface FoliageSetup {
   theme: StageTheme;
 }
 
-/** Grass blades (lawn and tall tufts), a flower kit (four flowers and clover) and pond reeds: three instanced draws. */
+/** Grass blades (lawn and tall tufts), a flower kit (four flowers and clover), pond reeds and stones: up to four instanced draws. */
 /** Steps (`prepare/steps.ts`): each layer's placement is a step. */
 export function* createFoliage(setup: FoliageSetup): Steps<Foliage> {
   const uniforms: FoliageUniforms = {
@@ -151,7 +153,10 @@ export function* createFoliage(setup: FoliageSetup): Steps<Foliage> {
     vertex: FoliageVertex,
     values: Float32Array,
   ): FoliageLayer => {
-    const instances = chunkInstances(values, TERRAIN_HALF, PLANT_TOP, 4);
+    const grown = values.filter((_, i, all) =>
+      hasGround(setup.theme, all[i - (i % 4)]!, all[i - (i % 4) + 2]!),
+    );
+    const instances = chunkInstances(grown, TERRAIN_HALF, PLANT_TOP, 4);
     geometry.setAttribute("aRoot", instances.attribute);
     // three shades normal-less geometry flat; the real normal comes from the ground in the shader.
     geometry.setAttribute(
@@ -208,6 +213,17 @@ export function* createFoliage(setup: FoliageSetup): Steps<Foliage> {
         reedGeometry(),
         reedVertex(reeds),
         yield* placeReeds({ ...placement, density: placement.density * reeds.density }),
+      ),
+    );
+  yield;
+  const pebbles = setup.theme.vegetation.pebbles;
+  if (pebbles)
+    layers.push(
+      layer(
+        "foliage-pebbles",
+        pebbleGeometry(),
+        pebbleVertex(pebbles),
+        yield* placePebbles(placement, pebbles),
       ),
     );
   const frustum = new Frustum();

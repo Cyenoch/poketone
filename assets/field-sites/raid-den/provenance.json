@@ -1,0 +1,18 @@
+{
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "field-sites/raid-den/generation/tripo-out/tripo-out/poketone-raid-den-mv-e623eae5/model.glb",
+  "tripoSourceSha256": "3bfd3168da05636585f2914a8d3a69cc1a592fa7adb912cd7f693c97b5cb833f",
+  "tripoTask": "e623eae5-55b6-4979-ab88-3aecfb57634a",
+  "tripoType": "multiview_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 1982,
+  "dimensions": [0.9863, 0.998, 0.4364],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "3a1dda07f35688446f039fb1735a4a4b533aed3d522d6c2247a4f51f05b87318"
+}

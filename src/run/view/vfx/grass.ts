@@ -103,14 +103,30 @@ const sparkle = sprite({
 });
 
 export const razorLeaf: ShotLook = {
+  launch(fx, x, y, z) {
+    fx.sprites.emit(flash, x, y, z, 0, 0, 0, 0.18);
+    spray(fx, shred, x, y, z, 2, 1, 0.6, 0.07);
+  },
   fly(fx, shot, x, y, z) {
-    fx.sprites.draw(leafStreak, x, y, z, shot.radius * 0.7, 1, shot.vx, shot.vz);
+    fx.sprites.draw(leafStreak, x, y, z, shot.radius * 1.1, 1, shot.vx, shot.vz);
+    // A few cut leaf scraps shed behind each blade, so a volley leaves visible paths through a crowd.
+    for (let i = perFrame(fx, 9); i > 0; i--)
+      fx.sprites.emit(
+        shred,
+        x,
+        y,
+        z,
+        -shot.vx * 0.06 + rand(-0.4, 0.4),
+        rand(0.2, 0.8),
+        -shot.vz * 0.06 + rand(-0.4, 0.4),
+        rand(0.05, 0.08),
+      );
     fx.sprites.draw(
       leaf,
       x,
       y,
       z,
-      shot.radius * 1.5,
+      shot.radius * 1.8,
       1,
       0,
       0,

@@ -11,7 +11,7 @@ Reference game: very short (≈ 0.35 s): a spinning ground water-swirl decal gro
 radius over 0.5 s; nine 35 ms frames of three fast arcs around the player at slowly growing radius;
 droplets flung tangentially; a splash at the end.
 
-Sim: spin around the player, radius 1.05, life 1.6 s, ticks 0.3 s, follows, knockback.
+Sim: spin around the player, radius 3.5, life 1.6 s, ticks 0.3 s, follows, knockback.
 
 Keep: fast, low crescent arcs hugging the body (wind + a little water), dust kicked out. Avoid: a
 tall wall (was 1.25 m, now 0.75 m) and a full-disc fill.

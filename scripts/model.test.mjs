@@ -681,8 +681,8 @@ function flatTerrain() {
   };
 }
 
-/** Damage the real sim deals with one level-1 move to an unkillable rattata `distance` ahead. */
-function simDamage(move, distance) {
+/** Damage the real sim deals with one level-1 move to one stationary body `distance` ahead, with no terrain or other targets. */
+function simDamage(move, distance, species = "rattata") {
   const world = createWorld({
     mode: "expedition",
     rules: [],
@@ -694,7 +694,8 @@ function simDamage(move, distance) {
   world.map.terrain = flatTerrain();
   const player = world.players[0];
   player.moves = [newMoveState(move)];
-  const dummy = spawnEnemy(world, "rattata", distance, 0);
+  world.map.obstacles = [];
+  const dummy = spawnEnemy(world, species, distance, 0);
   dummy.x = dummy.px = distance;
   dummy.z = dummy.pz = 0;
   dummy.hp = dummy.maxHp = 1e9;
@@ -758,6 +759,47 @@ test("modelled move damage on a lone target matches the sim's cast timing, ticks
     assert.ok(
       Math.abs(model / sim - 1) < 0.1,
       `${move}: model ${model.toFixed(0)} vs sim ${sim.toFixed(0)} over ${SECONDS} s`,
+    );
+  }
+});
+
+test("a sparse chain ends at its first miss and cannot recycle a lone body", () => {
+  const player = createPlayer(0, "abra", 0);
+  const target = targetFor(fieldAt(0, "forest", 300, 0, false), 30, average);
+  const chain = (density, living) =>
+    moveOutput(newMoveState("psyshock"), playerStats(player), {
+      ...target,
+      hp: 1e6,
+      density,
+      living,
+    });
+  const first = chain(0, 1);
+  const sparse = chain(0.005, 30);
+  const dense = chain(0.7, 30);
+  assert.equal(first.targets, 1);
+  assert.ok(sparse.targets > 1 && sparse.targets < 2 && dense.targets > sparse.targets);
+  assert.equal(chain(0.7, 1).hits, first.hits, "no extra damage without a new body");
+});
+
+test("water moves deliver bounded DPS on a lone small body and the forest guardian", (t) => {
+  for (const [species, distance] of [
+    ["rattata", 6],
+    ["scyther", 5],
+  ]) {
+    const bubble = simDamage("bubble", distance, species) / SECONDS;
+    const spiral = simDamage("hydro-spiral", distance, species) / SECONDS;
+    const gun = simDamage("water-gun", distance, species) / SECONDS;
+    t.diagnostic(
+      `${species} at ${distance}: Bubble ${bubble.toFixed(1)}, Hydro Spiral ${spiral.toFixed(1)}, Water Gun ${gun.toFixed(1)} HP/s`,
+    );
+    // The spread volley and the area fusion must neither whiff nor multiply damage on a wide body.
+    assert.ok(
+      bubble > 0.45 * gun && bubble < 1.6 * gun,
+      `${species}: Bubble ${bubble / gun}× Water Gun`,
+    );
+    assert.ok(
+      spiral > 0.08 * gun && spiral < 0.65 * gun,
+      `${species}: Hydro Spiral ${spiral / gun}× Water Gun`,
     );
   }
 });
@@ -1144,6 +1186,8 @@ test("mixed batches pay XP and ultimate charge for their count, not their extra 
     assert.equal(actual.players[0].level, rounded.levelAt.length - 1);
     assert.equal(fieldAt(0, "forest", 180, 0, false).eliteXp, LOOT.eliteXpCount);
 
+    // Isolate the damage-dealt budget: hostile HP loss is an independent source of charge.
+    options.crisisCharge = false;
     // Put the full charge boundary between four and five kills; a phantom alpha kill would cast at 60.
     zone.beats = [
       { window: [59, 59], beat: { kind: "alpha" } },

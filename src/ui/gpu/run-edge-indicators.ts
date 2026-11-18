@@ -50,7 +50,6 @@ export class GpuEdgeIndicators {
   });
   private readonly players: Marker[];
   private readonly guardian: Marker;
-  private readonly names: Container[];
   private readonly point = new Vector3();
   private clock = 0;
   private readonly stage: UiStage;
@@ -61,17 +60,6 @@ export class GpuEdgeIndicators {
     stage.root.add(stack(this.root, -1));
     this.players = playerColors.map((color, slot) => this.marker(color, 42, slot));
     this.guardian = this.marker("#ffd45b", 48);
-    this.names = playerColors.map((color, slot) => {
-      const tag = gameTag(`P${slot + 1}`, {
-        size: "badge",
-        face: color,
-        ink: INK,
-        ring: { color: INK, width: 1 },
-      });
-      tag.setProperties({ positionType: "absolute", display: "none" });
-      this.root.add(tag);
-      return tag;
-    });
   }
   private marker(color: string, size: number, slot?: number): Marker {
     const root = new Container({
@@ -193,8 +181,7 @@ export class GpuEdgeIndicators {
       bottom: v.height,
     });
     world.players.forEach((player, slot) => {
-      const marker = this.players[slot]!,
-        name = this.names[slot]!;
+      const marker = this.players[slot]!;
       const form = formOf(player);
       const x = player.px + (player.x - player.px) * alpha,
         z = player.pz + (player.z - player.pz) * alpha;
@@ -206,14 +193,6 @@ export class GpuEdgeIndicators {
         world.players.length > 1 &&
         !player.departed &&
         (player.alive || canBeRescued(world, player));
-      name.setProperties({ display: shown && onScreen ? "flex" : "none" });
-      if (onScreen) {
-        const head = this.project(world, camera, x, z, form.height + 0.35);
-        name.setProperties({
-          positionLeft: ((head.x + 1) * v.width) / 2 - (name.size.value?.[0] ?? 24) / 2,
-          positionTop: ((1 - head.y) * v.height) / 2 - 16,
-        });
-      }
       const look = shiny(player.id);
       if (marker.form !== form.id || marker.shiny !== look) {
         marker.form = form.id;
@@ -232,7 +211,6 @@ export class GpuEdgeIndicators {
     // No stale marker when a new solo world replaces a co-op run.
     for (let i = world.players.length; i < this.players.length; i++) {
       this.players[i]!.root.setProperties({ display: "none" });
-      this.names[i]!.setProperties({ display: "none" });
     }
     const boss = world.enemies.find((enemy) => enemy.id === world.bossId && enemy.hp > 0);
     if (boss) {

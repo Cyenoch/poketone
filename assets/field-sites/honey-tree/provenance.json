@@ -1,0 +1,18 @@
+{
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "field-sites/honey-tree/generation/tripo-out/tripo-out/poketone-honey-tree-mv-2-66821ccc/model.glb",
+  "tripoSourceSha256": "391f1790a1a002fd17c6d7d5c97dcece9427e692af99855a42355e19a3cc5bad",
+  "tripoTask": "66821ccc-21fe-4f93-a5b9-f22011c7bd76",
+  "tripoType": "multiview_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 2224,
+  "dimensions": [0.8728, 0.7417, 1.0],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "fe530d62f1fdd1cbb9d43157d63e4101f93b9c1b6152223b8d9110cefa58b270"
+}

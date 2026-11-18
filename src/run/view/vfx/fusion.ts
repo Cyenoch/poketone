@@ -237,21 +237,21 @@ export const hydroSpiral: AreaLook = {
           y,
           z + dz * 0.5,
           yaw,
-          area.radius * 0.75,
-          area.radius * 0.75,
+          area.radius * 0.4,
+          area.radius * 0.4,
           area.length,
         ),
         water.light,
-        fade,
+        0.7 * fade,
         water.deep,
         2,
       );
       fx.decals
         .put(Decal.strip, x, z, area.length, yaw)
         .rect(-area.radius, 0, area.radius, area.length)
-        .tint(water.dark, 0.5 * fade, water.foam, 0)
+        .tint(water.dark, 0.25 * fade, water.foam, 0)
         .args(0, area.radius, 1);
-      for (let i = perFrame(fx, 20 * fade); i > 0; i--) {
+      for (let i = perFrame(fx, 14 * fade); i > 0; i--) {
         const d = area.length * rand(0.85, 1);
         fx.sprites.emit(
           droplet,

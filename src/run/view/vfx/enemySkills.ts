@@ -24,7 +24,18 @@ import { danger, electric, fire, gold, poison, powder, stone, water, white } fro
 import { Shape, sprite } from "./sprites";
 
 const acidGreen = poison.light;
-const glob = sprite({ shape: Shape.ball, from: poison.purple, accent: poison.deep });
+/** A teardrop along its flight: round head leading, tail trailing. */
+const glob = sprite({ shape: Shape.drop, from: poison.purple, accent: poison.light, stretch: -1 });
+const drip = sprite({
+  shape: Shape.drop,
+  life: 0.4,
+  grow: 0.6,
+  from: poison.purple,
+  to: poison.deep,
+  accent: poison.light,
+  gravity: 12,
+  stretch: -1,
+});
 const globHalo = sprite({
   shape: Shape.glow,
   from: acidGreen,
@@ -41,16 +52,28 @@ const bubble = sprite({
   gravity: -1.5,
   alpha: 0.8,
 });
+/** Stun spore drifts as a pale, soft haze carrying fine glinting spores, never as a dust cloud. */
 const sporeMote = sprite({
   shape: Shape.cloud,
-  life: 0.9,
-  grow: 1.6,
-  from: gold.white,
-  to: gold.yellow,
-  accent: gold.deep,
-  alpha: 0.55,
+  life: 1.4,
+  grow: 1.5,
+  from: white,
+  to: gold.white,
+  accent: white,
+  alpha: 0.32,
   drag: 2,
-  gravity: -0.4,
+  gravity: -0.3,
+});
+const sporeDot = sprite({
+  shape: Shape.glow,
+  life: 1.1,
+  grow: 0.6,
+  from: electric.yellow,
+  to: gold.yellow,
+  accent: white,
+  add: 1,
+  drag: 1.5,
+  gravity: -0.5,
 });
 const beamGlow = sprite({ shape: Shape.glow, from: powder.pink, accent: white, add: 0.8 });
 const iceGlow = sprite({ shape: Shape.glow, from: water.light, accent: white, add: 0.55 });
@@ -261,7 +284,8 @@ export function radialHazard(fx: Fx, hazard: Hazard, x: number, z: number): void
   if (charging) {
     fx.danger
       .put(Decal.telegraph, x, z, hazard.radius, 0, hazard.id * 0.618)
-      .tint(color, 0.95, danger.deep, 0)
+      // Under yellow, the deep red fill went mud brown: an electric ring fills with pale light.
+      .tint(color, 0.95, electricRing(kind) ? gold.white : danger.deep, 0)
       .args(charge);
     if (singing)
       for (let i = 0; i < 3; i++) {
@@ -343,7 +367,19 @@ export function acidHazard(fx: Fx, hazard: Hazard, x: number, y: number, z: numb
     .tint(poison.purple, 0.9, poison.light, 0.3)
     .args(1 - hazard.life / ACID.flight);
   fx.sprites.draw(globHalo, x, y, z, hazard.radius * 2.2);
-  fx.sprites.draw(glob, x, y, z, hazard.radius);
+  fx.sprites.draw(glob, x, y, z, hazard.radius * 1.25, 1, hazard.vx, hazard.vz);
+  for (let i = perFrame(fx, 16); i > 0; i--)
+    fx.sprites.emit(
+      drip,
+      x + rand(-0.5, 0.5) * hazard.radius,
+      y - hazard.radius * 0.3,
+      z + rand(-0.5, 0.5) * hazard.radius,
+      hazard.vx * 0.15,
+      rand(-1, 0),
+      hazard.vz * 0.15,
+      hazard.radius * rand(0.25, 0.4),
+      fx.ground.heightAt(x, z),
+    );
 }
 
 /** The pool it leaves: the same ring, held full, fading over its last second. */
@@ -378,19 +414,33 @@ export function stunSporeHazard(fx: Fx, hazard: Hazard, x: number, y: number, z:
     return;
   }
   const fade = Math.min(1, hazard.life * 2);
-  fx.danger.put(Decal.glow, x, z, r).tint(gold.yellow, 0.45 * fade, gold.white, 0.3);
-  for (let i = perFrame(fx, 24); i > 0; i--) {
+  fx.danger.put(Decal.glow, x, z, r).tint(gold.white, 0.35 * fade, gold.yellow, 0.4);
+  for (let i = perFrame(fx, 6 * fade); i > 0; i--) {
     const a = rand(0, Math.PI * 2);
-    const d = Math.sqrt(Math.random()) * r * 0.9;
+    const d = Math.sqrt(Math.random()) * r * 0.75;
     fx.sprites.emit(
       sporeMote,
       x + Math.cos(a) * d,
-      y + rand(-0.3, 0.6),
+      y + rand(-0.2, 0.5),
       z + Math.sin(a) * d,
-      rand(-0.2, 0.2),
-      rand(0, 0.3),
-      rand(-0.2, 0.2),
-      rand(0.25, 0.4),
+      rand(-0.15, 0.15),
+      rand(0, 0.2),
+      rand(-0.15, 0.15),
+      rand(0.5, 0.75),
+    );
+  }
+  for (let i = perFrame(fx, 22 * fade); i > 0; i--) {
+    const a = rand(0, Math.PI * 2);
+    const d = Math.sqrt(Math.random()) * r * 0.9;
+    fx.sprites.emit(
+      sporeDot,
+      x + Math.cos(a) * d,
+      y + rand(-0.4, 0.8),
+      z + Math.sin(a) * d,
+      rand(-0.3, 0.3),
+      rand(0, 0.4),
+      rand(-0.3, 0.3),
+      rand(0.07, 0.11),
     );
   }
 }

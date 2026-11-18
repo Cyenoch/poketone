@@ -11,7 +11,7 @@ import { signatureFusions } from "./content/fusions";
 import { statuses, type EnemyStatusId, type StatusDef } from "./content/statuses";
 import { next, type Rng } from "./rng";
 import { powInt } from "./math";
-import { earnStardust, itemRule, playerStats } from "./stats";
+import { earnStardust, itemRule, playerStats, refreshStats } from "./stats";
 import type { Choice, MoveState, Partner, PendingChoice, Player, Rarity } from "./state/entities";
 import type { World } from "./state/world";
 import {
@@ -695,6 +695,8 @@ export function applyChoice(player: Player, choice: Choice): void {
       break;
     }
   }
+  // The build changed; a frozen world (another card queued) does not step to refresh the memo.
+  refreshStats();
 }
 
 function setAbilitySlot(player: Player, slot: Player["abilitySlot"]): void {

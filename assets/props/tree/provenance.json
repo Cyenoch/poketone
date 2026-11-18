@@ -1,0 +1,23 @@
+{
+  "baseSpread": 0.174,
+  "colliderTarget": 0.1139,
+  "repaint": {
+    "leaf": ["#264a2c", "#7d9c55"]
+  },
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "props/tree/generation-tripo/tripo-out/tripo-out/poketone-tree-mv-21cfc703/model.glb",
+  "tripoSourceSha256": "4947755784dd27ca3d0991379f4709dbcf950c2b0f09047a22bb6bc663b21f50",
+  "tripoTask": "21cfc703-323c-4552-b60b-99a9862177c9",
+  "tripoType": "multiview_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1200
+  },
+  "triangles": 1698,
+  "dimensions": [0.8669, 0.7516, 1.0],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "46203b18e511a57cd93ba95ba68013c0b5bd5157f51fa186dc52dc32d66ef288"
+}

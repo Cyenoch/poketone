@@ -15,8 +15,14 @@ let wanted = false;
 let requesting = false;
 let stopFirstGesture: (() => void) | undefined;
 
+/** The page may still ask to go fullscreen, whatever the pointer. */
+export function canEnterFullscreen(): boolean {
+  return document.fullscreenEnabled && !installed() && !document.fullscreenElement;
+}
+
+/** A touch page that is not fullscreen yet: what the first tap and the coarse toggles restore. */
 export function needsFullscreen(): boolean {
-  return wanted && document.fullscreenEnabled && !installed() && !document.fullscreenElement;
+  return wanted && canEnterFullscreen();
 }
 
 export function onFullscreenChange(listener: () => void): () => void {
@@ -28,12 +34,31 @@ export function onFullscreenChange(listener: () => void): () => void {
 export async function restoreFullscreen(): Promise<void> {
   stopFirstGesture?.();
   stopFirstGesture = undefined;
-  if (!needsFullscreen() || requesting) return;
+  if (needsFullscreen() && !requesting) await requestFullscreen();
+}
+
+/**
+ * The portrait notice's key, offered to any pointer. False only when the browser refused (or the
+ * page can no longer ask); a lock the device lacks still leaves the page fullscreen to rotate.
+ */
+export async function enterLandscape(): Promise<boolean> {
+  stopFirstGesture?.();
+  stopFirstGesture = undefined;
+  if (requesting || document.fullscreenElement) return true;
+  if (!canEnterFullscreen() || !(await requestFullscreen())) return false;
+  // A touch page already locks from fullscreenchange.
+  if (!wanted) await lockLandscape();
+  return true;
+}
+
+async function requestFullscreen(): Promise<boolean> {
   requesting = true;
   try {
     await document.documentElement.requestFullscreen({ navigationUI: "hide" });
+    return true;
   } catch (error) {
     console.warn("请求全屏失败", error);
+    return false;
   } finally {
     requesting = false;
   }

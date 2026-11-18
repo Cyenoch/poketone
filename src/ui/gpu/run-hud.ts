@@ -7,7 +7,7 @@ import { type NavigationAction } from "../../platform/input";
 import { InputGlyph } from "./input-glyph";
 import { GpuDamageNumbers } from "./run-damage-numbers";
 import { softOf } from "./run-choice-surface";
-import { crestPose, themeColors, themeGrain, typeColors } from "./run-theme";
+import { crestPose, themeColors, themeGrain } from "./run-theme";
 import { SlantPlate } from "./slant-plate";
 import { LIFT, SNAP } from "./motion";
 import { RADIUS_INNER, slantOf, ui } from "./tokens";
@@ -28,7 +28,7 @@ import {
 } from "@pmndrs/uikit";
 import { Color, Matrix4, Vector3 } from "three";
 import type { RunSnapshot } from "../../run/createRun";
-import { formatTime, typeNames } from "../../run/labels";
+import { formatTime } from "../../run/labels";
 import { moves } from "../../run/sim/content/moves";
 import type { ElementType } from "../../run/sim/content/elements";
 import type { StarterId } from "../../run/sim/content/lines/index";
@@ -47,7 +47,6 @@ import { createMenuIcon } from "./icons";
 import { portraitSrc } from "./ball";
 import { createRunCommandIcon } from "./run-overlays-icons";
 import { playerColors } from "../player-colors";
-import { slantTag } from "./tag";
 import { formDefs } from "../../run/sim/content/lines/index";
 import { GpuTrainerCutin, type CueGlyphs } from "./trainer-cutin";
 import { WeatherChip } from "../../run/view/weatherChip";
@@ -55,6 +54,7 @@ import { assistLooks, trainers, type TrainerId } from "../../trainers";
 import { trainerKits } from "../../run/sim/content/trainers";
 import { TRAINER } from "../../run/sim/content/params/trainers";
 import { assistLeft } from "../../run/sim/trainers";
+import { crestSrc, crestTagWidth, typeTag, typeTagGap } from "./type-icon";
 
 export interface RunHudNotice {
   id: number;
@@ -137,16 +137,13 @@ const STICK_ZONE = 150;
 /** The name row: the form's name, then its type chips (slant tags, 11px: 21 tall). */
 const NAME_ROW_GAP = 6;
 /** The gap once the chips show crests only: the name keeps the room it needs. */
-const CREST_ROW_GAP = 4;
-const TYPE_TAG_GAP = 2;
+const CREST_ROW_GAP = 2;
 const TYPE_TAG_SIZE = 11;
-/** A type chip that shows its crest only: the icon and `pad` past the lean on each side. */
-const CREST_TAG_ICON = 14;
-const CREST_TAG_PAD = 0;
+/** Slanted chips sit 2px apart along their parallel edges (a negative step). */
+const TYPE_TAG_GAP = typeTagGap(TYPE_TAG_SIZE);
 /** The smallest the form's name steps down to before it is cut. */
 const NAME_MIN_SIZE = 12;
-const CREST_TAG_WIDTH =
-  CREST_TAG_ICON + 2 * CREST_TAG_PAD + slantOf(Math.round(TYPE_TAG_SIZE * 1.9));
+const CREST_TAG_WIDTH = crestTagWidth(TYPE_TAG_SIZE);
 
 const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
 /**
@@ -163,6 +160,8 @@ const HEAL_MS = 420;
 const LOW_HP = 0.3;
 /** The ultimate key's ring while the cast protects the player: warm yellow, apart from the charge. */
 const PROTECT = "#ffd45b";
+/** How long a crisis gain's flash lasts on the ultimate's ring (simulation s). */
+const CRISIS_FLASH = 0.8;
 /** One gathering of the ultimate's halo into its key while the cast prepares (s). */
 const WINDUP_PULSE = 0.6;
 /** XP ring chase, in levels: ease-out time constant, the slowest and fastest it moves (laps/s). */
@@ -283,11 +282,7 @@ export class GpuRunHud {
     { text: "", fontSize: 16, fontWeight: 800, color: ui.white },
     { width: 3, color: ui.ink },
   );
-  private readonly formTypes = new Container({
-    flexDirection: "row",
-    gap: TYPE_TAG_GAP,
-    flexShrink: 0,
-  });
+  private readonly formTypes = new Container({ flexDirection: "row", flexShrink: 0 });
   private typeTags: { tag: Container; dispose(): void }[] = [];
   private formTypeList: readonly ElementType[] = [];
   /** How the name row fits its plate, decided by measure (`fitNameRow`): the type chips show
@@ -375,6 +370,13 @@ export class GpuRunHud {
     { text: "", fontSize: 16, fontWeight: 800, color: ui.white },
     { width: 3, color: ui.ink },
   );
+  /** The guardian's type crest before its name. */
+  private readonly bossCrest = new Image({
+    src: crestSrc("normal"),
+    width: 22,
+    height: 22,
+    flexShrink: 0,
+  });
   private readonly bossHp = new RunHudSurface("hp");
   private readonly bossChip = new RunHudSurface("chip");
   private readonly right = new Container({
@@ -612,7 +614,7 @@ export class GpuRunHud {
     this.medal.add(stack(this.levelTag, 4));
     this.crest = stack(
       new Image({
-        src: "/art/icons/crests/fire.webp",
+        src: crestSrc("fire"),
         width: 28,
         height: 28,
         positionType: "absolute",
@@ -641,9 +643,13 @@ export class GpuRunHud {
     const bossBar = new Container({ width: "100%", height: 16 });
     stack(this.bossChip.content, 1);
     bossBar.add(this.bossHp.content, this.bossChip.content);
+    // One notch at half HP: every guardian changes its attacks below it (params/guardian.ts `below`).
+    this.bossHp.uniforms.hudTicks.value.set(0.5, -1, -1);
+    const bossTitle = new Container({ flexDirection: "row", alignItems: "center", gap: 4 });
+    bossTitle.add(this.bossCrest, this.bossName.root);
     this.boss.add(
       // The hit chip swells past the bar's top edge; the name stays above it (DESIGN.md 掉血段).
-      stack(this.bossName.root, 2),
+      stack(bossTitle, 2),
       bossBar,
     );
     this.center.add(this.boss);
@@ -1271,7 +1277,7 @@ export class GpuRunHud {
     this.ultimate.uniforms.hudGrain.value.set(grain.color);
     this.ultimate.uniforms.hudKind.value = grain.kind;
     this.halo.uniforms.hudColor.value.set(palette[2]);
-    this.crest.setProperties({ src: `/art/icons/crests/${state.theme}.webp` });
+    this.crest.setProperties({ src: crestSrc(state.theme) });
     const portrait = portraitSrc(snap.form, snap.shiny);
     if (portrait !== this.portraitShown) {
       this.portraitShown = portrait;
@@ -1324,7 +1330,10 @@ export class GpuRunHud {
     this.stardust.setProperties({ text: `+${snap.stardust}` });
     this.boss.setProperties({ display: snap.boss ? "flex" : "none" });
     if (snap.boss) {
-      if (snap.boss.name !== previous?.boss?.name) this.bossName.set({ text: snap.boss.name });
+      if (snap.boss.name !== previous?.boss?.name) {
+        this.bossName.set({ text: snap.boss.name });
+        this.bossCrest.setProperties({ src: crestSrc(snap.boss.type) });
+      }
       this.updateHealth(
         this.bossBar,
         snap.boss.hp / snap.boss.max,
@@ -1382,6 +1391,15 @@ export class GpuRunHud {
       Math.min(1, protection > 0 ? protection / ULT_INVULNERABLE : snap.ult),
     );
     if (protection > 0) this.ultimate.uniforms.hudColor.value.set(PROTECT);
+    // A crisis gain (hurt or swarmed) flashes the arc it added, on the simulation clock.
+    if (snap.ultCrisisAt !== null && snap.ultCrisisAt !== previous?.ultCrisisAt)
+      this.crisisFrom = previous ? Math.min(previous.ult, snap.ult) : snap.ult;
+    const crisis =
+      snap.ultCrisisAt === null || snap.ult >= 1 || protection > 0
+        ? 0
+        : Math.max(0, 1 - (snap.time - snap.ultCrisisAt) / CRISIS_FLASH) ** 2;
+    this.ultimate.uniforms.hudGlow.value = crisis;
+    this.ultimate.uniforms.hudTrail.value = this.crisisFrom;
     this.halo.content.setProperties({
       display: (snap.ult >= 1 && !snap.casting) || windup > 0 ? "flex" : "none",
     });
@@ -1677,6 +1695,8 @@ export class GpuRunHud {
   /** `.run-ult img` filter: saturate(.25) brightness(.75) until ready, 160ms transition. */
   private readonly ultLook = { gray: 0.75, bright: 0.75 };
   private ultReady: boolean | null = null;
+  /** The charge before the latest crisis gain: where its flashing arc starts. */
+  private crisisFrom = 0;
   private assist!: RunHudSurface;
   private assistPanel!: Container;
   private assistArt: RunHudArt | null = null;
@@ -1714,19 +1734,9 @@ export class GpuRunHud {
       tag.dispose();
       tag.tag.dispose();
     }
-    this.typeTags = this.formTypeList.map((type) =>
-      crests
-        ? slantTag(
-            "",
-            { size: TYPE_TAG_SIZE, face: typeColors[type].soft, pad: CREST_TAG_PAD },
-            new Image({
-              src: `/art/icons/crests/${type}.webp`,
-              width: CREST_TAG_ICON,
-              height: CREST_TAG_ICON,
-            }),
-          )
-        : slantTag(typeNames[type], { size: TYPE_TAG_SIZE }),
-    );
+    this.typeTags = this.formTypeList.map((type) => typeTag(type, TYPE_TAG_SIZE, !crests));
+    // Yoga takes no negative gap: each later chip steps back over the lean on its own margin.
+    for (const tag of this.typeTags.slice(1)) tag.tag.setProperties({ marginLeft: TYPE_TAG_GAP });
     this.formTypes.add(...this.typeTags.map((tag) => tag.tag));
   }
   /** The full name shows wherever it can: when it and the type chips overrun the row, the chips

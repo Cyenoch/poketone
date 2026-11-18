@@ -1,17 +1,35 @@
+import { defaultGrade } from "../grade";
 import type { StageTheme } from "./types";
 import { coastThunderTerrain, createCoastWeather } from "../environment/coast-weather";
-import { dressCoastLighthouse } from "../environment/coast-landmark";
 import { shadeCoastReef } from "../environment/coast-reef";
 import { coastShrubSite } from "../environment/coast-dressing";
 export const coast: StageTheme = {
   id: "coast",
+  grade: defaultGrade,
   decorate({ scene, world, wind, uniforms }) {
     const weather = createCoastWeather(world, wind, uniforms);
     if (!weather) return;
     scene.add(weather.root);
     return weather;
   },
+  drift: [
+    {
+      shape: "streak",
+      count: 160,
+      color: [0.9, 0.86, 0.76],
+      alpha: 0.35,
+      size: [0.066, 1.54],
+      height: [0.05, 0.5],
+      rise: 0.1,
+      life: 2.5,
+      speed: 1.3,
+      carry: 4,
+      flutter: 0,
+      clear: 0.3,
+    },
+  ],
   loadingArt: "/art/loading-coast.webp",
+  edge: "#5fd0ff",
   haze: {
     color: "#c9b9a6",
     near: 28,
@@ -27,24 +45,24 @@ export const coast: StageTheme = {
   },
   ground: {
     grass: {
-      map: "/art/ground-dirt.jpg",
-      settle: [0.12, 2.05, 1.92, 1.62],
-      tile: 3.6,
-      detail: "/textures/ground/sand-detail.png",
-      normal: 0.16,
+      map: "/art/ground-coast-sand.jpg",
+      settle: [1, 1, 1, 1],
+      tile: 4.2,
+      detail: "/art/ground-coast-sand-detail.png",
+      normal: 0.12,
     },
     meadow: {
-      map: "/art/ground-dirt.jpg",
-      settle: [0.1, 1.92, 1.82, 1.55],
-      tile: 4.4,
-      detail: "/textures/ground/sand-detail.png",
-      normal: 0.16,
+      map: "/art/ground-coast-sand.jpg",
+      settle: [1, 1, 1, 1],
+      tile: 5,
+      detail: "/art/ground-coast-sand-detail.png",
+      normal: 0.12,
     },
     dirt: {
-      map: "/art/ground-dirt.jpg",
-      settle: [0.3, 1.1, 0.98, 0.84],
+      map: "/art/ground-coast-sand.jpg",
+      settle: [0.62, 0.86, 0.78, 0.68],
       tile: 3.2,
-      detail: "/textures/ground/sand-detail.png",
+      detail: "/art/ground-coast-sand-detail.png",
       normal: 0.16,
     },
     cliff: {
@@ -148,6 +166,13 @@ export const coast: StageTheme = {
       light: 0,
     },
     {
+      model: "/models/props/coast-conch.glb",
+      height: 0.09,
+      density: 0.08,
+      placement: "shore",
+      light: 0,
+    },
+    {
       model: "/models/props/coast-seagrass.glb",
       height: 0.12,
       density: 0.1,
@@ -163,12 +188,11 @@ export const coast: StageTheme = {
     },
   ],
   landmark: {
-    patchMaterial: dressCoastLighthouse,
-    columnOffset: [0, 2.75, -1.16],
+    columnOffset: [0, 3, -0.86],
     model: "/models/props/coast-landmark.glb",
     height: 3.3,
     glow: 0xffdca0,
-    cores: [[0, 2.68, -1.16]],
+    cores: [[0, 2.82, -0.62]],
   },
   architecture: null,
   water: {
@@ -222,6 +246,26 @@ export const coast: StageTheme = {
       drawScale: 1,
       castShadow: false,
     },
+  },
+  backdrop: {
+    rise: 0.12,
+    cap: 3,
+    hills: 1.5,
+    hillSize: 12,
+    layers: [
+      { kind: "bush", band: [0, 6], spacing: 2.6, cover: 0.45, scale: [1, 1.5] },
+      { kind: "palm", band: [0.5, 9], spacing: 3.6, cover: 0.5, scale: [1, 1.4] },
+      {
+        kind: "rock",
+        band: [3, 28],
+        spacing: 7,
+        cover: 0.6,
+        scale: [3.5, 6],
+        stretch: [1.2, 1.5, 1.2],
+        sink: 1,
+      },
+      { kind: "rock", band: [6, 40], spacing: 13, cover: 0.4, scale: [2.5, 5], sea: true, sink: 1 },
+    ],
   },
   minimap: {
     land: [

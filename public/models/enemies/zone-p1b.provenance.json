@@ -34,7 +34,8 @@
       "textureSize": 512,
       "facingYawPi": -0.5,
       "faceLimit": 1000,
-      "note": "Second sheet (views2/, sheet2.jpg): the first mesh was a hollow faceless fur shell, see rejected."
+      "note": "Second sheet (views2/, sheet2.jpg): the first mesh was a hollow faceless fur shell, see rejected.",
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     },
     {
       "id": "pinsir",
@@ -104,7 +105,8 @@
       "triangles": 900,
       "textureSize": 512,
       "facingYawPi": -0.5,
-      "faceLimit": 1000
+      "faceLimit": 1000,
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     },
     {
       "id": "tangela",
@@ -122,7 +124,8 @@
       "textureSize": 512,
       "facingYawPi": -0.5,
       "faceLimit": 1000,
-      "note": "Decimated to 1300, not 900: at 900 the vines tore UV seams into white flecks."
+      "note": "Decimated to 1300, not 900: at 900 the vines tore UV seams into white flecks.",
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     },
     {
       "id": "haunter",

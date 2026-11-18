@@ -165,7 +165,7 @@ export function updateAreas(ctx: Ctx, dt: number): void {
 function strikeZone(ctx: Ctx, a: Area, owner: Player, zone: Zone, dt: number): void {
   const { world } = ctx;
   const ground = heightAt(world.map.terrain, a.x, a.z);
-  zone.track?.(world, a, ground);
+  zone.track?.(world, a, ground, owner);
   if (a.delay > 0) {
     a.delay -= dt;
     return;

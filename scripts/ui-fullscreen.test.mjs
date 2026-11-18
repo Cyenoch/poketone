@@ -92,3 +92,58 @@ test("fullscreen exit cancels the initial gesture path; only restore re-enters a
     }
   }
 });
+
+test("a fine pointer still gets the portrait key: it enters, locks and reports a refusal", async () => {
+  const keys = ["window", "document", "navigator", "screen", "matchMedia"];
+  const saved = keys.map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]);
+  const page = new EventTarget();
+  const win = new EventTarget();
+  let requests = 0,
+    locks = 0,
+    refuse = false;
+  Object.assign(page, {
+    fullscreenEnabled: true,
+    fullscreenElement: null,
+    documentElement: {
+      async requestFullscreen() {
+        requests++;
+        if (refuse) throw new TypeError("not granted");
+        page.fullscreenElement = {};
+        page.dispatchEvent(new Event("fullscreenchange"));
+      },
+    },
+  });
+  const globals = {
+    window: win,
+    document: page,
+    navigator: {},
+    screen: { orientation: { lock: async () => void locks++ } },
+    matchMedia: () => ({ matches: false }),
+  };
+  for (const [key, value] of Object.entries(globals))
+    Object.defineProperty(globalThis, key, { configurable: true, value });
+  const { warn } = console;
+  console.warn = () => {};
+  try {
+    // A fresh module: the page-lifetime owner above already read a coarse pointer.
+    const landscape = await import("../src/platform/landscape.ts?fine-pointer");
+    landscape.requestLandscapeOnFirstTap();
+    win.dispatchEvent(new Event("touchend"));
+    assert.equal(requests, 0, "only a touch page asks on its own");
+    assert.equal(landscape.needsFullscreen(), false);
+    assert.equal(landscape.canEnterFullscreen(), true, "the key is offered to a mouse page");
+    refuse = true;
+    assert.equal(await landscape.enterLandscape(), false, "a refusal is reported to the key");
+    assert.equal(locks, 0);
+    refuse = false;
+    assert.equal(await landscape.enterLandscape(), true);
+    assert.deepEqual([requests, locks], [2, 1], "entered fullscreen, then the landscape lock");
+    assert.equal(landscape.canEnterFullscreen(), false);
+  } finally {
+    console.warn = warn;
+    for (const [key, descriptor] of saved) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+      else delete globalThis[key];
+    }
+  }
+});

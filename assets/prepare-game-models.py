@@ -42,26 +42,26 @@ MODELS = {
     "blastoise": ("characters/blastoise/animations/**/model.glb", "blastoise.glb", None, 1024),
     "raichu": ("characters/raichu/blender/model.glb", "raichu.glb", None, 1024),
     "caterpie": ("enemies/caterpie/retexture/**/model.glb", "enemies/caterpie.glb", 900, 512),
-    "weedle": ("enemies/weedle/generation/model.glb", "enemies/weedle.glb", 900, 512),
+    "weedle": ("enemies/weedle/generation-v2/**/model.glb", "enemies/weedle.glb", 900, 512),
     "rattata": ("enemies/rattata/generation/**/model.glb", "enemies/rattata.glb", 900, 512),
-    "pidgey": ("enemies/pidgey/generation/**/model.glb", "enemies/pidgey.glb", 900, 512),
+    "pidgey": ("enemies/pidgey/generation-v2/**/model.glb", "enemies/pidgey.glb", 1300, 512),
     "oddish": ("enemies/oddish/generation/**/model.glb", "enemies/oddish.glb", 900, 512),
     "scyther": ("enemies/scyther/generation/**/model.glb", "enemies/scyther.glb", None, 1024),
     "spearow": ("enemies/spearow/generation/**/model.glb", "enemies/spearow.glb", 900, 512),
     "zubat": ("enemies/zubat/generation/**/model.glb", "enemies/zubat.glb", 900, 512),
     "ekans": ("enemies/ekans/generation/**/model.glb", "enemies/ekans.glb", 900, 512),
     "paras": ("enemies/paras/generation/**/model.glb", "enemies/paras.glb", 900, 512),
-    "geodude": ("enemies/geodude/generation/**/model.glb", "enemies/geodude.glb", 900, 512),
+    "geodude": ("enemies/geodude/generation-v2/**/model.glb", "enemies/geodude.glb", 1200, 512),
     "venonat": ("enemies/venonat/generation/**/model.glb", "enemies/venonat.glb", 900, 512),
-    "metapod": ("enemies/metapod/generation/**/model.glb", "enemies/metapod.glb", 900, 512),
-    "kakuna": ("enemies/kakuna/generation/**/model.glb", "enemies/kakuna.glb", 900, 512),
-    "nidoran-f": ("enemies/nidoran-f/generation/**/model.glb", "enemies/nidoran-f.glb", 900, 512),
+    "metapod": ("enemies/metapod/generation-v2/**/model.glb", "enemies/metapod.glb", 1200, 512),
+    "kakuna": ("enemies/kakuna/generation-v2/**/model.glb", "enemies/kakuna.glb", 900, 512),
+    "nidoran-f": ("enemies/nidoran-f/generation-v2/**/model.glb", "enemies/nidoran-f.glb", 900, 512),
     "nidoran-m": ("enemies/nidoran-m/generation/**/model.glb", "enemies/nidoran-m.glb", 900, 512),
     "voltorb": ("enemies/voltorb/generation/**/model.glb", "enemies/voltorb.glb", 900, 512),
-    "vulpix": ("enemies/vulpix/generation/**/model.glb", "enemies/vulpix.glb", 900, 512),
-    "growlithe": ("enemies/growlithe/generation/**/model.glb", "enemies/growlithe.glb", 900, 512),
+    "vulpix": ("enemies/vulpix/generation-v2/**/model.glb", "enemies/vulpix.glb", 1300, 512),
+    "growlithe": ("enemies/growlithe/generation-v2/**/model.glb", "enemies/growlithe.glb", 900, 512),
     "butterfree": ("enemies/butterfree/generation/**/model.glb", "enemies/butterfree.glb", 900, 512),
-    "beedrill": ("enemies/beedrill/generation/**/model.glb", "enemies/beedrill.glb", 900, 512),
+    "beedrill": ("enemies/beedrill/generation-v2/**/model.glb", "enemies/beedrill.glb", 900, 512),
     "raticate": ("enemies/raticate/generation/**/model.glb", "enemies/raticate.glb", 900, 512),
     "pidgeotto": ("enemies/pidgeotto/generation/**/model.glb", "enemies/pidgeotto.glb", 900, 512),
     "gloom": ("enemies/gloom/generation/**/model.glb", "enemies/gloom.glb", 900, 512),
@@ -72,7 +72,7 @@ MODELS = {
     "vileplume": ("enemies/vileplume/generation/**/model.glb", "enemies/vileplume.glb", 900, 512),
     "graveler": ("enemies/graveler/generation/**/model.glb", "enemies/graveler.glb", 900, 512),
     "electrode": ("enemies/electrode/generation/**/model.glb", "enemies/electrode.glb", 900, 512),
-    "golem": ("enemies/golem/generation/**/model.glb", "enemies/golem.glb", 900, 512),
+    "golem": ("enemies/golem/generation-v2/**/model.glb", "enemies/golem.glb", 1600, 512),
     # Zone content P1, models 1–10: multiview Tripo meshes.
     "nidorina": ("enemies/nidorina/generation/**/model.glb", "enemies/nidorina.glb", 900, 512),
     "poliwag": ("enemies/poliwag/generation/**/model.glb", "enemies/poliwag.glb", 900, 512),
@@ -83,15 +83,15 @@ MODELS = {
     "nidorino": ("enemies/nidorino/generation/**/model.glb", "enemies/nidorino.glb", 900, 512),
     "magnemite": ("enemies/magnemite/generation/**/model.glb", "enemies/magnemite.glb", 900, 512),
     "poliwhirl": ("enemies/poliwhirl/generation/**/model.glb", "enemies/poliwhirl.glb", 900, 512),
-    "exeggcute": ("enemies/exeggcute/generation/**/model.glb", "enemies/exeggcute.glb", 900, 512),
+    "exeggcute": ("enemies/exeggcute/generation-v2/**/model.glb", "enemies/exeggcute.glb", 1300, 512),
     # Zone content P1, models 11–20; Pinsir and Nidoking guard forest zones 2 and 3, undecimated like Scyther.
     # Tangela's vines and Weezing's craters tear their UV seams into white flecks at 900 triangles.
-    "primeape": ("enemies/primeape/generation/**/model.glb", "enemies/primeape.glb", 900, 512),
+    "primeape": ("enemies/primeape/generation-v2/**/model.glb", "enemies/primeape.glb", 1300, 512),
     "pinsir": ("enemies/pinsir/generation/**/model.glb", "enemies/pinsir.glb", None, 1024),
     "gastly": ("enemies/gastly/generation/**/model.glb", "enemies/gastly.glb", 900, 512),
     "koffing": ("enemies/koffing/generation/**/model.glb", "enemies/koffing.glb", 900, 512),
-    "clefairy": ("enemies/clefairy/generation/**/model.glb", "enemies/clefairy.glb", 900, 512),
-    "tangela": ("enemies/tangela/generation/**/model.glb", "enemies/tangela.glb", 1300, 512),
+    "clefairy": ("enemies/clefairy/generation-v3/**/model.glb", "enemies/clefairy.glb", 2200, 512),
+    "tangela": ("enemies/tangela/generation-v3/**/model.glb", "enemies/tangela.glb", 2600, 512),
     "haunter": ("enemies/haunter/generation/**/model.glb", "enemies/haunter.glb", 900, 512),
     "weezing": ("enemies/weezing/generation/**/model.glb", "enemies/weezing.glb", 1300, 512),
     "exeggutor": ("enemies/exeggutor/generation/**/model.glb", "enemies/exeggutor.glb", 900, 512),
@@ -103,7 +103,7 @@ MODELS = {
     "meowth": ("enemies/meowth/generation/**/model.glb", "enemies/meowth.glb", 900, 512),
     "ponyta": ("enemies/ponyta/generation/**/model.glb", "enemies/ponyta.glb", 900, 512),
     "cubone": ("enemies/cubone/generation/**/model.glb", "enemies/cubone.glb", 1300, 512),
-    "tauros": ("enemies/tauros/generation/**/model.glb", "enemies/tauros.glb", None, 512),
+    "tauros": ("enemies/tauros/generation-v2/**/model.glb", "enemies/tauros.glb", None, 512),
     "sandslash": ("enemies/sandslash/generation/**/model.glb", "enemies/sandslash.glb", None, 1024),
     "machop": ("enemies/machop/generation/**/model.glb", "enemies/machop.glb", 1300, 512),
     "hitmonlee": ("enemies/hitmonlee/generation/**/model.glb", "enemies/hitmonlee.glb", 900, 512),
@@ -111,7 +111,7 @@ MODELS = {
     # Zone content P2, models 30–37; Marowak and Aerodactyl guard desert zones 2 and 3, undecimated like Scyther.
     # Marowak's multiview mesh came back with a blank grey texture; it ships Tripo's retexture of the same mesh.
     "dodrio": ("enemies/dodrio/generation/**/model.glb", "enemies/dodrio.glb", 1300, 512),
-    "onix": ("enemies/onix/generation/**/model.glb", "enemies/onix.glb", 900, 512),
+    "onix": ("enemies/onix/generation-v2/**/model.glb", "enemies/onix.glb", 900, 512),
     "marowak": ("enemies/marowak/generation/retexture/**/model.glb", "enemies/marowak.glb", None, 1024),
     "rapidash": ("enemies/rapidash/generation/**/model.glb", "enemies/rapidash.glb", 1300, 512),
     "kabutops": ("enemies/kabutops/generation/**/model.glb", "enemies/kabutops.glb", 1300, 512),
@@ -123,7 +123,7 @@ MODELS = {
     "krabby": ("enemies/krabby/generation/**/model.glb", "enemies/krabby.glb", 1300, 512),
     "tentacool": ("enemies/tentacool/generation/**/model.glb", "enemies/tentacool.glb", 900, 512),
     "omanyte": ("enemies/omanyte/generation/**/model.glb", "enemies/omanyte.glb", 1300, 512),
-    "kabuto": ("enemies/kabuto/generation/**/model.glb", "enemies/kabuto.glb", 1300, 512),
+    "kabuto": ("enemies/kabuto/generation-v2/**/model.glb", "enemies/kabuto.glb", 1300, 512),
     "golduck": ("enemies/golduck/generation/**/model.glb", "enemies/golduck.glb", 900, 512),
     "kingler": ("enemies/kingler/generation/**/model.glb", "enemies/kingler.glb", None, 1024),
     "seadra": ("enemies/seadra/generation/**/model.glb", "enemies/seadra.glb", 900, 512),
@@ -166,16 +166,13 @@ MODELS = {
     # Zone content P6, models 75–81; Magmar, Arcanine and Dragonite guard volcano zones 1–3, undecimated like Scyther.
     # Dugtrio's faces, Ninetales's tails and Flareon's face tear UV seams into white flecks at 900 triangles.
     "dugtrio": ("enemies/dugtrio/generation/**/model.glb", "enemies/dugtrio.glb", 1300, 512),
-    "ninetales": ("enemies/ninetales/generation/**/model.glb", "enemies/ninetales.glb", 1300, 512),
+    "ninetales": ("enemies/ninetales/generation-v2/**/model.glb", "enemies/ninetales.glb", 1300, 512),
     "hitmonchan": ("enemies/hitmonchan/generation/**/model.glb", "enemies/hitmonchan.glb", 900, 512),
     "flareon": ("enemies/flareon/generation/**/model.glb", "enemies/flareon.glb", 1300, 512),
     "magmar": ("enemies/magmar/generation/**/model.glb", "enemies/magmar.glb", None, 1024),
     "arcanine": ("enemies/arcanine/generation/**/model.glb", "enemies/arcanine.glb", None, 1024),
     "dragonite": ("enemies/dragonite/generation/**/model.glb", "enemies/dragonite.glb", None, 1024),
-    "tree": ("props/tree/blender/model.glb", "props/tree.glb", 650, 512),
     "pine": ("props/pine/generation/**/model.glb", "props/pine.glb", 600, 512),
-    "rock": ("props/rock/generation/**/model.glb", "props/rock.glb", 500, 512),
-    "bush": ("props/bush/blender/model.glb", "props/bush.glb", 500, 512),
     "palm": ("props/palm/blender/model.glb", "props/palm.glb", 1000, 512),
     # Stations on the map's building pads (Hypno forgets moves, Bill's machine fuses them).
     "hypno": ("props/hypno/generation/**/model.glb", "props/hypno.glb", 1200, 512),
@@ -185,14 +182,6 @@ MODELS = {
     "magikarp": ("enemies/magikarp/blender/model.glb", "enemies/magikarp.glb", 900, 512),
     "charizard-x": ("characters/charizard-x/blender/model.glb", "charizard-x.glb", None, 1024),
     "charizard-y": ("characters/charizard-y/blender/model.glb", "charizard-y.glb", None, 1024),
-    "gengar-altar": ("field-sites/gengar-altar/generation/tripo-out/model.glb", "field-sites/gengar-altar.glb", None, 512),
-    "honey-tree": ("field-sites/honey-tree/blender/model.glb", "field-sites/honey-tree.glb", None, 256),
-    "item-ball": ("field-sites/item-ball/blender/model.glb", "field-sites/item-ball.glb", None, 256),
-    "fishing": ("field-sites/fishing/blender/model.glb", "field-sites/fishing.glb", None, 256),
-    "fossil": ("field-sites/fossil/blender/model.glb", "field-sites/fossil.glb", None, 256),
-    "raid-den": ("field-sites/raid-den/blender/model.glb", "field-sites/raid-den.glb", None, 256),
-    "spring": ("field-sites/spring/blender/model.glb", "field-sites/spring.glb", None, 256),
-    "egg": ("field-sites/egg/blender/model.glb", "field-sites/egg.glb", None, 256),
 }
 
 
@@ -209,13 +198,21 @@ SEAM_REPAIRS = {
     "poliwag", "poliwhirl", "poliwrath", "ponyta", "primeape", "psyduck",
     "rapidash", "rattata", "rhydon", "rhyhorn", "sandshrew", "seadra",
     "seaking", "seel", "snorlax", "tangela", "tauros", "tentacool",
-    "venonat", "vileplume", "weezing", "heracross", "munchlax", "magikarp",
+    "venonat", "vileplume", "vulpix", "weezing", "heracross", "munchlax", "magikarp",
 }
 
 
 # Scripted S5–S7 families share the same publishing/colour pipeline.
 for prop in json.loads((ASSETS / "props/map-props.json").read_text()):
     MODELS[prop] = (f"props/{prop}/blender/model.glb", f"props/{prop}.glb", None, 256)
+# Tripo map props and landmarks, cut and footprint-fitted by props/compose-tripo-props.py.
+for prop in json.loads((ASSETS / "props/tripo-props.json").read_text()):
+    MODELS[prop] = (f"props/{prop}/blender/model.glb", f"props/{prop}.glb", None, 512)
+
+# Field sites publish from their catalog, the one record of each site's source, triangles and texture.
+for name, model in json.loads((ASSETS / "field-models.provenance.json").read_text())["models"].items():
+    if model.get("build") and model["build"][0].startswith("field-sites/"):
+        MODELS[name] = tuple(model["build"])
 
 # Prefix build keys because these species also have independent swarm assets.
 for form in ("gastly", "haunter", "gengar", "dratini", "dragonair", "dragonite", "machop", "machoke", "machamp",
@@ -516,14 +513,14 @@ def merged_islands(mesh):
     return sorted(pieces.values(), key=len, reverse=True)
 
 
-def drop_islands(behind):
-    """Delete loose pieces lying wholly behind x = `behind` (the body's back): Tripo's multiview Raichu builds its
-    tail's bolt as a sheet floating behind the head, with no tail joining it."""
+def drop_islands(stray):
+    """Delete loose pieces whose every vertex satisfies `stray`: Tripo's multiview Raichu builds its tail's bolt as a
+    sheet floating behind the head, and Tauros a tail tuft floating over its back, with nothing joining them."""
     mesh_obj = next(o for o in bpy.context.scene.objects if o.type == "MESH" and not o.name.startswith("Icosphere"))
     mesh = mesh_obj.data
-    doomed = [i for piece in merged_islands(mesh)[1:] if all(mesh.vertices[i].co.x < behind for i in piece) for i in piece]
+    doomed = [i for piece in merged_islands(mesh)[1:] if all(stray(mesh.vertices[i].co) for i in piece) for i in piece]
     if not doomed:
-        raise RuntimeError(f"{mesh_obj.name}: no loose piece behind x = {behind}")
+        raise RuntimeError(f"{mesh_obj.name}: no stray loose piece")
     bm = bmesh.new()
     bm.from_mesh(mesh)
     bm.verts.ensure_lookup_table()
@@ -597,47 +594,6 @@ def repair_source_parts(name):
         for part in parts[1:]:
             for i in part:
                 mesh.vertices[i].co += Vector((0.026, 0, 0.008))
-
-
-def repair_tauros_tail():
-    """Restore the missing central tail stalk using the existing dark tail atlas texel."""
-    obj = next(o for o in bpy.context.scene.objects if o.type == "MESH")
-    # Close the short breaks in the two outer tail strands, without moving the tufts.
-    pieces = merged_islands(obj.data)
-    if len(pieces) != 6:
-        raise RuntimeError(f"tauros: expected six source pieces, found {len(pieces)}")
-    for piece in pieces:
-        verts = [obj.data.vertices[i] for i in piece]
-        if all(v.co.x < -0.28 for v in verts) and max(v.co.z for v in verts) < 0.11:
-            centre = sum((v.co for v in verts), Vector()) / len(verts)
-            for v in verts:
-                for axis in (0, 2):
-                    v.co[axis] = centre[axis] + (v.co[axis] - centre[axis]) * 1.14
-    bm = bmesh.new()
-    bm.from_mesh(obj.data)
-    uv = bm.loops.layers.uv.active
-    # From rump through the surviving central stem to the isolated upper tuft.
-    path = [(-0.265, 0, 0.08), (-0.30, 0, 0.22), (-0.365, 0, 0.30), (-0.445, 0, 0.345)]
-    anchor = min(bm.verts, key=lambda v: (v.co - Vector((-0.275, -0.04, 0.242))).length)
-    texel = anchor.link_loops[0][uv].uv.copy()
-    rings = []
-    for i, p in enumerate(path):
-        tangent = Vector(path[min(i+1, len(path)-1)]) - Vector(path[max(i-1, 0)])
-        a = tangent.normalized().cross(Vector((0, 1, 0))).normalized() * 0.009
-        b = tangent.normalized().cross(a)
-        rings.append([bm.verts.new(Vector(p) + a*math.cos(k*math.tau/5) + b*math.sin(k*math.tau/5)) for k in range(5)])
-    faces = []
-    for left, right in zip(rings, rings[1:]):
-        for k in range(5):
-            faces.append(bm.faces.new((left[k], left[(k+1)%5], right[(k+1)%5], right[k])))
-    faces += [bm.faces.new(list(reversed(rings[0]))), bm.faces.new(rings[-1])]
-    for f in faces:
-        for loop in f.loops:
-            loop[uv].uv = texel
-    bmesh.ops.recalc_face_normals(bm, faces=faces)
-    bmesh.ops.triangulate(bm, faces=faces)
-    bm.to_mesh(obj.data)
-    bm.free()
 
 
 def drop_gloom_speck():
@@ -838,11 +794,62 @@ def add_tail(path, radius, bolt, bolt_thickness, tail_rgb, bolt_rgb):
     print(f"add_tail: {len(added)} vertices")
 
 
-def recolour(hue_lo, hue_hi, min_saturation, rgb, max_saturation=1.0, min_value=0.0):
+def raise_wings(root, angle, blend=0.08):
+    """Fold flat side wings up about the body's long axis: vertices beyond `root` (lateral distance from the
+    centreline) turn up by `angle` degrees, eased in over `blend` so the wing roots stay joined. The view scales
+    an enemy by its height, so a flat wingspan would draw several times as wide as its peers."""
+    turn = math.radians(angle)
+    for obj in [o for o in bpy.context.scene.objects if o.type == "MESH"]:
+        world, local = obj.matrix_world, obj.matrix_world.inverted()
+        for vertex in obj.data.vertices:
+            p = world @ vertex.co
+            out = abs(p.y) - root
+            if out <= 0:
+                continue
+            ease = min(1.0, out / blend)
+            a = turn * ease * ease * (3 - 2 * ease)
+            p.y = math.copysign(root + out * math.cos(a), p.y)
+            p.z += out * math.sin(a)
+            vertex.co = local @ p
+
+
+def region_texels(image, where):
+    """Texels of `image` covered by the UV triangles of faces whose centre satisfies `where(x, z)`, in the mesh's
+    bounds normalised by its height (x: Tripo's forward axis from the back, z: up from the feet)."""
+    w, h = image.size
+    mask = np.zeros((h, w), dtype=bool)
+    for obj in [o for o in bpy.context.scene.objects if o.type == "MESH"]:
+        mesh = obj.data
+        corners = np.array([obj.matrix_world @ v.co for v in mesh.vertices])
+        lo, size = corners.min(0), corners.max(0)[2] - corners.min(0)[2]
+        uv = mesh.uv_layers.active.data
+        mesh.calc_loop_triangles()
+        for tri in mesh.loop_triangles:
+            centre = (corners[list(tri.vertices)].mean(0) - lo) / size
+            if not where(centre[0], centre[2]):
+                continue
+            t = np.array([uv[i].uv for i in tri.loops]) * (w, h)
+            x0, y0 = np.floor(t.min(0)).astype(int)
+            x1, y1 = np.ceil(t.max(0)).astype(int)
+            gx, gy = np.meshgrid(np.arange(max(x0, 0), min(x1 + 1, w)), np.arange(max(y0, 0), min(y1 + 1, h)))
+            p = np.stack([gx + 0.5, gy + 0.5], -1)
+            (ax, ay), (bx, by), (cx, cy) = t
+            d = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy)
+            if abs(d) < 1e-9:
+                continue
+            l1 = ((by - cy) * (p[..., 0] - cx) + (cx - bx) * (p[..., 1] - cy)) / d
+            l2 = ((cy - ay) * (p[..., 0] - cx) + (ax - cx) * (p[..., 1] - cy)) / d
+            inside = (l1 >= -0.02) & (l2 >= -0.02) & (1 - l1 - l2 >= -0.02)
+            mask[gy[inside], gx[inside]] = True
+    return mask.ravel()
+
+
+def recolour(hue_lo, hue_hi, min_saturation, rgb, max_saturation=1.0, min_value=0.0, where=None, max_value=1.0):
     """Repaint base-colour texels whose hue lies in [hue_lo, hue_hi) degrees (wrapping past 360 when hue_lo > hue_hi)
     with `rgb`, keeping each texel's brightness relative to the band's median, so baked shading survives. The
-    saturation and value limits keep a pale tint apart from a strong or dark colour of the same hue. For colours
-    Tripo's own reference image got wrong, where a re-texture would repeat the mistake."""
+    saturation and value limits keep a pale tint apart from a strong or dark colour of the same hue; `where` limits
+    it to a body region (`region_texels`). For colours Tripo's own reference image got wrong, where a re-texture
+    would repeat the mistake."""
     target = np.array(rgb, dtype=np.float32)
     for image in bpy.data.images:
         px = np.empty(image.size[0] * image.size[1] * 4, dtype=np.float32)
@@ -855,7 +862,9 @@ def recolour(hue_lo, hue_hi, min_saturation, rgb, max_saturation=1.0, min_value=
         hue = np.where(high == r, ((g - b) / span) % 6, np.where(high == g, (b - r) / span + 2, (r - g) / span + 4)) * 60
         in_hue = (hue >= hue_lo) & (hue < hue_hi) if hue_lo < hue_hi else (hue >= hue_lo) | (hue < hue_hi)
         saturation = span / (high + 1e-6)
-        band = in_hue & (saturation > min_saturation) & (saturation < max_saturation) & (high > min_value)
+        band = in_hue & (saturation > min_saturation) & (saturation <= max_saturation) & (high > min_value) & (high <= max_value)
+        if where is not None:
+            band &= region_texels(image, where)
         if not band.any():
             raise RuntimeError(f"{image.name}: no texels in hue band {hue_lo}–{hue_hi}")
         shade = high[band] / np.median(high[band])
@@ -897,16 +906,61 @@ FIXES = {
     "pikachu": (lambda: symmetrise(0.0), lambda: open_arms(0.75)),
     "charizard": (lambda: symmetrise(0.25), lambda: open_arms(ARMS_OPEN)),
     "raichu": (
-        lambda: drop_islands(-0.12),
+        lambda: drop_islands(lambda co: co.x < -0.12),
         lambda: symmetrise(0.0),
         lambda: open_arms(0.75),
         lambda: add_tail(RAICHU_TAIL, 0.022, RAICHU_BOLT, 0.025, (0.07, 0.06, 0.06), (0.98, 0.80, 0.16)),
     ),
     "exeggutor": (lambda: drop_sheets(0.01, 0.1),),
-    "tangela": (lambda: drop_sheets(0.01, 0.15),),
+    "tauros": (lambda: drop_islands(lambda co: co.z > 0.27 and co.x > -0.2),),
     "omanyte": (repair_omanyte_eye,),
     "gloom": (drop_gloom_speck,),
     "muk": (rejoin_muk_hand,),
+    "venomoth": (lambda: raise_wings(0.15, 55),),
+    # Tripo painted Ninetales lemon yellow; its artwork is a pale cream gold.
+    "ninetales": (lambda: recolour(38, 70, 0.25, (0.96, 0.9, 0.66)),),
+    # Tripo textured Graveler's rock body near-black against its artwork and its player form.
+    "graveler": (lambda: recolour(0, 360, -1, (0.66, 0.63, 0.56), max_saturation=0.3),),
+    # The player Golem's head and limbs came out a warm grey beside the shell's green-grey; its artwork's skin is tan.
+    "player-golem": (lambda: recolour(330, 30, 0.03, (0.78, 0.62, 0.42), max_saturation=0.2, min_value=0.42),),
+    # Tripo painted these purple and blue bodies a saturated blue-violet; their artwork is a softer, warmer purple
+    # (Zubat's and Oddish's bodies a mid blue, Nidoran's a pink lilac).
+    "ekans": (lambda: recolour(240, 300, 0.3, (0.6, 0.36, 0.72)),),
+    "arbok": (lambda: recolour(250, 290, 0.3, (0.56, 0.38, 0.62)),),
+    "venonat": (lambda: recolour(240, 280, 0.3, (0.6, 0.42, 0.7)),),
+    "rattata": (lambda: recolour(255, 300, 0.25, (0.62, 0.48, 0.7)),),
+    "nidoran-m": (lambda: recolour(250, 300, 0.15, (0.78, 0.55, 0.78)),),
+    "oddish": (lambda: recolour(180, 240, 0.5, (0.3, 0.4, 0.68)),),
+    "zubat": (
+        lambda: recolour(240, 290, 0.4, (0.56, 0.34, 0.74)),
+        lambda: recolour(195, 240, 0.7, (0.26, 0.48, 0.84)),
+    ),
+    # Kabuto's shell came out a bright orange; its artwork is a deeper brown.
+    "kabuto": (lambda: recolour(20, 40, 0.4, (0.62, 0.4, 0.22)),),
+    # Aerodactyl came out flat grey; its artwork is a light grey-violet with purple wing membranes.
+    "aerodactyl": (
+        lambda: recolour(250, 310, 0.15, (0.58, 0.46, 0.7)),
+        lambda: recolour(0, 360, -1, (0.68, 0.62, 0.76), max_saturation=0.15, max_value=0.85),
+    ),
+    # Electrode's white upper half came out light grey; Seaking's white body and fins grey with a dull red.
+    "electrode": (lambda: recolour(0, 360, -1, (0.97, 0.97, 0.96), max_saturation=0.18, min_value=0.55),),
+    "seaking": (
+        lambda: recolour(0, 360, -1, (0.95, 0.95, 0.94), max_saturation=0.2, min_value=0.45, max_value=0.8),
+        lambda: recolour(0, 360, -1, (0.97, 0.96, 0.94), max_saturation=0.2, min_value=0.5),
+        lambda: recolour(350, 32, 0.35, (0.98, 0.5, 0.18)),
+    ),
+    # Nidorina's pale specks over the blue body.
+    "nidorina": (lambda: recolour(170, 250, -1, (0.62, 0.75, 0.8), max_saturation=0.15, min_value=0.5),),
+    # Ponyta's and Rapidash's cream body came out tan, with flame orange painted over the body; flames belong to the
+    # mane and tail (and Rapidash's ankles), outside the body region.
+    "ponyta": (
+        lambda: recolour(25, 65, 0.12, (1.0, 0.95, 0.78), max_saturation=0.6, min_value=0.5),
+        lambda: recolour(0, 50, 0.3, (1.0, 0.95, 0.78), where=lambda x, z: z < 0.45 or (x > 0.32 and z < 0.55) or (x > 0.72 and z < 0.62)),
+    ),
+    "rapidash": (
+        lambda: recolour(25, 65, 0.12, (1.0, 0.95, 0.78), max_saturation=0.6, min_value=0.5),
+        lambda: recolour(5, 50, 0.6, (1.0, 0.95, 0.78), where=lambda x, z: 0.3 < x < 0.68 and 0.3 < z < 0.6),
+    ),
 }
 
 
@@ -929,8 +983,6 @@ def build(name):
         drop_kadabra_spoon()
     if name in ("rapidash", "seaking", "electabuzz", "rattata", "nidoking"):
         repair_source_parts(name)
-    if name == "tauros":
-        repair_tauros_tail()
     if target is not None and before > target:
         for obj in meshes:
             if any(m.type == "ARMATURE" for m in obj.modifiers):

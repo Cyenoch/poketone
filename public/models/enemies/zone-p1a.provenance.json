@@ -32,7 +32,8 @@
       "bytes": 90940,
       "triangles": 900,
       "textureSize": 512,
-      "facingYawPi": -0.5
+      "facingYawPi": -0.5,
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     },
     {
       "id": "poliwag",
@@ -176,7 +177,8 @@
       "bytes": 86460,
       "triangles": 900,
       "textureSize": 512,
-      "facingYawPi": -0.5
+      "facingYawPi": -0.5,
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     }
   ]
 }

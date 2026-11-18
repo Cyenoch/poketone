@@ -1,24 +1,23 @@
 import { ZONE_GUARDIAN } from "../sim/content/params/late-zones";
 import {
-  BoxGeometry,
   DynamicDrawUsage,
   ExtrudeGeometry,
   Group,
-  IcosahedronGeometry,
   InstancedMesh,
   MeshLambertMaterial,
   Object3D,
-  OctahedronGeometry,
   Shape,
   type BufferGeometry,
   type Material,
   type ShaderMaterial,
 } from "three";
 import { buffCue, healCue, itemBurst } from "./vfx/items";
-import { trainerAssist } from "./vfx/assist";
+import { berryGeometry, candyGeometry, chestGeometry } from "./vfx/pickups";
+import { assistAura, trainerAssist } from "./vfx/assist";
 import { TRAINER } from "../sim/content/params/trainers";
 import { archetypes } from "../sim/archetypes/index";
 import { moves, type MoveId } from "../sim/content/moves";
+import { enemies as enemyDefs } from "../sim/content/enemies";
 import type { ReactionId } from "../sim/content/reactions";
 import { formOf } from "../sim/evolution";
 import { CHEST } from "../sim/content/params/combat";
@@ -37,6 +36,8 @@ import type { Hazard, Player, PlayerId } from "../sim/state/entities";
 import type { AssistItem } from "../sim/content/trainers";
 import type { RunEvent } from "../sim/state/events";
 import * as common from "./vfx/common";
+import * as playerStates from "./vfx/playerStates";
+import { eliteMark, shinyMark } from "./vfx/enemyMarks";
 import * as skills from "./vfx/enemySkills";
 import * as zone from "./vfx/zoneSkills";
 import * as desert from "./vfx/desertSkills";
@@ -73,7 +74,15 @@ import {
 } from "./vfx/fire";
 import { flame, uploadRange } from "./vfx/gl";
 import { megaEvolve } from "./vfx/mega";
-import { Echoes, seedOf, type AreaLook, type Fx, type Ground, type ShotLook } from "./vfx/fx";
+import {
+  Echoes,
+  seedOf,
+  type AreaLook,
+  type Fx,
+  type Ground,
+  type Mouth,
+  type ShotLook,
+} from "./vfx/fx";
 import { razorLeaf, sleepPowder, solarBeam, vineWhip } from "./vfx/grass";
 import { Ribbons } from "./vfx/ribbons";
 import { Sprites } from "./vfx/sprites";
@@ -179,14 +188,15 @@ interface ShotTrack {
 const LAUNCH_BLEND = 0.15;
 
 /** A drawn player's muzzle this frame (head socket), set by the run view before `update`. */
-export interface Muzzle {
-  x: number;
-  y: number;
-  z: number;
-  /** Facing of the model on the ground plane. */
-  faceX: number;
-  faceZ: number;
-}
+export type Muzzle = Mouth;
+
+type AssistBuff = Exclude<AssistItem, "superPotion">;
+/** Every timed assist buff, listed once so the per-frame aura loop allocates nothing. */
+const ASSIST_BUFFS = Object.keys({
+  xSpeed: true,
+  direHit: true,
+  fullHeal: true,
+} satisfies Record<AssistBuff, true>) as AssistBuff[];
 
 interface AreaTrack {
   id: number;
@@ -214,6 +224,8 @@ type PlayerEvent = Extract<
       | "dash"
       | "level"
       | "revive"
+      | "bond-endure"
+      | "bond-cure"
       | "player-hit"
       | "drain"
       | "evolve"
@@ -233,6 +245,8 @@ const RAINBOW_SPAN = 1.8;
 
 const dummy = new Object3D();
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+/** Elites and shinies further than this from the camera's subject are off screen (status.ts). */
+const MARK_REACH = 17;
 
 /** Drops tracks not seen this frame (their sim object is gone). */
 function sweep<T extends { id: number; seen: number }>(
@@ -291,6 +305,8 @@ export class Vfx {
   private readonly fx: Fx;
   /** Players whose mega shell broke this frame: the ceremony's key frame, where its sound starts. */
   readonly megaShatters: PlayerId[] = [];
+  /** Players whose shield held last frame: the frame it empties draws the break. */
+  private readonly shielded = new Set<PlayerId>();
   /** Trainer items that popped this frame (`late`: seconds past the pop), where their sound hits. */
   readonly assistPops: {
     player: PlayerId;
@@ -326,6 +342,8 @@ export class Vfx {
   private readonly auras: CastAura[] = [];
   private readonly uniforms = { uTime: { value: 0 } };
   private frame = 0;
+  /** Contact flashes drawn since the last frame (`common.hit` thins them out in a crowd). */
+  private hits = 0;
 
   constructor(ground: Ground, stage: StageId) {
     this.tells = new Tells();
@@ -358,18 +376,18 @@ export class Vfx {
     ];
     layers.forEach((mesh, order) => (mesh.renderOrder = order + 1));
     this.candies = instanced(
-      new OctahedronGeometry(0.22, 0),
-      new MeshLambertMaterial({ color: "#59c8ff", emissive: "#1f6fb0" }),
+      candyGeometry(),
+      new MeshLambertMaterial({ vertexColors: true, flatShading: true, emissive: "#1f6fb0" }),
       600,
     );
     this.berries = instanced(
-      new IcosahedronGeometry(0.28, 0),
-      new MeshLambertMaterial({ color: "#3d7bf0", emissive: "#173a80" }),
+      berryGeometry(),
+      new MeshLambertMaterial({ vertexColors: true, flatShading: true, emissive: "#173a80" }),
       40,
     );
     this.chests = instanced(
-      new BoxGeometry(0.8, 0.6, 0.6),
-      new MeshLambertMaterial({ color: "#ffd45b", emissive: "#6b4a00" }),
+      chestGeometry(),
+      new MeshLambertMaterial({ vertexColors: true, flatShading: true, emissive: "#3a2400" }),
       20,
     );
     this.stardust = instanced(
@@ -385,14 +403,11 @@ export class Vfx {
     switch (event.t) {
       case "hit":
         if (event.confirmedContact || event.move === "hypnosis") break;
-        common.hit(fx, event.x, event.z, event.crit);
+        common.hit(fx, event.x, event.z, event.crit, event.type, this.hits++);
         break;
       case "contact":
         if (event.move === "hypnosis") break;
-        common.hit(fx, event.x, event.z, false);
-        break;
-      case "death":
-        common.death(fx, event.x, event.z, event.elite);
+        common.hit(fx, event.x, event.z, false, event.type, this.hits++);
         break;
       case "reaction": {
         const y = fx.ground.heightAt(event.x, event.z) + 0.7;
@@ -425,6 +440,8 @@ export class Vfx {
       case "dash":
       case "level":
       case "revive":
+      case "bond-endure":
+      case "bond-cure":
       case "player-hit":
       case "drain":
       case "evolve":
@@ -506,15 +523,17 @@ export class Vfx {
       this.landShot(event, event.type === "fire" && burnsBlue(owner(world, event.owner)));
     this.untrackedLandings.length = 0;
     this.updateAuras(world, alpha, dt, self.id);
+    this.updatePlayerStates(world, alpha);
     // Projectile heads and hazards paint over the status marks.
     this.rainbow(world, alpha);
     statusMarks(fx, world, alpha, subject);
+    this.enemyMarks(world, alpha, subject);
     skills.skillBodies(fx, world, alpha);
     zone.zoneBodies(fx, world, alpha);
     coast.coastBodies(fx, world, alpha);
     this.updateMends(dt);
     this.updateShots(world, alpha, muzzles);
-    this.updateAreas(world, alpha);
+    this.updateAreas(world, alpha, muzzles);
     fx.echoes.update(fx);
     desert.surfacePatches(fx, world.map.terrain.surface?.patches ?? []);
     this.updateHazards(world, alpha);
@@ -537,6 +556,50 @@ export class Vfx {
     this.tells.draw(fx);
     fx.sprites.update(dt);
     this.projectileBeats.clear();
+    this.hits = 0;
+  }
+
+  /** Elite rings and shiny glints on the enemies near the camera's subject. */
+  private enemyMarks(world: World, alpha: number, subject: Player): void {
+    const cx = lerp(subject.px, subject.x, alpha);
+    const cz = lerp(subject.pz, subject.z, alpha);
+    for (const enemy of world.enemies) {
+      if (!(enemy.elite && !enemy.boss) && !enemy.shiny) continue;
+      if (Math.abs(enemy.x - cx) > MARK_REACH || Math.abs(enemy.z - cz) > MARK_REACH) continue;
+      const x = lerp(enemy.px, enemy.x, alpha);
+      const z = lerp(enemy.pz, enemy.z, alpha);
+      const height = enemyDefs[enemy.species].height * enemy.scale;
+      if (enemy.elite && !enemy.boss) eliteMark(this.fx, x, z, enemy.radius, height);
+      if (enemy.shiny) shinyMark(this.fx, enemy.id, x, z, enemy.radius, height);
+    }
+  }
+
+  /** Shield bubbles (and their break), the ultimate's protection and trainer items' buffs on every player. */
+  private updatePlayerStates(world: World, alpha: number): void {
+    for (const player of world.players) {
+      const shielded = this.shielded.has(player.id);
+      if (!player.alive || player.departed) {
+        this.shielded.delete(player.id);
+        continue;
+      }
+      const x = lerp(player.px, player.x, alpha);
+      const z = lerp(player.pz, player.z, alpha);
+      const form = formOf(player);
+      if (player.shield > 0) {
+        this.shielded.add(player.id);
+        playerStates.shieldBubble(this.fx, x, z, form.height, 1);
+      } else if (shielded) {
+        this.shielded.delete(player.id);
+        playerStates.shieldBreak(this.fx, x, z, form.height);
+      }
+      const protection = playerStates.protectionLevel(player.ult.protection);
+      if (protection > 0)
+        playerStates.protectionMark(this.fx, x, z, form.radius, form.height, protection);
+      for (const item of ASSIST_BUFFS) {
+        const left = player.assistBuffs[item] ?? 0;
+        if (left > 0) assistAura(this.fx, item, x, z, form.radius, form.height, left);
+      }
+    }
   }
 
   /** 彩虹 under every player still fighting, drawn from the world so a restored run shows it too. */
@@ -568,8 +631,15 @@ export class Vfx {
         const form = formOf(player);
         if (weather) weatherCasts[weather](this.fx, x, z, form.radius, form.height);
       } else if (event.t === "dash") common.dash(this.fx, x, z, player.dashX, player.dashZ);
-      else if (event.t === "level" || event.t === "revive") common.levelUp(this.fx, x, z);
-      else if (event.t === "drain")
+      else if (event.t === "level") common.levelUp(this.fx, x, z);
+      else if (event.t === "revive") {
+        const form = formOf(player);
+        playerStates.revive(this.fx, x, z, form.radius, form.height);
+      } else if (event.t === "bond-endure" || event.t === "bond-cure") {
+        const form = formOf(player);
+        const kind = event.t === "bond-endure" ? "endure" : "cure";
+        playerStates.bondCue(this.fx, kind, x, z, form.radius, form.height);
+      } else if (event.t === "drain")
         (player.starter === "gastly" ? dreamReturn : drainBack)(this.fx, event.x, event.z, x, z);
       else if (event.t === "evade") {
         if (player.starter === "gastly") shadowPhase(this.fx, x, z);
@@ -700,7 +770,7 @@ export class Vfx {
     if (this.freeAreas.length < 64) this.freeAreas.push(track);
   };
 
-  private updateAreas(world: World, alpha: number): void {
+  private updateAreas(world: World, alpha: number, muzzles: ReadonlyMap<PlayerId, Muzzle>): void {
     for (const area of world.areas) {
       // A combination field has its own look, whichever pledge its damage is credited to.
       const look = area.pledgeField
@@ -734,12 +804,13 @@ export class Vfx {
       // The sim returns on the tick that consumes the last delay. Its tickTimer only advances
       // when the attack actually runs, so a charged impact must wait for that following tick.
       const active = area.delay <= 0 && (track.delay <= 0 || area.tickTimer !== 0);
+      const mouth = player ? muzzles.get(player.id) : undefined;
       if (active && !track.struck) {
         track.struck = true;
-        look.strike?.(this.fx, area, x, z);
+        look.strike?.(this.fx, area, x, z, mouth);
       }
       const charge = active ? 1 : Math.min(0.999, 1 - area.delay / track.delay);
-      look.live?.(this.fx, area, x, z, charge);
+      look.live?.(this.fx, area, x, z, charge, mouth);
     }
     flame.blue = false;
     sweep(this.areas, this.frame, this.releaseArea);
@@ -1003,6 +1074,11 @@ export class Vfx {
     const t = 1 - boss.attackTimer / (BOSS_RECOVER * bossTelegraph);
     const reach = AIR_SLASH.speed * AIR_SLASH.life;
     common.airSlashWarn(this.fx, boss.x, boss.z, airSlashBlades, AIR_SLASH.radius, reach, t);
+  }
+
+  /** An enemy's body finished its death squash (createRunView's dying bodies); its poof follows. */
+  death(x: number, z: number, kind: common.DeathKind, radius: number, height: number): void {
+    common.death(this.fx, x, z, kind, radius, height);
   }
 
   /** A player fell (the run view sees `alive` turn false); drawn at the body it leaves. */

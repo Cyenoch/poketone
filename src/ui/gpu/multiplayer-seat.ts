@@ -12,7 +12,8 @@ import { themeColors } from "./run-theme";
 import { SlantPlate } from "./slant-plate";
 import type { UiStage } from "./stage";
 import { RADIUS_INNER, slantOf, ui } from "./tokens";
-import { slantTag, typeTag } from "./tag";
+import { slantTag } from "./tag";
+import { typeTag } from "./type-icon";
 import type { SeatView } from "./multiplayer-view";
 
 /** Chip faces by seat state. */
@@ -89,7 +90,7 @@ export class MultiplayerSeat {
     wordBreak: "keep-all",
   });
   private readonly facts = new Container({ flexDirection: "row", alignItems: "center", gap: 5 });
-  private typeChip: Container | null = null;
+  private typeChip: { tag: Container; dispose(): void } | null = null;
   private readonly trainerChip = new Container({
     height: 21,
     paddingX: 7,
@@ -322,9 +323,13 @@ export class MultiplayerSeat {
     filled.set({ depth: 0 });
     this.filled = filled;
     this.root.add(filled.content);
-    this.typeChip?.removeFromParent();
-    this.typeChip = typeTag(type);
-    this.facts.add(this.typeChip);
+    if (this.typeChip) {
+      this.typeChip.tag.removeFromParent();
+      this.typeChip.dispose();
+      this.typeChip.tag.dispose();
+    }
+    this.typeChip = typeTag(type, 11);
+    this.facts.add(this.typeChip.tag);
   }
 
   /** On the 15Hz idle clock: the pending spinner turns, an empty seat's ball breathes. */
@@ -346,5 +351,6 @@ export class MultiplayerSeat {
     this.tag.dispose();
     this.ball.dispose();
     this.chipPlate.dispose();
+    this.typeChip?.dispose();
   }
 }

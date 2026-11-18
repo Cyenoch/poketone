@@ -150,7 +150,13 @@ export function inPatch(world: World, hazard: Hazard, player: Player, ground: nu
 export function damageFromHazard(world: World, player: Player, hazard: Hazard): boolean {
   const source = hazard.source ?? hazard.caster;
   const attacker = source >= 0 ? world.enemies.find((e) => e.id === source && e.hp > 0) : undefined;
-  return damagePlayer(world, player, hazard.dmg, hazard.element, attacker);
+  return damagePlayer(
+    world,
+    player,
+    hazard.dmg,
+    hazard.element,
+    hazard.source === -1 ? "environment" : attacker,
+  );
 }
 
 /** Height of the middle of the player's body. */

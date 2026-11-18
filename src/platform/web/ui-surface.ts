@@ -1,5 +1,7 @@
 import {
+  canEnterFullscreen,
   claimInstallHint,
+  enterLandscape,
   needsFullscreen,
   onFullscreenChange,
   toggleFullscreen,
@@ -96,6 +98,9 @@ export class WebUiSurface implements UiSurface {
     return document.fullscreenElement || needsFullscreen()
       ? { active: !!document.fullscreenElement, toggle: this.#toggleFullscreen }
       : undefined;
+  }
+  get landscapeFullscreen() {
+    return canEnterFullscreen() ? enterLandscape : undefined;
   }
 
   listen(events: UiEvents) {

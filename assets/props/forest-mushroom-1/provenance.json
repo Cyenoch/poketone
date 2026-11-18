@@ -1,11 +1,19 @@
 {
-  "generator": "assets/props/build-map-props.py",
-  "seed": 3233405678,
-  "source": "Original scripted geometry; no external assets",
-  "triangles": 48,
-  "materials": 1,
-  "vertexColors": true,
-  "units": "metres",
-  "sha256": "f75bd329af58b719f305b34f7a4cd6c9e6d2abd5c4d4a506e6e5f4469b3c8bd6",
-  "tripoCredits": 0
+  "set": "forest-mushrooms",
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "props/forest-mushrooms/generation/tripo-out/tripo-out/poketone-forest-mushrooms-d6eae50c/model.glb",
+  "tripoSourceSha256": "c9f98274f801e4af1cf69ec824ff0301dc23e55df6922d2559a3c461ca1766f7",
+  "tripoTask": "d6eae50c-1fb2-434c-98c1-ad93d44782b2",
+  "tripoType": "image_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 761,
+  "dimensions": [0.274, 0.2642, 0.3307],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "4932c971119d83e22114939307b78bc01ef901e3425dadaa33e249dad0262847"
 }

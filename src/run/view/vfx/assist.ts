@@ -8,7 +8,7 @@
 import { TRAINER } from "../../sim/content/params/trainers";
 import type { AssistItem } from "../../sim/content/trainers";
 import { Decal } from "./decals";
-import { rand, type Echo, type Fx } from "./fx";
+import { perFrame, rand, type Echo, type Fx } from "./fx";
 import { rgb, type Rgb } from "./gl";
 import { healCue } from "./items";
 import { gold, white, wind } from "./palette";
@@ -83,6 +83,19 @@ const focusStar = sprite({
   accent: white,
   add: 0.7,
 });
+const auraMote = ITEMS.map((id) =>
+  sprite({
+    shape: Shape.glow,
+    life: 0.8,
+    grow: 0.4,
+    from: LOOK[id].light,
+    to: LOOK[id].body,
+    accent: white,
+    add: 1,
+    gravity: -1.5,
+    drag: 1,
+  }),
+);
 const cleanse = sprite({
   shape: Shape.bubble,
   life: 0.6,
@@ -203,4 +216,44 @@ function focus(fx: Fx, x: number, z: number, radius: number, height: number): vo
     );
   }
   fx.sprites.emit(focusStar, x, y + height * 0.3, z, 0, 0.8, 0, 0.3);
+}
+
+/**
+ * While a trainer item's buff lasts on a player: a pulse of its colour and a thin ring at their feet, and
+ * motes of its light rising off them, fading out over its last second.
+ */
+export function assistAura(
+  fx: Fx,
+  item: Exclude<AssistItem, "superPotion">,
+  x: number,
+  z: number,
+  radius: number,
+  height: number,
+  left: number,
+): void {
+  const k = Math.min(1, left);
+  const { body, light } = LOOK[item];
+  const pulse = 0.75 + 0.25 * Math.sin(fx.time * 5);
+  // Outside the player's own seat ring (0.87 m), which would cover a body-sized ring.
+  const reach = Math.max(1.2, radius * 2.4);
+  fx.decals.put(Decal.glow, x, z, reach).tint(body, 0.45 * k * pulse, light, 1);
+  fx.decals
+    .put(Decal.ring, x, z, reach)
+    .tint(light, 0.8 * k, body, 1)
+    .args(0, 0.07 * pulse, 1);
+  const h = fx.ground.heightAt(x, z);
+  for (let i = perFrame(fx, 12 * k); i > 0; i--) {
+    const a = rand(0, Math.PI * 2);
+    const d = radius * rand(0.5, 1.1);
+    fx.sprites.emit(
+      auraMote[ITEMS.indexOf(item)]!,
+      x + Math.cos(a) * d,
+      h + height * rand(0, 0.4),
+      z + Math.sin(a) * d,
+      0,
+      rand(0.8, 1.6),
+      0,
+      rand(0.08, 0.12),
+    );
+  }
 }

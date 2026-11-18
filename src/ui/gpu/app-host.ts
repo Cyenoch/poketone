@@ -268,6 +268,7 @@ export async function createGpuAppHost(
   // `:focus-visible`: focus is drawn after keyboard input and hidden after pointer input. Starts
   // shown, as a browser shows a page's initial programmatic focus before any pointer use.
   let focusVisible = true;
+  shell.setFocusVisible(focusVisible);
   const showFocus = (visible: boolean) => {
     if (focusVisible === visible) return;
     focusVisible = visible;
@@ -276,6 +277,7 @@ export async function createGpuAppHost(
     for (const shown of screens) shown.setFocusVisible(visible);
     runLayer?.hud.setFocusVisible(visible);
     runLayer?.overlays.setFocusVisible(visible);
+    shell.setFocusVisible(visible);
   };
   const setInputMode = (mode: InputMode) => {
     const wasTouch = inputMode.kind === "touch";
@@ -352,8 +354,19 @@ export async function createGpuAppHost(
     scroll: () => {},
     setPressed: (index) => toast.setPressed(index),
   });
+  // Over everything while it blocks: the portrait notice's fullscreen key.
+  const shellInput = new MenuInput({
+    hit: (x, y) => shell.hit(x, y),
+    hover: (index) => shell.hover(index),
+    focus: () => {},
+    activate: () => shell.activate(),
+    scroll: () => {},
+    setPressed: (index) => shell.setPressed(index),
+  });
   const cancelInput = () => {
     actions.cancel();
+    shellInput.cancel();
+    shell.hover(null);
     toastInput.cancel();
     toast.setHovered(null);
     input.cancel();
@@ -396,6 +409,7 @@ export async function createGpuAppHost(
   const resize = () => {
     if (!state || destroyed) return;
     const fullscreen = platform.fullscreen;
+    shell.setFullscreenAction(platform.landscapeFullscreen);
     dialog?.setFullscreenAction(fullscreen?.toggle, fullscreen?.active ?? false);
     for (const shown of screens)
       shown.setFullscreenAction?.(fullscreen?.toggle, fullscreen?.active ?? false);
@@ -541,11 +555,24 @@ export async function createGpuAppHost(
     setInputMode(
       event.kind === "mouse" ? { kind: "keyboardMouse", pointer: true } : { kind: "touch" },
     );
+    const { x, y } = event;
+    // The portrait key answers through loads and input-mode switches; what it covers stays blocked.
+    if (
+      state &&
+      !failed &&
+      !contextLost &&
+      event.button === 0 &&
+      blocking() &&
+      shellInput.down(event.id, x, y)
+    ) {
+      platform.focus();
+      capture(event.id);
+      return true;
+    }
     if (takeTouch) return true;
     showFocus(false);
     if (!state || failed || event.button !== 0 || contextLost || state.busy) return false;
     platform.focus();
-    const { x, y } = event;
     if (blocking()) return true;
     syncInputOwner();
     if (toastInput.down(event.id, x, y)) {
@@ -590,8 +617,10 @@ export async function createGpuAppHost(
   const onMove = (event: UiPointer) => {
     if (event.kind === "mouse" && event.moved)
       setInputMode({ kind: "keyboardMouse", pointer: true });
-    if (contextLost || state?.busy) return;
+    if (contextLost) return;
     const { x, y } = event;
+    shellInput.move(event.id, x, y, event.kind === "mouse");
+    if (state?.busy) return;
     toastInput.move(event.id, x, y, event.kind === "mouse");
     if (hudPointers.has(event.id)) {
       runLayer?.hud.move(event.id, x, y);
@@ -631,6 +660,9 @@ export async function createGpuAppHost(
   };
   const release = (event: UiPointer, cancelled: boolean) => {
     const { x, y } = event;
+    // Activates inside this pointerup: for touch, the event that lets the page go fullscreen.
+    if (cancelled) shellInput.cancel(event.id);
+    else shellInput.up(event.id, x, y);
     if (cancelled) toastInput.cancel(event.id);
     else toastInput.up(event.id, x, y);
     const mapPress = mapPointers.get(event.id);
@@ -718,6 +750,9 @@ export async function createGpuAppHost(
       return true;
     }
     const action = navigationAction(event.code, event.shift);
+    // Enter or Space on the portrait notice: the keydown is the gesture fullscreen needs.
+    if (blocking() && action === "confirm" && !event.repeat && !contextLost && shell.activate())
+      return true;
     if (
       state.busy ||
       contextLost ||

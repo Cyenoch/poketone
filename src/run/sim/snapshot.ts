@@ -17,12 +17,12 @@ import { initialRoute, ROUTE_TIERS, routeStep } from "./content/campaign";
 import { towerMap } from "./content/tower-map";
 import { markerAllowed, routeMarkers, routeModifiers } from "./content/route";
 import { ROUTE_REWARD } from "./content/params/route";
-import { ULT_INVULNERABLE } from "./content/params/ultimates";
+import { ULT_CRISIS, ULT_INVULNERABLE } from "./content/params/ultimates";
 import { MAX_BOND_LEVEL } from "./content/bonds";
 import { BOND_CURE_LEVEL, BOND_ENDURE_LEVEL } from "./content/params/bonds";
 
 /** Snapshot format; bumped when the snapshot's dynamic state shape changes. */
-export const SNAPSHOT_VERSION = 16;
+export const SNAPSHOT_VERSION = 17;
 
 /** Static map and runtime navigation; snapshots carry only the nav's continuation facts. */
 type MapFields = "map" | "nav";
@@ -331,6 +331,21 @@ function validateFieldState(world: Omit<World, MapFields>): void {
     check(
       nonnegative(player.ult.protection) && player.ult.protection <= ULT_INVULNERABLE,
       `players.${player.id}.ult.protection`,
+    );
+    const crisis = player.crisis;
+    check(
+      record(crisis) &&
+        count(crisis.startTick) &&
+        crisis.startTick <= world.tick &&
+        nonnegative(crisis.spent) &&
+        crisis.spent <= ULT_CRISIS.cap &&
+        (crisis.lastTick === null
+          ? crisis.spent === 0 && crisis.startTick === 0
+          : count(crisis.lastTick) &&
+            crisis.lastTick >= crisis.startTick &&
+            crisis.lastTick <= world.tick &&
+            crisis.spent > 0),
+      `players.${player.id}.crisis`,
     );
     check(count(player.ult.cast), `players.${player.id}.ult.cast`);
     for (const pending of player.pending) {

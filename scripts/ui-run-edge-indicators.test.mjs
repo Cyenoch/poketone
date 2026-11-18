@@ -185,11 +185,7 @@ test("projection uses interpolated terrain positions and the live rotated camera
           }
           f.frame(alpha, 0.2);
           const onScreen = view.z < -f.camera.near && Math.abs(ndc.x) <= 1 && Math.abs(ndc.y) <= 1;
-          assert.equal(
-            f.indicators.names[1].displayed.value,
-            onScreen,
-            "nameplate visibility follows the rendered world",
-          );
+          // On screen the seat reads from the teammate's overhead bar (healthBars.ts).
           assert.equal(f.indicators.players[1].root.displayed.value, !onScreen);
           assert.equal(
             f.indicators.players[0].root.displayed.value,
@@ -265,7 +261,6 @@ test("entering view fades the portrait in place, and returning offscreen resets 
     f.frame(1, 0.05);
     const fading = f.center();
     const marker = f.indicators.players[1];
-    assert.ok(f.indicators.names[1].displayed.value);
     assert.ok(marker.root.displayed.value);
     assert.ok(marker.root.properties.value.opacity > 0 && marker.root.properties.value.opacity < 1);
     assert.ok(Math.hypot(fading.x - initial.x, fading.y - initial.y) <= 1 / f.stage.pixelGrid);
@@ -273,7 +268,6 @@ test("entering view fades the portrait in place, and returning offscreen resets 
     assert.equal(marker.root.displayed.value, false);
     f.move(-40, -40);
     f.frame();
-    assert.equal(f.indicators.names[1].displayed.value, false);
     assertOnEdge(f.center(), bounds(f.stage), 1 / f.stage.pixelGrid);
     assert.ok(
       f.center().x < f.stage.viewport.width / 2,
@@ -360,23 +354,19 @@ test("a downed teammate keeps an urgent locator until revival or departure", asy
   }
 });
 
-test("a Nuzlocke knockout has no locator or name: there is no rescue to point to", async () => {
+test("a Nuzlocke knockout has no locator: there is no rescue to point to", async () => {
   const f = await fixture();
   try {
     f.world.rules = ["nuzlocke"];
     const mate = f.world.players[1];
     const marker = f.indicators.players[1];
-    for (const x of [60, 2]) {
-      f.move(x, 0);
-      mate.alive = true;
-      f.frame(1, 0.2);
-      const shown = x === 60 ? marker.root : f.indicators.names[1];
-      assert.ok(shown.displayed.value, "alive, the teammate is locatable");
-      mate.alive = false;
-      f.frame(1, 0.2);
-      assert.equal(marker.root.displayed.value, false, "no offscreen locator");
-      assert.equal(f.indicators.names[1].displayed.value, false, "no name over an empty seat");
-    }
+    f.move(60, 0);
+    mate.alive = true;
+    f.frame(1, 0.2);
+    assert.ok(marker.root.displayed.value, "alive, the teammate is locatable");
+    mate.alive = false;
+    f.frame(1, 0.2);
+    assert.equal(marker.root.displayed.value, false, "no offscreen locator");
   } finally {
     f.dispose();
   }

@@ -1,7 +1,6 @@
 import { abortableEffect, Container, Content, Image, Text } from "@pmndrs/uikit";
 import { Color, Mesh, MeshBasicMaterial, PlaneGeometry, Vector2, Vector3 } from "three";
 import type { CodexEntry } from "../../run/codex";
-import { typeNames } from "../../run/labels";
 import type { CodexThumbs } from "./codex-model";
 import type { ElementType } from "../../run/sim/content/elements";
 import { itemIcon, moveIcon } from "../../screens/runArt";
@@ -12,13 +11,12 @@ import { BALL_STAGE_GLSL } from "./ball-stage";
 import { cubicBezier, uiEaseOut } from "./focus-mark";
 import { inheritedOpacity, stack } from "./layer";
 import { LIFT, SNAP, type UiMotion } from "./motion";
-import { cardFaces, ChoiceIconPlate } from "./run-choice-surface";
+import { ChoiceIconPlate } from "./run-choice-surface";
 import { typeColors } from "./run-theme";
 import { clipMain, clipVertex } from "./screen-parts";
-import { SlantPlate } from "./slant-plate";
 import type { UiStage } from "./stage";
 import { createStationArt } from "./station-art";
-import { RADIUS, RADIUS_INNER, slantOf, srgb, ui } from "./tokens";
+import { RADIUS, srgb, ui } from "./tokens";
 import { UiShaderMaterial } from "./ui-shader";
 
 const cssEase = (t: number) => cubicBezier(t, 0.25, 0.1, 0.25, 1);
@@ -189,9 +187,6 @@ export function createArt(
   }
   return { root, dispose: () => plate?.dispose() };
 }
-
-/** Types with a crest (`public/art/icons/crests`): every card face but the normal one. */
-const crested = new Set<ElementType>([...cardFaces].filter((type) => type !== "normal"));
 
 /** What a 图鉴 control shows: pointer, keyboard and gamepad state, and whether it is the pick. */
 export interface CodexPaint {
@@ -429,58 +424,6 @@ export class CodexChip {
     this.stage.motion.cancel(this.pose);
     for (const owned of this.owned) owned.dispose();
   }
-}
-
-/** A type label: an ink slanted chip with the type's crest (else a gem in its colour) and name. */
-export function typeChip(type: ElementType, compact: boolean): { tag: Container; dispose(): void } {
-  const height = compact ? 26 : 30;
-  const lean = slantOf(height) / 2;
-  const crest = crested.has(type);
-  const tag = new Container({
-    height,
-    paddingX: 10 + lean,
-    justifyContent: "center",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    flexShrink: 0,
-  });
-  const plate = new SlantPlate(tag, { fill: ui.ink }, RADIUS_INNER);
-  plate.set({ depth: 3 });
-  tag.add(plate.content);
-  // The crest, or (a type without one) a gem in the type's colour.
-  tag.add(
-    stack(
-      crest
-        ? new Image({
-            src: `/art/icons/crests/${type}.webp`,
-            width: compact ? 20 : 22,
-            height: compact ? 20 : 22,
-            flexShrink: 0,
-          })
-        : new Container({
-            width: 9,
-            height: 9,
-            backgroundColor: typeColors[type].type,
-            transformRotateZ: 45,
-            flexShrink: 0,
-          }),
-      1,
-    ),
-  );
-  tag.add(
-    stack(
-      new Text({
-        text: typeNames[type],
-        fontSize: compact ? 13 : 14,
-        fontWeight: 800,
-        color: ui.white,
-        wordBreak: "keep-all",
-      }),
-      1,
-    ),
-  );
-  return { tag, dispose: () => plate.dispose() };
 }
 
 /**

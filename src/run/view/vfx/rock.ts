@@ -33,6 +33,18 @@ const dust = sprite({
   drag: 4,
 });
 
+/** Ultimate debris: fist-sized stones thrown up and falling back. */
+const slab = sprite({
+  shape: Shape.rock,
+  life: 0.7,
+  from: rock.stone,
+  to: rock.dark,
+  accent: rock.ink,
+  gravity: 14,
+  drag: 1.5,
+  spin: 5,
+});
+
 /** A tapered solid shard rising from the ground, shaded on two faces. */
 function pillar(fx: Fx, x: number, z: number, height: number, width: number, fade: number): void {
   const h = fx.ground.heightAt(x, z);
@@ -68,12 +80,15 @@ function drawQuake(fx: Fx, e: Echo, t: number): void {
     .tint(rock.light, 0.8 * fade, rock.ink, 0)
     .args(t, 1);
   const travel = 1 - (1 - t) ** 3;
-  for (let i = 0; i < 9; i++) {
-    const angle = e.seed + (i / 9) * Math.PI * 2;
-    const d = e.a * (0.25 + travel * 0.52);
+  // Wide move quakes (c) get two staggered rings of stones so a 5 m disc isn't a sparse circle of pebbles.
+  const count = e.c && e.a > 3 ? Math.round(e.a * 3.6) : 9;
+  for (let i = 0; i < count; i++) {
+    const angle = e.seed + (i / count) * Math.PI * 2;
+    const d =
+      e.a * ((i % 2 && count > 9 ? 0.12 : 0.25) + travel * (i % 2 && count > 9 ? 0.4 : 0.52));
     const x = e.x + Math.sin(angle) * d;
     const z = e.z + Math.cos(angle) * d;
-    const size = Math.min(0.28, e.a * 0.12) * (1 - t);
+    const size = Math.min(e.c ? 0.36 : 0.28, e.a * 0.12) * (1 - t);
     if (e.b) pillar(fx, x, z, (0.5 + (i % 3) * 0.3) * (1 - t), size, fade);
     else
       fx.sprites.draw(
@@ -91,9 +106,9 @@ function drawQuake(fx: Fx, e: Echo, t: number): void {
   }
 }
 
-function quake(fx: Fx, x: number, z: number, r: number, pillars = false): void {
+function quake(fx: Fx, x: number, z: number, r: number, pillars = false, dense = false): void {
   const h = fx.ground.heightAt(x, z);
-  fx.echoes.add(drawQuake, 0.28, x, h, z, r, Number(pillars));
+  fx.echoes.add(drawQuake, 0.28, x, h, z, r, Number(pillars), Number(dense));
   spray(fx, chip, x, h + 0.25, z, pillars ? 10 : 6, r * 1.5, 2, 0.12);
   spray(fx, dust, x, h + 0.15, z, 4, r, 0.3, Math.min(0.32, r * 0.15));
   // The aged cracks shader has lost its hot edge: a short harmless, rimless residue.
@@ -117,7 +132,7 @@ export const rockThrow: ShotLook = {
 
 export const rockBurst: AreaLook = {
   strike(fx, a, x, z) {
-    quake(fx, x, z, a.radius);
+    quake(fx, x, z, a.radius, false, true);
   },
 };
 
@@ -258,8 +273,8 @@ export const stoneEdge: AreaLook = {
           fx,
           x + Math.sin(angle) * d,
           z + Math.cos(angle) * d,
-          (row ? 0.9 : 0.5) * fade,
-          Math.min(0.22, a.length * 0.07) * fade,
+          (row ? 1.4 : 0.85) * fade,
+          Math.min(0.34, a.length * 0.1) * fade,
           fade,
         );
       }
@@ -351,20 +366,42 @@ function drawRockImpact(fx: Fx, e: Echo, t: number): void {
   );
   fx.ribbons.point(e.x, e.y + 0.3, e.z, 0.25 * (1 - t), rock.light, 0.55 * fade);
   fx.ribbons.flush(Ribbon.solid, 0);
-  fx.sprites.draw(boulder, e.x, e.y + 0.22, e.z, 0.4 * (1 - t), fade, 0, 0, e.seed, e.seed);
+  fx.sprites.draw(boulder, e.x, e.y + 0.4, e.z, 0.7 * (1 - t * 0.5), fade, 0, 0, e.seed, e.seed);
+}
+
+/** The ultimate's upheaval: a ring of tall slabs bursts up across the disc, holds, then sinks. a: radius. */
+function drawUpheaval(fx: Fx, e: Echo, t: number): void {
+  const rise = Math.min(1, t / 0.15) * (t < 0.6 ? 1 : 1 - (t - 0.6) / 0.4);
+  const count = Math.round(e.a * 3.2);
+  for (let i = 0; i < count; i++) {
+    const angle = e.seed + (i / count) * Math.PI * 2;
+    const d = e.a * (i % 2 ? 0.55 : 0.88);
+    const tall = (1.1 + (i % 3) * 0.45) * Math.min(1.4, e.a / 3);
+    pillar(fx, e.x + Math.sin(angle) * d, e.z + Math.cos(angle) * d, tall * rise, 0.45 * rise, 1);
+  }
 }
 
 export function rockslideQuake(fx: Fx, e: UltPulseEvent): void {
-  quake(fx, e.x, e.z, e.radius, e.look === "blast");
-  if (e.look === "meteor")
-    fx.echoes.add(drawRockImpact, 0.18, e.x, fx.ground.heightAt(e.x, e.z), e.z);
+  const r = e.radius;
+  const h = fx.ground.heightAt(e.x, e.z);
+  quake(fx, e.x, e.z, r, e.look === "blast");
+  // Heavy, earthy weight on green or sand: a dark impact bed and a thick dust wall, no glow.
+  fx.decals.stamp(Decal.scorch, e.x, e.z, r * 0.9, 1.4, rock.ink, 0.55, rock.clay, 0);
+  fx.decals.stamp(Decal.ring, e.x, e.z, r, 0.6, rock.earth, 0.95, rock.light, 0.3, 0.1, 1);
+  spray(fx, dust, e.x, h + 0.2, e.z, Math.round(r * 4), r * 1.6, 1.2, 0.45);
+  spray(fx, slab, e.x, h + 0.3, e.z, Math.round(r * 3), r * 1.4, 6, 0.26);
+  if (e.look === "meteor") fx.echoes.add(drawRockImpact, 0.26, e.x, h, e.z);
+  else fx.echoes.add(drawUpheaval, e.look === "blast" ? 0.8 : 0.55, e.x, h, e.z, r);
 }
 
 /** A grounded cast cue; the actual ring/strike events carry the ultimate's hitboxes. */
 export function rockCast(fx: Fx, x: number, z: number): void {
   const h = fx.ground.heightAt(x, z);
   spray(fx, chip, x, h + 0.2, z, 12, 1.8, 3, 0.15);
-  spray(fx, dust, x, h + 0.12, z, 6, 1.2, 0.4, 0.25);
+  spray(fx, slab, x, h + 0.3, z, 8, 2, 7, 0.22);
+  spray(fx, dust, x, h + 0.12, z, 10, 2, 0.6, 0.35);
+  fx.decals.stamp(Decal.cracks, x, z, 2.2, 0.9, rock.clay, 0.7, rock.ink, 0, 1);
+  fx.decals.stamp(Decal.ring, x, z, 2.2, 0.4, rock.earth, 0.9, rock.light, 0.3, 0.12, 0.2);
 }
 
 export function rockAura(fx: Fx, x: number, z: number, fade: number): void {

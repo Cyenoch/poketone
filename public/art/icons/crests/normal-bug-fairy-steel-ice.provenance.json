@@ -1,0 +1,11 @@
+{
+  "createdAt": "2026-11-18",
+  "assets": ["normal", "bug", "fairy", "steel", "ice"],
+  "generator": "Magpie generate_image, openrouter/google/gemini-nano-banana-2.1",
+  "prompt": "A sprite sheet of 6 game type crest icons arranged in perfectly even 3x2 grid equal square cells separated by wide uniform empty gaps, each icon centered on plain flat warm off-white (#f5f1e8) background. Row by row left to right: NORMAL a warm beige-grey rounded five-point star badge with a small cream highlight; BUG a lime-green beetle shell seen from above with two short antennae and a center seam; FAIRY a soft pink four-point sparkle star with two tiny pink sparkles beside it; STEEL a cool blue-grey hex nut with a round center hole and bevelled faces; ICE a pale cyan six-armed snowflake crystal with chunky arms; a small neutral gray star (unused). Match visual weight and thick outline of reference crests. Clean solid background, no noise and no glow halo. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject.",
+  "references": ["public/art/icons/crests/fire.webp", "public/art/icons/crests/water.webp"],
+  "referenceNote": "References flattened onto #f5f1e8 before upload; two earlier ash/gpt-image-2.5-sunburst attempts drew a dark glowing background and were discarded.",
+  "source": "assets/icons/source/crests-normal-bug-fairy-steel-ice.jpg",
+  "processing": "python3 assets/icons/slice-sheet.py <source> 3 2 public/art/icons/crests normal bug fairy steel ice (border flood fill tolerance 38, trim, 8% padding, 128px, WebP q88); steel's enclosed hole then flood-filled to transparent from its centre (tolerance 38). Spare gray star unused.",
+  "rights": "Generated for a noncommercial Pokémon fan project; not licensed as standalone open art."
+}

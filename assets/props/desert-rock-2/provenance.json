@@ -1,11 +1,23 @@
 {
-  "generator": "assets/props/build-map-props.py",
-  "seed": 875692674,
-  "source": "Original scripted geometry; no external assets",
-  "triangles": 84,
-  "materials": 1,
-  "vertexColors": true,
-  "units": "metres",
-  "sha256": "459513f24702e5ebfe657afec6b6197c7f0f1366a7367d57de38d76e70afeb78",
-  "tripoCredits": 0
+  "set": "desert-rocks",
+  "variantOf": "desert-rock-1",
+  "scale": [1.05, 0.9, 1.1],
+  "yaw": 2.4,
+  "regrade": ["#4d3d2e", "#a58b6b", "#e4d3b0"],
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "props/desert-rocks/generation/tripo-out/tripo-out/poketone-desert-rocks-2e290aaa/model.glb",
+  "tripoSourceSha256": "82c854fc5cda1f41b54bd0ce3be9dd7d55cd73b57aae6a6ce88335dad33140a6",
+  "tripoTask": "2e290aaa-b677-4edb-8dd8-7c80bdabb96f",
+  "tripoType": "image_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 743,
+  "dimensions": [0.2854, 0.2777, 0.3014],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "fc9cec4c73a4bc83a1bf0997c91ec9f71f5873fb36d3e160ef83400f9b6205b5"
 }

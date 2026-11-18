@@ -9,7 +9,7 @@ export const SHOT_KNOCK = 1.2;
 export const SECTOR_CONTACT_PADDING = 0.6;
 
 /** Shots sit `spread` apart, each nudged by up to ±`jitter`. */
-export const BARRAGE = { spread: 0.16, jitter: 0.05, stagger: 0.07 } as const;
+export const BARRAGE = { spread: 0.085, jitter: 0.025, stagger: 0.07 } as const;
 
 /** `reach`: full beam length before terrain clips it; `rearReach`: hit allowance behind its origin. */
 export const BEAM = {
@@ -56,8 +56,8 @@ export const BOLT = { fan: 0.22, stagger: 0.05 } as const;
 
 export const BURST = { knock: 1.5 } as const;
 
-/** Candidates considered for each next jump, including already struck bodies. */
-export const CHAIN = { range: 10, candidates: 6 } as const;
+/** First target range; each subsequent jump uses the move’s area. */
+export const CHAIN = { range: 10 } as const;
 
 /** `aimPadding`: how far beyond the hit's reach an enemy may trigger a cast. */
 export const CONE = { tick: 0.2, angle: 0.55, aimPadding: 1, knock: 0.4 } as const;
@@ -139,18 +139,18 @@ export const SPRINKLER = {
   /** Fires when enemies are this close to the jets' reach. */
   range: 1,
   shell: 1.6,
-  shellDmg: 0.6,
+  shellDmg: 1.1,
   shellKnock: 2.5,
   jets: 2,
   jetsMax: 2,
   /** Radians per second. */
   spin: 4.2,
-  jetTick: 0.1,
-  jetDmg: 0.2,
+  jetTick: 0.05,
+  jetDmg: 0.14,
   jetWidth: 0.45,
   jetKnock: 1.2,
   splash: 2,
-  splashDmg: 0.7,
+  splashDmg: 1.3,
   splashChance: 1,
 } as const;
 

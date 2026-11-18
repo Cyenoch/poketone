@@ -125,7 +125,7 @@ test("ability cards name the ability and show the reached stage's effect", async
       assert.equal(text(card.title), abilities[id].name);
       // The card shows the effect at the stage the player has reached.
       assert.equal(
-        card.lines.map(text).join("；"),
+        card.lines.map((line) => line.value.replace(/\s/g, "")).join("；"),
         abilityText(abilities[id], 1).replace(/\s/g, ""),
         id,
       );

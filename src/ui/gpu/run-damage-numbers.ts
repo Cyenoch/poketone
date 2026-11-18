@@ -19,6 +19,11 @@ type Font = NonNullable<Text["fontSignal"]["value"]>;
 /** Swarm hits (a vortex ticking 20 enemies) would bury the arena; numbers are a garnish, not the signal. */
 const MAX_ACTIVE = 30;
 const MAX_PER_FRAME = 5;
+/**
+ * A ticking move (a held fan, sweeping jets) hits the same enemy every 0.1–0.2 s: a plain hit on the
+ * enemy of a still-young plain number adds to it and pops it again instead of stacking a new one.
+ */
+const MERGE_AGE = 0.45;
 /** Digits of the largest hit that can show at once, per number. */
 const MAX_DIGITS = 6;
 const MAX_GLYPHS = MAX_ACTIVE * MAX_DIGITS;
@@ -30,6 +35,10 @@ const popEase = (t: number) => cubicBezier(t, 0.34, 1.56, 0.64, 1);
 interface FloatingNumber {
   /** The digits of a hit, or a combat cue (闪避, 蒸汽). */
   text: string;
+  /** Damage summed into this number (0 for a combat cue). */
+  amount: number;
+  /** The struck enemy's id; -1 when unknown or a combat cue, which never merges. */
+  enemy: number;
   x: number;
   z: number;
   life: number;
@@ -202,17 +211,19 @@ export class GpuDamageNumbers {
     stage.scene.add(this.mesh);
   }
 
-  spawn(x: number, z: number, amount: number, crit: boolean, weak: boolean): void {
-    if (amount < 1 || this.active.length >= MAX_ACTIVE) return;
+  spawn(x: number, z: number, amount: number, crit: boolean, weak: boolean, enemy = -1): void {
+    if (amount < 1) return;
+    if (!crit && enemy >= 0 && this.merge(enemy, amount, weak)) return;
+    if (this.active.length >= MAX_ACTIVE) return;
     if (this.spawnedThisFrame >= MAX_PER_FRAME && !crit) return;
     this.spawnedThisFrame++;
     const item = this.pool.pop() ?? ({} as FloatingNumber);
     const angle = Math.random() * Math.PI * 2;
     const kick = crit ? 1.1 : 0.7;
-    // Bigger hits read bigger, on a log curve so a 300 doesn't swallow the screen.
-    const magnitude = Math.min(1.6, Math.max(0.85, 0.8 + Math.log10(Math.max(1, amount)) * 0.24));
     Object.assign(item, {
       text: String(Math.round(amount)).slice(-MAX_DIGITS),
+      amount,
+      enemy,
       x,
       z,
       driftX: Math.cos(angle) * kick,
@@ -221,12 +232,26 @@ export class GpuDamageNumbers {
       max: crit ? 0.95 : 0.75,
       life: crit ? 0.95 : 0.75,
       kind: crit ? 1 : weak ? 2 : 0,
-      // Resisted hits stay small but never below the 14 px readability floor.
-      size: crit ? 24 * magnitude : weak ? Math.max(14, 14 * magnitude) : 17 * magnitude,
+      size: numberSize(amount, crit, weak),
       tilt: crit ? ((Math.random() - 0.5) * 16 * Math.PI) / 180 : 0,
       pop: 0,
     });
     this.active.push(item);
+  }
+
+  /** Adds a plain hit to a young plain number of the same kind on that enemy; false when there is none. */
+  private merge(enemy: number, amount: number, weak: boolean): boolean {
+    const kind = weak ? 2 : 0;
+    for (const item of this.active) {
+      if (item.enemy !== enemy || item.kind !== kind || item.max - item.life > MERGE_AGE) continue;
+      item.amount += amount;
+      item.text = String(Math.round(item.amount)).slice(-MAX_DIGITS);
+      item.size = numberSize(item.amount, false, weak);
+      // Pops again where it is: restarting its arc would snap it back down every tick.
+      item.pop = 0;
+      return true;
+    }
+    return false;
   }
 
   /** 闪避 over the player when a hit is evaded: the hit's pop and arc, straight up, ice blue. */
@@ -244,6 +269,8 @@ export class GpuDamageNumbers {
     const item = this.pool.pop() ?? ({} as FloatingNumber);
     Object.assign(item, {
       text,
+      amount: 0,
+      enemy: -1,
       x,
       z,
       driftX: 0,
@@ -353,6 +380,13 @@ export class GpuDamageNumbers {
     this.geometry.dispose();
     this.material.dispose();
   }
+}
+
+/** Bigger hits read bigger, on a log curve so a 300 doesn't swallow the screen. */
+function numberSize(amount: number, crit: boolean, weak: boolean): number {
+  const magnitude = Math.min(1.6, Math.max(0.85, 0.8 + Math.log10(Math.max(1, amount)) * 0.24));
+  // Resisted hits stay small but never below the 14 px readability floor.
+  return crit ? 24 * magnitude : weak ? Math.max(14, 14 * magnitude) : 17 * magnitude;
 }
 
 /** `run-number-pop`: 2.1× to 0.86× at 45%, then to 1×, each leg on the pop curve. */

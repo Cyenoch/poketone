@@ -91,12 +91,34 @@ class Codex extends Screen {
   closeWindow() {}
 }
 class Shell extends Screen {
-  blocking = false;
+  static last;
+  portrait = false;
+  phase = "idle";
+  fullscreenAction;
+  constructor(...args) {
+    super(...args);
+    Shell.last = this;
+  }
+  get blocking() {
+    return this.portrait || this.phase !== "idle";
+  }
   setPortrait(value) {
-    this.blocking = value;
+    this.portrait = value;
+  }
+  // The notice's fullscreen key: the only control, shown while the host hands it an action.
+  setFullscreenAction(action) {
+    this.fullscreenAction = action;
+  }
+  hit() {
+    return this.portrait && this.fullscreenAction ? 0 : -1;
+  }
+  activate() {
+    if (!this.portrait || !this.fullscreenAction) return false;
+    this.fullscreenAction();
+    return true;
   }
   setTransition(phase) {
-    this.blocking = phase !== "idle";
+    this.phase = phase;
   }
   update() {}
 }
@@ -329,6 +351,7 @@ async function setup({ boot = new Screen(), part, handoff = true } = {}) {
   return {
     host,
     app,
+    platform,
     notes,
     modals,
     save,
@@ -593,6 +616,41 @@ try {
       mesh.geometry.dispose();
       mesh.material.dispose();
     }
+  } else if (scenario === "portrait-fullscreen") {
+    const below = new Screen();
+    s.host.registerScreen(below);
+    const calls = [];
+    let releasing = false;
+    const enter = async () => (calls.push(releasing), true);
+    s.platform.landscapeFullscreen = enter;
+    s.platform.display.portrait = true;
+    s.events().displayChanged();
+    const touch = { id: 5, x: 20, y: 20, kind: "touch", button: 0 };
+    s.events().down(touch);
+    assert.deepEqual(calls, [], "the press waits for its release");
+    releasing = true;
+    s.events().up(touch);
+    releasing = false;
+    assert.deepEqual(calls, [true], "fullscreen is asked inside the release, the touch's gesture");
+    s.key("Enter");
+    assert.equal(calls.length, 2, "Enter on the notice asks too");
+    // A slow map load covers the app: the key still answers, the scene stays blocked.
+    s.update({ busy: true, transition: "cover" });
+    s.events().down(touch);
+    releasing = true;
+    s.events().up(touch);
+    releasing = false;
+    s.key("Space");
+    assert.deepEqual(calls.slice(2), [true, false], "touch and Space ask while the scene is busy");
+    s.update({ busy: false, transition: "idle" });
+    s.platform.landscapeFullscreen = undefined;
+    s.events().displayChanged();
+    assert.equal(Shell.last.fullscreenAction, undefined, "fullscreen on: no key");
+    s.events().down(touch);
+    s.events().up(touch);
+    s.key("Enter");
+    assert.equal(calls.length, 4);
+    assert.deepEqual(below.activations, [], "the notice keeps every press from the screen below");
   } else {
     throw new Error(`Unknown host lifecycle scenario: ${scenario}`);
   }

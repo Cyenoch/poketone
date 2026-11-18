@@ -348,10 +348,10 @@ float groundShore(vec2 xz) {
 `;
 
 /**
- * Procedural sand for walkable ground (defines GROUND_SAND): a tone from dry to damp, the dirt map's
- * detail tiled small as grain, warped wind ripples that fade before they shimmer, and a sparse scatter
+ * Procedural sand for walkable ground (defines GROUND_SAND): a tone from dry to damp modulated by
+ * the painted grass-layer map, the dirt map's detail tiled small as grain, warped wind ripples that fade before they shimmer, and a sparse scatter
  * of shells and pebbles. `damp` 0..1 comes from the caller (distance to the sea). Fragment only (it
- * takes derivatives); requires `groundGlsl` earlier.
+ * takes derivatives); requires `groundGlsl` and `sampleUntiled` earlier.
  */
 export const sandGlsl = (sand: SandLook) => /* glsl */ `
 #define GROUND_SAND
@@ -368,6 +368,9 @@ const float SAND_GRAIN_TILE = 1.3;
 vec3 sandAlbedo(vec2 p, vec2 dx, vec2 dy, float damp) {
   float macro = envNoise(p * 0.06) * 0.6 + envNoise(p * 0.21 + 4.0) * 0.4;
   vec3 c = mix(SAND_DRY, SAND_DAMP, damp) * mix(0.92, 1.06, macro);
+  // The painted sand (grass layer) carries the large forms: ripples, drifts, colour drift.
+  vec3 painted = sampleUntiled(uGrassMap, p / GRASS_TILE, dx / GRASS_TILE, dy / GRASS_TILE);
+  c *= mix(vec3(1.0), painted / max(meanColor(uGrassMap), vec3(1e-3)), 0.85 * (1.0 - 0.5 * damp));
   vec3 dirt = textureGrad(uDirtMap, p / SAND_GRAIN_TILE, dx / SAND_GRAIN_TILE, dy / SAND_GRAIN_TILE).rgb;
   float grain = groundLuma(dirt) / max(groundLuma(meanColor(uDirtMap)), 1e-3) - 1.0;
   c *= 1.0 + clamp(grain, -0.7, 0.7) * SAND_GRAIN;

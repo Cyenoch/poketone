@@ -105,6 +105,10 @@ const float SEA_WADE = ${WADE_DEPTH.toFixed(3)};
 float seaGloss;
 float seaGlow;
 float seaFresnel;
+/** The long swell the facets follow, in the facet grid's frame. */
+float seaLongSwell(vec2 v, float t) {
+  return envNoise(v * 0.16 + vec2(t * 0.026, t * 0.01)) + envNoise(v.yx * 0.23 + vec2(-t * 0.012, t * 0.03) + 7.1) * 0.55;
+}
 `;
 
 /**
@@ -129,25 +133,45 @@ vec3 seaNormal = vec3(0.0, 1.0, 0.0);
   const float e = 0.1;
   vec2 a = q * 0.55 + vec2(t * 0.09, t * 0.035);
   vec2 b = q * 1.7 + vec2(-t * 0.05, t * 0.16) + 7.1;
-  vec2 c = q * 5.5 + vec2(t * 0.4, -t * 0.25) + 3.3;
+  vec2 c = q * 5.5 + vec2(t * 0.2, -t * 0.12) + 3.3;
   float h0 = envNoise(a) + envNoise(b) * 0.45;
   float hx = envNoise(a + vec2(e * 0.55, 0.0)) + envNoise(b + vec2(e * 1.7, 0.0)) * 0.45;
   float hz = envNoise(a + vec2(0.0, e * 0.55)) + envNoise(b + vec2(0.0, e * 1.7)) * 0.45;
   // Fine ripples only tilt the glints: small, scattered flecks rather than one smeared sun.
   float r0 = envNoise(c);
   vec2 ripple = vec2(envNoise(c + vec2(e * 5.5, 0.0)) - r0, envNoise(c + vec2(0.0, e * 5.5)) - r0) / e * 0.05;
-  vec2 slope = (vec2(hx - h0, hz - h0) / e * 0.12 + ripple) * calm * lift;
+  vec2 swellSlope = vec2(hx - h0, hz - h0) / e * 0.12;
+  // Out past the wading shelf the swell turns low-poly: each facet of a 1.6 m grid, turned off the
+  // world axes, is a flat plane through a long swell at its corners, so whole facets catch the sun.
+  // The swell stays under the grid's Nyquist (1 / 3.2 m): finer noise sampled only at the corners
+  // aliases into large, straight-edged bright and dark regions.
+  {
+    const float facet = 1.6;
+    const mat2 turn = mat2(0.8, 0.6, -0.6, 0.8);
+    vec2 g = turn * q / facet;
+    vec2 cell = floor(g);
+    vec2 f = g - cell;
+    vec2 corner = f.x > f.y ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+    float s0 = seaLongSwell(cell * facet, t);
+    float s1 = seaLongSwell((cell + corner) * facet, t);
+    float s2 = seaLongSwell((cell + 1.0) * facet, t);
+    vec2 facetSlope = transpose(turn) * (f.x > f.y ? vec2(s1 - s0, s2 - s1) : vec2(s2 - s1, s1 - s0)) / facet * 0.6;
+    swellSlope = mix(swellSlope, facetSlope, smoothstep(SEA_WADE, SEA_WADE + 1.2, depth));
+  }
+  vec2 slope = (swellSlope + ripple) * calm * lift;
   seaNormal = normalize(vec3(-slope.x, 1.0, -slope.y));
 
   // Depth ramp with a wandering edge; a soft darker shelf where the water gets too deep to wade.
   float d = depth + (envNoise(p * 0.21 + 2.0) - 0.5) * 0.12;
   vec3 color = mix(SEA_SHALLOW, SEA_MID, smoothstep(0.08, 0.95, d));
   color = mix(color, SEA_DEEP, smoothstep(0.8, 2.6, d));
+  // Open water past the shelf deepens further toward a dark blue.
+  color = mix(color, SEA_DEEP * vec3(0.62, 0.72, 0.95), smoothstep(3.0, 12.0, d));
   float shelf = smoothstep(SEA_WADE - 0.06, SEA_WADE + 0.1, depth);
   color *= mix(1.06, 0.9, shelf);
   // Large soft patches (wind on the water), brighter swell crests.
   color *= 0.94 + 0.12 * envNoise(q * 0.09 + t * 0.01);
-  color = mix(color, SEA_SHALLOW * 1.1, smoothstep(0.85, 1.25, h0) * 0.25 * calm);
+  color = mix(color, SEA_SHALLOW * 1.1, smoothstep(0.7, 1.5, h0) * 0.1 * calm);
   // Clear at the waterline, opaque in the deep: the sand and its caustics show through the shallows.
   float alpha = mix(0.0, 0.62, smoothstep(0.0, 0.32, depth));
   alpha = mix(alpha, 0.8, smoothstep(0.32, SEA_WADE + 0.1, depth));
@@ -170,9 +194,11 @@ vec3 seaNormal = vec3(0.0, 1.0, 0.0);
   color = mix(color, SEA_FOAM, foam);
   alpha = max(alpha, foam * 0.9);
 
-  // Out in the deep, whitecaps on the swell when the wind is up.
-  float caps = smoothstep(1.2, 1.3, h0 + envNoise(q * 3.0 - t * 0.3) * 0.3) * smoothstep(1.2, 2.5, depth) * smoothstep(0.35, 0.9, uWindStrength + uWindGust * 0.5);
-  color = mix(color, SEA_FOAM, caps * 0.6);
+  // Out in the deep, whitecaps on the swell crests when the wind is up: small flecks that break and
+  // drift, never whole crests (from above, a white crest reads as a sand bar).
+  float caps = smoothstep(1.15, 1.3, h0) * smoothstep(1.2, 2.5, depth) * smoothstep(0.35, 0.9, uWindStrength + uWindGust * 0.5);
+  caps *= smoothstep(0.7, 0.78, envNoise(q * 4.5 + vec2(-t * 0.7, t * 0.3)));
+  color = mix(color, SEA_FOAM, caps * 0.75);
 
   diffuseColor.rgb = color;
   diffuseColor.a = alpha;
@@ -188,7 +214,7 @@ export const SEA_LIGHT = inject(ShaderChunk.lights_lambert_pars_fragment, "sea-g
   {
     vec3 halfway = normalize(directLight.direction + geometryViewDir);
     float facing = saturate(dot(geometryNormal, halfway));
-    float glint = smoothstep(0.55, 0.8, pow(facing, 600.0)) * 0.7 + pow(facing, 160.0) * 0.08;
+    float glint = smoothstep(0.35, 0.9, pow(facing, 500.0)) * 0.6 + pow(facing, 140.0) * 0.07;
     reflectedLight.directSpecular += directLight.color * seaGloss * glint;
   }`,
 });

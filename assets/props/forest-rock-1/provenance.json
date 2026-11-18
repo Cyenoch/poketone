@@ -1,11 +1,27 @@
 {
-  "generator": "assets/props/build-map-props.py",
-  "seed": 729332050,
-  "source": "Original scripted geometry; no external assets",
-  "triangles": 240,
-  "materials": 1,
-  "vertexColors": true,
-  "units": "metres",
-  "sha256": "c003d6aacdb2c24b56db2f9509dd4537e41603f989338135bf2025b14430a769",
-  "tripoCredits": 0
+  "set": "forest-rocks",
+  "footprint": {
+    "baseSpreadBefore": 0.4276,
+    "target": 0.5647,
+    "xyScale": 1.3206
+  },
+  "repaint": {
+    "lichen": ["#2f4a1f", "#6f8a3c"]
+  },
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "props/forest-rocks/generation/tripo-out/tripo-out/poketone-forest-rocks-8a197b89/model.glb",
+  "tripoSourceSha256": "23f43df3f7832a71a507cdd9347e03d8bdc6bf88822beee74e949f0a8cb1737f",
+  "tripoTask": "8a197b89-2675-4bc3-a9a8-f680acc1ea81",
+  "tripoType": "image_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 826,
+  "dimensions": [0.3773, 0.3825, 0.3386],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "72566fecee23113d5561d82863ea3e4b9424e50d31707f64a09e032a41d56df5"
 }

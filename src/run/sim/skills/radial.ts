@@ -116,6 +116,7 @@ export const hazards = {
     // Self-destruction removes the enemy without granting kills, loot or captures.
     world.events.push({
       t: "death",
+      id: caster.id,
       x: caster.x,
       z: caster.z,
       species: caster.species,

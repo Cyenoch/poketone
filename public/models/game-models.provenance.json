@@ -102,7 +102,8 @@
       "step": "generation",
       "taskId": "1a32ddf3-946c-432f-8752-2cf23cb97b96",
       "type": "text_to_model",
-      "credits": 30
+      "credits": 30,
+      "supersededBy": "enemies/creature-pass.provenance.json (2026-11-18)"
     },
     {
       "asset": "enemies/rattata",
@@ -123,7 +124,8 @@
       "step": "generation",
       "taskId": "db7acac9-041a-4e6b-bc2d-8b7501926671",
       "type": "text_to_model",
-      "credits": 30
+      "credits": 30,
+      "supersededBy": "enemies/creature-pass.provenance.json (2026-11-18)"
     },
     {
       "asset": "props/bush",
@@ -1176,11 +1178,11 @@
     },
     {
       "file": "public/models/enemies/weedle.glb",
-      "source": "assets/enemies/weedle/generation/model.glb",
-      "triangles": 899,
+      "source": "assets/enemies/weedle/generation-v2/tripo-out/tripo-out/weedle-mv-460ee0c8/model.glb",
+      "triangles": 900,
       "texture": 512,
       "clips": [],
-      "bytes": 71312
+      "bytes": 94436
     },
     {
       "file": "public/models/enemies/rattata.glb",
@@ -1192,11 +1194,11 @@
     },
     {
       "file": "public/models/enemies/pidgey.glb",
-      "source": "assets/enemies/pidgey/generation/tripo-out/poketone-pidgey-1a32ddf3/model.glb",
-      "triangles": 900,
+      "source": "assets/enemies/pidgey/generation-v2/tripo-out/tripo-out/pidgey-mv-8ece7b07/model.glb",
+      "triangles": 1300,
       "texture": 512,
       "clips": [],
-      "bytes": 78040
+      "bytes": 136176
     },
     {
       "file": "public/models/enemies/oddish.glb",
@@ -1264,11 +1266,11 @@
     },
     {
       "file": "public/models/props/tree.glb",
-      "source": "assets/props/tree/blender/model.glb (hand-built by assets/props/build-props.py, 0 credits; Tripo export not shipped)",
-      "triangles": 524,
-      "texture": null,
+      "source": "assets/props/tree/blender/model.glb (Tripo, composed by assets/props/compose-tripo-props.py; see assets/props/tree/provenance.json)",
+      "triangles": 1698,
+      "texture": 512,
       "clips": [],
-      "bytes": 14188
+      "bytes": 112144
     },
     {
       "file": "public/models/props/pine.glb",
@@ -1277,22 +1279,6 @@
       "texture": 512,
       "clips": [],
       "bytes": 46916
-    },
-    {
-      "file": "public/models/props/rock.glb",
-      "source": "assets/props/rock/generation/tripo-out/poketone-rock-b593ee64/model.glb",
-      "triangles": 500,
-      "texture": 512,
-      "clips": [],
-      "bytes": 38040
-    },
-    {
-      "file": "public/models/props/bush.glb",
-      "source": "assets/props/bush/blender/model.glb (hand-built by assets/props/build-props.py, 0 credits; Tripo export not shipped)",
-      "triangles": 400,
-      "texture": null,
-      "clips": [],
-      "bytes": 11084
     },
     {
       "file": "public/models/bulbasaur.glb",

@@ -154,11 +154,14 @@ if (!fixture) {
         debugHeight: () => 0,
         megaShatters: [],
         assistPops: [],
+        drawn: { enemies: new Map(), players: new Map() },
       };
     },
   }));
   await mock.module(at("src/run/view/grade.ts"), () => ({
     applyWorldOutput: noop,
+    defaultGrade: {},
+    setWorldGrade: noop,
     createGrade: () => ({ vignette: new Object3D(), dispose: noop }),
   }));
   await mock.module(at("src/run/view/healthBars.ts"), () => ({

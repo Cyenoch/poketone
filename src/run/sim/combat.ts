@@ -316,6 +316,7 @@ function settleDamage(
     type: hit.type,
     move: hit.move,
     by: hit.owner.id,
+    enemy: enemy.id,
     ...(confirmedContact ? { confirmedContact: true } : {}),
   });
   if (enemy.hp <= 0) killEnemy(ctx, enemy, hit.owner);
@@ -437,6 +438,7 @@ export function killEnemy(ctx: Ctx, enemy: Enemy, killer: Player | null): void {
   recordDefeat(world, enemy, killer);
   world.events.push({
     t: "death",
+    id: enemy.id,
     x: enemy.x,
     z: enemy.z,
     species: enemy.species,

@@ -338,6 +338,8 @@ for (const starter of ["abra", "geodude"])
       const looks = new Set();
       for (let tick = 0; tick < 190; tick++) {
         updateUltimate(ctx, player, TICK);
+        // The world step counts the cast's protection down; its glow on the body ends with it.
+        player.ult.protection = Math.max(0, player.ult.protection - TICK);
         for (const e of world.events) {
           if (e.t === "ult-pulse") looks.add(e.look);
           vfx.handle(e);
@@ -350,6 +352,33 @@ for (const starter of ["abra", "geodude"])
       assert.ok(looks.has(starter === "abra" ? "roots" : "meteor"));
       if (stage === 2) assert.ok(looks.has("blast"));
       assert.equal(inspect(vfx).vertices, 0, "cast aura and pulses must finish");
+    }
+  });
+
+for (const starter of ["abra", "geodude"])
+  test(`${starter}: each ultimate pulse look draws its own geometry`, (t) => {
+    const { world, vfx, update } = arena(t, starter);
+    world.enemies = [];
+    for (const look of ["ring", starter === "abra" ? "roots" : "meteor", "blast"]) {
+      update(3);
+      assert.equal(
+        inspect(vfx).vertices,
+        0,
+        "nothing else draws, so what follows is the pulse's own",
+      );
+      vfx.handle({
+        t: "ult-pulse",
+        player: 0,
+        look,
+        x: 1,
+        z: 2,
+        radius: 3,
+        dirX: 0,
+        dirZ: 1,
+        length: 5,
+      });
+      update();
+      assert.ok(inspect(vfx).vertices > 0, `${look} pulse is visible`);
     }
   });
 

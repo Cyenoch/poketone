@@ -70,6 +70,11 @@ export function createVolcanoAir(world: World, pools: GroundPools, wind: WindUni
       if (sampleDepth(lava, px, pz) < 0.35) continue;
       roots.push(px, level + 0.08, pz, 2);
       phases.push(jitter);
+      // Heat shimmer: a sparser set of tall, faint rippling sheets over the pool.
+      if (latticeHash(world.seed, Math.round(x * 3), Math.round(z * 3)) < 0.35) {
+        roots.push(px, level + 0.05, pz, 3);
+        phases.push(jitter);
+      }
     }
   const quad = new PlaneGeometry(1, 1);
   const geometry = new InstancedBufferGeometry();
@@ -90,11 +95,13 @@ export function createVolcanoAir(world: World, pools: GroundPools, wind: WindUni
         varying vec2 vAirUv;
         varying float vAirFade;
         varying float vSteam;
-        varying float vHot;`,
+        varying float vHot;
+        varying float vShimmer;`,
       "#include <project_vertex>": `
         vAirUv = uv;
         vSteam = 1.0 - step(0.5, abs(aVolcanoRoot.w - 1.0));
-        vHot = step(1.5, aVolcanoRoot.w);
+        vShimmer = step(2.5, aVolcanoRoot.w);
+        vHot = step(1.5, aVolcanoRoot.w) - vShimmer;
         float age = fract(uWindTime * mix(0.055, 0.19, vSteam) + aPhase);
         vAirFade = smoothstep(0.0, 0.16, age) * (1.0 - smoothstep(0.55, 1.0, age));
         vec3 root = aVolcanoRoot.xyz;
@@ -103,8 +110,13 @@ export function createVolcanoAir(world: World, pools: GroundPools, wind: WindUni
         root.xz += uWindDir * age * age * mix(2.4, 0.65, vSteam);
         root.xz += vec2(sin(aPhase * 32.0 + age * 6.0), cos(aPhase * 24.0 + age * 5.0)) * age * 0.12;
         float size = mix(0.035, 0.16 + age * 0.5, vSteam) + vHot * 0.045;
+        if (vShimmer > 0.5) {
+          root = aVolcanoRoot.xyz + vec3(0.0, 0.9, 0.0);
+          vAirFade = 0.6 + 0.4 * sin(uWindTime * 0.7 + aPhase * 6.2832);
+          size = 1.7;
+        }
         vec4 mvPosition = modelViewMatrix * vec4(root, 1.0);
-        mvPosition.xy += position.xy * vec2(size, size * mix(0.8, 1.5, vSteam));
+        mvPosition.xy += position.xy * vec2(size, size * mix(mix(0.8, 1.5, vSteam), 1.2, vShimmer));
         gl_Position = projectionMatrix * mvPosition;`,
     });
     shader.fragmentShader = inject(shader.fragmentShader, "volcano-air", {
@@ -112,14 +124,22 @@ export function createVolcanoAir(world: World, pools: GroundPools, wind: WindUni
         varying vec2 vAirUv;
         varying float vAirFade;
         varying float vSteam;
-        varying float vHot;`,
+        varying float vHot;
+        varying float vShimmer;`,
       "#include <color_fragment>": `#include <color_fragment>
         vec2 p = vAirUv * 2.0 - 1.0;
         float edge = 1.0 - smoothstep(0.25, 1.0, dot(p,p));
         float wisp = mix(1.0, 0.55 + 0.45 * envNoise(vAirUv * 5.0 - vec2(0.0, uWindTime * 0.2)), vSteam);
         diffuseColor.rgb = mix(${ember ? "vec3(0.8,0.25,0.025)" : "vec3(0.32,0.3,0.29)"}, ${night ? "vec3(0.22,0.2,0.24)" : "vec3(0.45,0.43,0.42)"}, vSteam);
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.5, 0.045), vHot);
-        diffuseColor.a = edge * wisp * vAirFade * mix(0.6, 0.2, vSteam);`,
+        diffuseColor.a = edge * wisp * vAirFade * mix(0.6, 0.2, vSteam);
+        if (vShimmer > 0.5) {
+          // Rising, wavering bands of brighter air: reads as heat haze without a refraction pass.
+          float wobble = sin(vAirUv.x * 7.0 + uWindTime * 2.3 + vAirUv.y * 3.0) * 1.4;
+          float band = pow(0.5 + 0.5 * sin(vAirUv.y * 26.0 - uWindTime * 5.0 + wobble), 3.0);
+          diffuseColor.rgb = vec3(1.0, 0.62, 0.3);
+          diffuseColor.a = band * edge * smoothstep(0.0, 0.25, vAirUv.y) * vAirFade * 0.075;
+        }`,
     });
   });
   const mesh = new Mesh(geometry, material);

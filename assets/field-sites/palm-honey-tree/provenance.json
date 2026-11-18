@@ -1,0 +1,21 @@
+{
+  "repaint": {
+    "leaf": ["#264a2c", "#7d9c55"]
+  },
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "field-sites/palm-honey-tree/generation/tripo-out/tripo-out/poketone-palm-honey-tree-mv-dbde5f21/model.glb",
+  "tripoSourceSha256": "b86e37f4715e36f40713ff629e016a33bee8573600075c7d55150adbead97f3e",
+  "tripoTask": "dbde5f21-46cd-45ca-bd12-c8a0f92cf7c3",
+  "tripoType": "multiview_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 2135,
+  "dimensions": [0.7906, 0.82, 1.0],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "2a4ed7eb7f87aa4cd89e730b6cde3420d74de4a461f0ae6b1262844280e9aca6"
+}

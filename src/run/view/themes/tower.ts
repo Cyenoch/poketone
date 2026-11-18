@@ -3,15 +3,30 @@ import {
   createTowerAtmosphere,
   towerCandleMaterial,
   towerOfferings,
+  towerRubble,
   towerStonework,
   towerVigil,
+  towerWindowLight,
 } from "../environment/tower";
 import { createTowerCutaway } from "../towerCutaway";
-import { Mesh } from "three";
+import { Color, Mesh } from "three";
+import { createTowerExterior } from "../environment/towerExterior";
+/** A CSS colour as an RGB triple for shader literals. */
+function colorTriple(css: string): [number, number, number] {
+  const c = new Color(css);
+  return [c.r, c.g, c.b];
+}
 export const tower: StageTheme = {
   id: "tower",
+  grade: {
+    exposure: 1.2,
+    green: 0.25,
+    shade: [0.92, 0.94, 1.02],
+    light: [1.08, 1.01, 0.9],
+    curve: 0.65,
+  },
   zoneAtmosphere: towerFloorAtmosphere,
-  decorate({ scene, terrain, world, wind }) {
+  decorate({ scene, terrain, world, wind, light }) {
     const cutaway = createTowerCutaway(terrain, world);
     const atmosphere = createTowerAtmosphere(world, wind);
     const stonework = terrain instanceof Mesh ? towerStonework(terrain, world.map.terrain) : null;
@@ -20,6 +35,22 @@ export const tower: StageTheme = {
         ? towerVigil(terrain.material, world)
         : null;
     scene.add(atmosphere.mesh);
+    const exterior =
+      terrain instanceof Mesh
+        ? createTowerExterior(
+            terrain.material,
+            wind,
+            scene.fog?.color ?? new Color(tower.haze.color),
+          )
+        : null;
+    if (exterior) scene.add(...exterior.meshes);
+    const windows =
+      terrain instanceof Mesh
+        ? towerWindowLight(terrain, world, light.sunOffset, colorTriple(light.sun))
+        : null;
+    const rubble = towerRubble(world);
+    if (windows) scene.add(windows.mesh);
+    scene.add(rubble.mesh);
     return {
       update() {
         cutaway.update();
@@ -28,51 +59,85 @@ export const tower: StageTheme = {
       dispose() {
         atmosphere.dispose();
         stonework?.dispose();
+        exterior?.dispose();
+        windows?.dispose();
+        rubble.dispose();
       },
     };
   },
+  drift: [
+    {
+      shape: "sheet",
+      count: 20,
+      color: [0.55, 0.52, 0.66],
+      alpha: 0.17,
+      size: [3.0, 8.0],
+      height: [0.05, 0.1],
+      rise: 0,
+      life: 10,
+      speed: 0.1,
+      carry: 0.6,
+      flutter: 0,
+      clear: 0.15,
+    },
+    {
+      shape: "mote",
+      count: 120,
+      color: [0.62, 0.72, 1],
+      alpha: 0.84,
+      size: [0.11, 0.11],
+      height: [0.3, 2.5],
+      rise: 0.8,
+      life: 6,
+      speed: 0.15,
+      carry: 0.4,
+      flutter: 0.8,
+      clear: 0.15,
+    },
+  ],
   loadingArt: "/art/loading-tower.webp",
+  edge: "#f0c6ff",
   haze: {
     color: "#aaa1b7",
     near: 28,
     far: 82,
   },
   light: {
-    sky: "#d3c6e6",
-    ground: "#3f354c",
+    sky: "#cfc5dc",
+    ground: "#4a3f3c",
     hemi: 1,
-    sun: "#ede2ff",
+    sun: "#fbe9d6",
     sunIntensity: 3,
     sunOffset: [20, 18, 9],
   },
   ground: {
     grass: {
-      map: "/textures/ground/stone-albedo.png",
-      settle: [0.45, 0.88, 0.86, 0.97],
+      map: "/art/ground-tower-stone.jpg",
+      settle: [0.4, 1.14, 1.02, 0.86],
       tile: 3.6,
-      detail: "/textures/ground/stone-detail.png",
-      normal: 0.24,
+      detail: "/art/ground-tower-stone-detail.png",
+      normal: 0.16,
     },
     meadow: {
-      map: "/textures/ground/stone-albedo.png",
-      settle: [0.45, 0.88, 0.86, 0.97],
+      map: "/art/ground-tower-stone.jpg",
+      settle: [0.4, 1.14, 1.02, 0.86],
       tile: 4.4,
-      detail: "/textures/ground/stone-detail.png",
-      normal: 0.24,
+      detail: "/art/ground-tower-stone-detail.png",
+      normal: 0.16,
     },
     dirt: {
-      map: "/textures/ground/stone-albedo.png",
-      settle: [0.45, 0.88, 0.86, 0.97],
+      map: "/art/ground-tower-stone.jpg",
+      settle: [0.6, 0.9, 0.88, 0.92],
       tile: 3.2,
-      detail: "/textures/ground/stone-detail.png",
-      normal: 0.24,
+      detail: "/art/ground-tower-stone-detail.png",
+      normal: 0.16,
     },
     cliff: {
-      map: "/textures/ground/rock-albedo.png",
-      settle: [0.45, 0.88, 0.86, 0.97],
+      map: "/art/ground-tower-stone.jpg",
+      settle: [0.6, 0.88, 0.86, 0.92],
       tile: 2.6,
-      detail: "/textures/ground/rock-detail.png",
-      normal: 0.24,
+      detail: "/art/ground-tower-stone-detail.png",
+      normal: 0.2,
     },
     wetSoil: [0.05, 0.04, 0.024],
     pebble: [0.12, 0.115, 0.1],
@@ -100,7 +165,23 @@ export const tower: StageTheme = {
     strata: [0.55, 0],
   },
   footprints: null,
-  vegetation: { grass: null, flowers: null, reeds: null },
+  vegetation: {
+    grass: {
+      density: 0.45,
+      kind: "dry",
+      root: [0.07, 0.11, 0.07],
+      tip: [0.25, 0.36, 0.2],
+      weeds: [0.7, 0.85, 0.8],
+    },
+    flowers: null,
+    reeds: null,
+    pebbles: {
+      density: 0.7,
+      size: [0.04, 0.12],
+      dark: [0.12, 0.11, 0.15],
+      light: [0.36, 0.34, 0.4],
+    },
+  },
   dressing: [
     {
       model: "/models/props/tower-candles.glb",
@@ -121,14 +202,14 @@ export const tower: StageTheme = {
     {
       model: "/models/props/tower-petals.glb",
       height: 0.025,
-      density: 0.005,
+      density: 0.008,
       placement: "scatter",
       light: 0,
     },
     {
       model: "/models/props/tower-rubble.glb",
       height: 0.15,
-      density: 0.004,
+      density: 0.012,
       placement: "scatter",
       light: 0,
     },
@@ -142,18 +223,18 @@ export const tower: StageTheme = {
   ],
   landmark: {
     model: "/models/props/tower-landmark.glb",
-    height: 2.1,
+    height: 3.2,
     glow: 0xece1b8,
     cores: [
-      [-1.65, 1.95, -0.55],
-      [1.65, 1.95, -0.55],
+      [-1.57, 2.03, -1.16],
+      [1.57, 2.03, -1.16],
     ],
   },
   architecture: {
     slab: 1.5,
     joint: 0.035,
-    wall: 0x706a7d,
-    cap: 0x4a4458,
+    wall: 0xa08a90,
+    cap: 0x8c7d84,
     candles: [1, 1, 1, 0.5, 0.35, 0.35, 0.6],
   },
   water: {
@@ -199,7 +280,7 @@ export const tower: StageTheme = {
       castShadow: true,
     },
     bush: {
-      models: ["/models/props/bush.glb"],
+      models: ["/models/props/tower-rubble.glb"],
       sway: [0.1, 1.6],
       flat: true,
       tint: 1,

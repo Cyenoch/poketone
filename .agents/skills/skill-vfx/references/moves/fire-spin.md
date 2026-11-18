@@ -11,8 +11,8 @@ Reference game: ~7 flames orbiting at ≈ 0.55 of the radius plus a deep-fire sw
 ≈ 0.9 radius; trail of flames rising; collapse ("boom"): ground ring at the radius, 14 flames
 thrown tangentially out of a ring at half radius, smoke. Low, ground-hugging, not a tall tower.
 
-Sim: vortex at the target, radius 1.2, delay 0.25 s, life dur + 0.25 = 2.65 s, ticks 0.3 s, pulls
-enemies from 2 × radius; collapses into a `burst` (radius 1.2, life 0.3 s, ×2.5 damage). Big tier.
+Sim: vortex at the target, radius 1.5, delay 0.25 s, life dur + 0.25 = 2.05 s, ticks 0.3 s, pulls
+enemies from 2 × radius; collapses into a `burst` (radius 1.5, life 0.3 s, ×1.8 damage). Big tier.
 
 Keep: swirl that reads as trapping, the collapse burst. Avoid: a tall opaque funnel (> 2 m hides
 the crowd), fire filling the whole disc.

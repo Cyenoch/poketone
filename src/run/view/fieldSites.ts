@@ -15,6 +15,7 @@ import {
   type MeshLambertMaterial,
 } from "three";
 import { SITE } from "../sim/content/params/sites";
+import type { StageId } from "../sim/content/stages/index";
 import { formOf } from "../sim/evolution";
 import { TICK, type World } from "../sim/state/world";
 import type { Site, SiteKind } from "../sim/state/field";
@@ -23,20 +24,27 @@ import type { InstanceSource } from "./assets";
 import { shadeUnderClouds } from "./environment/clouds";
 import type { WindUniforms } from "./environment/wind";
 import { creatureLook, lambertCopy, ownShadowDepth } from "./materials";
+import { springWater } from "./springWater";
 
 /** Prop models of the field sites (`public/models/field-sites`), keyed by model name. */
 export type SiteModel =
   | "honey-tree"
+  | "palm-honey-tree"
   | "item-ball"
   | "fishing"
   | "fossil"
   | "raid-den"
   | "spring"
+  | "spring-sand"
+  | "spring-frost"
+  | "spring-basalt"
+  | "spring-tower"
   | "egg"
+  | "egg-nest"
   | "gengar-altar";
 
 /** Which prop draws each kind; Snorlax sleeps as its own species model, the glint is light only. */
-export const siteModelOf: Record<SiteKind, SiteModel | "snorlax" | null> = {
+const SITE_MODEL: Record<SiteKind, SiteModel | "snorlax" | null> = {
   "honey-tree": "honey-tree",
   "item-ball": "item-ball",
   snorlax: "snorlax",
@@ -51,6 +59,21 @@ export const siteModelOf: Record<SiteKind, SiteModel | "snorlax" | null> = {
   // Gengar's deal shares the altar prop until its own model lands (add-route-branches 4.1).
   "gengar-deal": "gengar-altar",
 };
+
+/** The stage's prop for a site kind: the coast's honey tree is one of its palms. */
+/** The spring's well in each map's own stone. */
+const SPRING_STONE: Partial<Record<StageId, SiteModel>> = {
+  desert: "spring-sand",
+  glacier: "spring-frost",
+  volcano: "spring-basalt",
+  tower: "spring-tower",
+};
+
+export function siteModelOf(kind: SiteKind, stage: StageId): SiteModel | "snorlax" | null {
+  if (kind === "honey-tree" && stage === "coast") return "palm-honey-tree";
+  if (kind === "spring") return SPRING_STONE[stage] ?? "spring";
+  return SITE_MODEL[kind];
+}
 
 const GOLD = "#ffd45b",
   AMBER = "#ffb02e",
@@ -309,14 +332,24 @@ export function siteLook(site: Site, time: number, elapsed = 0): SiteLook {
 /** Heights of each prop in world units (assets/field-models.provenance.json, scripted props in metres). */
 export const siteModelHeight: Record<SiteModel, number> = {
   "honey-tree": 2.8,
-  "item-ball": 0.42,
-  fishing: 1.9,
-  fossil: 0.62,
-  "raid-den": 1.17,
-  spring: 0.86,
-  egg: 0.6,
+  "palm-honey-tree": 3,
+  "item-ball": 0.48,
+  fishing: 1.6,
+  fossil: 0.9,
+  "raid-den": 1.4,
+  spring: 1.4,
+  "spring-sand": 1.4,
+  "spring-frost": 1.4,
+  "spring-basalt": 1.4,
+  "spring-tower": 1.4,
+  // The egg and its nest are one Tripo model split apart: equal heights keep the source's proportions.
+  egg: 0.73,
+  "egg-nest": 0.73,
   "gengar-altar": 1.3,
 };
+
+/** The egg's base above the nest's foot (`assets/field-sites/egg/provenance.json` eggLiftPerNest × 0.73). */
+const EGG_SEAT = 0.12;
 
 const hashYaw = (id: number) => (id * 2.39996) % (Math.PI * 2);
 
@@ -345,7 +378,10 @@ interface Pulse {
 }
 interface Prop {
   root: Group;
+  /** What shakes: the whole prop, or only the egg above a grounded nest. */
+  wobble: Object3D;
   mesh: Mesh;
+  nest: { mesh: Mesh; material: MeshLambertMaterial; base: Color } | null;
   material: MeshLambertMaterial;
   base: Color;
   depth: Material | null;
@@ -653,6 +689,12 @@ export function createFieldSites(
     if (!source) return null;
     const material = lambertCopy(source.material);
     if (model === "snorlax") creatureLook(material);
+    if (kind === "spring") {
+      const box =
+        source.geometry.boundingBox ??
+        (source.geometry.computeBoundingBox(), source.geometry.boundingBox!);
+      springWater(material, wind, Math.max(box.max.x - box.min.x, box.max.z - box.min.z) / 2);
+    }
     shadeUnderClouds(material, wind);
     const mesh = new Mesh(source.geometry, material);
     const group = new Group();
@@ -674,6 +716,7 @@ export function createFieldSites(
     group.add(mesh);
     const casts =
       model === "honey-tree" ||
+      model === "palm-honey-tree" ||
       model === "raid-den" ||
       model === "fishing" ||
       model === "gengar-altar" ||
@@ -683,7 +726,9 @@ export function createFieldSites(
     root.add(group);
     return {
       root: group,
+      wobble: group,
       mesh,
+      nest: null,
       material,
       base: material.color.clone(),
       depth: casts ? ownShadowDepth(mesh) : null,
@@ -695,9 +740,26 @@ export function createFieldSites(
     };
   }
 
+  /** A field egg sits in its nest; only the egg shakes, and only the egg is carried. */
+  function seatInNest(prop: Prop): void {
+    const source = sources["egg-nest"];
+    if (!source) return;
+    const material = lambertCopy(source.material);
+    shadeUnderClouds(material, wind);
+    const mesh = new Mesh(source.geometry, material);
+    mesh.receiveShadow = true;
+    const egg = new Group();
+    egg.position.y = EGG_SEAT;
+    egg.add(prop.mesh);
+    prop.root.add(egg, mesh);
+    prop.wobble = egg;
+    prop.nest = { mesh, material, base: material.color.clone() };
+  }
+
   function dropProp(prop: Prop): void {
     prop.root.removeFromParent();
     prop.material.dispose();
+    prop.nest?.material.dispose();
     prop.depth?.dispose();
   }
 
@@ -721,10 +783,11 @@ export function createFieldSites(
     for (const site of world.sites) {
       seen.add(site.id);
       const look = siteLook(site, time, elapsed);
-      const model = siteModelOf[site.kind];
+      const model = siteModelOf(site.kind, world.stage);
       let prop = props.get(site.id);
       if (!prop && model) {
         const made = makeProp(site.kind, model, site.id);
+        if (made && site.kind === "egg") seatInNest(made);
         if (made) props.set(site.id, (prop = made));
       }
       const base = ground(site.x, site.z);
@@ -736,8 +799,8 @@ export function createFieldSites(
           site.z,
         );
         const shake = look.shake;
-        prop.root.rotation.z = Math.sin(elapsed * 29 + site.id) * 0.07 * shake;
-        prop.root.rotation.x = Math.cos(elapsed * 23 + site.id) * 0.05 * shake;
+        prop.wobble.rotation.z = Math.sin(elapsed * 29 + site.id) * 0.07 * shake;
+        prop.wobble.rotation.x = Math.cos(elapsed * 23 + site.id) * 0.05 * shake;
         const swell = 1 + (site.kind === "item-ball" ? 0.25 * shake : 0);
         if (site.kind === "snorlax")
           prop.mesh.scale.set(
@@ -747,6 +810,7 @@ export function createFieldSites(
           );
         else prop.root.scale.setScalar(swell * prop.scale);
         prop.material.color.copy(prop.base).multiplyScalar(look.tone);
+        prop.nest?.material.color.copy(prop.nest.base).multiplyScalar(look.tone);
         prop.material.emissive.setRGB(look.flash * 0.9, look.flash * 0.08, look.flash * 0.04);
         // A trap that went off leaves sparks; a used spring or a dug fossil shows its end too.
         if (prop.state === "busy" && site.state === "spent" && site.kind === "item-ball") {
@@ -859,7 +923,7 @@ export function createFieldSites(
       if (!prop) {
         const made = makeProp("egg", "egg", player.id);
         if (!made) continue;
-        made.scale = 0.75;
+        made.scale = 0.65;
         carried.set(player.id, (prop = made));
       }
       const form = formOf(player);

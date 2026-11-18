@@ -6,10 +6,13 @@ import {
   Box3,
   BufferGeometry,
   Float32BufferAttribute,
+  Frustum,
   Group,
+  Matrix4,
   MeshStandardMaterial,
   NumberKeyframeTrack,
   PerspectiveCamera,
+  Scene,
   Skeleton,
   SkinnedMesh,
   Uint16BufferAttribute,
@@ -41,11 +44,15 @@ import { installResources } from "../src/platform/resources.ts";
 import { nativeResources } from "../src/platform/native/resources.ts";
 import { runAll } from "../src/prepare/steps.ts";
 import { snapshotWorld } from "../src/run/sim/snapshot.ts";
+import { currentStats, refreshStats } from "../src/run/sim/stats.ts";
 import { departPlayer } from "../src/run/sim/team.ts";
 import { weatherDamagePlayer } from "../src/run/sim/hurt.ts";
-import { loadRunAssets } from "../src/run/view/assets.ts";
+import { loadRunAssets, runSharedNeeds } from "../src/run/view/assets.ts";
+import { createPreparation } from "../src/prepare/preparation.ts";
 import { createRunView } from "../src/run/view/createRunView.ts";
 import { playerRings } from "../src/run/view/player-rings.ts";
+import { createHealthBars } from "../src/run/view/healthBars.ts";
+import { chunkInstances } from "../src/run/view/environment/chunkedInstances.ts";
 
 test("敌人步态在 30 Hz 模拟 / 20 Hz 快照速度变化时连续，暂停不改变姿态", () => {
   const buffer = new SnapshotBuffer();
@@ -571,4 +578,384 @@ test("超级进化的模型随演出事件切换，壳碎那一帧报告音效�
   player.mega = "charizard-y";
   for (let i = 0; i < 70; i++) view.frame(1, 1 / 60, [], 0);
   assert.ok(shown("charizard-y"), "a missed event cannot leave the old model up");
+});
+
+/** A frame as the view would hand it to the bars: each body standing where the sim has it. */
+function barFrame(world, events = []) {
+  const [lead] = world.players;
+  const camera = new PerspectiveCamera(42, 1.6, 0.5, 120);
+  camera.position.set(lead.x, 14, lead.z + 10);
+  camera.lookAt(lead.x, 0, lead.z);
+  camera.updateMatrixWorld();
+  const body = (entity, height, radius) => [
+    entity.id,
+    { x: entity.x, y: 0, z: entity.z, height, radius, yaw: null, profile: undefined },
+  ];
+  return {
+    camera,
+    enemies: new Map(
+      world.enemies.map((e) => body(e, enemies[e.species].height * e.scale, e.radius)),
+    ),
+    players: new Map(world.players.map((p) => body(p, 1, 0.4))),
+    events,
+  };
+}
+
+test("overhead bars: every present seat and elite, a normal enemy once hurt, never the guardian, world untouched", () => {
+  const world = createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed: 3,
+    difficulty: 1,
+    players: [
+      { trainer: "chengxi", starter: "charmander" },
+      { trainer: "chengxi", starter: "squirtle" },
+    ],
+  });
+  const [a] = world.players;
+  const normal = spawnEnemy(world, "rattata", a.x + 3, a.z);
+  const elite = spawnEnemy(world, "rattata", a.x - 3, a.z);
+  elite.elite = true;
+  summonGuardian(world, null);
+  const bars = createHealthBars();
+  try {
+    bars.update(world, 0, 1 / 60, barFrame(world));
+    assert.equal(
+      bars.mesh.count,
+      3,
+      "two players and the elite; an unhurt enemy and the guardian have none",
+    );
+    normal.hp -= 1;
+    world.enemies.find((enemy) => enemy.boss).hp -= 1;
+    const after = JSON.stringify(snapshotWorld(world));
+    bars.update(world, 0, 1 / 60, barFrame(world));
+    assert.equal(bars.mesh.count, 4, "the hurt enemy gains a bar, the hurt guardian still none");
+    assert.equal(JSON.stringify(snapshotWorld(world)), after, "the view only reads the world");
+  } finally {
+    bars.dispose();
+  }
+});
+
+test("overhead bars: a downed teammate's bar is an empty capsule with no lost-HP segment", () => {
+  const world = createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed: 3,
+    difficulty: 1,
+    players: [
+      { trainer: "chengxi", starter: "charmander" },
+      { trainer: "chengxi", starter: "squirtle" },
+    ],
+  });
+  const mate = world.players[1];
+  mate.hp = 60;
+  const bars = createHealthBars();
+  try {
+    bars.update(world, 0, 1 / 60, barFrame(world));
+    Object.assign(mate, { hp: 0, shield: 0, alive: false, revives: 0 });
+    bars.update(world, 0, 1 / 60, barFrame(world));
+    assert.equal(bars.mesh.count, 2, "the downed teammate keeps a bar while it can be rescued");
+    // Instances: enemies, teammates, then the local player last.
+    const bar = bars.mesh.geometry.getAttribute("aBar");
+    const mateBar = bars.mesh.count - 2;
+    assert.deepEqual(
+      [bar.getX(mateBar), bar.getY(mateBar), bar.getZ(mateBar), bar.getW(mateBar)],
+      [0, 0, 0, 0],
+      "no HP, no shield, no trailing lost-HP segment and no hit flash",
+    );
+    assert.equal(
+      bars.mesh.geometry.getAttribute("aChip").getX(mateBar),
+      0,
+      "nothing pops out of a downed bar",
+    );
+  } finally {
+    bars.dispose();
+  }
+});
+
+test("overhead bars: a big hit's lost segment pops out further than a scratch, then settles", () => {
+  const world = createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed: 3,
+    difficulty: 1,
+    players: [{ trainer: "chengxi", starter: "charmander" }],
+  });
+  const [player] = world.players;
+  const big = spawnEnemy(world, "rattata", player.x + 3, player.z);
+  const scratch = spawnEnemy(world, "rattata", player.x - 3, player.z);
+  const bars = createHealthBars();
+  const pops = () => {
+    const chip = bars.mesh.geometry.getAttribute("aChip");
+    // Instances: enemies in world order, then the player.
+    return [0, 1].map((i) => chip.getX(i) * (0.5 + chip.getY(i)));
+  };
+  try {
+    bars.update(world, 0, 1 / 60, barFrame(world));
+    big.hp -= big.maxHp * 0.4;
+    scratch.hp -= scratch.maxHp * 0.02;
+    for (let i = 0; i < 12; i++) bars.update(world, 0, 1 / 60, barFrame(world));
+    const [bigPop, scratchPop] = pops();
+    assert.ok(scratchPop > 0, "even a scratch pops out of the bar during the hold");
+    assert.ok(bigPop > scratchPop, `a big hit pops further (${bigPop} vs ${scratchPop})`);
+    for (let i = 0; i < 90; i++) bars.update(world, 0, 1 / 60, barFrame(world));
+    assert.deepEqual(pops(), [0, 0], "both settle back into their bars");
+  } finally {
+    bars.dispose();
+  }
+});
+
+test("overhead bars: a knockout revived in the same tick and a max-HP drop are new baselines, not hits", () => {
+  const world = createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed: 3,
+    difficulty: 1,
+    players: [{ trainer: "chengxi", starter: "charmander" }],
+  });
+  const [player] = world.players;
+  const bars = createHealthBars();
+  const lost = () => {
+    const bar = bars.mesh.geometry.getAttribute("aBar");
+    return bar.getZ(0) - bar.getX(0);
+  };
+  try {
+    player.items.push({ id: "hp-up", level: 3 });
+    refreshStats();
+    player.hp = currentStats(player).maxHp;
+    bars.update(world, 0, 1 / 60, barFrame(world));
+    // A personal revive: knocked out and back up at lower HP within one tick.
+    player.hp *= 0.3;
+    bars.update(world, 0, 1 / 60, barFrame(world, [{ t: "revive", player: player.id }]));
+    assert.equal(lost(), 0, "the revive does not trail the pre-knockout HP as a hit");
+    assert.equal(bars.mesh.geometry.getAttribute("aChip").getX(0), 0, "and nothing pops");
+    // Losing the item lowers max HP and clamps HP with it.
+    player.hp = currentStats(player).maxHp;
+    bars.update(world, 0, 1 / 60, barFrame(world));
+    player.items.length = 0;
+    refreshStats();
+    player.hp = currentStats(player).maxHp;
+    bars.update(world, 0, 1 / 60, barFrame(world));
+    assert.equal(lost(), 0, "a lower max HP is not damage");
+  } finally {
+    bars.dispose();
+  }
+});
+
+test("overhead bars: four seats' full crowd is drawn; over capacity live bars beat dying ones, elites first", () => {
+  const world = createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed: 3,
+    difficulty: 1,
+    players: [{ trainer: "chengxi", starter: "charmander" }],
+  });
+  const [player] = world.players;
+  const crowd = (n) =>
+    Array.from({ length: n }, (_, i) => {
+      const enemy = spawnEnemy(world, "rattata", player.x + (i % 30) - 15, player.z + i / 30);
+      enemy.hp -= 1;
+      return enemy;
+    });
+  const bars = createHealthBars();
+  const drawn = () => {
+    const look = bars.mesh.geometry.getAttribute("aLook");
+    const kinds = { live: 0, dying: 0, elite: 0 };
+    // Instances: enemies, then the player last.
+    for (let i = 0; i < bars.mesh.count - 1; i++) {
+      if (look.getW(i) > 0) kinds.dying++;
+      else kinds.live++;
+      if (look.getX(i) === 1) kinds.elite++;
+    }
+    return kinds;
+  };
+  try {
+    const first = crowd(448);
+    bars.update(world, 0, 1 / 60, barFrame(world));
+    assert.equal(drawn().live, 448, "the live cap at four seats");
+    crowd(250);
+    const elite = spawnEnemy(world, "rattata", player.x, player.z - 4);
+    elite.elite = true;
+    bars.update(world, 0, 1 / 60, barFrame(world));
+    assert.equal(drawn().elite, 1, "past capacity the elite keeps its bar");
+    // 200 die: 499 live and 200 dying bars still exceed the buffer.
+    const dead = new Set(first.slice(0, 200));
+    world.enemies = world.enemies.filter((enemy) => !dead.has(enemy));
+    bars.update(world, 0, 1 / 60, barFrame(world));
+    const after = drawn();
+    assert.equal(after.live, 499, "every live bar is drawn before any dying one");
+    assert.ok(after.dying < 200, "dying bars take only the room left");
+  } finally {
+    bars.dispose();
+  }
+});
+
+// The real program on a real context: a GLSL compile error (e.g. a reserved word) passes every
+// attribute-level test above. CI has no GPU host (CLAUDE.md), so this stays a local check.
+test(
+  "overhead bars: the bar program compiles and draws on a real EGL context mid-pop",
+  { skip: process.env.CI ? "needs a GPU host" : false },
+  async (t) => {
+    const { createWebGL2Context } = await import("webgl-node");
+    const { WebGLRenderer } = await import("three");
+    const [W, H] = [320, 200];
+    const native = createWebGL2Context(W, H, { canvas: false });
+    const gl = native.gl;
+    const renderer = new WebGLRenderer({ canvas: null, context: gl });
+    renderer.setSize(W, H, false);
+    const errors = [];
+    renderer.debug.onShaderError = (context, program, vertex, fragment) =>
+      errors.push(context.getShaderInfoLog(vertex) + context.getShaderInfoLog(fragment));
+    const world = createWorld({
+      mode: "expedition",
+      rules: [],
+      stage: "forest",
+      seed: 3,
+      difficulty: 1,
+      players: [{ trainer: "chengxi", starter: "charmander" }],
+    });
+    const [player] = world.players;
+    const enemy = spawnEnemy(world, "rattata", player.x + 3, player.z);
+    const bars = createHealthBars();
+    const scene = new Scene();
+    scene.add(bars.mesh);
+    const camera = new PerspectiveCamera(42, W / H, 0.5, 120);
+    camera.position.set(player.x, 14, player.z + 10);
+    camera.lookAt(player.x, 0, player.z);
+    camera.updateMatrixWorld();
+    t.after(() => {
+      bars.dispose();
+      renderer.dispose();
+      native.destroy();
+    });
+    bars.update(world, 0, 1 / 60, barFrame(world));
+    enemy.hp -= enemy.maxHp * 0.4;
+    player.hp -= player.maxHp * 0.3;
+    for (let i = 0; i < 8; i++) bars.update(world, 0, 1 / 60, barFrame(world));
+    renderer.render(scene, camera);
+    assert.deepEqual(errors, []);
+    assert.equal(gl.getError(), gl.NO_ERROR);
+    const frame = new Uint8Array(W * H * 4);
+    gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, frame);
+    assert.ok(
+      frame.some((v, i) => i % 4 === 3 && v > 0),
+      "the bars draw pixels",
+    );
+  },
+);
+
+test("overhead bars: a new map's scene drops the previous map's enemy bars", () => {
+  const world = createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed: 3,
+    difficulty: 1,
+    players: [{ trainer: "chengxi", starter: "charmander" }],
+  });
+  const [player] = world.players;
+  const enemy = spawnEnemy(world, "rattata", player.x + 3, player.z);
+  const bars = createHealthBars();
+  try {
+    new Scene().add(bars.mesh);
+    enemy.hp -= 1;
+    bars.update(world, 0, 1 / 60, barFrame(world));
+    assert.equal(bars.mesh.count, 2, "the hurt enemy and the player");
+    // The next map: its scene takes the mesh and the old map's enemies are gone from the world.
+    new Scene().add(bars.mesh);
+    world.enemies.length = 0;
+    bars.update(world, 0, 1 / 60, barFrame(world));
+    assert.equal(
+      bars.mesh.count,
+      1,
+      "only the player; the old enemy does not fade out at its old spot",
+    );
+  } finally {
+    bars.dispose();
+  }
+});
+
+test("分块实例只绘制视野内的块：离开视野的块在下一次重排时去掉，回来时再加上", () => {
+  // Two clusters of ground instances 40 m apart; the camera looks down at one at a time.
+  const values = new Float32Array([-20, 0, 0, 1, -19, 0, 1, 1, 20, 0, 0, 1]);
+  const instances = chunkInstances(values, 30, 2, 8);
+  const camera = new PerspectiveCamera(30, 1, 0.1, 100);
+  const frustum = new Frustum();
+  const lookAt = (x) => {
+    camera.position.set(x, 20, 0.01);
+    camera.lookAt(x, 0, 0);
+    camera.updateMatrixWorld();
+    frustum.setFromProjectionMatrix(
+      new Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse),
+    );
+    return instances.update(frustum, camera.position, 100);
+  };
+  assert.equal(lookAt(-20), 2, "the west cluster enters");
+  assert.equal(lookAt(20), 1, "the west cluster leaves as the east one enters");
+  assert.equal(lookAt(0), 0, "nothing in view: nothing drawn");
+  assert.equal(lookAt(-20), 2, "the west cluster comes back");
+
+  // A wide model just outside the view is packed when its outline reaches in.
+  const wide = chunkInstances(new Float32Array([-20, 0, 0, 1]), 30, 2, 8, 12);
+  camera.position.set(-5, 20, 0.01);
+  camera.lookAt(-5, 0, 0);
+  camera.updateMatrixWorld();
+  frustum.setFromProjectionMatrix(
+    new Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse),
+  );
+  assert.equal(
+    instances.update(frustum, camera.position, 100),
+    0,
+    "a root-only box is out of view",
+  );
+  assert.equal(wide.update(frustum, camera.position, 100), 1, "the outline is in view");
+});
+
+test("一个场地模型缺失只少画那块场地道具，备战和开局照常完成", async (t) => {
+  const files = nativeResources(new URL("../public/", import.meta.url));
+  const missing = "/models/field-sites/spring-sand.glb";
+  installResources({
+    ...files,
+    read: (url, options) =>
+      String(url).includes("spring-sand")
+        ? Promise.reject(new Error(`404 ${String(url)}`))
+        : files.read(url, options),
+  });
+  const reported = [];
+  const error = console.error;
+  console.error = (value) => reported.push(String(value?.message ?? value));
+  t.after(() => {
+    console.error = error;
+    installResources(files);
+  });
+
+  const preparation = createPreparation({
+    revision: 0,
+    lane: "critical",
+    needs: runSharedNeeds("desert"),
+  });
+  t.after(() => preparation.cancel());
+  assert.equal(await preparation.settled, "ready", String(preparation.error?.key));
+
+  const run = await loadRunAssets(
+    {
+      stage: "desert",
+      players: [{ trainer: "chengxi", starter: "charmander" }],
+      enemies: [],
+      partners: [],
+    },
+    new AbortController().signal,
+  );
+  t.after(() => run.dispose());
+  assert.equal(run.sites["spring-sand"], undefined);
+  assert.ok(run.sites.fossil && run.sites.egg && run.sites["egg-nest"], "其余场地道具照常载入");
+  assert.ok(
+    reported.some((message) => message.includes(missing)),
+    "报告缺失的文件",
+  );
 });

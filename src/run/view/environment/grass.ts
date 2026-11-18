@@ -106,7 +106,13 @@ export const grassVertex = (look: NonNullable<VegetationLook["grass"]>) => ({
   float footDistance = length(away);
   float footBend = (1.0 - smoothstep(0.075, 0.3, footDistance))
     * (1.0 - smoothstep(0.6, 1.2, abs(uFoliagePusher.y - aRoot.y)));
+  // Gust sweeps: broad bands roll downwind faster than the breeze, flattening and brightening the
+  // blades they cross, so a gust reads as a wave travelling over the field.
+  vec2 sweepAxis = vec2(dot(aRoot.xz, uWindDir), dot(aRoot.xz, vec2(-uWindDir.y, uWindDir.x)));
+  float sweepPhase = sweepAxis.x * 0.11 - uWindTime * (0.9 + 0.8 * uWindStrength) + envNoise(sweepAxis * vec2(0.02, 0.06)) * 3.0;
+  float gustSweep = smoothstep(0.55, 1.0, sin(sweepPhase)) * (0.45 + 0.55 * envNoise(sweepAxis * vec2(0.01, 0.045) + 7.0));
   vec2 grassLean = windLean(aRoot.xz, grassRand + aBlade.x, 2.6) * 0.9
+    + uWindDir * gustSweep * 0.55
     + away / max(footDistance, 1e-3) * footBend * 0.3;
   blade = bendBy(blade, grassLean, aBlade.y);
   vec3 transformed = aRoot.xyz + blade;
@@ -115,8 +121,8 @@ export const grassVertex = (look: NonNullable<VegetationLook["grass"]>) => ({
   // Tips: sunlit yellow-olive in warm patches, fresher green in cool ones.
   vec3 tipTint = mix(vec3(1.45, 1.6, 1.35), vec3(1.78, 1.66, 1.02), grassPatch);
   vec3 tip = mix(soil * tipTint + vec3(0.03, 0.05, 0.0), soil * vec3(1.75, 1.6, 1.15) + vec3(0.06, 0.05, 0.0), tall);
-  float sheen = smoothstep(0.75, 1.5, length(grassLean)) * aBlade.y * aBlade.y;
-  tip += soil * vec3(0.55, 0.5, 0.25) * sheen;
+  float sheen = max(smoothstep(0.6, 1.3, length(grassLean)), gustSweep) * aBlade.y * aBlade.y;
+  tip += soil * vec3(0.7, 0.64, 0.3) * sheen;
   vFoliageColor = mix(soil * 0.55, tip, aBlade.y) * (0.8 + 0.4 * fract(aBlade.x * 13.1 + grassRand));
   vFoliageColor = ${look.kind === "dry" ? `mix(${glslVec(look.root)}, ${glslVec(look.tip)}, aBlade.y)` : `vFoliageColor * mix(${glslVec(look.root)}, ${glslVec(look.tip)}, aBlade.y)`};
   // About a quarter of the clumps are deep blue-green weeds: the dark tufts that break up the lawn.

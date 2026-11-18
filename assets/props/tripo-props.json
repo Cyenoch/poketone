@@ -1,0 +1,809 @@
+{
+  "coast-conch": {
+    "set": "coast-beach",
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/coast-beach/generation/tripo-out/tripo-out/poketone-coast-beach-1990af59/model.glb",
+    "tripoSourceSha256": "81e9db937f1145a8b2e9a6ee4fadac4685f822c7abfe22608a719e9272f66879",
+    "tripoTask": "1990af59-ecb2-4cf0-9a60-301b3c82d9dc",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 706,
+    "dimensions": [0.2035, 0.1977, 0.184],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "f3129c43498f5f559023552136f095e4e733f8b8c0c81efeaac5a76da1db119d"
+  },
+  "coast-driftwood": {
+    "set": "coast-beach",
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/coast-beach/generation/tripo-out/tripo-out/poketone-coast-beach-1990af59/model.glb",
+    "tripoSourceSha256": "81e9db937f1145a8b2e9a6ee4fadac4685f822c7abfe22608a719e9272f66879",
+    "tripoTask": "1990af59-ecb2-4cf0-9a60-301b3c82d9dc",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 1662,
+    "dimensions": [0.4853, 0.1879, 0.2368],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "2aa23c4e8adc84794298c6e407257a5cb5df6ce2adb9b69e09a58a7d238821e6"
+  },
+  "coast-landmark": {
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/coast-landmark/generation/tripo-out/tripo-out/poketone-coast-landmark-mv-6cbde80e/model.glb",
+    "tripoSourceSha256": "2638ec62d0f8ac852fa96b59c1c49d56e5c0de74c39681d636206c9b0d287bcb",
+    "tripoTask": "6cbde80e-8a1b-4c99-b6db-cc024df64b02",
+    "tripoType": "multiview_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 1872,
+    "dimensions": [2.6323, 3.463, 3.3],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "8dbd1164fe0651a17849bf7ec00092bcaa5f66340cc0556601c587c3972d867d"
+  },
+  "coast-rock-1": {
+    "set": "coast-rocks",
+    "footprint": {
+      "baseSpreadBefore": 0.5698,
+      "target": 0.5647,
+      "xyScale": 0.9911
+    },
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/coast-rocks/generation/tripo-out/tripo-out/poketone-coast-rocks-7724edd9/model.glb",
+    "tripoSourceSha256": "092d79dd0a323f42b6f03c9a1bf479224ce40c7fd8552075a7442734d69125e6",
+    "tripoTask": "7724edd9-67c2-4f31-8e1e-0b241da6b80a",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 418,
+    "dimensions": [0.3006, 0.322, 0.2505],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "490763ccb0a4da23b39032fdfb419147b0a4f16d6f066437523495aec1c17ced"
+  },
+  "coast-rock-2": {
+    "set": "coast-rocks",
+    "footprint": {
+      "baseSpreadBefore": 1.0459,
+      "target": 0.5647,
+      "xyScale": 0.5399
+    },
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/coast-rocks/generation/tripo-out/tripo-out/poketone-coast-rocks-7724edd9/model.glb",
+    "tripoSourceSha256": "092d79dd0a323f42b6f03c9a1bf479224ce40c7fd8552075a7442734d69125e6",
+    "tripoTask": "7724edd9-67c2-4f31-8e1e-0b241da6b80a",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 458,
+    "dimensions": [0.2018, 0.1701, 0.1703],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "d81acfdf66b039ae6c37ec4b3a2585852e0dcee6ea4ec525c70ce2ba150caa41"
+  },
+  "coast-rock-3": {
+    "set": "coast-rocks",
+    "footprint": {
+      "baseSpreadBefore": 0.5497,
+      "target": 0.5647,
+      "xyScale": 1.0274
+    },
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/coast-rocks/generation/tripo-out/tripo-out/poketone-coast-rocks-7724edd9/model.glb",
+    "tripoSourceSha256": "092d79dd0a323f42b6f03c9a1bf479224ce40c7fd8552075a7442734d69125e6",
+    "tripoTask": "7724edd9-67c2-4f31-8e1e-0b241da6b80a",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 588,
+    "dimensions": [0.2815, 0.3016, 0.2798],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "a7e642ee5d274977023eb3230da149a2a8327847b70c04e8fd7f9e34e41b63ee"
+  },
+  "coast-shell": {
+    "set": "coast-beach",
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/coast-beach/generation/tripo-out/tripo-out/poketone-coast-beach-1990af59/model.glb",
+    "tripoSourceSha256": "81e9db937f1145a8b2e9a6ee4fadac4685f822c7abfe22608a719e9272f66879",
+    "tripoTask": "1990af59-ecb2-4cf0-9a60-301b3c82d9dc",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 502,
+    "dimensions": [0.2407, 0.1898, 0.1879],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "4cce1c85e0029465b6d879b6c62f98caa54dc0b46d08d69055188082c579e2ce"
+  },
+  "coast-shrub-1": {
+    "set": "shrubs",
+    "repaint": {
+      "leaf": ["#264a2c", "#7d9c55"]
+    },
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/shrubs/generation/tripo-out/tripo-out/poketone-shrubs-aab6cedb/model.glb",
+    "tripoSourceSha256": "e2b7c266ea0485dc7768c5a3ebd38f3cd8fde345eb847454616a77edaa26b80b",
+    "tripoTask": "aab6cedb-ecfd-444d-9e38-0046bae3fad8",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 1282,
+    "dimensions": [0.4579, 0.2387, 0.3659],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "a2298dd971176d90cf48bb8ad82fb37ba1c643e45ef9d3f4d7b40f27d1f9d21c"
+  },
+  "coast-shrub-2": {
+    "set": "shrubs",
+    "variantOf": "coast-shrub-1",
+    "scale": [1.25, 0.85, 0.8],
+    "yaw": 0.6,
+    "repaint": {
+      "leaf": ["#264a2c", "#7d9c55"]
+    },
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/shrubs/generation/tripo-out/tripo-out/poketone-shrubs-aab6cedb/model.glb",
+    "tripoSourceSha256": "e2b7c266ea0485dc7768c5a3ebd38f3cd8fde345eb847454616a77edaa26b80b",
+    "tripoTask": "aab6cedb-ecfd-444d-9e38-0046bae3fad8",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 1282,
+    "dimensions": [0.5332, 0.3888, 0.2928],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "1aed00a4f21f0f7625319da28ecb52f2f33c02eb192b083c9d6a0e9715bf20d5"
+  },
+  "desert-landmark": {
+    "regrade": ["#4d3d2e", "#a58b6b", "#e4d3b0"],
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/desert-landmark/generation/tripo-out/tripo-out/poketone-desert-landmark-mv-7698ad19/model.glb",
+    "tripoSourceSha256": "6ba6169522f7d3caf6f1496098331bbe2d7c9ef2abccbf04d384c345fd1742d9",
+    "tripoTask": "7698ad19-3def-4511-82a8-e67b8e59f514",
+    "tripoType": "multiview_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 1526,
+    "dimensions": [2.4147, 2.5198, 2.7],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "1061dbfd86ad033e25346fa1fa5db19002f4289762e350f017aa96b75761bfa1"
+  },
+  "desert-ribs": {
+    "set": "desert-ribs",
+    "regrade": ["#6e5e4a", "#c8b898", "#f2ead8"],
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/desert-ribs/generation/tripo-out/tripo-out/poketone-desert-ribs-mv-0651facd/model.glb",
+    "tripoSourceSha256": "897bdeab750bf6d9c3367be27d2a0b942fc270352ace40c1f790777405598731",
+    "tripoTask": "0651facd-27c9-429f-b20d-9931f8c2a1fb",
+    "tripoType": "multiview_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 2683,
+    "dimensions": [0.8239, 1.0, 0.7104],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "f11fb2cae446420064ca88b127b2190dfecc2900b3ab5e7303a32e9ae8b91619"
+  },
+  "desert-rock-1": {
+    "set": "desert-rocks",
+    "footprint": {
+      "baseSpreadBefore": 0.54,
+      "target": 0.5647,
+      "xyScale": 1.0457
+    },
+    "regrade": ["#4d3d2e", "#a58b6b", "#e4d3b0"],
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/desert-rocks/generation/tripo-out/tripo-out/poketone-desert-rocks-2e290aaa/model.glb",
+    "tripoSourceSha256": "82c854fc5cda1f41b54bd0ce3be9dd7d55cd73b57aae6a6ce88335dad33140a6",
+    "tripoTask": "2e290aaa-b677-4edb-8dd8-7c80bdabb96f",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 743,
+    "dimensions": [0.311, 0.3295, 0.274],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "8dbdb8dd1b0d3288e44f85d540b6b3ad1983cfff736549f298730fa13b5010f1"
+  },
+  "desert-rock-2": {
+    "set": "desert-rocks",
+    "variantOf": "desert-rock-1",
+    "scale": [1.05, 0.9, 1.1],
+    "yaw": 2.4,
+    "regrade": ["#4d3d2e", "#a58b6b", "#e4d3b0"],
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/desert-rocks/generation/tripo-out/tripo-out/poketone-desert-rocks-2e290aaa/model.glb",
+    "tripoSourceSha256": "82c854fc5cda1f41b54bd0ce3be9dd7d55cd73b57aae6a6ce88335dad33140a6",
+    "tripoTask": "2e290aaa-b677-4edb-8dd8-7c80bdabb96f",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 743,
+    "dimensions": [0.2854, 0.2777, 0.3014],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "fc9cec4c73a4bc83a1bf0997c91ec9f71f5873fb36d3e160ef83400f9b6205b5"
+  },
+  "desert-rock-3": {
+    "set": "desert-rocks",
+    "footprint": {
+      "baseSpreadBefore": 0.5945,
+      "target": 0.5647,
+      "xyScale": 0.9499
+    },
+    "regrade": ["#4d3d2e", "#a58b6b", "#e4d3b0"],
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/desert-rocks/generation/tripo-out/tripo-out/poketone-desert-rocks-2e290aaa/model.glb",
+    "tripoSourceSha256": "82c854fc5cda1f41b54bd0ce3be9dd7d55cd73b57aae6a6ce88335dad33140a6",
+    "tripoTask": "2e290aaa-b677-4edb-8dd8-7c80bdabb96f",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 456,
+    "dimensions": [0.264, 0.2993, 0.2524],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "33b2a2bcaaf71aac562509b9a158cdd61d3d388338634e52cc8cd3f4b3e84bcc"
+  },
+  "desert-skull": {
+    "set": "desert-skull",
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/desert-skull/generation/tripo-out/tripo-out/poketone-desert-skull-mv-196b7d2d/model.glb",
+    "tripoSourceSha256": "0802ed52ab6faafd87ef2b7d42b0a76a10b02b147245340f651f1f61de6505f1",
+    "tripoTask": "196b7d2d-9d28-4785-ba46-a9a6019c3b3b",
+    "tripoType": "multiview_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 2587,
+    "dimensions": [1.0, 0.9256, 0.82],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "65edc1ca4ef06483bcd71207f7acb121770703ec5c7055be5655bc1a5747f8de"
+  },
+  "forest-bush": {
+    "set": "shrubs",
+    "footprint": {
+      "baseSpreadBefore": 0.598,
+      "target": 0.4902,
+      "xyScale": 0.8197
+    },
+    "repaint": {
+      "leaf": ["#264a2c", "#7d9c55"]
+    },
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/shrubs/generation/tripo-out/tripo-out/poketone-shrubs-aab6cedb/model.glb",
+    "tripoSourceSha256": "e2b7c266ea0485dc7768c5a3ebd38f3cd8fde345eb847454616a77edaa26b80b",
+    "tripoTask": "aab6cedb-ecfd-444d-9e38-0046bae3fad8",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 837,
+    "dimensions": [0.393, 0.3497, 0.3307],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "3cfb66931378258750ed37da68f9460e148fa2110d27b2e0f1624317c8d1a7b3"
+  },
+  "forest-mushroom-1": {
+    "set": "forest-mushrooms",
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/forest-mushrooms/generation/tripo-out/tripo-out/poketone-forest-mushrooms-d6eae50c/model.glb",
+    "tripoSourceSha256": "c9f98274f801e4af1cf69ec824ff0301dc23e55df6922d2559a3c461ca1766f7",
+    "tripoTask": "d6eae50c-1fb2-434c-98c1-ad93d44782b2",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 761,
+    "dimensions": [0.274, 0.2642, 0.3307],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "4932c971119d83e22114939307b78bc01ef901e3425dadaa33e249dad0262847"
+  },
+  "forest-mushroom-2": {
+    "set": "forest-mushrooms",
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/forest-mushrooms/generation/tripo-out/tripo-out/poketone-forest-mushrooms-d6eae50c/model.glb",
+    "tripoSourceSha256": "c9f98274f801e4af1cf69ec824ff0301dc23e55df6922d2559a3c461ca1766f7",
+    "tripoTask": "d6eae50c-1fb2-434c-98c1-ad93d44782b2",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 817,
+    "dimensions": [0.317, 0.2055, 0.3483],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "b082e0525439f0414be093d381c5050e64261776e84d7af0d371eae8bd8b19d1"
+  },
+  "forest-mushroom-3": {
+    "set": "forest-mushrooms",
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/forest-mushrooms/generation/tripo-out/tripo-out/poketone-forest-mushrooms-d6eae50c/model.glb",
+    "tripoSourceSha256": "c9f98274f801e4af1cf69ec824ff0301dc23e55df6922d2559a3c461ca1766f7",
+    "tripoTask": "d6eae50c-1fb2-434c-98c1-ad93d44782b2",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 232,
+    "dimensions": [0.2466, 0.2446, 0.2329],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "c1136a6abc075382ca42599e2f76c445824bcbb941a7391ae9bfac0fe505d5e9"
+  },
+  "forest-rock-1": {
+    "set": "forest-rocks",
+    "footprint": {
+      "baseSpreadBefore": 0.4276,
+      "target": 0.5647,
+      "xyScale": 1.3206
+    },
+    "repaint": {
+      "lichen": ["#2f4a1f", "#6f8a3c"]
+    },
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/forest-rocks/generation/tripo-out/tripo-out/poketone-forest-rocks-8a197b89/model.glb",
+    "tripoSourceSha256": "23f43df3f7832a71a507cdd9347e03d8bdc6bf88822beee74e949f0a8cb1737f",
+    "tripoTask": "8a197b89-2675-4bc3-a9a8-f680acc1ea81",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 826,
+    "dimensions": [0.3773, 0.3825, 0.3386],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "72566fecee23113d5561d82863ea3e4b9424e50d31707f64a09e032a41d56df5"
+  },
+  "forest-rock-2": {
+    "set": "forest-rocks",
+    "footprint": {
+      "baseSpreadBefore": 0.9949,
+      "target": 0.5647,
+      "xyScale": 0.5676
+    },
+    "repaint": {
+      "lichen": ["#2f4a1f", "#6f8a3c"]
+    },
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/forest-rocks/generation/tripo-out/tripo-out/poketone-forest-rocks-8a197b89/model.glb",
+    "tripoSourceSha256": "23f43df3f7832a71a507cdd9347e03d8bdc6bf88822beee74e949f0a8cb1737f",
+    "tripoTask": "8a197b89-2675-4bc3-a9a8-f680acc1ea81",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 822,
+    "dimensions": [0.2188, 0.2344, 0.2055],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "76ee50700498ebb06eeebb0ed2046cbca33d8c49977ccd8af10fce1ff731c423"
+  },
+  "forest-rock-3": {
+    "set": "forest-rocks",
+    "footprint": {
+      "baseSpreadBefore": 0.6123,
+      "target": 0.5647,
+      "xyScale": 0.9222
+    },
+    "repaint": {
+      "lichen": ["#2f4a1f", "#6f8a3c"]
+    },
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/forest-rocks/generation/tripo-out/tripo-out/poketone-forest-rocks-8a197b89/model.glb",
+    "tripoSourceSha256": "23f43df3f7832a71a507cdd9347e03d8bdc6bf88822beee74e949f0a8cb1737f",
+    "tripoTask": "8a197b89-2675-4bc3-a9a8-f680acc1ea81",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 278,
+    "dimensions": [0.2689, 0.287, 0.2564],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "8f31b1ed98d0c8118b755b5659b9d019e04f7cc8f60a44bc2517bb8b5f949d91"
+  },
+  "glacier-landmark": {
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/glacier-landmark/generation/tripo-out/tripo-out/poketone-glacier-landmark-mv-b59679d8/model.glb",
+    "tripoSourceSha256": "21ec782ad17e9504771dda26244075421b97180c986e936ec4a784d12f5d3914",
+    "tripoTask": "b59679d8-9712-433f-a092-bc67399daffb",
+    "tripoType": "multiview_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 1558,
+    "dimensions": [2.6323, 3.5959, 2.8],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "650f2c54e95e12559bfceef566fff3053b638260470fa39111b72a4c8cec3feb"
+  },
+  "glacier-rock-1": {
+    "set": "glacier-rocks",
+    "footprint": {
+      "baseSpreadBefore": 0.3705,
+      "target": 0.5647,
+      "xyScale": 1.5242
+    },
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/glacier-rocks/generation/tripo-out/tripo-out/poketone-glacier-rocks-a3643d9a/model.glb",
+    "tripoSourceSha256": "d2d24db5994d6d114cf26653b148fca3662fc25751677a23449f2acc5adc6580",
+    "tripoTask": "a3643d9a-a015-4953-a8e1-3d32fbc84ec0",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 568,
+    "dimensions": [0.3669, 0.3162, 0.3249],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "279187f92a668e0d0716ef52ef95814b6a95951b73bc3b6f0e37c0a7bafb833b"
+  },
+  "glacier-rock-2": {
+    "set": "glacier-rocks",
+    "footprint": {
+      "baseSpreadBefore": 0.8264,
+      "target": 0.5647,
+      "xyScale": 0.6834
+    },
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/glacier-rocks/generation/tripo-out/tripo-out/poketone-glacier-rocks-a3643d9a/model.glb",
+    "tripoSourceSha256": "d2d24db5994d6d114cf26653b148fca3662fc25751677a23449f2acc5adc6580",
+    "tripoTask": "a3643d9a-a015-4953-a8e1-3d32fbc84ec0",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 668,
+    "dimensions": [0.2848, 0.2594, 0.2309],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "551002258862d04adae5abb383a8c83432d49da8d8f34c58aab8a9f56328ef49"
+  },
+  "glacier-rock-3": {
+    "set": "glacier-rocks",
+    "footprint": {
+      "baseSpreadBefore": 0.4997,
+      "target": 0.5647,
+      "xyScale": 1.1301
+    },
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/glacier-rocks/generation/tripo-out/tripo-out/poketone-glacier-rocks-a3643d9a/model.glb",
+    "tripoSourceSha256": "d2d24db5994d6d114cf26653b148fca3662fc25751677a23449f2acc5adc6580",
+    "tripoTask": "a3643d9a-a015-4953-a8e1-3d32fbc84ec0",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 764,
+    "dimensions": [0.3162, 0.3118, 0.272],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "3bc71b5f7ddc9390c73e14e07378b704f28b920b32340436728b472f8701bd65"
+  },
+  "tower-landmark": {
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/tower-landmark/generation/tripo-out/tripo-out/poketone-tower-landmark-mv-46ffcdf2/model.glb",
+    "tripoSourceSha256": "f950a02ec4e65651bcfba6a0133f855ae60fff88b88eeb9c5ba97b3a2b0d1454",
+    "tripoTask": "46ffcdf2-8341-473f-9b04-0e6a541a06d0",
+    "tripoType": "multiview_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 1922,
+    "dimensions": [2.4238, 1.7571, 2.1],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "158f2d353dcb924016c51bb76858a13ebd070af6205ffc87bb03c6c3980614aa"
+  },
+  "tower-rock-1": {
+    "set": "tower-rocks",
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/tower-rocks/generation/tripo-out/tripo-out/poketone-tower-rocks-9a291936/model.glb",
+    "tripoSourceSha256": "945222f154a7a013082f7ae383dab80ea9a76c237ba303047caec20f743a9427",
+    "tripoTask": "9a291936-26bb-49f2-a359-a51cdc6c03f1",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 546,
+    "dimensions": [0.2975, 0.2994, 0.2935],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "b54e23b63c392133c7b3b1c0ea7d05e7ee2e04db23c37aaf85b5cd07f992944e"
+  },
+  "tower-rock-2": {
+    "set": "tower-rocks",
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/tower-rocks/generation/tripo-out/tripo-out/poketone-tower-rocks-9a291936/model.glb",
+    "tripoSourceSha256": "945222f154a7a013082f7ae383dab80ea9a76c237ba303047caec20f743a9427",
+    "tripoTask": "9a291936-26bb-49f2-a359-a51cdc6c03f1",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 660,
+    "dimensions": [0.2818, 0.2779, 0.3405],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "dad6a634ca6ac53bb916c513c5c0841e196b979b5e3b7cdea27318c101bf80f9"
+  },
+  "tower-rock-3": {
+    "set": "tower-rocks",
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/tower-rocks/generation/tripo-out/tripo-out/poketone-tower-rocks-9a291936/model.glb",
+    "tripoSourceSha256": "945222f154a7a013082f7ae383dab80ea9a76c237ba303047caec20f743a9427",
+    "tripoTask": "9a291936-26bb-49f2-a359-a51cdc6c03f1",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 426,
+    "dimensions": [0.4442, 0.3679, 0.2035],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "e8d12a4c90635e96750b985a3306fd68a97f96373c9c458e292dc74de7c6f9a5"
+  },
+  "tower-tomb-1": {
+    "set": "tower-tombs",
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/tower-tombs/generation/tripo-out/tripo-out/poketone-tower-tombs-8d6c68d7/model.glb",
+    "tripoSourceSha256": "ab1542a38b198b05bb05a7fab7f682c029e5c7066782eec6445c13b7048a0240",
+    "tripoTask": "8d6c68d7-5090-4a0f-bb6a-cb21d3821086",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 878,
+    "dimensions": [0.3581, 0.2505, 0.4227],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "8b427343af0cf7f72f2d7a1be2ac24248f41959b559d181e091f5f590192d8e4"
+  },
+  "tower-tomb-2": {
+    "set": "tower-tombs",
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/tower-tombs/generation/tripo-out/tripo-out/poketone-tower-tombs-8d6c68d7/model.glb",
+    "tripoSourceSha256": "ab1542a38b198b05bb05a7fab7f682c029e5c7066782eec6445c13b7048a0240",
+    "tripoTask": "8d6c68d7-5090-4a0f-bb6a-cb21d3821086",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 325,
+    "dimensions": [0.2798, 0.3014, 0.4971],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "cf8d16a9c14398e8d76fa43cf9b023c485cbd0eb65a000b4104601ff043a9b5e"
+  },
+  "tower-tomb-3": {
+    "set": "tower-tombs",
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/tower-tombs/generation/tripo-out/tripo-out/poketone-tower-tombs-8d6c68d7/model.glb",
+    "tripoSourceSha256": "ab1542a38b198b05bb05a7fab7f682c029e5c7066782eec6445c13b7048a0240",
+    "tripoTask": "8d6c68d7-5090-4a0f-bb6a-cb21d3821086",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 512,
+    "dimensions": [0.1937, 0.2016, 0.4286],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "a2e96f29a29152f43a1d97158211ca2648cffd7f5eac11b8e40734558456bf7a"
+  },
+  "tree": {
+    "baseSpread": 0.174,
+    "colliderTarget": 0.1139,
+    "repaint": {
+      "leaf": ["#264a2c", "#7d9c55"]
+    },
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/tree/generation-tripo/tripo-out/tripo-out/poketone-tree-mv-21cfc703/model.glb",
+    "tripoSourceSha256": "4947755784dd27ca3d0991379f4709dbcf950c2b0f09047a22bb6bc663b21f50",
+    "tripoTask": "21cfc703-323c-4552-b60b-99a9862177c9",
+    "tripoType": "multiview_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1200
+    },
+    "triangles": 1698,
+    "dimensions": [0.8669, 0.7516, 1.0],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "46203b18e511a57cd93ba95ba68013c0b5bd5157f51fa186dc52dc32d66ef288"
+  },
+  "volcano-rock-1": {
+    "set": "volcano-rocks",
+    "footprint": {
+      "baseSpreadBefore": 0.2714,
+      "target": 0.5647,
+      "xyScale": 2.0805
+    },
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/volcano-rocks/generation/tripo-out/tripo-out/poketone-volcano-rocks-f0a1b237/model.glb",
+    "tripoSourceSha256": "ceee3af5ae5c98b9cf665179f5d76334383dfbb389862e17a13d0888538309c1",
+    "tripoTask": "f0a1b237-aca7-478e-8524-54560a7b87cc",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 365,
+    "dimensions": [0.5741, 0.456, 0.3953],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "ac234a1422a128a430672c15abdf46a11a2da3f80248c34ee5b2dde30db48ff4"
+  },
+  "volcano-rock-2": {
+    "set": "volcano-rocks",
+    "footprint": {
+      "baseSpreadBefore": 1.0488,
+      "target": 0.5647,
+      "xyScale": 0.5384
+    },
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/volcano-rocks/generation/tripo-out/tripo-out/poketone-volcano-rocks-f0a1b237/model.glb",
+    "tripoSourceSha256": "ceee3af5ae5c98b9cf665179f5d76334383dfbb389862e17a13d0888538309c1",
+    "tripoTask": "f0a1b237-aca7-478e-8524-54560a7b87cc",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 717,
+    "dimensions": [0.2097, 0.1918, 0.1722],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "2d5ee429e299c4fb890e5a44da99b4afde23c23532b8cc80cc480d35a297dc03"
+  },
+  "volcano-rock-3": {
+    "set": "volcano-rocks",
+    "footprint": {
+      "baseSpreadBefore": 0.3297,
+      "target": 0.5647,
+      "xyScale": 1.713
+    },
+    "generator": "assets/props/compose-tripo-props.py",
+    "tripoSource": "props/volcano-rocks/generation/tripo-out/tripo-out/poketone-volcano-rocks-f0a1b237/model.glb",
+    "tripoSourceSha256": "ceee3af5ae5c98b9cf665179f5d76334383dfbb389862e17a13d0888538309c1",
+    "tripoTask": "f0a1b237-aca7-478e-8524-54560a7b87cc",
+    "tripoType": "image_to_model",
+    "tripoCredits": 40,
+    "tripoSettings": {
+      "model": "tripo-v3.1",
+      "smart_low_poly": true,
+      "face_limit": 1500
+    },
+    "triangles": 480,
+    "dimensions": [0.5096, 0.3855, 0.4168],
+    "units": "model units; the view scales to its theme height",
+    "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+    "sha256": "593b208ab49430ad7752efc86fa2b35dbbf109d2e5311975f2a713fb3554d109"
+  }
+}

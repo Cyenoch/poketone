@@ -400,6 +400,8 @@ function drawSlam(fx: Fx, e: Echo, t: number): void {
 export const seismicToss: AreaLook = {
   strike(fx, a, x, z) {
     fx.echoes.add(drawSlam, 0.28, x, fx.ground.heightAt(x, z), z, a.radius, 1);
+    // A brief warm fill so the wide slam reads as a struck area, not only a rim.
+    fx.decals.stamp(Decal.glow, x, z, a.radius, 0.22, fighting.amber, 0.35, fighting.cream, 1);
     spray(fx, chip, x, fx.ground.heightAt(x, z) + 0.2, z, 10, a.radius * 2, 2.5, 0.1);
     fx.decals.stamp(
       Decal.cracks,

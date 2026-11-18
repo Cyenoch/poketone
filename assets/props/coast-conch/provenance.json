@@ -1,0 +1,19 @@
+{
+  "set": "coast-beach",
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "props/coast-beach/generation/tripo-out/tripo-out/poketone-coast-beach-1990af59/model.glb",
+  "tripoSourceSha256": "81e9db937f1145a8b2e9a6ee4fadac4685f822c7abfe22608a719e9272f66879",
+  "tripoTask": "1990af59-ecb2-4cf0-9a60-301b3c82d9dc",
+  "tripoType": "image_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 706,
+  "dimensions": [0.2035, 0.1977, 0.184],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "f3129c43498f5f559023552136f095e4e733f8b8c0c81efeaac5a76da1db119d"
+}

@@ -53,7 +53,8 @@
       "textureSize": 512,
       "facingYawPi": -0.5,
       "faceLimit": 1000,
-      "note": "Rears up with the boulder chain trailing straight back; from the run camera it is seen head-on, so its sim height should be generous (proposed 2.2) for it to read as heavy."
+      "note": "Rears up with the boulder chain trailing straight back; from the run camera it is seen head-on, so its sim height should be generous (proposed 2.2) for it to read as heavy.",
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     },
     {
       "id": "marowak",
@@ -98,7 +99,8 @@
       "textureSize": 512,
       "facingYawPi": -0.5,
       "faceLimit": 1000,
-      "note": "Flames came out as opaque orange/yellow geometry and read from the run camera; the real look is translucent fire, so a view-side flame flicker/aura (skill-vfx) would carry it. The near front leg has a small gap at the knee from Tripo (also in the raw mesh); invisible at swarm scale. Decimated to 1300: at 900 the flames tore UV seams into white flecks."
+      "note": "Flames came out as opaque orange/yellow geometry and read from the run camera; the real look is translucent fire, so a view-side flame flicker/aura (skill-vfx) would carry it. The near front leg has a small gap at the knee from Tripo (also in the raw mesh); invisible at swarm scale. Decimated to 1300: at 900 the flames tore UV seams into white flecks.",
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     },
     {
       "id": "kabutops",

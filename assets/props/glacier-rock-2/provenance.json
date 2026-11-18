@@ -1,11 +1,24 @@
 {
-  "generator": "assets/props/build-map-props.py",
-  "seed": 3557600564,
-  "source": "Original scripted geometry; no external assets",
-  "triangles": 160,
-  "materials": 1,
-  "vertexColors": true,
-  "units": "metres",
-  "sha256": "3f819538eb8b77e36ad7f7dcb6cf0b27decc554139a85e1e1c0ff9ad5638d086",
-  "tripoCredits": 0
+  "set": "glacier-rocks",
+  "footprint": {
+    "baseSpreadBefore": 0.8264,
+    "target": 0.5647,
+    "xyScale": 0.6834
+  },
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "props/glacier-rocks/generation/tripo-out/tripo-out/poketone-glacier-rocks-a3643d9a/model.glb",
+  "tripoSourceSha256": "d2d24db5994d6d114cf26653b148fca3662fc25751677a23449f2acc5adc6580",
+  "tripoTask": "a3643d9a-a015-4953-a8e1-3d32fbc84ec0",
+  "tripoType": "image_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 668,
+  "dimensions": [0.2848, 0.2594, 0.2309],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "551002258862d04adae5abb383a8c83432d49da8d8f34c58aab8a9f56328ef49"
 }

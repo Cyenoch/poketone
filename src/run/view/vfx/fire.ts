@@ -358,66 +358,144 @@ export const fireSpin: AreaLook = {
   },
 };
 
+const tongue = sprite({
+  shape: Shape.flame,
+  life: 0.3,
+  grow: 1.6,
+  from: fire.yellow,
+  to: fire.red,
+  accent: fire.core,
+  add: 0.5,
+  gravity: -4,
+  drag: 3,
+});
+const tipSmoke = sprite({
+  shape: Shape.puff,
+  life: 0.5,
+  grow: 1.8,
+  from: fire.ash,
+  to: fire.smoke,
+  accent: fire.smoke,
+  alpha: 0.45,
+  gravity: -1.8,
+  drag: 2,
+  spin: 0.6,
+});
+
+/** Mouth distance ahead of the body centre when the caster's model is not drawn. */
+const JET_MOUTH = 0.35;
+/**
+ * Flamethrower: one continuous jet from the mouth that widens to the fan's full half-angle and
+ * reach (the sim's `angle` and `length`), white-hot along its axis and at the mouth, red and ragged
+ * at its edges and tip. It shoots out in 0.09 s and detaches from the mouth over its last 0.2 s.
+ * Tongues lick up off it for height, smoke curls off the tip; each enemy it hits flares (`common.hit`).
+ * Everything aims along the sim's current direction, so the lit fan is always the hitbox.
+ */
 export const flamethrower: AreaLook = {
-  live(fx, area, x, z) {
-    const length = area.length;
-    const fade = Math.min(1, area.life / 0.25);
-    const yaw = Math.atan2(area.dirX, area.dirZ);
+  live(fx, area, x, z, _charge, mouth) {
+    const reachOf = area.length;
+    const elapsed = area.maxLife - area.life;
+    const grow = Math.min(1, elapsed / 0.09);
+    const fade = Math.min(1, area.life / 0.2);
+    const dx = area.dirX;
+    const dz = area.dirZ;
+    const yaw = Math.atan2(dx, dz);
     const h = fx.ground.heightAt(x, z);
-    const mouthX = x + area.dirX * 0.55;
-    const mouthZ = z + area.dirZ * 0.55;
-    const y = h + 0.65;
-    const side = length * Math.sin(Math.min(area.angle, Math.PI / 2)) + 0.3;
+    const tipX = x + dx * reachOf;
+    const tipZ = z + dz * reachOf;
+    const tipY = fx.ground.heightAt(tipX, tipZ) + 0.4;
+    // The jet leaves the mouth socket itself and aims at the fan's tip from there.
+    const fromMouth = mouth !== undefined && mouth.faceX * dx + mouth.faceZ * dz > 0.3;
+    const sx = fromMouth ? mouth.x : x + dx * JET_MOUTH;
+    const sz = fromMouth ? mouth.z : z + dz * JET_MOUTH;
+    const sy = fromMouth ? mouth.y : h + 0.55;
+    const span = Math.max(0.3, Math.hypot(tipX - sx, tipZ - sz));
+    const jx = (tipX - sx) / span;
+    const jz = (tipZ - sz) / span;
+    // The last puff leaves the mouth and burns out along the jet.
+    const detach = (1 - fade) * span * 0.6;
+    const length = Math.max(0.3, (span - detach) * grow);
+    const mx = sx + jx * detach;
+    const mz = sz + jz * detach;
+    const my = sy - detach * 0.1;
+    const ahead = Math.max(0.1, (mx - x) * dx + (mz - z) * dz);
+    const half = reachOf * Math.sin(Math.min(area.angle, Math.PI / 2));
+    const seed = seedOf(area.id);
+    fx.volumes.beams.add(
+      place(
+        mx,
+        my,
+        mz,
+        Math.atan2(jx, jz),
+        half,
+        0.3,
+        length,
+        Math.atan2(my - tipY, span - detach),
+      ),
+      fire.yellow,
+      1,
+      fire.orange,
+      4,
+      seed,
+      1 - fade,
+    );
+    // The jet lights the ground under it.
     fx.decals
-      .put(Decal.sector, x, z, length, yaw, seedOf(area.id))
-      .rect(-side, -0.3, side, length + 0.3)
-      .tint(fire.orange, 0.5 * fade, fire.yellow, 0.85)
+      .put(Decal.sector, x, z, reachOf, yaw, seed)
+      .rect(-half - 0.3, -0.3, half + 0.3, reachOf + 0.3)
+      .tint(fire.orange, 0.4 * fade * grow, fire.yellow, 0.85)
       .args(0, area.angle, 0);
-    fx.sprites.draw(halo, mouthX, y, mouthZ, 0.32, fade);
-    // Bound the flame body to the live fan; persistent jets outran its tip and lingered after it.
-    for (let lane = -1; lane <= 1; lane++) {
-      for (let i = 0; i < 8; i++) {
-        const seed = seedOf(area.id + i + (lane + 1) * 8);
-        const travel = (i / 8 + fx.time * 2.4 + seed * 0.11) % 1;
-        const angle = yaw + (lane * 0.55 + Math.sin(travel * 9 + seed * 6) * 0.13) * area.angle;
-        const d = length * (0.12 + travel * 0.72);
-        const size = length * (0.035 + travel * 0.1) * (0.8 + seed * 0.2) * fade;
-        const px = x + Math.sin(angle) * d;
-        const pz = z + Math.cos(angle) * d;
-        fx.sprites.draw(
-          stream,
-          px,
-          fx.ground.heightAt(px, pz) + 0.3 + (1 - travel) * 0.3,
-          pz,
-          size,
-          fade * (0.9 - travel * 0.35),
-          0,
-          0,
-          0,
-          seed,
-          travel * 0.65,
-        );
-      }
+    if (fade > 0.6) {
+      fx.sprites.draw(halo, mx, my, mz, 0.42, fade);
+      fx.sprites.draw(core, mx, my, mz, 0.2, fade, dx, dz);
     }
-    for (let i = perFrame(fx, 12 * fade); i > 0; i--) {
-      const d = length * rand(0.3, 0.8);
-      const spread = rand(-0.65, 0.65) * area.angle;
-      const px = x + Math.sin(yaw + spread) * d;
-      const pz = z + Math.cos(yaw + spread) * d;
-      fx.sprites.emit(emberSpark, px, h + 0.35, pz, 0, 0.6, 0, 0.035, h);
+    for (let i = perFrame(fx, 40 * fade * grow); i > 0; i--) {
+      const u = Math.sqrt(Math.random());
+      const d = ahead + (reachOf - ahead) * u * grow;
+      const side = rand(-0.8, 0.8) * area.angle;
+      const px = x + Math.sin(yaw + side) * d;
+      const pz = z + Math.cos(yaw + side) * d;
+      fx.sprites.emit(
+        tongue,
+        px,
+        my + (tipY - my) * u,
+        pz,
+        dx * 2,
+        rand(0.6, 1.6),
+        dz * 2,
+        rand(0.14, 0.24) * (0.6 + u * 0.8),
+      );
+    }
+    for (let i = perFrame(fx, 7 * fade); i > 0; i--) {
+      fx.sprites.emit(
+        tipSmoke,
+        tipX + rand(-0.5, 0.5) * half,
+        tipY + 0.2,
+        tipZ + rand(-0.5, 0.5) * half,
+        dx * 0.8,
+        rand(0.4, 0.9),
+        dz * 0.8,
+        rand(0.2, 0.3),
+      );
+    }
+    for (let i = perFrame(fx, 14 * fade); i > 0; i--) {
+      const d = reachOf * rand(0.3, 0.9);
+      const side = rand(-0.8, 0.8) * area.angle;
+      const px = x + Math.sin(yaw + side) * d;
+      const pz = z + Math.cos(yaw + side) * d;
+      fx.sprites.emit(emberSpark, px, h + 0.4, pz, dx, rand(0.8, 1.6), dz, 0.04, h);
     }
   },
-  strike(fx, area, x, z) {
-    fx.sprites.emit(
-      flash,
-      x + area.dirX * 0.45,
-      fx.ground.heightAt(x, z) + 0.65,
-      z + area.dirZ * 0.45,
-      0,
-      0,
-      0,
-      0.22,
-    );
+  strike(fx, area, x, z, mouth) {
+    const dx = area.dirX;
+    const dz = area.dirZ;
+    const fromMouth = mouth !== undefined && mouth.faceX * dx + mouth.faceZ * dz > 0.3;
+    const mx = fromMouth ? mouth.x : x + dx * JET_MOUTH;
+    const mz = fromMouth ? mouth.z : z + dz * JET_MOUTH;
+    const my = fromMouth ? mouth.y : fx.ground.heightAt(x, z) + 0.55;
+    fx.sprites.emit(bloom, mx, my, mz, 0, 0, 0, 0.4);
+    fx.sprites.emit(flash, mx, my, mz, 0, 0, 0, 0.28);
+    spray(fx, flame, mx, my, mz, 4, 1.2, 1, 0.14);
   },
 };
 

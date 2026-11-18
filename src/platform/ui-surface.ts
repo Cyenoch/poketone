@@ -48,6 +48,8 @@ export interface UiSurface {
   present?(visible: boolean, interactive: boolean, layer: number): void;
   claimInstallHint?(): boolean;
   readonly fullscreen?: { active: boolean; toggle: () => void } | undefined;
+  /** The portrait notice's key: resolves false when the browser refused fullscreen. */
+  readonly landscapeFullscreen?: (() => Promise<boolean>) | undefined;
   /** Opens an external page in the system browser, leaving the game running. */
   openUrl(url: string): void;
   listen(events: UiEvents): () => void;

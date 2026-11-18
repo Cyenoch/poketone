@@ -527,7 +527,7 @@ diff --git a/dist/text/layout/index.js b/dist/text/layout/index.js
 index d28a318d8bf8748938328c012a3a50243b95305d..09f9f6e896d93892659c00b068628cf1cceaaf4e 100644
 --- a/dist/text/layout/index.js
 +++ b/dist/text/layout/index.js
-@@ -17,11 +17,9 @@ export function setupTextLayout(target) {
+@@ -17,11 +17,11 @@ export function setupTextLayout(target) {
          if (properties == null || size == null || paddingInset == null || borderInset == null) {
              return undefined;
          }
@@ -537,8 +537,10 @@ index d28a318d8bf8748938328c012a3a50243b95305d..09f9f6e896d93892659c00b068628cf1
 -        const actualWidth = width - pRight - pLeft - bRight - bLeft;
 -        const actualHeight = height - pTop - pBottom - bTop - bBottom;
 +        //poketone: wrap at the width it was measured in, as laid out: snapping its edges to the grid
-+        //may take up to half a device pixel off each side, which would break a line that fit.
-+        const [actualWidth, actualHeight] = target.node.layoutInner.value ?? [0, 0];
++        //may take up to half a device pixel off each side, which would break a line that fit. Yoga
++        //keeps it in float32, so a line measured 59.55 wide reads back 59.5499992: allow that sliver.
++        const [innerWidth, actualHeight] = target.node.layoutInner.value ?? [0, 0];
++        const actualWidth = innerWidth + 1e-3;
          return buildPositionedGlyphLayout(properties, actualWidth, actualHeight, target.properties.value.textAlign, target.properties.value.verticalAlign);
      });
      return { layout, customLayouting };

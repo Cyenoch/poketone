@@ -1,11 +1,19 @@
 {
-  "generator": "assets/props/build-map-props.py",
-  "seed": 1669576999,
-  "source": "Original scripted geometry; no external assets",
-  "triangles": 48,
-  "materials": 1,
-  "vertexColors": true,
-  "units": "metres",
-  "sha256": "0b798f0d6901df1d1e5afeb30fe2e03149b133a94ca477fa4d391bf0ed54d330",
-  "tripoCredits": 0
+  "set": "tower-tombs",
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "props/tower-tombs/generation/tripo-out/tripo-out/poketone-tower-tombs-8d6c68d7/model.glb",
+  "tripoSourceSha256": "ab1542a38b198b05bb05a7fab7f682c029e5c7066782eec6445c13b7048a0240",
+  "tripoTask": "8d6c68d7-5090-4a0f-bb6a-cb21d3821086",
+  "tripoType": "image_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 325,
+  "dimensions": [0.2798, 0.3014, 0.4971],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "cf8d16a9c14398e8d76fa43cf9b023c485cbd0eb65a000b4104601ff043a9b5e"
 }

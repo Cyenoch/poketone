@@ -33,6 +33,8 @@ export interface ThemeDecorationContext {
   wind: WindUniforms;
   pools: GroundPools;
   world: Readonly<World>;
+  /** The zone's resolved scene light (stage light with the zone atmosphere applied). */
+  light: StageTheme["light"];
 }
 
 export interface ThemeDecoration {
@@ -127,6 +129,8 @@ export interface VegetationLook {
     petals: readonly Vec3[];
   } | null;
   reeds: { density: number; green: Vec3; straw: Vec3 } | null;
+  /** View-only stones in loose drifts: per square metre, radius range in metres, two linear tones. */
+  pebbles?: { density: number; size: readonly [number, number]; dark: Vec3; light: Vec3 };
 }
 export interface DressingLook {
   model: string;
@@ -154,14 +158,49 @@ export interface ArchitectureLook {
   /** Fraction of placed candle groups lit on this floor. */
   candles: readonly number[];
 }
+/** The world grade (grade.ts): exposure, foliage-green calming, shade/sunlit split tone, S-curve. */
+/** One wind-carried ambience layer (environment/drift.ts). Sizes are world units. */
+export interface DriftLook {
+  shape: "streak" | "mote" | "flake" | "leaf" | "sheet";
+  /** Particles on a fine pointer, in the camera-centred box. */
+  count: number;
+  color: Vec3;
+  alpha: number;
+  /** Width and length. */
+  size: readonly [number, number];
+  /** Lift above the ground, and extra rise over one life. */
+  height: readonly [number, number];
+  rise: number;
+  /** Seconds per fade-in/out life; share of the wind scroll followed; extra downwind travel per life. */
+  life: number;
+  speed: number;
+  carry: number;
+  /** Tumble rate (0: none). */
+  flutter: number;
+  /** Screen radius kept clear around the centre (0 to ~1). */
+  clear: number;
+}
+
+export interface GradeLook {
+  exposure: number;
+  green: number;
+  shade: Vec3;
+  light: Vec3;
+  curve: number;
+}
 export interface StageTheme {
   id: StageId;
+  grade: GradeLook;
   /** Extra terrain-material patch for this stage's own surface detail. */
   patchTerrain?: (material: Material, terrain: Terrain) => void;
   decorate?: (context: ThemeDecorationContext) => ThemeDecoration | undefined;
   zoneAtmosphere?: (index: number) => AtmosphereLook;
+  /** Wind-carried ambience layers, view-only. */
+  drift?: readonly DriftLook[];
   /** Scene background and fog. Fog mixes in after the grade (grade.ts), so this is the graded haze. */
   haze: { color: string; near: number; far: number };
+  /** Tint of the soft curtain that rises at the arena edge near the player. */
+  edge: string;
   light: {
     sky: string;
     ground: string;
@@ -193,6 +232,8 @@ export interface StageTheme {
   architecture: ArchitectureLook | null;
   water: WaterLook;
   props: Record<Obstacle["kind"], PropLook>;
+  /** The land past the terrain's edge (environment/backdrop.ts); the tower builds its own exterior. */
+  backdrop?: import("../environment/backdrop").BackdropLook;
   /** Painted-map palette (DESIGN.md · 小地图): terrace bands low to high, water, the wall beyond the arena. */
   minimap: { land: readonly Rgb[]; water: Rgb; lava: Rgb; shore: Rgb; wall: Rgb; wallLight: Rgb };
   /** Full-bleed painting behind the run's loading screen (docs/ART-PROMPTS.md). */

@@ -1,29 +1,73 @@
+import type { ElementType } from "../../sim/content/elements";
 import type { Hazard } from "../../sim/state/entities";
 import { Decal } from "./decals";
 import { perFrame, rand, spray, type Fx } from "./fx";
-import { danger, gold, poison, white, wind } from "./palette";
-import { Shape, sprite } from "./sprites";
+import type { Rgb } from "./gl";
+import {
+  danger,
+  dragon,
+  electric,
+  fighting,
+  fire,
+  ghost,
+  gold,
+  grass,
+  poison,
+  psychic,
+  rock,
+  water,
+  white,
+  wind,
+} from "./palette";
+import { Shape, sprite, type SpriteSpec } from "./sprites";
 
-const hitFlash = sprite({
-  shape: Shape.star,
-  life: 0.12,
-  grow: 1.4,
-  from: white,
-  accent: white,
-  add: 1,
-  spin: 2,
-});
-const chip = sprite({
-  shape: Shape.spark,
-  life: 0.22,
-  grow: 0.4,
-  from: white,
-  accent: white,
-  add: 1,
-  gravity: 8,
-  drag: 2,
-  stretch: 0.04,
-});
+interface HitLook {
+  flash: SpriteSpec;
+  chip: SpriteSpec;
+}
+
+/** A small star in the move's colour and one or two bits of its element: never a white sheet. */
+function hitLook(body: Rgb, core: Rgb, shape: number, gravity: number): HitLook {
+  return {
+    flash: sprite({
+      shape: Shape.star,
+      life: 0.1,
+      grow: 1.3,
+      from: body,
+      accent: core,
+      add: 1,
+      spin: 2,
+    }),
+    chip: sprite({
+      shape,
+      life: 0.24,
+      grow: 0.5,
+      from: core,
+      to: body,
+      accent: core,
+      add: shape === Shape.flame || shape === Shape.leaf || shape === Shape.drop ? 0.3 : 1,
+      gravity,
+      drag: 2,
+      stretch: shape === Shape.spark ? 0.04 : 0,
+      spin: shape === Shape.leaf ? 6 : 0,
+    }),
+  };
+}
+
+const plainHit = hitLook(wind.cream, white, Shape.spark, 8);
+const hitLooks: Partial<Record<ElementType, HitLook>> = {
+  fire: hitLook(fire.orange, fire.core, Shape.flame, -4),
+  water: hitLook(water.light, water.foam, Shape.drop, 9),
+  grass: hitLook(grass.leaf, grass.light, Shape.leaf, 3),
+  electric: hitLook(electric.yellow, white, Shape.spark, 8),
+  psychic: hitLook(psychic.pink, psychic.core, Shape.spark, 6),
+  ghost: hitLook(ghost.glow, ghost.light, Shape.spark, 6),
+  poison: hitLook(ghost.glow, ghost.light, Shape.spark, 6),
+  dragon: hitLook(dragon.teal, dragon.light, Shape.spark, 8),
+  fighting: hitLook(fighting.amber, fighting.cream, Shape.spark, 8),
+  rock: hitLook(rock.earth, rock.light, Shape.spark, 10),
+  ground: hitLook(rock.earth, rock.light, Shape.spark, 10),
+};
 const critFlash = sprite({
   shape: Shape.star,
   life: 0.22,
@@ -40,6 +84,15 @@ const critRing = sprite({
   from: gold.yellow,
   accent: white,
   add: 0.8,
+});
+const bossFlash = sprite({
+  shape: Shape.glow,
+  life: 0.3,
+  grow: 1.8,
+  from: white,
+  to: gold.white,
+  accent: white,
+  add: 1,
 });
 const goldSpark = sprite({
   shape: Shape.spark,
@@ -153,29 +206,123 @@ const bladeHalo = sprite({
   add: 0.7,
 });
 
-/** Generic contact flash; move-specific impacts come from the move's own look. */
-export function hit(fx: Fx, x: number, z: number, crit: boolean): void {
+/** Hits this frame (crits included) that get the full contact flash; later ones only a small cue, then nothing. */
+const FULL_HITS = 6;
+const QUIET_HITS = 16;
+
+/**
+ * Generic contact flash in the hitting element's colour; move-specific impacts come from the move's own
+ * look. `nth` counts this frame's hits: an area tick lands on dozens at once, and a white flash on each
+ * buried the move under one sheet of light.
+ */
+export function hit(
+  fx: Fx,
+  x: number,
+  z: number,
+  crit: boolean,
+  type: ElementType,
+  nth: number,
+): void {
+  if (nth >= QUIET_HITS || fx.sprites.load > 0.8) return;
   const y = fx.ground.heightAt(x, z) + 0.7;
   if (crit) {
-    fx.sprites.emit(critFlash, x, y, z, 0, 0, 0, 0.85);
-    fx.sprites.emit(critRing, x, y, z, 0, 0, 0, 0.5);
-    spray(fx, goldSpark, x, y, z, 8, 6, 5, 0.1);
+    // A crit in a crowd still reads, by its gold ring, without whiting out the pack.
+    if (nth >= FULL_HITS) {
+      fx.sprites.emit(critRing, x, y, z, 0, 0, 0, 0.25);
+      return;
+    }
+    fx.sprites.emit(critFlash, x, y, z, 0, 0, 0, 0.45);
+    fx.sprites.emit(critRing, x, y, z, 0, 0, 0, 0.32);
+    spray(fx, goldSpark, x, y, z, 6, 5, 4, 0.08);
     return;
   }
-  // Area ticks hit dozens at once: drop optional sparkle when the pool runs hot.
-  if (fx.sprites.load > 0.8) return;
-  fx.sprites.emit(hitFlash, x, y, z, 0, 0, 0, 0.42);
-  spray(fx, chip, x, y, z, 2, 4, 3, 0.07);
+  const look = hitLooks[type] ?? plainHit;
+  if (nth >= FULL_HITS) {
+    fx.sprites.emit(look.flash, x, y, z, 0, 0, 0, 0.16);
+    return;
+  }
+  fx.sprites.emit(look.flash, x, y, z, 0, 0, 0, 0.26);
+  spray(fx, look.chip, x, y, z, 2, 2.5, 2.5, 0.07);
 }
 
-export function death(fx: Fx, x: number, z: number, elite: boolean): void {
-  const y = fx.ground.heightAt(x, z) + 0.45;
+export type DeathKind = "swarm" | "elite" | "guardian";
+
+/** The poof a defeated enemy's body leaves once its squash has played (createRunView's dying bodies). */
+export function death(
+  fx: Fx,
+  x: number,
+  z: number,
+  kind: DeathKind,
+  radius: number,
+  height: number,
+): void {
+  if (kind === "guardian") {
+    guardianDeath(fx, x, z, radius, height);
+    return;
+  }
+  const elite = kind === "elite";
+  const y = fx.ground.heightAt(x, z) + Math.min(height * 0.4, 1.2);
   // Kills come in crowds: a small poof each, so dozens of them don't wall off the field.
   spray(fx, poof, x, y, z, elite ? 8 : 3, elite ? 2.6 : 1.8, 1.2, elite ? 0.5 : 0.32);
   spray(fx, twinkle, x, y + 0.3, z, 3, 2, 2, 0.16);
   if (!elite) return;
   spray(fx, goldSpark, x, y, z, 16, 7, 6, 0.12);
   fx.decals.stamp(Decal.ring, x, z, 2.2, 0.5, gold.yellow, 1, gold.white, 0.8, 0.2, 0.2);
+}
+
+/**
+ * The zone's guardian falls: its body bursts into a cloud of smoke as big as it was, a white star
+ * flashes where it stood, a gold shock ring runs out across the arena and stars rise off the spot.
+ */
+function guardianDeath(fx: Fx, x: number, z: number, radius: number, height: number): void {
+  const h = fx.ground.heightAt(x, z);
+  fx.sprites.emit(bossFlash, x, h + height * 0.5, z, 0, 0, 0, Math.max(1.6, height * 0.9));
+  fx.sprites.emit(critFlash, x, h + height * 0.55, z, 0, 0, 0, Math.max(1.4, height * 0.7));
+  fx.decals.stamp(
+    Decal.ring,
+    x,
+    z,
+    radius * 5 + 2.5,
+    0.8,
+    gold.yellow,
+    1,
+    gold.white,
+    0.9,
+    0.1,
+    0.1,
+  );
+  fx.decals.stamp(Decal.ring, x, z, radius * 3 + 1, 0.5, white, 1, gold.white, 1, 0.18, 0.2);
+  fx.decals.stamp(Decal.glow, x, z, radius * 2.5 + 1, 0.9, gold.yellow, 0.8, gold.white, 1);
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2 + rand(-0.2, 0.2);
+    const d = radius * rand(0.3, 1);
+    fx.sprites.emit(
+      poof,
+      x + Math.cos(a) * d,
+      h + height * rand(0.1, 0.9),
+      z + Math.sin(a) * d,
+      Math.cos(a) * rand(1.5, 3),
+      rand(0.5, 1.5),
+      Math.sin(a) * rand(1.5, 3),
+      Math.max(0.35, height * 0.17) * rand(0.85, 1.2),
+      h,
+    );
+  }
+  spray(fx, goldSpark, x, h + height * 0.5, z, 30, 11, 8, 0.16);
+  for (let i = 0; i < 16; i++) {
+    const a = rand(0, Math.PI * 2);
+    const d = radius * rand(0.2, 0.8);
+    fx.sprites.emit(
+      rise,
+      x + Math.cos(a) * d,
+      h + height * rand(0.3, 1),
+      z + Math.sin(a) * d,
+      Math.cos(a) * 0.5,
+      rand(2.5, 5),
+      Math.sin(a) * 0.5,
+      rand(0.18, 0.3),
+    );
+  }
 }
 
 /**

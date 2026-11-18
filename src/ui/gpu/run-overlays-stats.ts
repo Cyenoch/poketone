@@ -15,7 +15,7 @@ interface StatDef {
   name: string;
   unit: Unit;
   suffix?: string;
-  /** Hidden while it is 0 with nothing feeding it (lifesteal, thorns, luck). */
+  /** Hidden while nothing moves it off its base (lifesteal, thorns, damage taken). */
   optional?: boolean;
 }
 

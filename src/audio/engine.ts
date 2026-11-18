@@ -107,10 +107,12 @@ export const UI_SOUNDS = SFX_NAMES.filter((name) => name.startsWith("ui-"));
  * the two lists.
  */
 export const RUN_SOUNDS = SFX_NAMES.filter((name) => !name.startsWith("ui-"));
+/** The lobby's tracks, played in turn like the run's. */
+export const MENU_TRACKS = ["menu", "menu-2"] as const;
 /** The run's tracks, played in turn: one pass each, and the next run starts on the next one. */
-export const RUN_TRACKS = ["run-1", "run-2", "run-3"] as const;
+export const RUN_TRACKS = ["run-1", "run-2", "run-3", "run-4"] as const;
 export type RunTrack = (typeof RUN_TRACKS)[number];
-export type MusicTrack = "menu" | "boss" | RunTrack;
+export type MusicTrack = (typeof MENU_TRACKS)[number] | "boss" | RunTrack;
 /** What the screens ask for: `run` is the run's rotation. */
 export type MusicWish = "menu" | "run" | "boss";
 export const AMBIENCE_NAMES = ["sun", "rain", "sandstorm", "hail"] as const;
@@ -379,12 +381,22 @@ export function createAudio(): Audio {
   const lastTake = new Map<SfxName, number>();
   let voices = 0;
   let wanted: MusicWish | null = null;
-  /** The rotation: the run track `run` stands for, and whether it has started since it became it. */
-  let runAt = 0;
-  let runStarted = false;
+  /** Each rotation: the track its wish stands for, and whether it has started since it became it. */
+  const rotations = {
+    menu: { tracks: MENU_TRACKS as readonly MusicTrack[], at: 0, started: false },
+    run: { tracks: RUN_TRACKS as readonly MusicTrack[], at: 0, started: false },
+  };
+  type Rotation = keyof typeof rotations;
+  const rotationOf = (track: MusicTrack): Rotation | null =>
+    track === "boss" ? null : track.startsWith("run-") ? "run" : "menu";
+  const trackOf = (rotation: Rotation) => rotations[rotation].tracks[rotations[rotation].at]!;
   let turn: ReturnType<typeof setTimeout> | undefined;
+  /** Rotation entries that failed to load since the last wish or successful start. */
+  let misses = 0;
   let applying: Handle<void> | null = null;
   let playing: Playing | null = null;
+  /** Outgoing tracks until they end: their scheduled fades belong to the clock they were made on. */
+  const retiring = new Set<Playing>();
   let paused = false;
   let ambientWish: AmbienceName | null = null;
   let ambientPlayer: { name: AmbienceName; hold: Handle<void> } | null = null;
@@ -439,18 +451,30 @@ export function createAudio(): Audio {
     ui.connect(master);
     buses = { sfx, bed, ui, music, duck, bedDuck, pause, ambience };
     ctx = context;
+    // An interruption (a call, an app switch) stops the clock without a gesture; the next one revives it.
+    context.onstatechange = () => {
+      if (enabled && context.state !== "running") armUnlock();
+    };
     if (!enabled) void context.suspend();
     void applyMusic();
     void applyAmbience();
   }
 
-  // Browsers only let a context run after a user gesture.
-  runtime().activateAudio(() => {
-    if (disposed) return true;
-    start();
-    if (enabled && ctx?.state === "suspended") void ctx.resume();
-    return ctx?.state === "running";
-  });
+  // Browsers only let a context run after a user gesture; it stays armed until the context runs.
+  let unlockArmed = false;
+  function armUnlock(): void {
+    if (unlockArmed) return;
+    unlockArmed = true;
+    runtime().activateAudio(() => {
+      if (disposed) return ((unlockArmed = false), true);
+      start();
+      if (enabled && ctx && ctx.state !== "running") void ctx.resume();
+      const running = ctx?.state === "running";
+      if (running) unlockArmed = false;
+      return running;
+    });
+  }
+  armUnlock();
 
   /** `bank.json`: what exists (files, key frames, tempo). Fetched once; a failed fetch is retried. */
   function manifestOf(): Promise<BankJson> {
@@ -669,13 +693,33 @@ export function createAudio(): Audio {
   function fadeOut(old: Playing, at: number, seconds: number): void {
     old.out.gain.setValueCurveAtTime(FADE_OUT, at, seconds);
     old.source.stop(at + seconds + 0.1);
-    old.source.onended = () => old.out.disconnect();
+    retiring.add(old);
+    old.source.onended = () => {
+      old.out.disconnect();
+      retiring.delete(old);
+    };
+  }
+
+  function discard(old: Playing): void {
+    old.source.stop();
+    old.source.disconnect();
+    old.out.disconnect();
+    retiring.delete(old);
+  }
+
+  /** Ends a superseded track. A stopped clock cannot run a fade, and a fade or a new source
+   *  scheduled against it would all sound together on resume, so it and every fade still pending
+   *  are dropped outright. */
+  function retire(old: Playing, context: AudioContext, at: number, seconds = MUSIC_FADE): void {
+    if (context.state === "running") return fadeOut(old, at, seconds);
+    discard(old);
+    for (const fading of retiring) discard(fading);
   }
 
   /** The player holds only the wanted track: switching away (the menu theme during a run) frees
    *  the old one unless someone else holds it; a playing source keeps its own buffer. */
   function follow(): void {
-    const track = wanted === "run" ? RUN_TRACKS[runAt]! : wanted;
+    const track = wanted === "run" || wanted === "menu" ? trackOf(wanted) : wanted;
     if (track === (player?.track ?? null)) return;
     const previous = player;
     // Background: music is never a surface's need, so it waits for what is (the first screen).
@@ -684,33 +728,44 @@ export function createAudio(): Audio {
     void applyMusic();
   }
 
-  function advanceRun(): void {
-    runAt = (runAt + 1) % RUN_TRACKS.length;
-    runStarted = false;
+  function advance(rotation: Rotation): void {
+    const state = rotations[rotation];
+    state.at = (state.at + 1) % state.tracks.length;
+    state.started = false;
   }
 
-  /** After one pass of a run track, the rotation turns to the next. The check reads the context's
-   *  clock, which stops while the sound is off, so a suspended pass waits instead of skipping. */
-  function scheduleTurn(pass: Playing): void {
+  /** After one pass of a rotating track, its rotation turns to the next. The check reads the
+   *  context's clock, which stops while the sound is off, so a suspended pass waits instead of
+   *  skipping. */
+  function scheduleTurn(pass: Playing, rotation: Rotation): void {
     clearTimeout(turn);
     const check = () => {
-      if (playing !== pass || wanted !== "run" || !ctx) return;
+      turn = undefined;
+      if (playing !== pass || wanted !== rotation || !ctx) return;
       const left = pass.duration - (ctx.currentTime - pass.startedAt);
       if (left > 0.05) return void (turn = setTimeout(check, Math.max(1, left) * 1000));
-      advanceRun();
+      advance(rotation);
       follow();
     };
     check();
   }
 
+  /** The wish came back to the track already playing: its turn is re-armed from its own start
+   *  when the wish left while the pass was ending and dropped the timer. */
+  function keepPlaying(): void {
+    const rotation = playing && rotationOf(playing.track);
+    if (playing && rotation && turn === undefined) scheduleTurn(playing, rotation);
+  }
+
   async function applyMusic(): Promise<void> {
     const target = player?.track ?? null;
-    if (disposed || !ctx || !buses || !bank || target === (playing?.track ?? null)) return;
+    if (disposed || !ctx || !buses || !bank) return;
+    if (target === (playing?.track ?? null)) return keepPlaying();
     // Only this hold is already applying; replaying the same track creates a new request.
     if (player !== null && applying === player.hold) return;
     const context = ctx;
     if (target === null) {
-      if (playing) fadeOut(playing, context.currentTime, 0.7);
+      if (playing) retire(playing, context, context.currentTime, 0.7);
       playing = null;
       return;
     }
@@ -726,15 +781,31 @@ export function createAudio(): Audio {
       if (applying === hold) applying = null;
     }
     // A same-track replay also replaces the hold while this request waits.
-    if (disposed || player?.hold !== hold || target === (playing?.track ?? null)) return;
-    // A track that failed to load was reported by its hold; the wish stays, silent.
+    if (disposed || player?.hold !== hold) return;
+    if (target === (playing?.track ?? null)) return keepPlaying();
+    // A track that failed to load was reported by its hold. The previous screen's track still
+    // leaves, and the rest of the playlist is tried once each; if none loads, it stays silent.
     const buffer = tracks.get(target);
-    if (!buffer) return;
+    if (!buffer) {
+      if (playing) retire(playing, context, context.currentTime);
+      playing = null;
+      const failedRotation = rotationOf(target);
+      if (failedRotation && ++misses < rotations[failedRotation].tracks.length) {
+        advance(failedRotation);
+        follow();
+      }
+      return;
+    }
+    misses = 0;
     const bpm = bank.music[target]!.bpm;
     const now = context.currentTime;
     const old = playing;
     // A switch inside the run (boss, the next run track) starts on the next beat of the playing loop.
-    const onBeat = old && old.track !== "menu" && target !== "menu";
+    const onBeat =
+      context.state === "running" &&
+      old &&
+      rotationOf(old.track) !== "menu" &&
+      rotationOf(target) !== "menu";
     const at =
       now +
       (onBeat
@@ -750,10 +821,11 @@ export function createAudio(): Audio {
     source.connect(fadeIn).connect(out).connect(buses.music);
     source.start(at);
     playing = { track: target, source, out, startedAt: at, duration: buffer.duration, bpm };
-    if (old) fadeOut(old, at, MUSIC_FADE);
-    if (target.startsWith("run-")) {
-      runStarted = true;
-      scheduleTurn(playing);
+    if (old) retire(old, context, at);
+    const rotation = rotationOf(target);
+    if (rotation) {
+      rotations[rotation].started = true;
+      scheduleTurn(playing, rotation);
     }
   }
 
@@ -769,7 +841,7 @@ export function createAudio(): Audio {
         music: playing?.track ?? null,
         ambience: ambientPlaying ? ambientPlayer?.name : null,
         wanted,
-        runTrack: RUN_TRACKS[runAt],
+        runTrack: trackOf("run"),
         recent: [...log],
       }),
     });
@@ -887,12 +959,15 @@ export function createAudio(): Audio {
       play(wish) {
         // Callers repeat the wish every snapshot; a failed track is reported once, not refetched.
         if (disposed || wish === wanted) return;
-        // Leaving the run (its end, or the menu) moves the rotation past the track it played.
-        if (wish !== "run" && wish !== "boss" && runStarted) advanceRun();
+        // Leaving the run (its end, or the menu) or the menu moves its rotation past the track it
+        // played, so the next visit opens on the next track.
+        if (wish !== "run" && wish !== "boss" && rotations.run.started) advance("run");
+        if (wish !== "menu" && rotations.menu.started) advance("menu");
         wanted = wish;
+        misses = 0;
         follow();
       },
-      runTrack: () => RUN_TRACKS[runAt]!,
+      runTrack: () => trackOf("run") as RunTrack,
       setPaused(value) {
         if (disposed) return;
         paused = value;

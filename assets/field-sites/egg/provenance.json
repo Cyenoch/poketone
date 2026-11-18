@@ -1,0 +1,20 @@
+{
+  "eggHeightPerNest": 0.9903,
+  "eggLiftPerNest": 0.1675,
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "field-sites/egg/generation/tripo-out/tripo-out/poketone-egg-mv-f2e0ad34/model.glb",
+  "tripoSourceSha256": "cb59564ceb1c479282838498c83ee02513f2c47315b57137ea92f421a171759a",
+  "tripoTask": "f2e0ad34-b2f7-492c-99de-beed60269226",
+  "tripoType": "multiview_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 505,
+  "dimensions": [0.6556, 0.6654, 0.7984],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "8234fdbaae5beefe157744db3bb9c5c4734e240b84682702fa932073cb27434a"
+}

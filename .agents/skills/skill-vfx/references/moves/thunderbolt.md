@@ -10,7 +10,7 @@ Signature traits
 Reference game: each link = a thick volt lightning plus a thin white core lightning; a bolt
 sprite on the struck target.
 
-Sim: instant chain from the player through count + 1 = 3 enemies within 4.5 m hops; event `chain`
+Sim: instant chain from the player through count + 1 = 3 enemies within 5.5 m hops; event `chain`
 with the points.
 
 Keep: zig-zag, white core, per-target spark. Avoid: long linger (≤ 0.3 s), fat glow halos.

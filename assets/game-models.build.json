@@ -11,13 +11,13 @@
   },
   "weedle": {
     "name": "weedle",
-    "source": "enemies/weedle/generation/model.glb",
+    "source": "enemies/weedle/generation-v2/tripo-out/tripo-out/weedle-mv-460ee0c8/model.glb",
     "output": "public/models/enemies/weedle.glb",
-    "trianglesBefore": 1296,
-    "trianglesAfter": 899,
+    "trianglesBefore": 2102,
+    "trianglesAfter": 900,
     "texture": 512,
     "clips": [],
-    "bytes": 71312
+    "bytes": 94436
   },
   "rattata": {
     "name": "rattata",
@@ -27,17 +27,17 @@
     "trianglesAfter": 875,
     "texture": 512,
     "clips": [],
-    "bytes": 84072
+    "bytes": 82840
   },
   "pidgey": {
     "name": "pidgey",
-    "source": "enemies/pidgey/generation/tripo-out/poketone-pidgey-1a32ddf3/model.glb",
+    "source": "enemies/pidgey/generation-v2/tripo-out/tripo-out/pidgey-mv-8ece7b07/model.glb",
     "output": "public/models/enemies/pidgey.glb",
-    "trianglesBefore": 978,
-    "trianglesAfter": 900,
+    "trianglesBefore": 2036,
+    "trianglesAfter": 1300,
     "texture": 512,
     "clips": [],
-    "bytes": 78040
+    "bytes": 136176
   },
   "oddish": {
     "name": "oddish",
@@ -47,7 +47,7 @@
     "trianglesAfter": 900,
     "texture": 512,
     "clips": [],
-    "bytes": 69892
+    "bytes": 69416
   },
   "scyther": {
     "name": "scyther",
@@ -63,11 +63,11 @@
     "name": "tree",
     "source": "props/tree/blender/model.glb",
     "output": "public/models/props/tree.glb",
-    "trianglesBefore": 524,
-    "trianglesAfter": 524,
+    "trianglesBefore": 1698,
+    "trianglesAfter": 1698,
     "texture": 512,
     "clips": [],
-    "bytes": 14188
+    "bytes": 112144
   },
   "pine": {
     "name": "pine",
@@ -78,26 +78,6 @@
     "texture": 512,
     "clips": [],
     "bytes": 44544
-  },
-  "rock": {
-    "name": "rock",
-    "source": "props/rock/generation/tripo-out/poketone-rock-b593ee64/model.glb",
-    "output": "public/models/props/rock.glb",
-    "trianglesBefore": 511,
-    "trianglesAfter": 500,
-    "texture": 512,
-    "clips": [],
-    "bytes": 38040
-  },
-  "bush": {
-    "name": "bush",
-    "source": "props/bush/blender/model.glb",
-    "output": "public/models/props/bush.glb",
-    "trianglesBefore": 400,
-    "trianglesAfter": 400,
-    "texture": 512,
-    "clips": [],
-    "bytes": 11084
   },
   "bulbasaur": {
     "name": "bulbasaur",
@@ -156,7 +136,7 @@
     "trianglesAfter": 900,
     "texture": 512,
     "clips": [],
-    "bytes": 85212
+    "bytes": 78100
   },
   "ekans": {
     "name": "ekans",
@@ -166,7 +146,7 @@
     "trianglesAfter": 900,
     "texture": 512,
     "clips": [],
-    "bytes": 66640
+    "bytes": 66668
   },
   "paras": {
     "name": "paras",
@@ -180,13 +160,13 @@
   },
   "geodude": {
     "name": "geodude",
-    "source": "enemies/geodude/generation/tripo-out/poketone-geodude-f875fc01/model.glb",
+    "source": "enemies/geodude/generation-v2/tripo-out/tripo-out/geodude-mv-516f2d8f/model.glb",
     "output": "public/models/enemies/geodude.glb",
-    "trianglesBefore": 952,
-    "trianglesAfter": 899,
+    "trianglesBefore": 1855,
+    "trianglesAfter": 1200,
     "texture": 512,
     "clips": [],
-    "bytes": 60316
+    "bytes": 104296
   },
   "venonat": {
     "name": "venonat",
@@ -196,7 +176,7 @@
     "trianglesAfter": 900,
     "texture": 512,
     "clips": [],
-    "bytes": 82664
+    "bytes": 79032
   },
   "wartortle": {
     "name": "wartortle",
@@ -228,14 +208,14 @@
     "name": "raichu",
     "source": "characters/raichu/blender/model.glb",
     "output": "public/models/raichu.glb",
-    "trianglesBefore": 1602,
-    "trianglesAfter": 1996,
+    "trianglesBefore": 1522,
+    "trianglesAfter": 1916,
     "texture": 1024,
     "clips": [
       "idle",
       "run"
     ],
-    "bytes": 696544
+    "bytes": 697044
   },
   "charmeleon": {
     "name": "charmeleon",
@@ -311,33 +291,33 @@
   },
   "metapod": {
     "name": "metapod",
-    "source": "enemies/metapod/generation/tripo-out/poketone-metapod-847a197d/model.glb",
+    "source": "enemies/metapod/generation-v2/tripo-out/tripo-out/metapod-mv-e095f167/model.glb",
     "output": "public/models/enemies/metapod.glb",
-    "trianglesBefore": 1237,
-    "trianglesAfter": 900,
+    "trianglesBefore": 1594,
+    "trianglesAfter": 1200,
     "texture": 512,
     "clips": [],
-    "bytes": 81328
+    "bytes": 111756
   },
   "kakuna": {
     "name": "kakuna",
-    "source": "enemies/kakuna/generation/tripo-out/poketone-kakuna-82df3cc8/model.glb",
+    "source": "enemies/kakuna/generation-v2/tripo-out/tripo-out/kakuna-mv-0c198444/model.glb",
     "output": "public/models/enemies/kakuna.glb",
-    "trianglesBefore": 1038,
-    "trianglesAfter": 899,
-    "texture": 512,
-    "clips": [],
-    "bytes": 51328
-  },
-  "nidoran-f": {
-    "name": "nidoran-f",
-    "source": "enemies/nidoran-f/generation/tripo-out/poketone-nidoran-f-d8698bc4/model.glb",
-    "output": "public/models/enemies/nidoran-f.glb",
-    "trianglesBefore": 1522,
+    "trianglesBefore": 1164,
     "trianglesAfter": 900,
     "texture": 512,
     "clips": [],
-    "bytes": 84172
+    "bytes": 95220
+  },
+  "nidoran-f": {
+    "name": "nidoran-f",
+    "source": "enemies/nidoran-f/generation-v2/tripo-out/tripo-out/nidoran-f-mv-c34dc479/model.glb",
+    "output": "public/models/enemies/nidoran-f.glb",
+    "trianglesBefore": 2062,
+    "trianglesAfter": 900,
+    "texture": 512,
+    "clips": [],
+    "bytes": 87516
   },
   "nidoran-m": {
     "name": "nidoran-m",
@@ -347,7 +327,7 @@
     "trianglesAfter": 899,
     "texture": 512,
     "clips": [],
-    "bytes": 74292
+    "bytes": 69656
   },
   "voltorb": {
     "name": "voltorb",
@@ -361,23 +341,23 @@
   },
   "vulpix": {
     "name": "vulpix",
-    "source": "enemies/vulpix/generation/tripo-out/poketone-vulpix-2668f0c5/model.glb",
+    "source": "enemies/vulpix/generation-v2/tripo-out/tripo-out/vulpix-mv-b3c7be64/model.glb",
     "output": "public/models/enemies/vulpix.glb",
-    "trianglesBefore": 1439,
-    "trianglesAfter": 900,
+    "trianglesBefore": 2359,
+    "trianglesAfter": 1299,
     "texture": 512,
     "clips": [],
-    "bytes": 77712
+    "bytes": 112180
   },
   "growlithe": {
     "name": "growlithe",
-    "source": "enemies/growlithe/generation/tripo-out/poketone-growlithe-a2d54e6e/model.glb",
+    "source": "enemies/growlithe/generation-v2/tripo-out/tripo-out/growlithe-mv-4e67dc21/model.glb",
     "output": "public/models/enemies/growlithe.glb",
-    "trianglesBefore": 1674,
+    "trianglesBefore": 1786,
     "trianglesAfter": 899,
     "texture": 512,
     "clips": [],
-    "bytes": 97216
+    "bytes": 113496
   },
   "butterfree": {
     "name": "butterfree",
@@ -391,13 +371,13 @@
   },
   "beedrill": {
     "name": "beedrill",
-    "source": "enemies/beedrill/generation/tripo-out/poketone-beedrill-35ac11ba/model.glb",
+    "source": "enemies/beedrill/generation-v2/tripo-out/tripo-out/beedrill-mv-3a37ea74/model.glb",
     "output": "public/models/enemies/beedrill.glb",
-    "trianglesBefore": 1178,
+    "trianglesBefore": 1858,
     "trianglesAfter": 900,
     "texture": 512,
     "clips": [],
-    "bytes": 89992
+    "bytes": 114088
   },
   "raticate": {
     "name": "raticate",
@@ -437,7 +417,7 @@
     "trianglesAfter": 899,
     "texture": 512,
     "clips": [],
-    "bytes": 78848
+    "bytes": 75528
   },
   "parasect": {
     "name": "parasect",
@@ -457,7 +437,7 @@
     "trianglesAfter": 900,
     "texture": 512,
     "clips": [],
-    "bytes": 74632
+    "bytes": 75128
   },
   "fearow": {
     "name": "fearow",
@@ -487,7 +467,7 @@
     "trianglesAfter": 900,
     "texture": 512,
     "clips": [],
-    "bytes": 83524
+    "bytes": 90936
   },
   "electrode": {
     "name": "electrode",
@@ -497,17 +477,17 @@
     "trianglesAfter": 899,
     "texture": 512,
     "clips": [],
-    "bytes": 67168
+    "bytes": 70100
   },
   "golem": {
     "name": "golem",
-    "source": "enemies/golem/generation/tripo-out/poketone-golem-bfdd4123/model.glb",
+    "source": "enemies/golem/generation-v2/tripo-out/tripo-out/golem-mv-00d22cfa/model.glb",
     "output": "public/models/enemies/golem.glb",
-    "trianglesBefore": 1796,
-    "trianglesAfter": 900,
+    "trianglesBefore": 2489,
+    "trianglesAfter": 1599,
     "texture": 512,
     "clips": [],
-    "bytes": 91756
+    "bytes": 164892
   },
   "charmander": {
     "name": "charmander",
@@ -530,7 +510,7 @@
     "trianglesAfter": 900,
     "texture": 512,
     "clips": [],
-    "bytes": 89728
+    "bytes": 89244
   },
   "poliwag": {
     "name": "poliwag",
@@ -614,23 +594,23 @@
   },
   "exeggcute": {
     "name": "exeggcute",
-    "source": "enemies/exeggcute/generation/tripo-out/tripo-out/poketone-exeggcute-mv-7a070dc0/model.glb",
+    "source": "enemies/exeggcute/generation-v2/tripo-out/tripo-out/exeggcute-mv-11b7e014/model.glb",
     "output": "public/models/enemies/exeggcute.glb",
-    "trianglesBefore": 1785,
-    "trianglesAfter": 899,
+    "trianglesBefore": 2482,
+    "trianglesAfter": 1299,
     "texture": 512,
     "clips": [],
-    "bytes": 85692
+    "bytes": 105300
   },
   "primeape": {
     "name": "primeape",
-    "source": "enemies/primeape/generation/tripo-out/tripo-out/primeape-mv2-c26b4973/model.glb",
+    "source": "enemies/primeape/generation-v2/tripo-out/tripo-out/primeape-mv-2-722db11a/model.glb",
     "output": "public/models/enemies/primeape.glb",
-    "trianglesBefore": 2107,
-    "trianglesAfter": 900,
+    "trianglesBefore": 1992,
+    "trianglesAfter": 1300,
     "texture": 512,
     "clips": [],
-    "bytes": 120436
+    "bytes": 132064
   },
   "pinsir": {
     "name": "pinsir",
@@ -664,23 +644,23 @@
   },
   "clefairy": {
     "name": "clefairy",
-    "source": "enemies/clefairy/generation/tripo-out/tripo-out/clefairy-mv-8e11f0c2/model.glb",
+    "source": "enemies/clefairy/generation-v3/tripo-out/tripo-out/clefairy-mv-3-67481a99/model.glb",
     "output": "public/models/enemies/clefairy.glb",
-    "trianglesBefore": 2154,
-    "trianglesAfter": 900,
+    "trianglesBefore": 2654,
+    "trianglesAfter": 2200,
     "texture": 512,
     "clips": [],
-    "bytes": 91260
+    "bytes": 146592
   },
   "tangela": {
     "name": "tangela",
-    "source": "enemies/tangela/generation/tripo-out/tripo-out/tangela-mv-2acec34d/model.glb",
+    "source": "enemies/tangela/generation-v3/tripo-out/tripo-out/tangela-mv-3-e7c8b097/model.glb",
     "output": "public/models/enemies/tangela.glb",
-    "trianglesBefore": 2630,
-    "trianglesAfter": 1287,
+    "trianglesBefore": 3493,
+    "trianglesAfter": 2600,
     "texture": 512,
     "clips": [],
-    "bytes": 136360
+    "bytes": 214880
   },
   "haunter": {
     "name": "haunter",
@@ -754,13 +734,13 @@
   },
   "kabuto": {
     "name": "kabuto",
-    "source": "enemies/kabuto/generation/tripo-out/tripo-out/kabuto-mv-2685df58/model.glb",
+    "source": "enemies/kabuto/generation-v2/tripo-out/tripo-out/kabuto-mv-2-b1b4f573/model.glb",
     "output": "public/models/enemies/kabuto.glb",
-    "trianglesBefore": 1632,
-    "trianglesAfter": 1300,
+    "trianglesBefore": 1512,
+    "trianglesAfter": 1299,
     "texture": 512,
     "clips": [],
-    "bytes": 94108
+    "bytes": 100284
   },
   "seadra": {
     "name": "seadra",
@@ -840,7 +820,7 @@
     "trianglesAfter": 900,
     "texture": 512,
     "clips": [],
-    "bytes": 118264
+    "bytes": 132504
   },
   "cubone": {
     "name": "cubone",
@@ -854,13 +834,13 @@
   },
   "tauros": {
     "name": "tauros",
-    "source": "enemies/tauros/generation/tripo-out/tripo-out/tauros-mv-cdf5caa2/model.glb",
+    "source": "enemies/tauros/generation-v2/tripo-out/tripo-out/tauros-mv-2-3719c3cb/model.glb",
     "output": "public/models/enemies/tauros.glb",
-    "trianglesBefore": 2532,
-    "trianglesAfter": 2568,
+    "trianglesBefore": 2777,
+    "trianglesAfter": 2721,
     "texture": 512,
     "clips": [],
-    "bytes": 193392
+    "bytes": 185648
   },
   "sandslash": {
     "name": "sandslash",
@@ -920,7 +900,7 @@
     "trianglesAfter": 900,
     "texture": 512,
     "clips": [],
-    "bytes": 101324
+    "bytes": 109552
   },
   "poliwrath": {
     "name": "poliwrath",
@@ -1004,13 +984,13 @@
   },
   "onix": {
     "name": "onix",
-    "source": "enemies/onix/generation/tripo-out/tripo-out/onix-mv-2ae4d7f2/model.glb",
+    "source": "enemies/onix/generation-v2/tripo-out/tripo-out/onix-mv-2-b7c478d0/model.glb",
     "output": "public/models/enemies/onix.glb",
-    "trianglesBefore": 1975,
-    "trianglesAfter": 899,
+    "trianglesBefore": 2336,
+    "trianglesAfter": 900,
     "texture": 512,
     "clips": [],
-    "bytes": 84716
+    "bytes": 112608
   },
   "marowak": {
     "name": "marowak",
@@ -1030,7 +1010,7 @@
     "trianglesAfter": 1299,
     "texture": 512,
     "clips": [],
-    "bytes": 139432
+    "bytes": 151728
   },
   "kabutops": {
     "name": "kabutops",
@@ -1070,7 +1050,7 @@
     "trianglesAfter": 2721,
     "texture": 1024,
     "clips": [],
-    "bytes": 202312
+    "bytes": 206060
   },
   "dugtrio": {
     "name": "dugtrio",
@@ -1084,13 +1064,13 @@
   },
   "ninetales": {
     "name": "ninetales",
-    "source": "enemies/ninetales/generation/tripo-out/tripo-out/ninetales-mv-fce9699c/model.glb",
+    "source": "enemies/ninetales/generation-v2/tripo-out/tripo-out/ninetales-mv-2-074832b5/model.glb",
     "output": "public/models/enemies/ninetales.glb",
-    "trianglesBefore": 2090,
+    "trianglesBefore": 2234,
     "trianglesAfter": 1300,
     "texture": 512,
     "clips": [],
-    "bytes": 131464
+    "bytes": 102204
   },
   "hitmonchan": {
     "name": "hitmonchan",
@@ -1346,331 +1326,331 @@
     "name": "forest-rock-1",
     "source": "props/forest-rock-1/blender/model.glb",
     "output": "public/models/props/forest-rock-1.glb",
-    "trianglesBefore": 240,
-    "trianglesAfter": 240,
-    "texture": 256,
+    "trianglesBefore": 826,
+    "trianglesAfter": 826,
+    "texture": 512,
     "clips": [],
-    "bytes": 28492
+    "bytes": 72944
   },
   "forest-rock-2": {
     "name": "forest-rock-2",
     "source": "props/forest-rock-2/blender/model.glb",
     "output": "public/models/props/forest-rock-2.glb",
-    "trianglesBefore": 240,
-    "trianglesAfter": 240,
-    "texture": 256,
+    "trianglesBefore": 822,
+    "trianglesAfter": 822,
+    "texture": 512,
     "clips": [],
-    "bytes": 28496
+    "bytes": 73464
   },
   "forest-rock-3": {
     "name": "forest-rock-3",
     "source": "props/forest-rock-3/blender/model.glb",
     "output": "public/models/props/forest-rock-3.glb",
-    "trianglesBefore": 240,
-    "trianglesAfter": 240,
-    "texture": 256,
+    "trianglesBefore": 278,
+    "trianglesAfter": 278,
+    "texture": 512,
     "clips": [],
-    "bytes": 28496
+    "bytes": 44912
   },
   "forest-landmark": {
     "name": "forest-landmark",
     "source": "props/forest-landmark/blender/model.glb",
     "output": "public/models/props/forest-landmark.glb",
-    "trianglesBefore": 1176,
-    "trianglesAfter": 1176,
+    "trianglesBefore": 546,
+    "trianglesAfter": 546,
     "texture": 256,
     "clips": [],
-    "bytes": 132624
+    "bytes": 53996
   },
   "forest-station": {
     "name": "forest-station",
     "source": "props/forest-station/blender/model.glb",
     "output": "public/models/props/forest-station.glb",
-    "trianglesBefore": 72,
-    "trianglesAfter": 72,
+    "trianglesBefore": 526,
+    "trianglesAfter": 526,
     "texture": 256,
     "clips": [],
-    "bytes": 5860
+    "bytes": 47396
   },
   "desert-rock-1": {
     "name": "desert-rock-1",
     "source": "props/desert-rock-1/blender/model.glb",
     "output": "public/models/props/desert-rock-1.glb",
-    "trianglesBefore": 160,
-    "trianglesAfter": 160,
-    "texture": 256,
+    "trianglesBefore": 743,
+    "trianglesAfter": 743,
+    "texture": 512,
     "clips": [],
-    "bytes": 19376
+    "bytes": 56268
   },
   "desert-rock-2": {
     "name": "desert-rock-2",
     "source": "props/desert-rock-2/blender/model.glb",
     "output": "public/models/props/desert-rock-2.glb",
-    "trianglesBefore": 84,
-    "trianglesAfter": 84,
-    "texture": 256,
+    "trianglesBefore": 743,
+    "trianglesAfter": 743,
+    "texture": 512,
     "clips": [],
-    "bytes": 6816
+    "bytes": 56268
   },
   "desert-rock-3": {
     "name": "desert-rock-3",
     "source": "props/desert-rock-3/blender/model.glb",
     "output": "public/models/props/desert-rock-3.glb",
-    "trianglesBefore": 100,
-    "trianglesAfter": 100,
-    "texture": 256,
+    "trianglesBefore": 456,
+    "trianglesAfter": 456,
+    "texture": 512,
     "clips": [],
-    "bytes": 8208
+    "bytes": 45584
   },
   "desert-landmark": {
     "name": "desert-landmark",
     "source": "props/desert-landmark/blender/model.glb",
     "output": "public/models/props/desert-landmark.glb",
-    "trianglesBefore": 124,
-    "trianglesAfter": 124,
-    "texture": 256,
+    "trianglesBefore": 1526,
+    "trianglesAfter": 1526,
+    "texture": 512,
     "clips": [],
-    "bytes": 9660
+    "bytes": 103816
   },
   "desert-station": {
     "name": "desert-station",
     "source": "props/desert-station/blender/model.glb",
     "output": "public/models/props/desert-station.glb",
-    "trianglesBefore": 72,
-    "trianglesAfter": 72,
+    "trianglesBefore": 526,
+    "trianglesAfter": 526,
     "texture": 256,
     "clips": [],
-    "bytes": 5860
+    "bytes": 47468
   },
   "coast-rock-1": {
     "name": "coast-rock-1",
     "source": "props/coast-rock-1/blender/model.glb",
     "output": "public/models/props/coast-rock-1.glb",
-    "trianglesBefore": 160,
-    "trianglesAfter": 160,
-    "texture": 256,
+    "trianglesBefore": 418,
+    "trianglesAfter": 418,
+    "texture": 512,
     "clips": [],
-    "bytes": 19372
+    "bytes": 39664
   },
   "coast-rock-2": {
     "name": "coast-rock-2",
     "source": "props/coast-rock-2/blender/model.glb",
     "output": "public/models/props/coast-rock-2.glb",
-    "trianglesBefore": 160,
-    "trianglesAfter": 160,
-    "texture": 256,
+    "trianglesBefore": 458,
+    "trianglesAfter": 458,
+    "texture": 512,
     "clips": [],
-    "bytes": 19372
+    "bytes": 42656
   },
   "coast-rock-3": {
     "name": "coast-rock-3",
     "source": "props/coast-rock-3/blender/model.glb",
     "output": "public/models/props/coast-rock-3.glb",
-    "trianglesBefore": 160,
-    "trianglesAfter": 160,
-    "texture": 256,
+    "trianglesBefore": 588,
+    "trianglesAfter": 588,
+    "texture": 512,
     "clips": [],
-    "bytes": 19372
+    "bytes": 48400
   },
   "coast-landmark": {
     "name": "coast-landmark",
     "source": "props/coast-landmark/blender/model.glb",
     "output": "public/models/props/coast-landmark.glb",
-    "trianglesBefore": 160,
-    "trianglesAfter": 160,
-    "texture": 256,
+    "trianglesBefore": 1872,
+    "trianglesAfter": 1872,
+    "texture": 512,
     "clips": [],
-    "bytes": 12304
+    "bytes": 144964
   },
   "coast-station": {
     "name": "coast-station",
     "source": "props/coast-station/blender/model.glb",
     "output": "public/models/props/coast-station.glb",
-    "trianglesBefore": 72,
-    "trianglesAfter": 72,
+    "trianglesBefore": 526,
+    "trianglesAfter": 526,
     "texture": 256,
     "clips": [],
-    "bytes": 5856
+    "bytes": 47396
   },
   "glacier-rock-1": {
     "name": "glacier-rock-1",
     "source": "props/glacier-rock-1/blender/model.glb",
     "output": "public/models/props/glacier-rock-1.glb",
-    "trianglesBefore": 160,
-    "trianglesAfter": 160,
-    "texture": 256,
+    "trianglesBefore": 568,
+    "trianglesAfter": 568,
+    "texture": 512,
     "clips": [],
-    "bytes": 19380
+    "bytes": 65712
   },
   "glacier-rock-2": {
     "name": "glacier-rock-2",
     "source": "props/glacier-rock-2/blender/model.glb",
     "output": "public/models/props/glacier-rock-2.glb",
-    "trianglesBefore": 160,
-    "trianglesAfter": 160,
-    "texture": 256,
+    "trianglesBefore": 668,
+    "trianglesAfter": 668,
+    "texture": 512,
     "clips": [],
-    "bytes": 19380
+    "bytes": 69736
   },
   "glacier-rock-3": {
     "name": "glacier-rock-3",
     "source": "props/glacier-rock-3/blender/model.glb",
     "output": "public/models/props/glacier-rock-3.glb",
-    "trianglesBefore": 160,
-    "trianglesAfter": 160,
-    "texture": 256,
+    "trianglesBefore": 764,
+    "trianglesAfter": 764,
+    "texture": 512,
     "clips": [],
-    "bytes": 19380
+    "bytes": 78480
   },
   "glacier-landmark": {
     "name": "glacier-landmark",
     "source": "props/glacier-landmark/blender/model.glb",
     "output": "public/models/props/glacier-landmark.glb",
-    "trianglesBefore": 92,
-    "trianglesAfter": 92,
-    "texture": 256,
+    "trianglesBefore": 1558,
+    "trianglesAfter": 1558,
+    "texture": 512,
     "clips": [],
-    "bytes": 7812
+    "bytes": 116468
   },
   "glacier-station": {
     "name": "glacier-station",
     "source": "props/glacier-station/blender/model.glb",
     "output": "public/models/props/glacier-station.glb",
-    "trianglesBefore": 72,
-    "trianglesAfter": 72,
+    "trianglesBefore": 526,
+    "trianglesAfter": 526,
     "texture": 256,
     "clips": [],
-    "bytes": 5864
+    "bytes": 47364
   },
   "volcano-rock-1": {
     "name": "volcano-rock-1",
     "source": "props/volcano-rock-1/blender/model.glb",
     "output": "public/models/props/volcano-rock-1.glb",
-    "trianglesBefore": 60,
-    "trianglesAfter": 60,
-    "texture": 256,
+    "trianglesBefore": 365,
+    "trianglesAfter": 365,
+    "texture": 512,
     "clips": [],
-    "bytes": 5384
+    "bytes": 35100
   },
   "volcano-rock-2": {
     "name": "volcano-rock-2",
     "source": "props/volcano-rock-2/blender/model.glb",
     "output": "public/models/props/volcano-rock-2.glb",
-    "trianglesBefore": 60,
-    "trianglesAfter": 60,
-    "texture": 256,
+    "trianglesBefore": 717,
+    "trianglesAfter": 717,
+    "texture": 512,
     "clips": [],
-    "bytes": 5384
+    "bytes": 52804
   },
   "volcano-rock-3": {
     "name": "volcano-rock-3",
     "source": "props/volcano-rock-3/blender/model.glb",
     "output": "public/models/props/volcano-rock-3.glb",
-    "trianglesBefore": 60,
-    "trianglesAfter": 60,
-    "texture": 256,
+    "trianglesBefore": 480,
+    "trianglesAfter": 480,
+    "texture": 512,
     "clips": [],
-    "bytes": 5384
+    "bytes": 39600
   },
   "volcano-landmark": {
     "name": "volcano-landmark",
     "source": "props/volcano-landmark/blender/model.glb",
     "output": "public/models/props/volcano-landmark.glb",
-    "trianglesBefore": 220,
-    "trianglesAfter": 220,
+    "trianglesBefore": 446,
+    "trianglesAfter": 446,
     "texture": 256,
     "clips": [],
-    "bytes": 16288
+    "bytes": 40944
   },
   "volcano-station": {
     "name": "volcano-station",
     "source": "props/volcano-station/blender/model.glb",
     "output": "public/models/props/volcano-station.glb",
-    "trianglesBefore": 72,
-    "trianglesAfter": 72,
+    "trianglesBefore": 526,
+    "trianglesAfter": 526,
     "texture": 256,
     "clips": [],
-    "bytes": 5864
+    "bytes": 47292
   },
   "tower-rock-1": {
     "name": "tower-rock-1",
     "source": "props/tower-rock-1/blender/model.glb",
     "output": "public/models/props/tower-rock-1.glb",
-    "trianglesBefore": 160,
-    "trianglesAfter": 160,
-    "texture": 256,
+    "trianglesBefore": 546,
+    "trianglesAfter": 546,
+    "texture": 512,
     "clips": [],
-    "bytes": 19372
+    "bytes": 58024
   },
   "tower-rock-2": {
     "name": "tower-rock-2",
     "source": "props/tower-rock-2/blender/model.glb",
     "output": "public/models/props/tower-rock-2.glb",
-    "trianglesBefore": 160,
-    "trianglesAfter": 160,
-    "texture": 256,
+    "trianglesBefore": 660,
+    "trianglesAfter": 660,
+    "texture": 512,
     "clips": [],
-    "bytes": 19372
+    "bytes": 62840
   },
   "tower-rock-3": {
     "name": "tower-rock-3",
     "source": "props/tower-rock-3/blender/model.glb",
     "output": "public/models/props/tower-rock-3.glb",
-    "trianglesBefore": 160,
-    "trianglesAfter": 160,
-    "texture": 256,
+    "trianglesBefore": 426,
+    "trianglesAfter": 426,
+    "texture": 512,
     "clips": [],
-    "bytes": 19372
+    "bytes": 54200
   },
   "tower-landmark": {
     "name": "tower-landmark",
     "source": "props/tower-landmark/blender/model.glb",
     "output": "public/models/props/tower-landmark.glb",
-    "trianglesBefore": 140,
-    "trianglesAfter": 140,
-    "texture": 256,
+    "trianglesBefore": 1922,
+    "trianglesAfter": 1922,
+    "texture": 512,
     "clips": [],
-    "bytes": 12776
+    "bytes": 129092
   },
   "tower-station": {
     "name": "tower-station",
     "source": "props/tower-station/blender/model.glb",
     "output": "public/models/props/tower-station.glb",
-    "trianglesBefore": 72,
-    "trianglesAfter": 72,
+    "trianglesBefore": 526,
+    "trianglesAfter": 526,
     "texture": 256,
     "clips": [],
-    "bytes": 5856
+    "bytes": 47468
   },
   "forest-mushroom-1": {
     "name": "forest-mushroom-1",
     "source": "props/forest-mushroom-1/blender/model.glb",
     "output": "public/models/props/forest-mushroom-1.glb",
-    "trianglesBefore": 48,
-    "trianglesAfter": 48,
-    "texture": 256,
+    "trianglesBefore": 761,
+    "trianglesAfter": 761,
+    "texture": 512,
     "clips": [],
-    "bytes": 4460
+    "bytes": 75388
   },
   "forest-mushroom-2": {
     "name": "forest-mushroom-2",
     "source": "props/forest-mushroom-2/blender/model.glb",
     "output": "public/models/props/forest-mushroom-2.glb",
-    "trianglesBefore": 48,
-    "trianglesAfter": 48,
-    "texture": 256,
+    "trianglesBefore": 817,
+    "trianglesAfter": 817,
+    "texture": 512,
     "clips": [],
-    "bytes": 4460
+    "bytes": 72076
   },
   "forest-mushroom-3": {
     "name": "forest-mushroom-3",
     "source": "props/forest-mushroom-3/blender/model.glb",
     "output": "public/models/props/forest-mushroom-3.glb",
-    "trianglesBefore": 48,
-    "trianglesAfter": 48,
-    "texture": 256,
+    "trianglesBefore": 232,
+    "trianglesAfter": 232,
+    "texture": 512,
     "clips": [],
-    "bytes": 4460
+    "bytes": 45516
   },
   "forest-leaves": {
     "name": "forest-leaves",
@@ -1686,21 +1666,21 @@
     "name": "forest-log",
     "source": "props/forest-log/blender/model.glb",
     "output": "public/models/props/forest-log.glb",
-    "trianglesBefore": 68,
-    "trianglesAfter": 68,
+    "trianglesBefore": 136,
+    "trianglesAfter": 136,
     "texture": 256,
     "clips": [],
-    "bytes": 6036
+    "bytes": 15048
   },
   "forest-bush": {
     "name": "forest-bush",
     "source": "props/forest-bush/blender/model.glb",
     "output": "public/models/props/forest-bush.glb",
-    "trianglesBefore": 560,
-    "trianglesAfter": 560,
-    "texture": 256,
+    "trianglesBefore": 837,
+    "trianglesAfter": 837,
+    "texture": 512,
     "clips": [],
-    "bytes": 64980
+    "bytes": 81292
   },
   "desert-dry-bush": {
     "name": "desert-dry-bush",
@@ -1716,121 +1696,121 @@
     "name": "desert-tumbleweed",
     "source": "props/desert-tumbleweed/blender/model.glb",
     "output": "public/models/props/desert-tumbleweed.glb",
-    "trianglesBefore": 420,
-    "trianglesAfter": 420,
+    "trianglesBefore": 1880,
+    "trianglesAfter": 1880,
     "texture": 256,
     "clips": [],
-    "bytes": 32004
+    "bytes": 137400
   },
   "coast-driftwood": {
     "name": "coast-driftwood",
     "source": "props/coast-driftwood/blender/model.glb",
     "output": "public/models/props/coast-driftwood.glb",
-    "trianglesBefore": 68,
-    "trianglesAfter": 68,
-    "texture": 256,
+    "trianglesBefore": 1662,
+    "trianglesAfter": 1662,
+    "texture": 512,
     "clips": [],
-    "bytes": 6048
+    "bytes": 115092
   },
   "desert-cactus": {
     "name": "desert-cactus",
     "source": "props/desert-cactus/blender/model.glb",
     "output": "public/models/props/desert-cactus.glb",
-    "trianglesBefore": 56,
-    "trianglesAfter": 56,
+    "trianglesBefore": 250,
+    "trianglesAfter": 250,
     "texture": 256,
     "clips": [],
-    "bytes": 5792
+    "bytes": 21504
   },
   "desert-pebbles": {
     "name": "desert-pebbles",
     "source": "props/desert-pebbles/blender/model.glb",
     "output": "public/models/props/desert-pebbles.glb",
-    "trianglesBefore": 400,
-    "trianglesAfter": 400,
+    "trianglesBefore": 130,
+    "trianglesAfter": 130,
     "texture": 256,
     "clips": [],
-    "bytes": 46752
+    "bytes": 14524
   },
   "tower-rubble": {
     "name": "tower-rubble",
     "source": "props/tower-rubble/blender/model.glb",
     "output": "public/models/props/tower-rubble.glb",
-    "trianglesBefore": 400,
-    "trianglesAfter": 400,
+    "trianglesBefore": 130,
+    "trianglesAfter": 130,
     "texture": 256,
     "clips": [],
-    "bytes": 46744
+    "bytes": 14516
   },
   "glacier-snowdrift": {
     "name": "glacier-snowdrift",
     "source": "props/glacier-snowdrift/blender/model.glb",
     "output": "public/models/props/glacier-snowdrift.glb",
-    "trianglesBefore": 400,
-    "trianglesAfter": 400,
+    "trianglesBefore": 156,
+    "trianglesAfter": 156,
     "texture": 256,
     "clips": [],
-    "bytes": 46764
+    "bytes": 13896
   },
   "desert-ribs": {
     "name": "desert-ribs",
     "source": "props/desert-ribs/blender/model.glb",
     "output": "public/models/props/desert-ribs.glb",
-    "trianglesBefore": 340,
-    "trianglesAfter": 340,
-    "texture": 256,
+    "trianglesBefore": 2683,
+    "trianglesAfter": 2683,
+    "texture": 512,
     "clips": [],
-    "bytes": 27692
+    "bytes": 200692
   },
   "desert-skull": {
     "name": "desert-skull",
     "source": "props/desert-skull/blender/model.glb",
     "output": "public/models/props/desert-skull.glb",
-    "trianglesBefore": 120,
-    "trianglesAfter": 120,
-    "texture": 256,
+    "trianglesBefore": 2587,
+    "trianglesAfter": 2587,
+    "texture": 512,
     "clips": [],
-    "bytes": 14816
+    "bytes": 179952
   },
   "coast-shrub-1": {
     "name": "coast-shrub-1",
     "source": "props/coast-shrub-1/blender/model.glb",
     "output": "public/models/props/coast-shrub-1.glb",
-    "trianglesBefore": 800,
-    "trianglesAfter": 800,
-    "texture": 256,
+    "trianglesBefore": 1282,
+    "trianglesAfter": 1282,
+    "texture": 512,
     "clips": [],
-    "bytes": 92344
+    "bytes": 108860
   },
   "coast-shrub-2": {
     "name": "coast-shrub-2",
     "source": "props/coast-shrub-2/blender/model.glb",
     "output": "public/models/props/coast-shrub-2.glb",
-    "trianglesBefore": 800,
-    "trianglesAfter": 800,
-    "texture": 256,
+    "trianglesBefore": 1282,
+    "trianglesAfter": 1282,
+    "texture": 512,
     "clips": [],
-    "bytes": 92344
+    "bytes": 108920
   },
   "coast-shell": {
     "name": "coast-shell",
     "source": "props/coast-shell/blender/model.glb",
     "output": "public/models/props/coast-shell.glb",
-    "trianglesBefore": 120,
-    "trianglesAfter": 120,
-    "texture": 256,
+    "trianglesBefore": 502,
+    "trianglesAfter": 502,
+    "texture": 512,
     "clips": [],
-    "bytes": 10492
+    "bytes": 66292
   },
   "coast-seagrass": {
     "name": "coast-seagrass",
     "source": "props/coast-seagrass/blender/model.glb",
     "output": "public/models/props/coast-seagrass.glb",
-    "trianglesBefore": 560,
-    "trianglesAfter": 560,
+    "trianglesBefore": 90,
+    "trianglesAfter": 90,
     "texture": 256,
     "clips": [],
-    "bytes": 64988
+    "bytes": 9452
   },
   "glacier-frost-shrub": {
     "name": "glacier-frost-shrub",
@@ -1846,141 +1826,121 @@
     "name": "glacier-icicles-1",
     "source": "props/glacier-icicles-1/blender/model.glb",
     "output": "public/models/props/glacier-icicles-1.glb",
-    "trianglesBefore": 120,
-    "trianglesAfter": 120,
+    "trianglesBefore": 142,
+    "trianglesAfter": 142,
     "texture": 256,
     "clips": [],
-    "bytes": 10868
+    "bytes": 14892
   },
   "glacier-icicles-2": {
     "name": "glacier-icicles-2",
     "source": "props/glacier-icicles-2/blender/model.glb",
     "output": "public/models/props/glacier-icicles-2.glb",
-    "trianglesBefore": 144,
-    "trianglesAfter": 144,
+    "trianglesBefore": 160,
+    "trianglesAfter": 160,
     "texture": 256,
     "clips": [],
-    "bytes": 12812
+    "bytes": 16796
   },
   "glacier-crystals": {
     "name": "glacier-crystals",
     "source": "props/glacier-crystals/blender/model.glb",
     "output": "public/models/props/glacier-crystals.glb",
-    "trianglesBefore": 96,
-    "trianglesAfter": 96,
+    "trianglesBefore": 98,
+    "trianglesAfter": 98,
     "texture": 256,
     "clips": [],
-    "bytes": 8920
+    "bytes": 11436
   },
   "volcano-dead-tree-1": {
     "name": "volcano-dead-tree-1",
     "source": "props/volcano-dead-tree-1/blender/model.glb",
     "output": "public/models/props/volcano-dead-tree-1.glb",
-    "trianglesBefore": 100,
-    "trianglesAfter": 100,
+    "trianglesBefore": 220,
+    "trianglesAfter": 220,
     "texture": 256,
     "clips": [],
-    "bytes": 8340
+    "bytes": 17812
   },
   "volcano-dead-tree-2": {
     "name": "volcano-dead-tree-2",
     "source": "props/volcano-dead-tree-2/blender/model.glb",
     "output": "public/models/props/volcano-dead-tree-2.glb",
-    "trianglesBefore": 100,
-    "trianglesAfter": 100,
+    "trianglesBefore": 300,
+    "trianglesAfter": 300,
     "texture": 256,
     "clips": [],
-    "bytes": 8340
+    "bytes": 23868
   },
   "volcano-obsidian": {
     "name": "volcano-obsidian",
     "source": "props/volcano-obsidian/blender/model.glb",
     "output": "public/models/props/volcano-obsidian.glb",
-    "trianglesBefore": 96,
-    "trianglesAfter": 96,
+    "trianglesBefore": 118,
+    "trianglesAfter": 118,
     "texture": 256,
     "clips": [],
-    "bytes": 8920
-  },
-  "volcano-sulphur": {
-    "name": "volcano-sulphur",
-    "source": "props/volcano-sulphur/blender/model.glb",
-    "output": "public/models/props/volcano-sulphur.glb",
-    "trianglesBefore": 96,
-    "trianglesAfter": 96,
-    "texture": 256,
-    "clips": [],
-    "bytes": 8916
+    "bytes": 13284
   },
   "volcano-vent": {
     "name": "volcano-vent",
     "source": "props/volcano-vent/blender/model.glb",
     "output": "public/models/props/volcano-vent.glb",
-    "trianglesBefore": 56,
-    "trianglesAfter": 56,
+    "trianglesBefore": 192,
+    "trianglesAfter": 192,
     "texture": 256,
     "clips": [],
-    "bytes": 4924
+    "bytes": 18848
   },
   "tower-candles": {
     "name": "tower-candles",
     "source": "props/tower-candles/blender/model.glb",
     "output": "public/models/props/tower-candles.glb",
-    "trianglesBefore": 232,
-    "trianglesAfter": 232,
+    "trianglesBefore": 528,
+    "trianglesAfter": 528,
     "texture": 256,
     "clips": [],
-    "bytes": 19808
-  },
-  "tower-candles-out": {
-    "name": "tower-candles-out",
-    "source": "props/tower-candles-out/blender/model.glb",
-    "output": "public/models/props/tower-candles-out.glb",
-    "trianglesBefore": 172,
-    "trianglesAfter": 172,
-    "texture": 256,
-    "clips": [],
-    "bytes": 12980
+    "bytes": 44420
   },
   "tower-column": {
     "name": "tower-column",
     "source": "props/tower-column/blender/model.glb",
     "output": "public/models/props/tower-column.glb",
-    "trianglesBefore": 180,
-    "trianglesAfter": 180,
+    "trianglesBefore": 378,
+    "trianglesAfter": 378,
     "texture": 256,
     "clips": [],
-    "bytes": 13012
+    "bytes": 30944
   },
   "tower-tomb-1": {
     "name": "tower-tomb-1",
     "source": "props/tower-tomb-1/blender/model.glb",
     "output": "public/models/props/tower-tomb-1.glb",
-    "trianglesBefore": 56,
-    "trianglesAfter": 56,
-    "texture": 256,
+    "trianglesBefore": 878,
+    "trianglesAfter": 878,
+    "texture": 512,
     "clips": [],
-    "bytes": 6220
+    "bytes": 75908
   },
   "tower-tomb-2": {
     "name": "tower-tomb-2",
     "source": "props/tower-tomb-2/blender/model.glb",
     "output": "public/models/props/tower-tomb-2.glb",
-    "trianglesBefore": 48,
-    "trianglesAfter": 48,
-    "texture": 256,
+    "trianglesBefore": 325,
+    "trianglesAfter": 325,
+    "texture": 512,
     "clips": [],
-    "bytes": 4872
+    "bytes": 45164
   },
   "tower-tomb-3": {
     "name": "tower-tomb-3",
     "source": "props/tower-tomb-3/blender/model.glb",
     "output": "public/models/props/tower-tomb-3.glb",
-    "trianglesBefore": 48,
-    "trianglesAfter": 48,
-    "texture": 256,
+    "trianglesBefore": 512,
+    "trianglesAfter": 512,
+    "texture": 512,
     "clips": [],
-    "bytes": 4872
+    "bytes": 54892
   },
   "tower-petals": {
     "name": "tower-petals",
@@ -1996,11 +1956,11 @@
     "name": "tower-incense",
     "source": "props/tower-incense/blender/model.glb",
     "output": "public/models/props/tower-incense.glb",
-    "trianglesBefore": 96,
-    "trianglesAfter": 96,
+    "trianglesBefore": 198,
+    "trianglesAfter": 198,
     "texture": 256,
     "clips": [],
-    "bytes": 7808
+    "bytes": 16332
   },
   "player-gastly": {
     "name": "player-gastly",
@@ -2182,7 +2142,7 @@
       "idle",
       "run"
     ],
-    "bytes": 302644
+    "bytes": 302508
   },
   "player-golem": {
     "name": "player-golem",
@@ -2195,7 +2155,7 @@
       "idle",
       "run"
     ],
-    "bytes": 373044
+    "bytes": 402688
   },
   "heracross": {
     "name": "heracross",
@@ -2251,11 +2211,11 @@
     "name": "item-ball",
     "source": "field-sites/item-ball/blender/model.glb",
     "output": "public/models/field-sites/item-ball.glb",
-    "trianglesBefore": 736,
-    "trianglesAfter": 736,
+    "trianglesBefore": 2064,
+    "trianglesAfter": 2064,
     "texture": 256,
     "clips": [],
-    "bytes": 71212
+    "bytes": 215696
   },
   "fishing": {
     "name": "fishing",
@@ -2291,21 +2251,21 @@
     "name": "spring",
     "source": "field-sites/spring/blender/model.glb",
     "output": "public/models/field-sites/spring.glb",
-    "trianglesBefore": 588,
-    "trianglesAfter": 588,
-    "texture": 256,
+    "trianglesBefore": 3456,
+    "trianglesAfter": 3456,
+    "texture": 512,
     "clips": [],
-    "bytes": 52172
+    "bytes": 272972
   },
   "egg": {
     "name": "egg",
     "source": "field-sites/egg/blender/model.glb",
     "output": "public/models/field-sites/egg.glb",
-    "trianglesBefore": 320,
-    "trianglesAfter": 320,
-    "texture": 256,
+    "trianglesBefore": 505,
+    "trianglesAfter": 505,
+    "texture": 512,
     "clips": [],
-    "bytes": 37592
+    "bytes": 71288
   },
   "charizard-x": {
     "name": "charizard-x",
@@ -2332,5 +2292,75 @@
       "run"
     ],
     "bytes": 846048
+  },
+  "coast-conch": {
+    "name": "coast-conch",
+    "source": "props/coast-conch/blender/model.glb",
+    "output": "public/models/props/coast-conch.glb",
+    "trianglesBefore": 706,
+    "trianglesAfter": 706,
+    "texture": 512,
+    "clips": [],
+    "bytes": 74912
+  },
+  "egg-nest": {
+    "name": "egg-nest",
+    "source": "field-sites/egg-nest/blender/model.glb",
+    "output": "public/models/field-sites/egg-nest.glb",
+    "trianglesBefore": 1586,
+    "trianglesAfter": 1586,
+    "texture": 512,
+    "clips": [],
+    "bytes": 137708
+  },
+  "palm-honey-tree": {
+    "name": "palm-honey-tree",
+    "source": "field-sites/palm-honey-tree/blender/model.glb",
+    "output": "public/models/field-sites/palm-honey-tree.glb",
+    "trianglesBefore": 2135,
+    "trianglesAfter": 2135,
+    "texture": 512,
+    "clips": [],
+    "bytes": 150196
+  },
+  "spring-sand": {
+    "name": "spring-sand",
+    "source": "field-sites/spring-sand/blender/model.glb",
+    "output": "public/models/field-sites/spring-sand.glb",
+    "trianglesBefore": 3456,
+    "trianglesAfter": 3456,
+    "texture": 512,
+    "clips": [],
+    "bytes": 273292
+  },
+  "spring-frost": {
+    "name": "spring-frost",
+    "source": "field-sites/spring-frost/blender/model.glb",
+    "output": "public/models/field-sites/spring-frost.glb",
+    "trianglesBefore": 3456,
+    "trianglesAfter": 3456,
+    "texture": 512,
+    "clips": [],
+    "bytes": 271724
+  },
+  "spring-basalt": {
+    "name": "spring-basalt",
+    "source": "field-sites/spring-basalt/blender/model.glb",
+    "output": "public/models/field-sites/spring-basalt.glb",
+    "trianglesBefore": 3456,
+    "trianglesAfter": 3456,
+    "texture": 512,
+    "clips": [],
+    "bytes": 267352
+  },
+  "spring-tower": {
+    "name": "spring-tower",
+    "source": "field-sites/spring-tower/blender/model.glb",
+    "output": "public/models/field-sites/spring-tower.glb",
+    "trianglesBefore": 3456,
+    "trianglesAfter": 3456,
+    "texture": 512,
+    "clips": [],
+    "bytes": 270200
   }
 }

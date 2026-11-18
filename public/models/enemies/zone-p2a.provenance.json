@@ -70,7 +70,8 @@
       "textureSize": 512,
       "facingYawPi": -0.5,
       "faceLimit": 1000,
-      "note": "Flames are solid low-poly shapes; they read as mane and tail without a VFX aura. A view-side flicker would add life but is not needed for identity."
+      "note": "Flames are solid low-poly shapes; they read as mane and tail without a VFX aura. A view-side flicker would add life but is not needed for identity.",
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     },
     {
       "id": "cubone",

@@ -29,7 +29,11 @@ export function firstScreenText() {
   );
   for (const item of Object.values(items)) parts.push(item.name);
   for (const { title, reward } of bondMilestones) parts.push(title, reward ?? "");
-  for (const id of trainerOrder) parts.push(trainers[id].name, kitTip(id));
+  for (const id of trainerOrder)
+    parts.push(
+      trainers[id].name,
+      ...kitTip(id).flatMap((entry) => [entry.name, entry.text, `${entry.cooldown ?? 0} 秒`]),
+    );
   return parts.join("");
 }
 

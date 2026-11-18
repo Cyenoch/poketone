@@ -204,7 +204,9 @@ test("the vitals name row keeps the full name clear of the type chips", async ()
           if (node instanceof Text && node.properties.value.text) labels++;
           if (node instanceof Image) crests++;
         });
-        assert.equal(labels + crests, def.types.length, `${where}: one label or crest per type`);
+        // Every chip shows its type's crest; a tight row drops the names.
+        assert.equal(crests, def.types.length, `${where}: one crest per type`);
+        assert.ok(labels === 0 || labels === def.types.length, `${where}: names all or none`);
         // The mega forms' Ｘ / Ｙ ending tells them apart: it shows on the smallest real phone.
         if (width === 667 && def.name.startsWith("超级"))
           assert.equal(text, def.name, `${where}: the mega name shows in full`);

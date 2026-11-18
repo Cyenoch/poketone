@@ -1,0 +1,10 @@
+{
+  "asset": "ground-volcano-cliff-detail.png",
+  "generator": "Magpie Image, model ash/gpt-image-2.5-sunburst",
+  "createdAt": "2026-11-18",
+  "source": "assets/textures/source/ground-volcano-cliff.png (1536×1024 px, centre-cropped to 1024)",
+  "prompts": "docs/ART-PROMPTS.md (ground texture template; see 生成记录)",
+  "processing": "bun scripts/paint-ground-maps.mjs: derived from the albedo luminance at 256 px: RG tangent normal XY, B relief, A grain; linear data (NoColorSpace)",
+  "use": "side-on basalt strata on sheer volcano banks",
+  "rights": "Generated for a noncommercial fan project."
+}

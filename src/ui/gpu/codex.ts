@@ -28,7 +28,6 @@ import {
   CodexChip,
   CodexRow,
   createArt,
-  typeChip,
   typeInk,
   type CodexPaint,
 } from "./codex-parts";
@@ -49,7 +48,10 @@ import { HARD_SHADOW, RADIUS, RADIUS_INNER, slantOf, ui } from "./tokens";
 import { GpuTooltip } from "./tooltip";
 import { researchTasks } from "./research-parts";
 import { balanceLines, breakLines, type GlyphWidths } from "./line-break";
+import { RichText } from "./rich-text";
+import { themeColors } from "./run-theme";
 import type { UiInsets } from "./viewport";
+import { typeTag } from "./type-icon";
 
 export interface CodexOptions {
   /** Partners not yet unlocked show as silhouettes with their lock, without their kit. */
@@ -105,12 +107,15 @@ interface Part {
  * not depend on this text; the text is broken again whenever that width changes.
  */
 interface Wrap {
-  node: Text;
+  /** Rich text (figures in colour) breaks itself; a plain Text gets its broken string. */
+  node: Text | RichText;
   text: string;
   size: number;
+  /** Infinity: only the text's own line breaks. */
   width(): number | undefined;
   balance: boolean;
   laid: number;
+  lineHeight?: number;
 }
 
 /** Greedy lines, evened out when asked or when the last line would be an orphan. */
@@ -689,12 +694,34 @@ export class GpuCodex {
     return node;
   }
 
+  /** Description text with its figures in the entry's colour, broken at `width` (see `Wrap`). */
+  private rich(
+    text: string,
+    figure: string,
+    size: number,
+    width: () => number | undefined,
+    weight: 700 | 800 = 700,
+    lineHeight = 1.45,
+  ): Container {
+    const node = new RichText(text, { ink: ui.ink, figure, weight });
+    this.building.push({ node, text, size, width, balance: false, laid: 0, lineHeight });
+    return node.panel;
+  }
+
   /** Breaks every wrapped text whose width changed; true when one did. */
   private layWraps(wraps: readonly Wrap[]): boolean {
     let changed = false;
     for (const wrap of wraps) {
-      const font = wrap.node.fontSignal.value;
       const width = wrap.width();
+      if (wrap.node instanceof RichText) {
+        if (!wrap.node.ready || !width || width <= 0) continue;
+        if (width === wrap.laid || Math.abs(width - wrap.laid) < 0.5) continue;
+        wrap.laid = width;
+        wrap.node.layout(width, wrap.size, wrap.lineHeight, "orphan");
+        changed = true;
+        continue;
+      }
+      const font = wrap.node.fontSignal.value;
       if (!font || !width || width <= 0 || Math.abs(width - wrap.laid) < 0.5) continue;
       wrap.laid = width;
       wrap.node.setProperties({ text: wrapText(wrap.text, width, wrap.size, font, wrap.balance) });
@@ -864,7 +891,7 @@ export class GpuCodex {
     }
     const tags = new Container({ flexDirection: "row", flexWrap: "wrap", gap: 8 });
     for (const type of entry.types) {
-      const chip = typeChip(type, compact);
+      const chip = typeTag(type, compact ? 13 : 14);
       owned.push(chip);
       tags.add(chip.tag);
     }
@@ -887,19 +914,23 @@ export class GpuCodex {
   }
 
   private block(block: CodexBlock, entry: CodexEntry, owned: { dispose(): void }[]): Container {
+    const figure = themeColors(entry.types[0] ?? "normal").deep;
     const root = new Container({ flexDirection: "column", gap: 10, flexShrink: 0 });
     // The heading keeps its width; the rule takes what is left (none on a narrow page).
     const title = new Container({ flexDirection: "row", alignItems: "center", gap: 10 });
     title.add(
-      new Text({
-        text: block.title,
-        fontSize: 15,
-        fontWeight: 900,
-        letterSpacing: 1,
-        color: ui.ink,
-        flexShrink: 0,
-        wordBreak: "keep-all",
-      }),
+      // A heading that names a type leads it with its crest (「火属性招式」).
+      block.title.includes("属性")
+        ? this.rich(block.title, figure, 15, () => Infinity, 800, 1.3)
+        : new Text({
+            text: block.title,
+            fontSize: 15,
+            fontWeight: 900,
+            letterSpacing: 1,
+            color: ui.ink,
+            flexShrink: 0,
+            wordBreak: "keep-all",
+          }),
       new Container({
         height: 2,
         flexGrow: 1,
@@ -935,39 +966,30 @@ export class GpuCodex {
         });
         cell.add(
           label,
-          wide
-            ? this.wrapped(
-                row.value,
-                { fontSize: 16, fontWeight: 800, color: ui.ink, flexShrink: 1 },
-                () => {
+          this.rich(
+            row.value,
+            figure,
+            16,
+            wide
+              ? () => {
                   const width = cell.size.value?.[0],
                     labelWidth = label.size.value?.[0];
                   return width && labelWidth ? width - 2 * 12 - labelWidth - 12 : undefined;
-                },
-              )
-            : new Text({
-                text: row.value,
-                fontSize: 16,
-                fontWeight: 800,
-                color: ui.ink,
-                wordBreak: "keep-all",
-              }),
+                }
+              : () => Infinity,
+            800,
+            1.3,
+          ),
         );
         body.add(cell);
       }
     else if (block.kind === "lines") {
       body.setProperties({ flexDirection: "column", gap: 6 });
       for (const line of block.lines)
-        body.add(
-          this.wrapped(
-            line,
-            { fontSize: 15, fontWeight: 700, lineHeight: 1.45, color: ui.ink },
-            () => body.size.value?.[0],
-          ),
-        );
+        body.add(this.rich(line, figure, 15, () => body.size.value?.[0]));
     } else if (block.kind === "rolls") {
       body.setProperties({ alignItems: "flex-start" });
-      body.add(...this.rolls(block));
+      body.add(...this.rolls(block, figure));
     } else if (block.kind === "research") body.add(...researchTasks(block, owned));
     else for (const ref of block.refs) body.add(this.refChip(ref, entry, owned));
     root.add(body);
@@ -978,7 +1000,7 @@ export class GpuCodex {
    * A move's level-ups: the gain every level gives, then what a level-up card adds, one row per
    * stat under the card's lowest and highest rarity (chips in the cards' rarity colours).
    */
-  private rolls(block: Extract<CodexBlock, { kind: "rolls" }>): Container[] {
+  private rolls(block: Extract<CodexBlock, { kind: "rolls" }>, figure: string): Container[] {
     const cell = (text: string, width: number, strong: boolean) =>
       new Text({
         text,
@@ -986,7 +1008,7 @@ export class GpuCodex {
         flexShrink: 0,
         fontSize: strong ? 16 : 13,
         fontWeight: 800,
-        color: strong ? ui.ink : ui.muted,
+        color: strong ? figure : ui.muted,
         wordBreak: "keep-all",
       });
     const LABEL = 76,
@@ -1010,13 +1032,7 @@ export class GpuCodex {
         color: ui.muted,
         wordBreak: "keep-all",
       }),
-      new Text({
-        text: block.perLevel.value,
-        fontSize: 16,
-        fontWeight: 800,
-        color: ui.ink,
-        wordBreak: "keep-all",
-      }),
+      this.rich(block.perLevel.value, figure, 16, () => Infinity, 800, 1.3),
     );
     const table = new Container({
       flexDirection: "column",

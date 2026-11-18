@@ -7,7 +7,7 @@
 ## 设计
 
 - 意图 / 签名：琥珀扇形掌刀、新月形刃光、重末击裂纹。
-- 模拟几何与时序：length 2.8，half-angle .8，count 2；delay .08+i×.14，active .16 s。数值以 `src/run/sim/content/moves.ts` 与对应 archetype 为准，画面读取实例。
+- 模拟几何与时序：length 4.2，half-angle .8，count 2；delay .08+i×.14，active .16 s。数值以 `src/run/sim/content/moves.ts` 与对应 archetype 为准，画面读取实例。
 - 阶段：每拳 80 ms 拳形前摇 → 落拳首帧起 320 ms 回声（扇形 + 两道扫带 + 米白边弧 + 新月刃）→ 末拳 +100 ms 与裂纹。
 - 保留与避让：保持同向，不能交替身后鞭击；不修改模拟速度。
 - 分层：新增 fist 拳形精灵；其余为既有贴花 / ribbon / 精灵 / ORB。

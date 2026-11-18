@@ -1,18 +1,63 @@
 import type { StageTheme } from "./types";
 import { createDesertDust } from "../environment/desert-dust";
-import { dressDesertTotem } from "../environment/desert-landmark";
+import { createDustDevils } from "../environment/dust-devil";
 export const desert: StageTheme = {
   id: "desert",
+  grade: {
+    exposure: 1.12,
+    green: 0.25,
+    shade: [0.86, 0.95, 1.06],
+    light: [1.04, 1.0, 0.93],
+    curve: 0.75,
+  },
   decorate({ scene, world, wind, uniforms }) {
     const dust = createDesertDust(world.zone.index === 2, wind, uniforms);
-    scene.add(dust.mesh);
-    return dust;
+    const devils = createDustDevils(wind, uniforms);
+    scene.add(dust.mesh, devils.mesh);
+    return {
+      update: (target) => devils.update(target),
+      dispose() {
+        dust.dispose();
+        devils.dispose();
+      },
+    };
   },
+  drift: [
+    {
+      shape: "sheet",
+      count: 26,
+      color: [0.95, 0.85, 0.68],
+      alpha: 0.22,
+      size: [1.8, 7.0],
+      height: [0.04, 0.08],
+      rise: 0,
+      life: 7,
+      speed: 1,
+      carry: 3,
+      flutter: 0,
+      clear: 0.2,
+    },
+    {
+      shape: "streak",
+      count: 320,
+      color: [1.0, 0.97, 0.9],
+      alpha: 0.75,
+      size: [0.2, 2.6],
+      height: [0.1, 0.9],
+      rise: 0.2,
+      life: 2.5,
+      speed: 1.4,
+      carry: 4,
+      flutter: 0,
+      clear: 0.3,
+    },
+  ],
   loadingArt: "/art/loading-desert.webp",
+  edge: "#ff6a3d",
   haze: {
     color: "#d9c7a0",
-    near: 26,
-    far: 76,
+    near: 34,
+    far: 92,
   },
   light: {
     sky: "#e5e1d6",
@@ -24,52 +69,52 @@ export const desert: StageTheme = {
   },
   ground: {
     grass: {
-      map: "/textures/ground/sand-albedo.png",
-      settle: [0.48, 0.7, 0.74, 0.84],
-      tile: 5.2,
-      detail: "/textures/ground/sand-detail.png",
-      normal: 0.1,
+      map: "/art/ground-desert-sand.jpg",
+      settle: [0.58, 0.98, 0.95, 0.92],
+      tile: 4.2,
+      detail: "/art/ground-desert-sand-detail.png",
+      normal: 0.14,
     },
     meadow: {
-      map: "/textures/ground/soil-albedo.png",
-      settle: [0.45, 0.86, 0.85, 0.85],
-      tile: 5.8,
-      detail: "/textures/ground/soil-detail.png",
-      normal: 0.16,
+      map: "/art/ground-desert-hardpan.jpg",
+      settle: [0.45, 1.0, 1.28, 0.88],
+      tile: 5.2,
+      detail: "/art/ground-desert-hardpan-detail.png",
+      normal: 0.18,
     },
     dirt: {
-      map: "/textures/ground/sand-albedo.png",
-      settle: [0.6, 0.72, 0.76, 0.82],
+      map: "/art/ground-desert-sand.jpg",
+      settle: [0.55, 0.86, 0.8, 0.75],
       tile: 3.2,
-      detail: "/textures/ground/sand-detail.png",
+      detail: "/art/ground-desert-sand-detail.png",
       normal: 0.16,
     },
     cliff: {
-      map: "/textures/ground/sandstone-albedo.png",
-      settle: [0.82, 1.02, 0.78, 0.66],
+      map: "/art/ground-desert-cliff.jpg",
+      settle: [0.5, 0.9, 1.12, 0.9],
       tile: 3.2,
-      detail: "/textures/ground/sandstone-detail.png",
-      normal: 0.16,
+      detail: "/art/ground-desert-cliff-detail.png",
+      normal: 0.2,
     },
     wetSoil: [0.27, 0.205, 0.135],
     pebble: [0.12, 0.115, 0.1],
     pondBed: [0.09, 0.12, 0.1],
     sand: null,
     macro: {
-      cool: [0.91, 0.93, 1.05],
-      warm: [1.04, 1.015, 0.97],
-      height: [0.005, 0, -0.008],
+      cool: [0.88, 0.9, 1.0],
+      warm: [1.08, 1.0, 0.88],
+      height: [0.02, 0, -0.03],
     },
     speckle: {
-      color: [0.85, 0.87, 0.9],
-      strength: 0.05,
-      frequency: 7,
+      color: [0.72, 0.6, 0.48],
+      strength: 0.22,
+      frequency: 5,
     },
     damp: [0.75, 0.77, 0.79],
     occlusion: [0.7, 0.65, 0.71],
     ink: [0.27, 0.18, 0.15],
     lip: [0.22, 0.18, 0.12],
-    detailContrast: 0.48,
+    detailContrast: 1.1,
     blend: 0.38,
     patch: 0.82,
     slope: [0.3, 0.75],
@@ -85,20 +130,26 @@ export const desert: StageTheme = {
   },
   vegetation: {
     grass: {
-      density: 0.38,
+      density: 0.55,
       kind: "dry",
       root: [0.2, 0.145, 0.08],
       tip: [0.54, 0.43, 0.23],
       weeds: [0.9, 0.86, 0.8],
     },
     flowers: null,
+    pebbles: {
+      density: 1.1,
+      size: [0.04, 0.14],
+      dark: [0.26, 0.15, 0.08],
+      light: [0.62, 0.45, 0.3],
+    },
     reeds: { density: 0.6, green: [0.23, 0.26, 0.1], straw: [0.4, 0.32, 0.15] },
   },
   dressing: [
     {
       model: "/models/props/desert-dry-bush.glb",
       height: 0.34,
-      density: 0.028,
+      density: 0.04,
       placement: "scatter",
       light: 0,
     },
@@ -112,7 +163,7 @@ export const desert: StageTheme = {
     {
       model: "/models/props/desert-pebbles.glb",
       height: 0.12,
-      density: 0.045,
+      density: 0.065,
       placement: "scatter",
       light: 0,
     },
@@ -139,11 +190,11 @@ export const desert: StageTheme = {
     },
   ],
   landmark: {
-    patchMaterial: dressDesertTotem,
     model: "/models/props/desert-landmark.glb",
-    height: 2.1,
+    height: 2.7,
     glow: 0xffdca0,
-    cores: [[0, 1.95, -0.4]],
+    columnOffset: [0, 0, -0.75],
+    cores: [[0, 2.48, -0.59]],
   },
   architecture: null,
   water: {
@@ -196,6 +247,27 @@ export const desert: StageTheme = {
       drawScale: 1,
       castShadow: false,
     },
+  },
+  backdrop: {
+    rise: 0.1,
+    cap: 2.5,
+    hills: 4.5,
+    hillSize: 13,
+    layers: [
+      { kind: "bush", band: [0.5, 9], spacing: 3.6, cover: 0.4, scale: [1, 1.4] },
+      { kind: "rock", band: [1, 12], spacing: 5.5, cover: 0.4, scale: [1.2, 2.4], sink: 0.3 },
+      {
+        kind: "rock",
+        band: [5, 36],
+        spacing: 13,
+        cover: 0.55,
+        scale: [3.5, 5.5],
+        stretch: [1.5, 1.4, 1.5],
+        sink: 1.5,
+        strata: 0.22,
+      },
+    ],
+    arches: { band: [-11, 6], spacing: 12, span: [8, 13], color: [0.78, 0.47, 0.24] },
   },
   minimap: {
     land: [

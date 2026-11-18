@@ -42,12 +42,24 @@ export interface ShotLook {
   fade?(fx: Fx, x: number, y: number, z: number): void;
 }
 
-/** How one area move looks. (x, z) is the interpolated centre, owner-following when the area follows. */
+/** Where a drawn caster's mouth is this frame and which way its model faces. */
+export interface Mouth {
+  x: number;
+  y: number;
+  z: number;
+  faceX: number;
+  faceZ: number;
+}
+
+/**
+ * How one area move looks. (x, z) is the interpolated centre, owner-following when the area follows;
+ * `mouth` is the drawn caster's mouth for a following area, when its model is on screen.
+ */
 export interface AreaLook {
   /** Every frame; `charge` runs 0 → 1 over the telegraph and is 1 once it does damage. */
-  live?(fx: Fx, area: Area, x: number, z: number, charge: number): void;
+  live?(fx: Fx, area: Area, x: number, z: number, charge: number, mouth?: Mouth): void;
   /** First damaging frame. */
-  strike?(fx: Fx, area: Area, x: number, z: number): void;
+  strike?(fx: Fx, area: Area, x: number, z: number, mouth?: Mouth): void;
 }
 
 export const rand = (a: number, b: number) => a + Math.random() * (b - a);

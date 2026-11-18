@@ -9,7 +9,7 @@ Signature traits
 
 Reference game: beam at 0.9 width × 1.15; cast = five splashes and a big splash at the mouth.
 
-Sim: beam half-width 0.29, reach 17 m clipped, delay 0.3 s, life 1.0 s, ticks 0.15 s, follows.
+Sim: beam half-width 0.35, reach 17 m clipped, delay 0.3 s, life 1.0 s, ticks 0.15 s, follows.
 
 Keep: swirling gather during the charge, torrent with foam, mouth splash. Avoid: spray shell and
 ground strip much wider than the half-width.

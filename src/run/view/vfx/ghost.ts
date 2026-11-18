@@ -427,13 +427,15 @@ export const hex: AreaLook = {
 function drawNightShade(fx: Fx, e: Echo, t: number): void {
   const grow = 1 - (1 - t) ** 3;
   const fade = 1 - t * t;
-  shadowDisc(fx, e.x, e.z, e.a * (0.35 + 0.7 * grow), 0.75 * fade);
-  dome(fx, e.x, e.z, e.a * (0.35 + 0.65 * grow), 0.45, 0.6 * fade, e.seed);
+  // At 4–5 m the dome covers half the screen: keep it a thin veil so the ring and spirits carry the shape.
+  shadowDisc(fx, e.x, e.z, e.a * (0.35 + 0.6 * grow), 0.5 * fade);
+  dome(fx, e.x, e.z, e.a * (0.35 + 0.65 * grow), 0.45, 0.3 * fade, e.seed);
   fx.decals
     .put(Decal.ring, e.x, e.z, e.a)
     .tint(ghost.glow, fade, ghost.shade, 0.3)
     .args(t * 0.7, 0.2, 0.25);
-  spirits(fx, e.x, e.y, e.z, e.a * (0.2 + 0.65 * grow), 6, e.seed, 0.32 * (1 - t * 0.4), fade);
+  const count = Math.max(6, Math.round(e.a * 2));
+  spirits(fx, e.x, e.y, e.z, e.a * (0.2 + 0.65 * grow), count, e.seed, 0.32 * (1 - t * 0.4), fade);
   if (t < 0.25) fx.sprites.draw(flash, e.x, e.y + 0.5, e.z, 0.6, 1 - t / 0.25);
 }
 

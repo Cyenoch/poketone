@@ -1,9 +1,5 @@
 import { Container, Text, type Component } from "@pmndrs/uikit";
 import { BoxShadow } from "./box-shadow";
-import { Color } from "three";
-import type { ElementType } from "../../run/sim/content/elements";
-import { typeNames } from "../../run/labels";
-import { typeColors } from "./run-theme";
 import { stack } from "./layer";
 import { SlantPlate } from "./slant-plate";
 import { HARD_SHADOW, RADIUS_INNER, slantOf, ui } from "./tokens";
@@ -78,18 +74,6 @@ export function rarityTag(name: string, color: string): Container {
   label.removeFromParent();
   tag.add(gem, label);
   return tag;
-}
-
-/** `Tag tone="type"`: soft face, 2px type ring, the type hue darkened toward ink (45%). */
-export function typeTag(type: ElementType): Container {
-  const tone = typeColors[type];
-  const ink = `#${new Color(ui.ink).lerp(new Color(tone.type), 0.45).getHexString()}`;
-  return gameTag(typeNames[type], {
-    face: tone.soft,
-    ink,
-    ring: { color: tone.type, width: 2 },
-    pill: true,
-  });
 }
 
 /**

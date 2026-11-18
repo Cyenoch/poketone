@@ -271,7 +271,11 @@ export const psychic: AreaLook = {
   live(fx, a, x, z, charge) {
     if (charge >= 1) return;
     const future = a.move === "future-sight";
-    discEdge(fx, x, z, a.radius, colour.light, 0.3 + charge * 0.35);
+    discEdge(fx, x, z, a.radius, colour.pink, 0.45 + charge * 0.4);
+    // A pink tint that deepens with the charge, so the warned zone is psychic colour, not a grey outline.
+    fx.decals
+      .put(Decal.glow, x, z, a.radius)
+      .tint(colour.rose, 0.12 + charge * 0.25, colour.pink, 0.4);
     const r = a.radius * (0.8 - charge * 0.6);
     groundArc(fx, x, z, r, fx.time * 2, Math.PI * 2, 0.12, 0.07, colour.pink, 0.7);
     if (future) {
@@ -294,6 +298,21 @@ export const psychic: AreaLook = {
   },
   strike(fx, a, x, z) {
     burst(fx, x, z, a.radius, false, a.move === "future-sight");
+    // The release: a pink ring at the full edge and crystal shards thrown to it.
+    const r = a.radius;
+    fx.decals.stamp(Decal.glow, x, z, r, 0.25, colour.rose, 0.35, colour.light, 0.6);
+    fx.decals.stamp(Decal.ring, x, z, r, 0.3, colour.pink, 0.9, colour.light, 0.5, 0.06, 1);
+    spray(
+      fx,
+      shatter,
+      x,
+      fx.ground.heightAt(x, z) + 0.4,
+      z,
+      Math.round(r * 4) + 2,
+      r * 2.2,
+      2,
+      0.12,
+    );
   },
 };
 
@@ -327,40 +346,93 @@ export const psystrikeBurst: AreaLook = {
   },
 };
 
-/** Instant refractions along the exact chain points, with a crystal at every struck target. */
+const shatter = sprite({
+  shape: Shape.gem,
+  life: 0.3,
+  grow: 0.2,
+  from: colour.light,
+  to: colour.pink,
+  accent: colour.rose,
+  drag: 6,
+  stretch: -1,
+});
+const castFlash = sprite({
+  shape: Shape.star,
+  life: 0.14,
+  grow: 1.4,
+  from: colour.pink,
+  accent: colour.core,
+  add: 0.8,
+  spin: 2,
+});
+
+/** Seconds a crystal takes for one jump; the links stay `LINGER` after it lands. */
+const HOP = 0.035;
+const LINGER = 0.2;
+
+/**
+ * Psyshock along the exact chain points: a pink crystal leaps target to target, each jump a straight
+ * refracted link (a soft pink glow round a pale core) that shrinks away after it lands; each landing
+ * shatters into gems over a small ring. HOP per jump, so it reads as jumping while the hits land at once.
+ */
 function drawRefraction(fx: Fx, e: Echo, t: number): void {
-  const fade = (1 - t) ** 2;
-  for (let i = 2; i < e.points.length; i += 2) {
+  const elapsed = t * e.life;
+  const before = elapsed - fx.dt;
+  for (let i = 2, hop = 0; i < e.points.length; i += 2, hop++) {
+    const start = hop * HOP;
+    const local = Math.min(1, (elapsed - start) / HOP);
+    if (local <= 0) break;
     const ax = e.points[i - 2]!;
     const az = e.points[i - 1]!;
     const bx = e.points[i]!;
     const bz = e.points[i + 1]!;
-    fx.ribbons.point(ax, fx.ground.heightAt(ax, az) + CHEST, az, 0.04 * (1 - t), colour.pink, fade);
-    fx.ribbons.point(
-      bx,
-      fx.ground.heightAt(bx, bz) + CHEST,
-      bz,
-      0.08 * (1 - t),
-      colour.light,
-      fade,
-    );
-    fx.ribbons.flush(Ribbon.solid, 0.1);
-    fx.sprites.draw(
-      shard,
-      bx,
-      fx.ground.heightAt(bx, bz) + CHEST,
-      bz,
-      0.24 * (1 - t),
-      fade,
-      bx - ax,
-      bz - az,
-    );
+    const ay = fx.ground.heightAt(ax, az) + CHEST;
+    const by = fx.ground.heightAt(bx, bz) + CHEST;
+    const hx = ax + (bx - ax) * local;
+    const hy = ay + (by - ay) * local;
+    const hz = az + (bz - az) * local;
+    const k = 1 - Math.max(0, Math.min(1, (elapsed - start - HOP) / LINGER));
+    const fade = k * k;
+    for (let layer = 0; layer < 2; layer++) {
+      const width = layer ? 0.045 : 0.16;
+      const tint = layer ? colour.core : colour.pink;
+      fx.ribbons.point(ax, ay, az, width * 0.5 * k, tint, fade * 0.6);
+      fx.ribbons.point(hx, hy, hz, width * k, tint, fade);
+      fx.ribbons.flush(layer ? Ribbon.solid : Ribbon.glow, layer ? 0.3 : 0.8);
+    }
+    if (local < 1) {
+      fx.sprites.draw(shard, hx, hy, hz, 0.22, 1, bx - ax, bz - az);
+      continue;
+    }
+    if (before < start + HOP) {
+      fx.sprites.emit(flash, bx, by, bz, 0, 0, 0, 0.3);
+      fx.decals.stamp(
+        Decal.ring,
+        bx,
+        bz,
+        0.6,
+        0.25,
+        colour.pink,
+        0.8,
+        colour.light,
+        0.5,
+        0.12,
+        0.3,
+      );
+      for (let j = 0; j < 4; j++) {
+        const a = (j / 4) * Math.PI * 2 + hop;
+        fx.sprites.emit(shatter, bx, by, bz, Math.cos(a) * 2.2, 0.6, Math.sin(a) * 2.2, 0.13);
+      }
+    }
   }
 }
 
 export function psyshock(fx: Fx, points: readonly number[]): void {
   if (points.length < 4) return;
-  fx.echoes.add(drawRefraction, 0.22, 0, 0, 0, 0, 0, 0, points);
+  const x = points[0]!;
+  const z = points[1]!;
+  fx.sprites.emit(castFlash, x, fx.ground.heightAt(x, z) + CHEST, z, 0, 0, 0, 0.3);
+  fx.echoes.add(drawRefraction, (points.length / 2 - 1) * HOP + LINGER, 0, 0, 0, 0, 0, 0, points);
 }
 
 function drawMindLane(fx: Fx, e: Echo, t: number): void {
@@ -370,5 +442,14 @@ function drawMindLane(fx: Fx, e: Echo, t: number): void {
 export function psychicField(fx: Fx, e: UltPulseEvent): void {
   if (e.look === "roots") {
     fx.echoes.add(drawMindLane, 0.24, e.x, e.radius, e.z, e.dirX, e.dirZ, e.length);
-  } else burst(fx, e.x, e.z, e.radius, e.look === "ring", e.look === "meteor");
+    return;
+  }
+  const r = e.radius;
+  const h = fx.ground.heightAt(e.x, e.z);
+  burst(fx, e.x, e.z, r, e.look === "ring", e.look === "meteor");
+  // The landing: a psychic-pink wash over the whole field, its edge held and shards thrown to it.
+  fx.sprites.emit(castFlash, e.x, h + CHEST, e.z, 0, 0, 0, Math.min(1.6, r * 0.35));
+  fx.decals.stamp(Decal.glow, e.x, e.z, r, 0.5, colour.rose, 0.5, colour.light, 0.8);
+  fx.decals.stamp(Decal.ring, e.x, e.z, r, 0.55, colour.pink, 1, colour.light, 0.6, 0.08, 1);
+  spray(fx, shatter, e.x, h + 0.4, e.z, Math.round(r * 5) + 4, r * 2.4, 2.5, 0.15);
 }

@@ -13,7 +13,7 @@ radius, a 0.12 s flash at 0.7 radius, **five arms of five flame puffs** launched
 steps (a star/大 spread), a central column of flames, smoke, two delayed smoke puffs at
 0.2–0.28 s, and a dark scorch at 1.6× radius for 1.5 s.
 
-Sim: orb head radius 0.3, speed 13, dur 1.4 s; bursts (radius 1.25, life 0.3 s) on first hit or at
+Sim: orb head radius 0.3, speed 13, dur 1.4 s; bursts (radius 1.7, life 0.3 s) on first hit or at
 end of range.
 
 Keep: 大 shape revealed fast on the ground and in flame, scorch 大 residue. Avoid: a ring larger

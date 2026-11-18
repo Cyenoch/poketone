@@ -275,9 +275,9 @@
       "source": "assets/characters/geodude/generation/tripo-out/tripo-out/geodude-player-multiview-7fe129a3/model.glb",
       "sourceSha256": "4ee22da01ab10f1de8fcd5335afa4c5b65050984e9373f64d1ee077495609b35",
       "preparedSource": "assets/characters/geodude/blender/model.glb",
-      "preparedSourceSha256": "bc2c403141e12b59a30f25243671c400c53694e6196b2be86519b71f268c0b85",
+      "preparedSourceSha256": "66e0bebf7e49d28e8fedef9e74b179af2f5f90ef4d9c9354201b6fe763507d35",
       "output": "public/models/geodude.glb",
-      "outputSha256": "e75caf6a224474992249ab9203d3aec9a159c3daf384a68c524d3460a2c2265a",
+      "outputSha256": "f691050ec8ee10115ae27b20854aded4f3bca9ff13fc6e1b27c1787340ca4418",
       "bytes": 264048,
       "triangles": 2462,
       "texture": 1024,
@@ -318,10 +318,10 @@
       "source": "assets/characters/graveler/generation/tripo-out/tripo-out/graveler-player-multiview-ff34ca0d/model.glb",
       "sourceSha256": "928561c9669c83ee468458e1e258e6e8c05b913c3a563d2f16aca5f5d66d1c20",
       "preparedSource": "assets/characters/graveler/blender/model.glb",
-      "preparedSourceSha256": "7620bd8d6ad46686233400e92f8358c143c2829c56e2c9e2dea9d261f47a9062",
+      "preparedSourceSha256": "a3db22c563a7de2034e829a0dd95da33abc3a7792133556b221ea533db0449c4",
       "output": "public/models/graveler.glb",
-      "outputSha256": "4ffe8b65ffd0225b02edd5d53bfc37361a7942e1348fd60257c2dc7287260528",
-      "bytes": 302644,
+      "outputSha256": "836f87346112a57a81a33288aa51b737ae4030671360e5d6260596248e0d1ec2",
+      "bytes": 302508,
       "triangles": 1956,
       "texture": 1024,
       "rig": {
@@ -361,10 +361,10 @@
       "source": "assets/characters/golem/generation/tripo-out/tripo-out/golem-player-multiview-c6ba2cfd/model.glb",
       "sourceSha256": "e59db240025c4c13c90e812bdb17652ace6880484d57f39914f92ea8c6c15308",
       "preparedSource": "assets/characters/golem/blender/model.glb",
-      "preparedSourceSha256": "a6de4e8da8886b6349e0c3209d9b1ea82b99b020dbea9c5194a71d81e43b9e40",
+      "preparedSourceSha256": "18b2a0ed6a852a8d8d564e1d2b5c9ca14c636b9f7ff7cb4da51924c3ea85fd6b",
       "output": "public/models/golem.glb",
-      "outputSha256": "d17826864857f8c6ad3494b715f8a0979c2e2702cf0fe52b05095c304bf0c29d",
-      "bytes": 373044,
+      "outputSha256": "e46cc2bfd9984d4e8b030d72aac9fe52355c3488ac11740c5ca821c3aa3e061f",
+      "bytes": 402688,
       "triangles": 2190,
       "texture": 1024,
       "rig": {
@@ -376,7 +376,8 @@
         "runCycles": 1,
         "plantedSpeedPerHeight": 1.534090909090909,
         "credits": 0
-      }
+      },
+      "textureFix": "prepare-game-models.py FIXES player-golem: warm-grey skin (hue 330\u201330\u00b0, low saturation, value > 0.42) recoloured to the artwork tan; the green-grey shell is untouched."
     }
   ]
 }

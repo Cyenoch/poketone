@@ -52,7 +52,8 @@
       "textureSize": 512,
       "facingYawPi": -0.5,
       "faceLimit": 1000,
-      "note": "Second sheet (views/ built from sheet2.jpg): the first sheet was redrawn for cleaner side profiles before any Tripo spend. Thin opaque white fins; proposed height 1.0, radius 0.55, swims (water layer)."
+      "note": "Second sheet (views/ built from sheet2.jpg): the first sheet was redrawn for cleaner side profiles before any Tripo spend. Thin opaque white fins; proposed height 1.0, radius 0.55, swims (water layer).",
+      "supersededBy": "creature-pass.provenance.json (2026-11-18)"
     },
     {
       "id": "poliwrath",

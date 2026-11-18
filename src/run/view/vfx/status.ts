@@ -1,13 +1,13 @@
 // Ongoing status marks on the bodies that carry a status: flames for burn, drips for wet, sparks for
 // paralysis, Z's for sleep, bubbles for poison, leaves circling the feet for root, frost flakes for
-// chill (one per charge), an ice shell for freeze, dark wisps for curse, a gold ring for a mark. Each mark is a looped one-frame sprite whose phase comes
+// chill (one per charge), an ice shell for freeze, dark wisps for curse, a gold ring for a mark, on
+// enemies (a player's statuses are pips on their overhead bar). Each mark is a looped one-frame sprite whose phase comes
 // from time and the body's id, so it follows the body with no particle state and costs a fixed few
-// sprites per body. The body tint (createRunView.ts) carries the status at crowd scale; these say which.
+// sprites per body. These say which status; the body tint (createRunView.ts) is only a light hint.
 
 import type { Color } from "three";
 import { enemies as enemyDefs } from "../../sim/content/enemies";
 import type { StatusId } from "../../sim/content/statuses";
-import { formOf } from "../../sim/evolution";
 import { FLYER_HOVER } from "../../sim/content/params/combat";
 import type { ActiveStatus, Enemy, Player } from "../../sim/state/entities";
 import type { World } from "../../sim/state/world";
@@ -144,24 +144,25 @@ function flagsOf(list: readonly ActiveStatus[]): number {
 }
 
 /**
- * Body tint that carries an enemy's status at crowd scale (freeze, sleep, paralysis, burn, curse,
- * poison, chill, wet); false when it has none. Paralysis flares on the same beat as its sparks; wet
- * glistens slowly. Root and a mark have no tint: their marks sit at the feet and over the head.
+ * A light body tint for an enemy's status (freeze, sleep, paralysis, burn, curse, poison, chill, wet);
+ * false when it has none. The marks say which status; the tint only keeps a crowd's afflicted bodies
+ * apart without washing out their colours. Freeze stays strong (the body is in ice); paralysis flares
+ * on the same beat as its sparks; wet glistens slowly. Root and a mark have no tint.
  */
 export function statusTint(enemy: Enemy, time: number, out: Color): boolean {
   const flags = flagsOf(enemy.statuses);
-  if (flags & FREEZE) out.setRGB(0.7, 1.35, 2);
-  else if (flags & SLEEP) out.setRGB(0.6, 0.65, 1.1);
+  if (flags & FREEZE) out.setRGB(0.75, 1.25, 1.8);
+  else if (flags & SLEEP) out.setRGB(0.8, 0.82, 1.05);
   else if (flags & PARALYSIS) {
-    if (crackling(time, enemy.id)) out.setRGB(1.9, 1.8, 0.8);
-    else out.setRGB(1.35, 1.25, 0.55);
-  } else if (flags & BURN) out.setRGB(1.4, 0.8, 0.6);
-  else if (flags & CURSE) out.setRGB(0.7, 0.45, 1.05);
-  else if (flags & POISON) out.setRGB(1.15, 0.8, 1.3);
-  else if (flags & CHILL) out.setRGB(0.8, 1.15, 1.6);
+    if (crackling(time, enemy.id)) out.setRGB(1.6, 1.55, 0.9);
+    else out.setRGB(1.1, 1.08, 0.85);
+  } else if (flags & BURN) out.setRGB(1.18, 0.9, 0.8);
+  else if (flags & CURSE) out.setRGB(0.85, 0.72, 1.02);
+  else if (flags & POISON) out.setRGB(1.07, 0.9, 1.12);
+  else if (flags & CHILL) out.setRGB(0.9, 1.07, 1.25);
   else if (flags & WET) {
-    const sheen = 1 + 0.12 * Math.sin(time * 3 + enemy.id);
-    out.setRGB(0.75 * sheen, 0.95 * sheen, 1.3 * sheen);
+    const sheen = 1 + 0.08 * Math.sin(time * 3 + enemy.id);
+    out.setRGB(0.88 * sheen, 0.97 * sheen, 1.12 * sheen);
   } else return false;
   return true;
 }
@@ -196,24 +197,8 @@ export function statusMarks(fx: Fx, world: World, alpha: number, self: Player): 
   rightZ = -backX;
   const time = fx.time;
 
+  // A player's statuses are pips on their overhead bar (healthBars.ts): said once, not here too.
   let budget = STATUS_SPRITES;
-  for (const player of world.players) {
-    if (!player.alive) continue;
-    const flags = flagsOf(player.statuses);
-    if (!flags) continue;
-    const form = formOf(player);
-    body.id = player.id;
-    body.x = player.px + (player.x - player.px) * alpha;
-    body.z = player.pz + (player.z - player.pz) * alpha;
-    body.y = fx.ground.heightAt(body.x, body.z);
-    body.h = form.height;
-    body.r = form.radius;
-    body.s = 1.2;
-    body.seed = 0.37 * player.id;
-    body.n = MAX_PER_STATUS;
-    body.chill = 0;
-    budget -= mark(fx, flags, time);
-  }
 
   // Count the slots in view first so a crowd gets fewer marks each instead of a cut-off.
   let wanted = 0;

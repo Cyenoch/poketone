@@ -8,6 +8,8 @@ import {
   DynamicDrawUsage,
   Fog,
   LinearSRGBColorSpace,
+  AdditiveBlending,
+  Matrix4,
   SRGBColorSpace,
   Group,
   HemisphereLight,
@@ -28,36 +30,41 @@ import { stopped } from "../sim/status";
 import { heightAt } from "../sim/terrain";
 import { TICK, type World } from "../sim/state/world";
 import type { Obstacle, Player, PlayerId } from "../sim/state/entities";
-import { starters, type FormId } from "../sim/content/lines/index";
+import { formDefs, starters, type FormId } from "../sim/content/lines/index";
 import type { RunEvent, UltLook } from "../sim/state/events";
 import { windAt } from "../sim/wind";
 import { releaseUploads } from "../../rendering/releaseUploads";
-import type { PlayerModels, RunAssets } from "./assets";
+import type { PlayerModels, Profile, RunAssets } from "./assets";
+import type { DrawnBody } from "./healthBars";
 import { advanceGait, bodyMotion } from "./enemyMotion";
 import { cloysterClosure, foldCloysterShell } from "./cloysterShell";
 import { enemyLook, towerEnemySilhouette } from "./enemyLook";
 import { shadeUnderClouds } from "./environment/clouds";
 import { createFoliage } from "./environment/foliage";
 import { createDressing } from "./environment/dressing";
+import { createBackdrop } from "./environment/backdrop";
 import { lightGroundPools } from "./architecture";
 import { createFootprints } from "./environment/footprints";
 import { bakeGroundLayers, createGroundUniforms } from "./environment/ground";
 import { createWater } from "./environment/water";
 import { createSunlight } from "./environment/sunlight";
 import { createWindUniforms, swayInWind, updateWindUniforms } from "./environment/wind";
+import { createDrift } from "./environment/drift";
 import { createCameraShake } from "./cameraShake";
 import { creatureLook, lambertCopy, ownShadowDepth } from "./materials";
+import { bodyGlow, EVOLVE_SWAP_MS, type BodyGlow } from "./bodyGlow";
 import { mountRig, type PlayerRig } from "./playerRig";
 import { conformToTerrain, createTerrainMesh, createTerrainUniforms, ditherFade } from "./terrain";
 import { formOf } from "../sim/evolution";
 import { shownForm, type ShownMega } from "./shownForm";
 import { Vfx, type Muzzle } from "./vfx";
+import type { DeathKind } from "./vfx/common";
 import { statusTint } from "./vfx/status";
 import type { PropLook } from "./stageThemes";
 import { zoneTheme } from "./zoneThemes";
 import { createLandmark } from "./landmark";
 import { createExitPortal } from "./exitPortal";
-import { createDarkness } from "./grade";
+import { createDarkness, defaultGrade, setWorldGrade } from "./grade";
 import { createRouteBeacons } from "./routeBeacons";
 import { createRouteMist } from "./routeMist";
 import { zoneDef } from "../sim/currentZone";
@@ -66,12 +73,20 @@ import { Deployment } from "./deployment";
 import { createFieldSites } from "./fieldSites";
 import { createWeather } from "./weather";
 import { moveWeather } from "./vfx/weatherMoves";
+import { DASH_TRAIL, DashTrail } from "./dashTrail";
+import { protectionLevel } from "./vfx/playerStates";
+import { DyingBodies, type Death } from "./dyingBodies";
 import { shinyLook } from "./shiny";
 import { isUnidentifiedGhost } from "../sim/combat";
 
 const dummy = new Object3D();
 const tint = new Color();
 const white = new Color(1, 1, 1);
+/** Seconds the new form takes to come out of the evolution's white. */
+const EVOLVE_FADE = 0.45;
+/** Seconds a revived body glows warm white, fading out as it stands back up. */
+const REVIVE_GLOW = 0.6;
+/** Seconds of ultimate protection left when its rim starts blinking. */
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 /** sim/viewFootprint.ts reproduces this camera (spawns off screen, auto-aim on it): change both together. */
 const CAMERA_HEIGHT = 16;
@@ -138,6 +153,8 @@ export interface RunView {
   megaShatters: readonly PlayerId[];
   /** Trainer items drawn popping during the last `frame` (`Vfx.assistPops`). */
   assistPops: Vfx["assistPops"];
+  /** Bodies drawn by the last `frame`, by enemy id and player id (where the overhead bars sit). */
+  drawn: { enemies: ReadonlyMap<number, DrawnBody>; players: ReadonlyMap<number, DrawnBody> };
   /** World point (y relative to the ground) → CSS pixels inside the canvas, or null when behind the camera. */
   project(x: number, y: number, z: number, width: number, height: number): [number, number] | null;
   /** Frees the GPU copies of the scene and the textures only shader closures hold; the view stays usable. */
@@ -154,8 +171,10 @@ export interface RunView {
 /** A form mounted for the whole run: evolving shows it, it is never rebuilt. */
 interface MountedForm {
   rig: PlayerRig;
+  glow: BodyGlow;
   holder: Group;
   head: Object3D | undefined;
+  profile: Profile;
 }
 
 /** One player's drawn body: a stable group that follows them, with every form of its line inside. */
@@ -171,6 +190,12 @@ interface Avatar {
   muzzle: Muzzle;
   /** Whether the player was alive last frame: the frame it turns false draws the faint. */
   alive: boolean;
+  /** An evolution in play: the old form stays shown until the swap, `age` in real seconds. */
+  evolving: { from: FormId; age: number } | null;
+  /** Real seconds since a revive, while its body glow plays. */
+  revived: number | null;
+  /** Some form's glow was lit last frame (it is cleared once). */
+  glowing: boolean;
   /** The mega drawn: it changes with the ceremony event, not with the state that leads it. */
   shown: ShownMega;
 }
@@ -194,6 +219,7 @@ export function* createRunView(
   coarsePointer: boolean,
 ): Steps<RunView> {
   const theme = zoneTheme(world);
+  setWorldGrade(theme.grade);
   const scene = new Scene();
   // Fog is mixed in after the colour grade (grade.ts), so its colour is already the graded haze.
   const fog = new Fog(theme.haze.color, theme.haze.near, theme.haze.far);
@@ -263,6 +289,7 @@ export function* createRunView(
     wind,
     theme,
     assets.scenery,
+    world.seed,
   );
   const dressing = yield* createDressing(
     world,
@@ -283,9 +310,30 @@ export function* createRunView(
     wind,
     pools: dressing.pools,
     world,
+    light,
   });
   if (decoration) disposables.push(decoration);
+  for (const [i, look] of (theme.drift ?? []).entries()) {
+    const drift = createDrift(look, wind, uniforms, coarsePointer ? COARSE_POINTER_DENSITY : 1, i);
+    scene.add(drift.mesh);
+    disposables.push(drift);
+  }
   scene.add(terrainMesh.mesh);
+  const backdrop = theme.backdrop
+    ? createBackdrop(
+        terrain,
+        theme.backdrop,
+        world.seed,
+        assets,
+        theme.props,
+        terrainMesh.mesh.material,
+        wind,
+      )
+    : null;
+  if (backdrop) {
+    for (const mesh of backdrop.meshes) scene.add(mesh);
+    disposables.push(backdrop);
+  }
   const sunlight = createSunlight(terrain, world.map.obstacles, theme, wind);
   scene.add(sunlight.mesh);
   disposables.push(sunlight);
@@ -427,6 +475,7 @@ export function* createRunView(
   let shellClose: InstancedBufferAttribute | undefined;
   const shellEnds = new Map<number, number>();
   const guardian = zoneDef(world).guardian.species;
+  let guardianTrail: InstancedMesh | undefined;
   /** A shiny of each ordinary species: its own few-instance draw with the species' shiny palette. */
   const shinyMeshes = new Map<EnemyId, InstancedMesh>();
   const shinyFades = new Map<EnemyId, InstancedBufferAttribute>();
@@ -447,7 +496,8 @@ export function* createRunView(
       shadeUnderClouds(material, wind);
       if (shiny) shinyLook(material, id);
       disposables.push(material);
-      const capacity = shiny ? 2 : id === guardian ? 2 : 320;
+      // The guardian's draw also holds its dying body.
+      const capacity = shiny ? 2 : id === guardian ? 3 : 320;
       const geometry = fades || id === "cloyster" ? source.geometry.clone() : source.geometry;
       if (fades || id === "cloyster") disposables.push(geometry);
       if (fades) {
@@ -471,6 +521,23 @@ export function* createRunView(
       mesh.count = 0;
       mesh.frustumCulled = false;
       mesh.castShadow = id === guardian;
+      if (id === guardian && !shiny) {
+        // Its dash afterimages: pale additive silhouettes of the same body, faded by instance colour.
+        const trailMaterial = new MeshBasicMaterial({
+          color: "#9fdcff",
+          transparent: true,
+          blending: AdditiveBlending,
+          depthWrite: false,
+        });
+        guardianTrail = new InstancedMesh(geometry, trailMaterial, DASH_TRAIL.images);
+        guardianTrail.instanceMatrix.setUsage(DynamicDrawUsage);
+        for (let i = 0; i < DASH_TRAIL.images; i++) guardianTrail.setColorAt(i, white);
+        guardianTrail.instanceColor!.setUsage(DynamicDrawUsage);
+        guardianTrail.count = 0;
+        guardianTrail.frustumCulled = false;
+        scene.add(guardianTrail);
+        disposables.push(guardianTrail, trailMaterial);
+      }
       if (id === "cloyster") {
         const depth = ownShadowDepth(mesh);
         foldCloysterShell(depth);
@@ -520,8 +587,10 @@ export function* createRunView(
       [...models].map(([form, model]) => {
         const mounted = {
           rig: mountRig(group, model, wind, isSelf),
+          glow: bodyGlow(model.holder),
           holder: model.holder,
           head: model.model.root.getObjectByName("Head"),
+          profile: model.profile,
         };
         model.holder.visible = false;
         return [form, mounted] as const;
@@ -550,6 +619,9 @@ export function* createRunView(
       runWeight: 0,
       muzzle: { x: 0, y: 0, z: 0, faceX: 0, faceZ: 1 },
       alive: player.alive,
+      evolving: null,
+      revived: null,
+      glowing: false,
       shown: { mega: player.mega, lag: 0 },
     };
   });
@@ -582,6 +654,13 @@ export function* createRunView(
 
   const shake = createCameraShake();
   let guardianWasDashing = false;
+  const bodies = new DyingBodies();
+  const dashTrail = new DashTrail();
+  const dyingMatrix = new Matrix4();
+  const burst = (x: number, z: number, kind: DeathKind, radius: number, height: number) =>
+    vfx.death(x, z, kind, radius, height);
+  const unmatchedDeath = ({ species, x, z, kind }: Death) =>
+    vfx.death(x, z, kind, enemyDefs[species].radius, enemyDefs[species].height);
   let elapsed = 0;
   const gaitPhases = new Map<number, number>();
   let hitClock = 0;
@@ -592,9 +671,34 @@ export function* createRunView(
   const toPlayer = new Vector3();
   const toProp = new Vector3();
 
+  /** Reused per frame: a drawn body for each enemy and player id drawn. */
+  const drawnEnemies = new Map<number, DrawnBody>();
+  const drawnPlayers = new Map<number, DrawnBody>();
+  const bodyPool: DrawnBody[] = [];
+  let pooled = 0;
+  function drawnBody(
+    into: Map<number, DrawnBody>,
+    id: number,
+    x: number,
+    y: number,
+    z: number,
+    height: number,
+    radius: number,
+    yaw: number | null,
+    profile: Profile | undefined,
+  ): void {
+    let body = bodyPool[pooled++];
+    if (!body) bodyPool.push((body = { x, y, z, height, radius, yaw, profile }));
+    else Object.assign(body, { x, y, z, height, radius, yaw, profile });
+    into.set(id, body);
+  }
+
   function frameEnemies(alpha: number, yaw: number, hitTime: number, dt: number): void {
+    pooled = 0;
+    drawnEnemies.clear();
     const living = new Set([...world.enemies, ...world.partners].map(({ id }) => id));
     for (const id of gaitPhases.keys()) if (!living.has(id)) gaitPhases.delete(id);
+    bodies.step(living, dt, burst, unmatchedDeath);
     const frameTime = world.time - (1 - alpha) * TICK;
     for (const [id, end] of shellEnds)
       if (cloysterClosure(frameTime, end) === 0 && frameTime > end) shellEnds.delete(id);
@@ -666,13 +770,25 @@ export function* createRunView(
       );
       dummy.updateMatrix();
       mesh.setMatrixAt(index, dummy.matrix);
+      // Its bar follows the drawn lift (jumps, hover) but not the hop, flinch or squash: those would shake it.
+      drawnBody(
+        drawnEnemies,
+        enemy.id,
+        x,
+        base +
+          motion.lift +
+          (def.mobility.flying ? FLYER_HOVER + Math.sin(phase * 0.5) * 0.15 : 0) * enemy.scale,
+        z,
+        height,
+        enemy.radius,
+        null,
+        assets.enemies[enemy.species]?.profile,
+      );
+      if (enemy.boss) dashTrail.follow(enemy.phase === "dash", dummy.matrix, dt);
       const unseen = isUnidentifiedGhost(world, enemy);
       if (enemy.flash > 0) tint.setRGB(3, 3, 3);
       else if (unseen) tint.setRGB(0.05, 0.04, 0.07);
-      else if (!statusTint(enemy, elapsed, tint)) {
-        if (enemy.elite) tint.setRGB(1.3, 1.08, 0.7);
-        else tint.setRGB(1, 1, 1);
-      }
+      else if (!statusTint(enemy, elapsed, tint)) tint.setRGB(1, 1, 1);
       // Without the Silph Scope the ghost is a black shadow; a hit only greys it.
       if (unseen && enemy.flash > 0) tint.setRGB(0.45, 0.4, 0.55);
       else vfx.tells.tint(enemy.id, tint);
@@ -689,6 +805,17 @@ export function* createRunView(
           );
       }
       mesh.setColorAt(index, tint);
+      bodies.pose(
+        enemy.id,
+        enemy.species,
+        shinyMesh !== undefined,
+        dummy.matrix,
+        x,
+        z,
+        enemy.radius,
+        height,
+        enemy.boss ? "guardian" : enemy.elite ? "elite" : "swarm",
+      );
       if (blobCount < blobs.instanceMatrix.count) {
         dummy.position.set(x, 0, z);
         dummy.rotation.set(0, 0, 0);
@@ -731,6 +858,34 @@ export function* createRunView(
         blobs.setMatrixAt(blobCount++, dummy.matrix);
       }
     }
+    if (!world.enemies.some((enemy) => enemy.boss)) dashTrail.follow(false, dummy.matrix, dt);
+    if (guardianTrail) {
+      let images = 0;
+      for (let i = 0; i < DASH_TRAIL.images; i++) {
+        const fade = dashTrail.fade(i);
+        if (fade <= 0) continue;
+        guardianTrail.setMatrixAt(images, dashTrail.matrix(i));
+        guardianTrail.setColorAt(images++, tint.setScalar(fade));
+      }
+      guardianTrail.count = images;
+      guardianTrail.visible = warming || images > 0;
+      guardianTrail.instanceMatrix.needsUpdate = true;
+      guardianTrail.instanceColor!.needsUpdate = true;
+    }
+    // Defeated bodies hold a white squash in their species' draw before their poof.
+    for (const body of bodies.dying) {
+      const shinyMesh = body.shiny ? shinyMeshes.get(body.species) : undefined;
+      const mesh = shinyMesh ?? enemyMeshes[body.species];
+      const index = shinyMesh
+        ? (shinyCounts.set(body.species, (shinyCounts.get(body.species) ?? 0) + 1),
+          shinyCounts.get(body.species)! - 1)
+        : counts[body.species]++;
+      if (index >= mesh.instanceMatrix.count) continue;
+      mesh.setMatrixAt(index, bodies.matrixOf(body, dyingMatrix));
+      mesh.setColorAt(index, tint.setRGB(3, 3, 3));
+      (shinyMesh ? shinyFades : enemyFades).get(body.species)?.setX(index, 1);
+      if (body.species === "cloyster") shellClose!.setX(index, 1);
+    }
     for (const [id, mesh] of shinyMeshes) {
       mesh.count = Math.min(shinyCounts.get(id) ?? 0, mesh.instanceMatrix.count);
       // Idle shiny draws stay out of the frame; the warm shows them so their program compiles.
@@ -758,9 +913,21 @@ export function* createRunView(
     blobs.instanceMatrix.needsUpdate = true;
   }
 
-  function frameAvatar(body: Avatar, alpha: number, dt: number, remoteSpeed?: number): void {
+  function frameAvatar(
+    body: Avatar,
+    alpha: number,
+    dt: number,
+    realStep: number,
+    remoteSpeed?: number,
+  ): void {
     const { player, group } = body;
-    const form = shownForm(body.shown, player, dt).id;
+    const evolving = body.evolving;
+    if (evolving) evolving.age += realStep;
+    if (body.revived !== null) body.revived += realStep;
+    const form =
+      evolving && evolving.age < EVOLVE_SWAP_MS / 1000
+        ? evolving.from
+        : shownForm(body.shown, player, dt).id;
     if (form !== body.form) {
       body.forms.get(body.form)!.holder.visible = false;
       Object.assign(body, show(body.forms, form));
@@ -805,7 +972,60 @@ export function* createRunView(
       -rig.footFloor() * group.scale.y - lerp(rig.lift.idle, rig.lift.run, runWeight),
     );
     rig.tail?.update(dt, turn, speed, runWeight, (rig.run.time / runClip) * rig.runCycles);
+    drawnBody(
+      drawnPlayers,
+      player.id,
+      x,
+      group.position.y,
+      z,
+      formDefs[body.form].height,
+      formDefs[body.form].radius,
+      group.rotation.y,
+      body.forms.get(body.form)!.profile,
+    );
     frameMuzzle(body);
+    frameGlow(body);
+  }
+
+  /**
+   * The evolution's white silhouette (it rises to full white at the swap, then the new form fades in
+   * from it), a revive's (full white fading as the body stands) and the ultimate's protection, a gold
+   * rim that blinks faster as it runs out.
+   */
+  function frameGlow(body: Avatar): void {
+    const evolving = body.evolving;
+    let white = 0;
+    if (evolving) {
+      const swap = EVOLVE_SWAP_MS / 1000;
+      white =
+        evolving.age < swap
+          ? (evolving.age / swap) ** 2
+          : Math.max(0, 1 - (evolving.age - swap) / EVOLVE_FADE);
+      if (evolving.age > swap + EVOLVE_FADE) body.evolving = null;
+    }
+    if (body.revived !== null) {
+      white = Math.max(white, 1 - body.revived / REVIVE_GLOW);
+      if (body.revived > REVIVE_GLOW) body.revived = null;
+    }
+    const protection = protectionLevel(body.player.alive ? body.player.ult.protection : 0);
+    if (white === 0 && protection === 0 && !body.glowing) return;
+    body.glowing = white > 0 || protection > 0;
+    // A slow band of the rim's light climbing the body, once every 1.25 s.
+    const height = formOf(body.player).height;
+    const sweepY = body.group.position.y + height * (1.3 * ((elapsed * 0.8) % 1) - 0.15);
+    for (const [form, { glow }] of body.forms) {
+      const rim = form === body.form ? protection : 0;
+      const lit = form === body.form ? white : 0;
+      glow.fill
+        .set(1, 0.8, 0.4)
+        .multiplyScalar(rim * 0.06)
+        .addScalar(lit * 1.3);
+      glow.rim
+        .set(1, 0.78, 0.3)
+        .multiplyScalar(rim * 2.4)
+        .addScalar(lit);
+      glow.sweep.set(sweepY, rim * 0.8);
+    }
   }
 
   /** Where the current form's shots leave the model: its head bone, nudged out along the facing. */
@@ -912,6 +1132,7 @@ export function* createRunView(
     debugHeight: (x, z) => Math.max(ground(x, z), uniforms.uLiquidTop.value) + 0.12,
     megaShatters: vfx.megaShatters,
     assistPops: vfx.assistPops,
+    drawn: { enemies: drawnEnemies, players: drawnPlayers },
     frame(alpha, dt, events, localYaw, remotePlayerSpeeds) {
       elapsed += dt;
       // Seats stay in order. On a team wipe hold the last fight, rather than cutting back to the body.
@@ -927,10 +1148,24 @@ export function* createRunView(
         if ((event.t === "evolve" || event.t === "mega") && mine) shake.add(TRAUMA.evolve);
         if (event.t === "mega")
           avatars.find((body) => body.player.id === event.player)!.shown.mega = event.form;
+        if (event.t === "evolve") {
+          const body = avatars.find((avatar) => avatar.player.id === event.player)!;
+          body.evolving = { from: body.evolving?.from ?? body.form, age: 0 };
+        }
+        if (event.t === "revive")
+          avatars.find((body) => body.player.id === event.player)!.revived = 0;
         if (event.t === "ult" && mine) shake.add(TRAUMA.ultCast);
         if (event.t === "ult-pulse" && mine) shake.add(ULT_KNOCK[event.look] ?? 0);
         // combat flags the guardian's death as elite too.
         if (event.t === "death" && event.elite) shake.add(TRAUMA.bigKill);
+        if (event.t === "death")
+          bodies.died(
+            event.id,
+            event.species,
+            event.x,
+            event.z,
+            event.elite ? (event.species === guardian ? "guardian" : "elite") : "swarm",
+          );
         fieldSites.handle(event, world);
         // A shiny's entrance: a star burst where it appears.
         if (event.t === "shiny")
@@ -941,7 +1176,8 @@ export function* createRunView(
       // Real time drives the hit shake so it keeps going through hit-stop (dt slowed), but it stops
       // with the game while frozen (dt 0: pause, level-up choice, end screen).
       const now = performance.now() / 1000;
-      if (dt > 0) hitClock += now - lastFrameAt;
+      const realStep = dt > 0 ? now - lastFrameAt : 0;
+      hitClock += realStep;
       lastFrameAt = now;
       vfx.tells.select(world, alpha, ground, subject.player);
       frameEnemies(alpha, yaw, hitClock, dt);
@@ -950,8 +1186,9 @@ export function* createRunView(
       landmark.update(world, elapsed);
       exitPortal.update(world, elapsed, local);
       beacons.update(world, elapsed);
+      drawnPlayers.clear();
       for (const body of avatars)
-        frameAvatar(body, alpha, dt, remotePlayerSpeeds?.get(body.player.id));
+        frameAvatar(body, alpha, dt, realStep, remotePlayerSpeeds?.get(body.player.id));
       deployment.frame(yaw);
       identities.update(alpha, dt);
       footprints?.update(alpha, dragBone);
@@ -973,6 +1210,7 @@ export function* createRunView(
       frameOcclusion(feet, dt);
       foliage.update(camera, feet);
       dressing.update(camera);
+      backdrop?.update(camera);
       decoration?.update?.(cameraTarget);
       water?.update(cameraTarget.x, cameraTarget.z);
       weather?.frame(world.weather, world.time - (1 - alpha) * TICK, cameraTarget, dt);
@@ -990,6 +1228,7 @@ export function* createRunView(
       warming = on;
       weather?.warm(on);
       for (const mesh of shinyMeshes.values()) mesh.visible = on || mesh.count > 0;
+      if (guardianTrail) guardianTrail.visible = on || guardianTrail.count > 0;
       deployment.root.visible = on || deployment.elapsed !== null;
       for (const body of avatars)
         for (const [form, mounted] of body.forms) mounted.holder.visible = on || form === body.form;
@@ -1006,6 +1245,7 @@ export function* createRunView(
       groundLayers.structure.dispose();
     },
     dispose() {
+      setWorldGrade(defaultGrade);
       for (const body of avatars) for (const mounted of body.forms.values()) mounted.rig.unmount();
       vfx.dispose();
       for (const item of disposables) item.dispose();

@@ -124,17 +124,31 @@ export const passiveLooks: Record<
   caretaker: {
     name: "照料",
     icon: "heart",
-    detail: `本局收服的同伴伤害 +${pct(TRAINER.caretaker.damage)}%、攻击间隔 −${pct(TRAINER.caretaker.interval)}%`,
+    detail: `本局收服的同伴伤害 +${pct(TRAINER.caretaker.damage)}%、攻击间隔 -${pct(TRAINER.caretaker.interval)}%`,
   },
 };
 
-/** The lobby tip for a trainer's kit: the item with its cooldown, then the passive. */
-export function kitTip(id: TrainerId): string {
+/** The lobby tip for a trainer's kit: the item (art, name, effect, cooldown), then the passive. */
+export function kitTip(id: TrainerId): {
+  icon: { src: string } | { glyph: (typeof passiveLooks)[Passive]["icon"] };
+  name: string;
+  text: string;
+  cooldown?: number;
+}[] {
   const { assist, passive } = trainerKits[id];
   return [
-    `${assistNames[assist]} · ${assistLooks[assist].detail} · 冷却 ${TRAINER.cooldown} 秒`,
-    `${passiveLooks[passive].name} · ${passiveLooks[passive].detail}`,
-  ].join("\n");
+    {
+      icon: { src: assistLooks[assist].icon },
+      name: assistNames[assist],
+      text: assistLooks[assist].detail,
+      cooldown: TRAINER.cooldown,
+    },
+    {
+      icon: { glyph: passiveLooks[passive].icon },
+      name: passiveLooks[passive].name,
+      text: passiveLooks[passive].detail,
+    },
+  ];
 }
 
 export const XIAQING_UNLOCK_KILLS = 5000;

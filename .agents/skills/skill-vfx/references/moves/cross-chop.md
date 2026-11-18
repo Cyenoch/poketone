@@ -7,7 +7,7 @@
 ## 设计
 
 - 意图 / 签名：交叉掌刃、X 形短闪、末击定格感。
-- 模拟几何与时序：length 2.5，half-angle .8，count 2；delay .08+i×.14，active .16 s。数值以 `src/run/sim/content/moves.ts` 与对应 archetype 为准，画面读取实例。
+- 模拟几何与时序：length 4.4，half-angle .8，count 2；delay .08+i×.14，active .16 s。数值以 `src/run/sim/content/moves.ts` 与对应 archetype 为准，画面读取实例。
 - 阶段：每拳 80 ms 拳形前摇 → 落拳 320 ms 回声，X 形双刃从高处劈落 → 末拳 +100 ms 与裂纹。
 - 保留与避让：X 在扇形内部，不是全屏闪光；同向连击。
 - 分层：新增 fist 拳形精灵；其余为既有贴花 / ribbon / 精灵 / ORB。

@@ -13,6 +13,7 @@ import {
 import type { Terrain } from "../sim/terrain";
 import type { RunAssets } from "./assets";
 import { lambertCopy } from "./materials";
+import { NOISE_GLSL } from "./environment/noise";
 import { inject, patchShader } from "./patchShader";
 import { glslVec, type ArchitectureLook } from "./stageThemes";
 
@@ -73,20 +74,44 @@ export function createGridWalls(
         vWallY=vMasonry.y-aWallExtent.x;vWallHeight=aWallExtent.y;`,
     });
     shader.fragmentShader = inject(shader.fragmentShader, key, {
-      "#include <common>":
-        "#include <common>\nvarying vec3 vMasonry;\nvarying float vWallY;\nvarying float vWallHeight;",
+      "#include <common>": `#include <common>\nvarying vec3 vMasonry;\nvarying float vWallY;\nvarying float vWallHeight;\n${NOISE_GLSL}`,
       "#include <color_fragment>": `#include <color_fragment>
+        // Same coursed ashlar as the tower exterior (0.55 m courses, 1.2 m stones, half bond),
+        // so the parapet and the hall walls read as one building with the drop below.
         vec3 face=abs(normalize(cross(dFdx(vMasonry),dFdy(vMasonry))));
-        vec2 uv=vec2(face.x>face.z?vMasonry.z:vMasonry.x,vMasonry.y);
-        float row=floor(uv.y/0.42);uv.x+=mod(row,2.0)*0.46;
-        vec2 tile=fract(uv/vec2(0.92,0.42));
-        vec2 edge=min(tile,1.0-tile)*vec2(0.92,0.42);
-        float seam=1.0-smoothstep(0.012,0.03,min(edge.x,edge.y));
-        float tone=0.92+0.12*fract(sin(dot(floor(uv/vec2(0.92,0.42)),vec2(17.1,53.7)))*43758.5453);
-        diffuseColor.rgb*=tone*mix(1.0,0.5,seam);
-        diffuseColor.rgb*=mix(0.6,1.0,smoothstep(0.0,0.45,vWallY));
-        float cap=max(step(vWallHeight-0.15,vWallY),step(0.8,face.y));
-        diffuseColor.rgb=mix(diffuseColor.rgb,${glslVec(new Color(look.cap).toArray())},cap*0.8);`,
+        vec2 uv=vec2(face.x>face.z?vMasonry.z:vMasonry.x,vWallY);
+        float row=floor(uv.y/0.55);uv.x+=mod(row,2.0)*0.6;
+        vec2 block=floor(uv/vec2(1.2,0.55));
+        vec2 tile=fract(uv/vec2(1.2,0.55));
+        vec2 edge=min(tile,1.0-tile)*vec2(1.2,0.55);
+        // Worn arrises: the joint line wanders and opens where the stone has chipped.
+        float chip=envNoise(uv*7.0)*0.025*smoothstep(0.45,0.8,envNoise(uv*1.3+block*0.37));
+        float seam=1.0-smoothstep(0.014,0.034,min(edge.x,edge.y)-chip);
+        float blockSeed=envHash(block);
+        float tone=0.82+0.24*blockSeed+(envNoise(uv*0.35)-0.5)*0.16;
+        vec3 hue=blockSeed<0.3?vec3(1.04,0.98,0.95):blockSeed<0.6?vec3(0.96,0.97,1.02):vec3(1.0);
+        diffuseColor.rgb*=hue*tone*mix(1.0,0.5,seam);
+        // Damp creeps up from the floor, with a little moss in the lowest joints.
+        float wallDamp=(1.0-smoothstep(0.0,0.9,vWallY))*(0.5+0.5*envNoise(uv*vec2(0.8,0.3)));
+        diffuseColor.rgb*=1.0-wallDamp*0.3;
+        float moss=seam*wallDamp*smoothstep(0.45,0.7,envNoise(uv*2.3));
+        diffuseColor.rgb=mix(diffuseColor.rgb,vec3(0.16,0.19,0.11),moss*0.7);
+        diffuseColor.rgb*=mix(0.62,1.0,smoothstep(0.0,0.45,vWallY));
+        // Coping: a lighter capstone course with its own joints, a drip shadow beneath its lip.
+        float copeY=vWallY-(vWallHeight-0.22);
+        float cap=max(step(0.0,copeY),step(0.8,face.y));
+        // Side faces joint along the course; the top joints every 0.7 m along both axes.
+        vec2 copeUv=face.y>0.8?vMasonry.xz/0.7:vec2(uv.x/0.7,0.5);
+        vec2 copeCell=fract(copeUv);
+        float capJoint=1.0-smoothstep(0.01,0.03,min(min(copeCell.x,1.0-copeCell.x),face.y>0.8?min(copeCell.y,1.0-copeCell.y):1.0)*0.7);
+        float drip=(1.0-smoothstep(0.0,0.07,-copeY))*step(copeY,0.0)*(1.0-step(0.8,face.y));
+        vec3 coping=${glslVec(new Color(look.cap).toArray())}*(0.84+0.26*envHash(floor(copeUv)))
+          *(0.9+0.2*envNoise(vMasonry.xz*1.7+vMasonry.y))*mix(1.0,0.6,capJoint);
+        diffuseColor.rgb=mix(diffuseColor.rgb,coping,cap);
+        diffuseColor.rgb*=1.0-drip*0.45;`,
+      // Weathered stone holds less of the night's blue than the floor: the exterior's dusky lilac-grey.
+      "#include <fog_fragment>": `gl_FragColor.rgb=mix(vec3(dot(gl_FragColor.rgb,vec3(0.3,0.59,0.11))),gl_FragColor.rgb,0.55);
+        #include <fog_fragment>`,
     });
   });
   const mesh = new InstancedMesh(geometry, material, runs.length);
@@ -150,6 +175,7 @@ export function createGridWalls(
     const geo = source.geometry.clone(),
       mat = lambertCopy(source.material);
     mat.flatShading = true;
+    duskStone(mat);
     geo.computeBoundingBox();
     const size = geo.boundingBox!.getSize(new Vector3());
     const inst = new InstancedMesh(geo, mat, placed.length);
@@ -157,7 +183,14 @@ export function createGridWalls(
       const scale = box.getSize(new Vector3());
       box.getCenter(dummy.position);
       dummy.position.y = box.min.y;
-      dummy.scale.set(scale.x / size.x, scale.y / size.y, scale.z / size.z);
+      // Lay the model's long side along the component's long side instead of squashing it across.
+      const turn = size.x >= size.z !== scale.x >= scale.z;
+      dummy.rotation.y = turn ? Math.PI / 2 : 0;
+      dummy.scale.set(
+        (turn ? scale.z : scale.x) / size.x,
+        scale.y / size.y,
+        (turn ? scale.x : scale.z) / size.z,
+      );
       dummy.updateMatrix();
       inst.setMatrixAt(i, dummy.matrix);
     });
@@ -175,4 +208,14 @@ export function createGridWalls(
       }
     },
   };
+}
+
+/** The tombs and columns share the walls' dusky lilac-grey: same desaturation after lighting. */
+export function duskStone(material: MeshLambertMaterial) {
+  patchShader(material, "tower-dusk-stone", (shader) => {
+    shader.fragmentShader = inject(shader.fragmentShader, "tower-dusk-stone", {
+      "#include <fog_fragment>": `gl_FragColor.rgb=mix(vec3(dot(gl_FragColor.rgb,vec3(0.3,0.59,0.11))),gl_FragColor.rgb,0.55);
+        #include <fog_fragment>`,
+    });
+  });
 }

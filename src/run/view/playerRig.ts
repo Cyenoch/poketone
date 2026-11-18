@@ -13,7 +13,7 @@ import {
   type Material,
   type Object3D,
 } from "three";
-import { formModels, type PlayerModel } from "./assets";
+import { formModels, pickClip, type PlayerModel } from "./assets";
 import { shadeUnderClouds } from "./environment/clouds";
 import type { WindUniforms } from "./environment/wind";
 import { creatureLook, lambertCopy, ownShadowDepth, shinyLook } from "./materials";
@@ -40,10 +40,6 @@ export interface PlayerRig {
   footFloor(): number;
   /** Takes the model off the avatar and frees what the rig made (the caller owns the model). */
   unmount(): void;
-}
-
-function pickClip(names: string[], wanted: string[]): string | undefined {
-  return names.find((name) => wanted.some((w) => name.toLowerCase().includes(w)));
 }
 
 /**
@@ -103,7 +99,7 @@ export function mountRig(
       const outline = new SkinnedMesh(mesh.geometry, outlineInk);
       outline.bind(mesh.skeleton, mesh.bindMatrix);
       outline.frustumCulled = false;
-      // After the effect layers (vfx.ts) and health bars, before the seat rings and beacons.
+      // After the effect layers (vfx.ts), before the seat rings, health bars and beacons.
       outline.renderOrder = 50;
       mesh.parent?.add(outline);
       ghosts.push(outline);

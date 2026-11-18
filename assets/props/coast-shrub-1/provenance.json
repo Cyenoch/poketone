@@ -1,11 +1,22 @@
 {
-  "generator": "assets/props/build-map-props.py",
-  "seed": 2999244169,
-  "source": "Original scripted geometry; no external assets",
-  "triangles": 800,
-  "materials": 1,
-  "vertexColors": true,
-  "units": "metres",
-  "sha256": "8cdf3aeab68e0d310d4821696d6b0007983ba0e847835641a446ba97b5855fd2",
-  "tripoCredits": 0
+  "set": "shrubs",
+  "repaint": {
+    "leaf": ["#264a2c", "#7d9c55"]
+  },
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "props/shrubs/generation/tripo-out/tripo-out/poketone-shrubs-aab6cedb/model.glb",
+  "tripoSourceSha256": "e2b7c266ea0485dc7768c5a3ebd38f3cd8fde345eb847454616a77edaa26b80b",
+  "tripoTask": "aab6cedb-ecfd-444d-9e38-0046bae3fad8",
+  "tripoType": "image_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 1282,
+  "dimensions": [0.4579, 0.2387, 0.3659],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "a2298dd971176d90cf48bb8ad82fb37ba1c643e45ef9d3f4d7b40f27d1f9d21c"
 }

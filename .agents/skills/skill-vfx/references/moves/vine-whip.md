@@ -10,7 +10,7 @@ Signature traits
 Reference game: two dark-leaf ribbons from the player swinging to opposite sides (the second
 smaller), a twinkle at the tip, a small leaf burst.
 
-Sim: strike fan, length 1.4, half-angle 1.2 rad, count 1 → lashes alternate direction, each life
+Sim: strike fan, length 3.7, half-angle 1.2 rad, count 1 → lashes alternate direction, each life
 0.22 s (+0.12 s stagger per extra lash).
 
 Keep: two-vine read, fast swing with smear, tip spark. Avoid: smear wider than the fan.

@@ -7,6 +7,18 @@
  * late build can't spam it. Fitted with the balance model to ~60–90 s per use (docs/BALANCE.md 终极技).
  */
 export const ULT_CHARGE = { time: 1 / 210, perXp: 0.004, room: 0.01 } as const;
+/** Fractions of a full bar. Nearby counts visible enemy centres in world units, sampled once a second. */
+export const ULT_CRISIS = {
+  perHpBar: 0.45,
+  radius: 4.5,
+  threshold: 3,
+  eliteWeight: 2,
+  guardianWeight: 3,
+  perBody: 0.005,
+  maxSurroundPerSecond: 0.025,
+  windowSeconds: 45,
+  cap: 0.45,
+} as const;
 /** Base damage per pulse (× pulse `mul`), growing with level and tier like the reference. */
 export const ULT_DMG = { base: 30, perLevel: 0.1, tier: [1, 1.15, 1.3] } as const;
 /** Seconds of invulnerability from firing an ultimate. */

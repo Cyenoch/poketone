@@ -214,6 +214,74 @@ test("a wave rolls outward, shoves along its travel, and a rock shelters only it
   assert.ok(!hurt(lee), "the rock is on this enemy's lane");
 });
 
+test("a held flamethrower turns back onto the enemy after its caster passes it", () => {
+  const world = arena();
+  const target = dummy(world, 2, 0);
+  let hpAfterFirstHit;
+  fight(world, ["flamethrower"], 0.45, (tick) => {
+    if (tick === 1) {
+      hpAfterFirstHit = target.hp;
+      world.players[0].x = 5;
+    }
+  });
+  assert.ok(hpAfterFirstHit < target.maxHp && target.hp < hpAfterFirstHit);
+});
+
+test("a tracking cone holds its last acquired heading after losing sight", () => {
+  const world = arena();
+  const enemy = dummy(world, 2, 0);
+  fight(world, ["flamethrower"], 0.25, (tick) => {
+    if (tick === 1) {
+      enemy.x = 0;
+      enemy.z = 3;
+    }
+    if (tick === 2) {
+      // It already turned; neither the obscured target nor the caster's facing can redirect it.
+      enemy.x = -3;
+      enemy.z = 0;
+      world.map.obstacles = [rock(-1.5, 0, 0.5)];
+      world.players[0].faceX = 1;
+      world.players[0].faceZ = 0;
+    }
+  });
+  const [cone] = world.areas;
+  assert.ok(cone.dirZ > 0.99 && Math.abs(cone.dirX) < 0.01);
+});
+
+test("sleep cones keep hitting their original sector when a closer target appears behind", () => {
+  for (const move of ["sleep-powder", "hypnosis"]) {
+    const world = arena();
+    const front = dummy(world, 2.5, 0);
+    let behind, firstHp;
+    fight(world, [move], 0.45, (tick) => {
+      if (tick === 1) {
+        firstHp = front.hp;
+        behind = dummy(world, -2, 0);
+      }
+    });
+    assert.ok(front.hp < firstHp && !hurt(behind), move);
+  }
+});
+
+test("Psyshock's count upgrade reaches another distinct body through a crowded chain", () => {
+  const baseHits = moves.psyshock.count + 1; // First target plus jumps.
+  const extraJumps = 3;
+  const hitCount = (extra) => {
+    const world = arena();
+    // Spent neighbours must not hide the final, still reachable link.
+    const targets = Array.from({ length: baseHits + extraJumps - 1 }, (_, i) =>
+      dummy(world, 2 + i * 0.1, 0),
+    );
+    targets.push(dummy(world, 5, 0));
+    fight(world, ["psyshock"], TICK, () => {
+      world.players[0].moves[0].mods.count = extra;
+    });
+    return targets.filter(hurt).length;
+  };
+  assert.equal(hitCount(0), baseHits);
+  assert.equal(hitCount(extraJumps), baseHits + extraJumps);
+});
+
 test("a nova strikes every enemy within its radius around the caster once, and nothing beyond", () => {
   const world = arena();
   const r = moves["lava-plume"].area;

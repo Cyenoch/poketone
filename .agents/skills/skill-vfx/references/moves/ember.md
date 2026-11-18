@@ -10,7 +10,7 @@ Signature traits
 Reference game: head = pixel flame sprite with a soft fire glow ≈ 1.3× its size; trail of tiny
 square embers with gravity (≈ 0.35 s); hit = four small flame puffs and a small smoke puff.
 
-Sim: speed 20, dur 0.9 s, radius 0.22, pierce 0, cd 0.9 s (basic tier).
+Sim: speed 20, dur 0.9 s, radius 0.22, pierce 0, cd 1 s (basic tier).
 
 Keep: tiny bright head, short ember trail, small hit puff. Avoid: big halos, ground decals in
 flight, scorch bigger than the head's hit.

@@ -40,6 +40,7 @@ import { cubicBezier } from "./focus-mark";
 import { EASE, idleTicked, patternDrift, SNAP } from "./motion";
 import { themeColors } from "./run-theme";
 import { SLANT, srgb, ui } from "./tokens";
+import { crestSrc } from "./type-icon";
 
 /** A form's model as the lobby shows it: the store's copy, unit high, centred, facing the camera. */
 interface Staged {
@@ -426,7 +427,7 @@ export class LobbyScene {
     u.cardB!.value = card;
     u.cardBOn!.value = 0;
     display(themeColors(type).theme, u.themeB!.value as Color);
-    const crest = this.view(`/art/icons/crests/${type}.webp`, "art", () => {
+    const crest = this.view(crestSrc(type), "art", () => {
       if (u.crest!.value === crest) u.crestOn!.value = 1;
       this.dirty = true;
     });

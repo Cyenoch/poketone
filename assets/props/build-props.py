@@ -1,12 +1,12 @@
-"""Hand-built low-poly sources for the round tree, the bush and the coconut palm (Blender 5.2).
+"""Hand-built low-poly source for the coconut palm (Blender 5.2).
 
 Run: blender --background --factory-startup --python assets/props/build-props.py
-Then: bun run assets:game tree bush palm
+Then: bun run assets:game palm
 
-The Tripo exports for these two were open, self-intersecting shard shells (kept beside this script as
-the archive); leafy round canopies are where smart_low_poly fails. These are closed icosphere clumps
-with a few vertex-colour bands, one mesh and one material, so the shipping pipeline treats them like
-any other source GLB. Seeded, so reruns are identical.
+The palm's Tripo export was an open, self-intersecting shard shell (kept beside this script as the
+archive). This one is closed icosphere clumps and fronds with a few vertex-colour bands, one mesh and
+one material, so the shipping pipeline treats it like any other source GLB. Seeded, so reruns are
+identical. The round tree is a Tripo model composed by assets/props/compose-tripo-props.py, its only source.
 """
 import bmesh
 import bpy
@@ -51,59 +51,12 @@ class Clump:
         return Vector((d.x, d.y, d.z / self.squash)).length / self.radius
 
 
-def trunk(bm, rings):
-    """Six-sided tapered column through (height, radius) rings, base capped."""
-    sides = 6
-    loops = []
-    for z, r in rings:
-        loops.append([
-            bm.verts.new((r * math.cos(a), r * math.sin(a), z))
-            for a in (2 * math.pi * i / sides + math.pi / sides for i in range(sides))
-        ])
-    for lower, upper in zip(loops, loops[1:]):
-        for i in range(sides):
-            j = (i + 1) % sides
-            bm.faces.new((lower[i], lower[j], upper[j], upper[i]))
-    bm.faces.new(list(reversed(loops[0])))
-    bm.faces.new(loops[-1])
-    return [v for loop in loops for v in loop]
-
-
 def mix(a, b, t):
     return [x + (y - x) * t for x, y in zip(a, b)]
 
 
 # Leaf ramp (albedo as it renders, before lighting): blue-green shade, olive mid, warm sunlit top.
 LEAF_SHADE, LEAF_MID, LEAF_LIT = srgb("2a4a3c"), srgb("6a8f52"), srgb("bccf96")
-
-
-def leaf_color(co, own, clumps, z0, z1):
-    """Each clump lit on top and dark underneath, the whole canopy darker low down, and creases
-    darker where one clump tucks into another (baked occlusion between leaf masses)."""
-    canopy = min(max((co.z - z0) / (z1 - z0), 0.0), 1.0)
-    up = (co - own.center).normalized().z * 0.5 + 0.5
-    t = 0.2 + 0.3 * canopy + 0.5 * up
-    crease = max((max(0.0, 1.0 - (c.depth(co) - 1.0) / 0.35) for c in clumps if c is not own), default=0.0)
-    t *= 1.0 - 0.5 * min(crease, 1.0)
-    c = mix(LEAF_SHADE, LEAF_MID, t / 0.55) if t < 0.55 else mix(LEAF_MID, LEAF_LIT, (t - 0.55) / 0.45)
-    # Neighbouring clumps differ slightly: some warmer and yellower, some cooler.
-    return mix(c, [c[0] * 1.12, c[1] * 1.04, c[2] * 0.85] if own.tint > 0 else [c[0] * 0.9, c[1], c[2] * 1.08], abs(own.tint) * 0.5)
-
-
-def paint(bm, clumps, z0, z1, bark=(), bark_ramp=None):
-    """Vertex colours: bark is a plain low-to-high ramp, leaves go through `leaf_color`."""
-    layer = bm.loops.layers.color.new("Col")
-    owner = {v: c for c in clumps for v in c.verts}
-    bark = set(bark)
-    for face in bm.faces:
-        for loop in face.loops:
-            v = loop.vert
-            if v in bark:
-                low, high, b0, b1 = bark_ramp
-                rgb = mix(low, high, min(max((v.co.z - b0) / (b1 - b0), 0.0), 1.0))
-            else:
-                rgb = leaf_color(v.co, owner[v], clumps, z0, z1)
-            loop[layer] = (*rgb, 1.0)
 
 
 def finish(bm, name):
@@ -129,54 +82,6 @@ def finish(bm, name):
     out.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.export_scene.gltf(filepath=str(out), export_format="GLB", export_vertex_color="MATERIAL")
     print(f"{name}: {len(mesh.polygons)} triangles -> {out.relative_to(PROPS.parent)}")
-
-
-def ring(bm, rng, count, reach, z, radius, squash, lumpy):
-    """Clumps spaced around the canopy's middle, each nudged so the ring isn't regular."""
-    start = rng.uniform(0, 2 * math.pi)
-    out = []
-    for i in range(count):
-        a = start + 2 * math.pi * i / count + rng.uniform(-0.25, 0.25)
-        r = reach * rng.uniform(0.9, 1.1)
-        out.append(clump(bm, rng, (r * math.cos(a), r * math.sin(a), z + rng.uniform(-0.05, 0.05)),
-                         radius * rng.uniform(0.88, 1.1), squash, lumpy))
-    return out
-
-
-def build_tree():
-    """Chunky trunk under six big rounded leaf lobes (a core, a crown and a ring of four), a
-    cauliflower canopy; only the trunk is in the bottom quarter (collision). Top stays at ~1.13 so the
-    trunk keeps its in-game width."""
-    rng = random.Random(7)
-    bm = bmesh.new()
-    bark = trunk(bm, [(0.0, 0.125), (0.1, 0.105), (0.55, 0.075), (0.85, 0.055)])
-    clumps = [
-        clump(bm, rng, (0.0, 0.0, 0.8), 0.27, 0.9, 0.07),
-        clump(bm, rng, (0.02, -0.01, 0.958), 0.2, 0.9, 0.07),
-        *ring(bm, rng, 4, 0.27, 0.66, 0.21, 0.88, 0.07),
-    ]
-    leaves = [v for c in clumps for v in c.verts]
-    # The game centres props on their bounding box, so centre the canopy over the trunk.
-    for axis in (0, 1):
-        mid = (min(v.co[axis] for v in leaves) + max(v.co[axis] for v in leaves)) / 2
-        for v in leaves:
-            v.co[axis] -= mid
-        for c in clumps:
-            c.center[axis] -= mid
-    paint(bm, clumps, 0.45, 1.12, bark, (srgb("3a2416"), srgb("6b4a30"), 0.0, 0.6))
-    finish(bm, "tree")
-
-
-def build_bush():
-    """Low mound of overlapping clumps, no stem or flowers (a red dot read as a pickup)."""
-    rng = random.Random(11)
-    bm = bmesh.new()
-    clumps = [
-        clump(bm, rng, (0.0, 0.0, 0.38), 0.32, 0.95, 0.08),
-        *ring(bm, rng, 4, 0.22, 0.24, 0.2, 0.9, 0.09),
-    ]
-    paint(bm, clumps, 0.05, 0.72)
-    finish(bm, "bush")
 
 
 def frond(bm, rng, z0, angle, length, lift, droop, width):
@@ -311,9 +216,5 @@ def build_palm():
     finish(bm, "palm")
 
 
-bpy.ops.wm.read_factory_settings(use_empty=True)
-build_tree()
-bpy.ops.wm.read_factory_settings(use_empty=True)
-build_bush()
 bpy.ops.wm.read_factory_settings(use_empty=True)
 build_palm()

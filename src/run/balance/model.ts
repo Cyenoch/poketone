@@ -208,6 +208,8 @@ import {
   type HpState,
   type Save,
 } from "./survival";
+import { ULT_CRISIS as CRISIS } from "../sim/content/params/ultimates";
+import { crisisCredit, surroundCharge } from "../sim/ultimates/crisis";
 import { ultCast, ultChargeRate, ultimateTiming, type UltimateTiming } from "./ultimate";
 import { ROUTE_TIERS, routeFields, type RouteStep } from "../sim/content/campaign";
 import { rollExitMarkers, rollRouteModifier } from "../sim/content/route";
@@ -1326,6 +1328,8 @@ export type RunOptions = (
   mega?: { branch: MegaBranch; grant?: MegaGrant };
   /** Analysis-only historical comparison; defaults are read from shared sim parameters. */
   ultimateTiming?: UltimateTiming;
+  /** Paired analytical control only. Actual runs always have crisis charge. */
+  crisisCharge?: boolean;
   /** Pass [] for the unmodified control with a challenge report. */
   rules?: readonly RuleId[];
 };
@@ -1418,6 +1422,7 @@ const BOSS_CONTACT = { perCycle: 1, share: 1, contact: true } as const;
 /** One stream of hits on the player: hits per second and damage per hit after armor. */
 export interface Hits {
   element?: ElementType;
+  environment?: true;
   rate: number;
   dmg: number;
   /** Swarm contact arrives as catches (cornered for several hits); other streams are plain Poisson. */
@@ -2437,7 +2442,7 @@ export function damageEvents(
   guard: { partners: number; ready: number },
   dodged: number,
   overflow: number,
-): { events: DamageEvent[]; landed: number; meanDps: number } {
+): { events: DamageEvent[]; landed: number; meanDps: number; environmentDps: number } {
   const evaded = 1 - defence.evasion;
   const plain = hits.filter((h) => !h.clumped && h.rate > 0);
   const contact = hits.filter((h) => h.clumped && h.rate > 0);
@@ -2455,6 +2460,7 @@ export function damageEvents(
   const ready = S > 0 ? rest + (1 - rest) * topped : 0;
   const events: DamageEvent[] = [];
   let meanDps = 0;
+  let environmentDps = 0;
   const share = (dmg: number) => dmg / maxHp;
   for (const h of plain) {
     const pmf = hitPmf(share(h.dmg));
@@ -2464,7 +2470,9 @@ export function damageEvents(
     }
     const rate = h.rate * evaded * block;
     events.push({ rate, pmf });
-    meanDps += rate * (h.dmg - ready * Math.min(S, h.dmg));
+    const dps = rate * (h.dmg - ready * Math.min(S, h.dmg));
+    meanDps += dps;
+    if (h.environment) environmentDps += dps;
   }
   if (catchRate > 0) {
     const hit = contact.reduce((sum, h) => sum + h.rate * h.dmg, 0) / (contactRate / evaded);
@@ -2484,7 +2492,12 @@ export function damageEvents(
     for (let k = 0; k <= BINS; k++) mean += pmf[k]! * k;
     meanDps += (catchRate * mean * maxHp) / BINS;
   }
-  return { events, landed: plainRate * block + contactRate - catchRate * guardBack, meanDps };
+  return {
+    events,
+    landed: plainRate * block + contactRate - catchRate * guardBack,
+    meanDps,
+    environmentDps,
+  };
 }
 
 /** The HP process' saves: what each restores and the share of catch deaths it outlasts. */
@@ -3484,8 +3497,13 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
     ...(siteStep && siteStep.damage > 0 ? [{ rate: 1, dmg: siteStep.damage * m.armor }] : []),
     ...(eruption
       ? [
-          { rate: eruption.bombs, dmg: ERUPTION.dmg * m.armor * weatherFactor(weather, "fire") },
           {
+            environment: true as const,
+            rate: eruption.bombs,
+            dmg: ERUPTION.dmg * m.armor * weatherFactor(weather, "fire"),
+          },
+          {
+            environment: true as const,
             rate: eruption.pools,
             dmg: ERUPTION.dmg * ZONE_GUARDIAN.pool * m.armor * weatherFactor(weather, "fire"),
           },
@@ -3501,15 +3519,17 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
     projection.slow = swarm.slowUptime;
     projection.electricRate = swarm.electricRate;
   }
-  const poison =
+  const enemyDrain =
     (m.ability === "magic-guard"
       ? 0
       : m.ability === "shed-skin"
         ? DEEP_PARAMETERS.shedSkinPoisonFactor
         : 1) *
-      (1 - (player.trainerProjection ? assistPoisonCover(player.trainerProjection) : 0)) *
-      poisonUptime *
-      drainAt(statuses.poison, clock) +
+    (1 - (player.trainerProjection ? assistPoisonCover(player.trainerProjection) : 0)) *
+    poisonUptime *
+    drainAt(statuses.poison, clock);
+  const poison =
+    enemyDrain +
     // 闪焰冲锋's recoil wears HP like poison: down to 1 HP, never lethal.
     m.maxHp * recoilShare(player, stats, weather, track.living);
 
@@ -3776,7 +3796,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   const party = track.partners.length;
   const guard = { partners: party, ready: party > 0 ? guardedShare(catches, m.guardRest) : 0 };
   const exposedHits = hits.map((h) => ({ ...h, rate: h.rate * exposed }));
-  const { events, landed, meanDps } = damageEvents(
+  const { events, landed, meanDps, environmentDps } = damageEvents(
     exposedHits,
     m.maxHp,
     skill.burst,
@@ -3848,6 +3868,24 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   const cured = Math.min(track.cureLeft, poisonUptime * STEP);
   track.cureLeft -= cured;
   const curedDrain = (cured / STEP) * drainAt(statuses.poison, clock);
+  if (options.crisisCharge !== false && !ultimateBusy && ultimateExposed === 1) {
+    const eliteBodies = track.elites.reduce((sum, cohort) => sum + cohort.n, 0);
+    const eliteDensity = targetFor(field, eliteBodies, skill).density;
+    const nearby =
+      TERRAIN_SIGHT *
+      ((target.density + eliteDensity * CRISIS.eliteWeight) * Math.PI * CRISIS.radius ** 2 +
+        (boss ? CRISIS.guardianWeight * Math.min(1, CRISIS.radius ** 2 / AIM_DISTANCE ** 2) : 0));
+    const lostShare = Math.min(
+      track.frac,
+      ((meanDps - environmentDps + Math.max(0, enemyDrain - curedDrain)) * STEP) / m.maxHp,
+    );
+    track.ultCharge += crisisCredit(
+      player.crisis,
+      Math.round(t / TICK),
+      track.ultCharge,
+      lostShare * CRISIS.perHpBar + surroundCharge(nearby) * STEP,
+    );
+  }
   const aliveBefore = track.alive;
   stepHp(track.hp, {
     events,

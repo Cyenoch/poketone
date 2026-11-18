@@ -31,12 +31,12 @@ FORMS = {
     'alakazam': dict(body=-.07, joint=.36, head=(.63,.72), waist=(.31,.48),
                      arms=[((-.10,.17,.64),(-.08,.31,.46),(.15,.41,.47))],
                      frames=24, duty=.25, stride=.34, lift=.10, crouch=.035, bob=.015, lean=.12, swing=.20),
-    'geodude': dict(arms=[((0,.40,.5),(.02,.78,.45),(.12,1.1,.64))], frames=30, wave=2.6),
+    'geodude': dict(arms=[((0,.40,.5),(.02,.78,.45),(.12,1.1,.64))], frames=30, wave=2.6, pump=(.55,.16,.5,.3)),
     'graveler': dict(joint=.18, arms=[((0,.29,.38),(.03,.45,.28),(.13,.55,.18)),
                                      ((0,.28,.65),(.0,.48,.78),(.06,.48,.94))],
-                     frames=24, duty=.17, stride=.19, lift=.065, crouch=.035, bob=.012, lean=.04, swing=.18),
+                     frames=24, duty=.17, stride=.19, lift=.065, crouch=.035, bob=.012, lean=.04, pump=(.4,.12,.35,.2)),
     'golem': dict(joint=.29, arms=[((.04,.30,.56),(.08,.40,.49),(.20,.47,.57))],
-                  frames=24, duty=.22, stride=.27, lift=.075, crouch=.035, bob=.015, lean=.06, swing=.22),
+                  frames=24, duty=.22, stride=.27, lift=.075, crouch=.035, bob=.015, lean=.06, pump=(.6,.14,.5,.22)),
 }
 
 
@@ -264,11 +264,22 @@ def build(name):
                 solve_leg(rig,side,feet[side]+Vector((fwd,0,up)))
             for index in range(len(cfg['arms'])):
                 prefix='Upper' if index else ''
-                swing=(cfg.get('swing',.16) if moving else .04)*math.sin(2*math.pi*t+sign*math.pi/2-index*.5)
+                phase=2*math.pi*t+sign*math.pi/2-index*.5
+                if 'pump' in cfg:
+                    # Arms held out sideways swing fore and aft about the up axis and curl the forearm up as the
+                    # fist comes forward; idle flexes both arms together.
+                    swing_run,swing_idle,flex_run,flex_idle=cfg['pump']
+                    swing=(swing_run if moving else swing_idle)*math.sin(phase)
+                    flex=flex_run*(.5-.5*sign*math.sin(phase)) if moving else flex_idle*(.5+.5*wave)
+                    turns={'Arm':Matrix.Rotation(sign*swing,3,'Z')@Matrix.Rotation(sign*flex*.4,3,'X'),
+                           'Forearm':Matrix.Rotation(sign*swing*1.2,3,'Z')@Matrix.Rotation(sign*flex,3,'X')}
+                else:
+                    swing=(cfg.get('swing',.16) if moving else .04)*math.sin(phase)
+                    turns=dict.fromkeys(('Arm','Forearm'),Matrix.Rotation(swing,3,'Y'))
                 for part in ('Arm','Forearm'):
                     n=prefix+part+side
                     a,b=arms[n]
-                    direction=turn@Matrix.Rotation(swing,3,'Y')@(b-a)
+                    direction=turn@turns[part]@(b-a)
                     if name=='graveler' and index==0:
                         direction=Matrix.Rotation(sign*(.22 if moving else .05),3,'X')@direction
                     aim(pb[n],pb[n].head.copy(),direction)

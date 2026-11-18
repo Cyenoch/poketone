@@ -4,6 +4,7 @@ import { iceShorePhase } from "../../sim/surface";
 import { FX_GLSL } from "../vfx/gl";
 import { ICE_GLSL, ICE_COLOR, ICE_DEEP } from "./ice-surface";
 import { inject, patchShader } from "../patchShader";
+import { NOISE_GLSL } from "./noise";
 
 /** Snow relief and ice fractures share the terrain draw, lighting, shadows and texture ownership. */
 export function glacierSurface(material: Material, terrain: Terrain): void {
@@ -17,12 +18,15 @@ export function glacierSurface(material: Material, terrain: Terrain): void {
 
     shader.fragmentShader = inject(shader.fragmentShader, key, {
       "#include <common>": `#include <common>
+${NOISE_GLSL}
 ${patches.length ? `${FX_GLSL}\n${ICE_GLSL}\nuniform vec4 uIcePatches[${patches.length}];` : ""}
 float glacierRidge(vec2 p) {
   vec2 q = vec2(dot(p, vec2(0.91, 0.42)), dot(p, vec2(-0.42, 0.91)));
   float bend = sin(q.y * 0.43) * 0.8 + sin(q.y * 0.87 + q.x * 0.23) * 0.3;
   float wave = sin(q.x * 5.1 + bend * 2.4 + sin(q.x * 1.3 + q.y * 0.3) * 1.1);
-  return pow(wave * 0.5 + 0.5, 4.0) * (0.55 + 0.45 * sin(q.y * 0.6 + q.x * 0.27));
+  // Only wind-scoured drifts carry ridges: a field-wide mask keeps them from reading as parallel light streaks.
+  float scour = smoothstep(0.5, 0.78, envNoise(p * 0.07 + vec2(3.1, 7.7)));
+  return pow(wave * 0.5 + 0.5, 4.0) * (0.55 + 0.45 * sin(q.y * 0.6 + q.x * 0.27)) * scour;
 }
 float glacierCrack(vec2 p) {
   vec2 cell = floor(p), f = fract(p);
@@ -43,13 +47,18 @@ float glacierCrack(vec2 p) {
   float ridge = glacierRidge(p);
   float ridgeFade = 1.0 - smoothstep(0.08, 0.45, length(fwidth(p)));
   vec3 snow = settle(mix(grassMean, grass, 0.18), GRASS_SETTLE);
-  snow *= 1.0 + (ridge - 0.28) * 0.14 * ridgeFade;
+  snow *= 1.0 + (ridge - 0.12) * 0.09 * ridgeFade;
   vec3 ice = settle(mix(meadowMean, meadow, 0.3), MEADOW_SETTLE);
   if (iceWeight > 0.02) {
     float crack = glacierCrack(p * 0.72);
     ice = mix(ice, vec3(0.68, 0.79, 0.87), crack * 0.085 * smoothstep(0.38, 0.65, envNoise(p * 1.7)));
   }
   vec3 albedo = mix(snow, ice, iceWeight);
+  // Cold glints: sparse crystal points that wink as the camera moves over them.
+  vec2 glintCell = floor(p * 16.0);
+  float glint = step(0.992, envHash(glintCell + floor(cameraPosition.xz * 1.3) * 0.37))
+    * (1.0 - smoothstep(0.08, 0.2, length(fract(p * 16.0) - 0.5)));
+  albedo += vec3(0.9, 0.95, 1.0) * glint * ridgeFade * 1.4;
   ${
     patches.length
       ? `for (int i = 0; i < ${patches.length}; i++) {

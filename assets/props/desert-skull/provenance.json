@@ -1,11 +1,19 @@
 {
-  "generator": "assets/props/build-map-props.py",
-  "seed": 2719282571,
-  "source": "Original scripted geometry; no external assets",
-  "triangles": 120,
-  "materials": 1,
-  "vertexColors": true,
-  "units": "metres",
-  "sha256": "fb805f809f786bef46976f1092d42d7af7a2e53a2a21674d6a12f244a2bb48a9",
-  "tripoCredits": 0
+  "set": "desert-skull",
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "props/desert-skull/generation/tripo-out/tripo-out/poketone-desert-skull-mv-196b7d2d/model.glb",
+  "tripoSourceSha256": "0802ed52ab6faafd87ef2b7d42b0a76a10b02b147245340f651f1f61de6505f1",
+  "tripoTask": "196b7d2d-9d28-4785-ba46-a9a6019c3b3b",
+  "tripoType": "multiview_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 2587,
+  "dimensions": [1.0, 0.9256, 0.82],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "65edc1ca4ef06483bcd71207f7acb121770703ec5c7055be5655bc1a5747f8de"
 }

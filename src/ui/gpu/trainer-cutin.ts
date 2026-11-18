@@ -17,6 +17,7 @@ import { HARD_SHADOW, RADIUS, RADIUS_INNER, SLANT, srgb, ui } from "./tokens";
 import { playerColors } from "../player-colors";
 import type { UiStage } from "./stage";
 import { UiShaderMaterial } from "./ui-shader";
+import { crestSrc } from "./type-icon";
 
 /** Room around the band's box for its hard shadow and the ultimate's colour ribbon. */
 const REACH = 18;
@@ -313,7 +314,7 @@ export class GpuTrainerCutin {
       ...trainerOrder.map((id) => trainerArt(id, "cutin")),
       ...new Set(
         (Object.keys(starters) as StarterId[]).flatMap((line) =>
-          lineForms(line).map((form) => `/art/icons/crests/${form.types[0]}.webp`),
+          lineForms(line).map((form) => crestSrc(form.types[0]!)),
         ),
       ),
     ],
@@ -422,7 +423,7 @@ export class GpuTrainerCutin {
         width: look.portrait,
         height: look.portrait,
       });
-    this.crest.setProperties({ src: `/art/icons/crests/${cue.type}.webp` });
+    this.crest.setProperties({ src: crestSrc(cue.type) });
     this.name.set(trainer.name, trainer.color, look.name);
     this.seat.set(
       cue.seat === null ? "" : `P${cue.seat + 1}`,

@@ -10,6 +10,8 @@ Signature traits
 Reference game: white bubble with two small satellite bubbles orbiting and bobbing, a twinkle
 highlight; trail of tiny rising bubbles; hit = quick splash (0.18 s), drops and four bubbles.
 
-Sim: 4 shots, radius 0.25, speed 9 (slow), dur 1.6 s, 70 ms stagger.
+Sim: 4 shots, radius 0.25, speed 12, dur 1.6 s, 70 ms stagger.
+
+Recipe: rimmed bubble sprite + fizz, plus a wet glow decal (1.3 × radius) on the ground under each bubble so a volley reads in a crowd from the default camera.
 
 Keep: transparent rimmed bubble with highlight, pop. Avoid: opaque blue balls.

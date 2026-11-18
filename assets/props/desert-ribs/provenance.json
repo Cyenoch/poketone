@@ -1,11 +1,20 @@
 {
-  "generator": "assets/props/build-map-props.py",
-  "seed": 2834406964,
-  "source": "Original scripted geometry; no external assets",
-  "triangles": 340,
-  "materials": 1,
-  "vertexColors": true,
-  "units": "metres",
-  "sha256": "65aecca0b31a8aef8fb192bcf93c34f750c78a69540a179195d9d88df3d3377c",
-  "tripoCredits": 0
+  "set": "desert-ribs",
+  "regrade": ["#6e5e4a", "#c8b898", "#f2ead8"],
+  "generator": "assets/props/compose-tripo-props.py",
+  "tripoSource": "props/desert-ribs/generation/tripo-out/tripo-out/poketone-desert-ribs-mv-0651facd/model.glb",
+  "tripoSourceSha256": "897bdeab750bf6d9c3367be27d2a0b942fc270352ace40c1f790777405598731",
+  "tripoTask": "0651facd-27c9-429f-b20d-9931f8c2a1fb",
+  "tripoType": "multiview_to_model",
+  "tripoCredits": 40,
+  "tripoSettings": {
+    "model": "tripo-v3.1",
+    "smart_low_poly": true,
+    "face_limit": 1500
+  },
+  "triangles": 2683,
+  "dimensions": [0.8239, 1.0, 0.7104],
+  "units": "model units; the view scales to its theme height",
+  "forward": "glTF +Z (Tripo +X turned in this script); facingYaw 0",
+  "sha256": "f11fb2cae446420064ca88b127b2190dfecc2900b3ab5e7303a32e9ae8b91619"
 }

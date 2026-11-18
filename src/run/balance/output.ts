@@ -1,6 +1,7 @@
 // Per-move output in closed form: what one move deals per second against the swarm and against a
 // lone guardian, from the same parameters the sim casts with (`moveParams`, the archetype modules, combat rules).
 
+import { average } from "./skill";
 import { moveParams } from "../sim/attacks";
 import type { MoveOverlay } from "./mega";
 import {
@@ -61,6 +62,27 @@ export const MAX_DENSITY = 0.7;
 export const AIM_DISTANCE = 6;
 /** Share of casts with a line of fire on a target (docs/BALANCE.md: 91–99% visible within 15 m). */
 export const TERRAIN_SIGHT = 0.95;
+/** Median kiting/standing casts, 35-enemy forest probe at reference investment. Use cast
+ * frequency, not the DPS ratio: target density and hits per cast are already in the volleys. */
+const KITE_CAST_SHARE: Partial<Record<Archetype, number>> = {
+  strike: 0.66,
+  combo: 0.83,
+  spin: 0.89,
+  cone: 0.74,
+  sprinkler: 0.97,
+};
+
+function swarmReach(archetype: Archetype, radius: number, melee: number): number {
+  // Forest kiting: the effective share of a self-centred nova grows with the area it can reach.
+  const share =
+    archetype === "nova" ? Math.min(1, (radius / 8.2) ** 2) : KITE_CAST_SHARE[archetype];
+  if (share === undefined) return 1;
+  // Anchor the average profile at the measured share, preserving zero and full contact.
+  return melee <= average.melee
+    ? (share * melee) / average.melee
+    : share + ((1 - share) * (melee - average.melee)) / (1 - average.melee);
+}
+
 /** Share of close enemies not stopped by the melee height step (0–14% blocked at 3.4 m). */
 export const MELEE_STEP = 0.92;
 /** Share of ground enemies standing wet from puddles: the only solo source of 感电. */
@@ -331,6 +353,7 @@ function stick(reach: number, life: number, target: Target): number {
 /** One cast as every archetype's model reads it. */
 interface Cast {
   p: MoveParams;
+  def: MoveDef<string>;
   target: Target;
   /** Trash and guardian body radius. */
   rE: number;
@@ -434,7 +457,7 @@ const volleyModels: Record<Archetype, (cast: Cast) => Volley[]> = {
       knock: smiteArea.knock,
     },
   ],
-  cone({ p, target, rE }) {
+  cone({ p, def, target, rE }) {
     const ticks = areaTicks(p.dur, 0, CONE.tick);
     const sector = CONE.angle;
     return [
@@ -442,7 +465,7 @@ const volleyModels: Record<Archetype, (cast: Cast) => Volley[]> = {
         copies: 1,
         ticks,
         scale: 1,
-        crowd: (d) => Math.max(1, d * sector * (p.area + rE) ** 2),
+        crowd: (d) => Math.max(1, (def.track ? 1 : 0) + d * sector * (p.area + rE) ** 2),
         onBoss: 1,
         bossTicks: ticks * stick(p.area, p.dur, target),
         knock: coneArea.knock,
@@ -466,7 +489,8 @@ const volleyModels: Record<Archetype, (cast: Cast) => Volley[]> = {
   },
   combo({ p, rE }) {
     const n = Math.ceil(p.count);
-    const crowd = (d: number) => Math.max(1, d * COMBO.angle * (p.area + rE) ** 2);
+    // Condition on the body aimed at; the sector may also contain other enemies.
+    const crowd = (d: number) => 1 + d * COMBO.angle * (p.area + rE) ** 2;
     return [
       // Every punch strikes the same locked sector, so the ordinary ones are repeat hits, not more targets.
       { copies: 1, ticks: n - 1, scale: 1, crowd, onBoss: 1, bossTicks: n - 1, knock: COMBO.knock },
@@ -510,13 +534,25 @@ const volleyModels: Record<Archetype, (cast: Cast) => Volley[]> = {
       },
     ];
   },
-  chain: ({ p }) => [
+  chain: ({ p, target }) => [
     {
       copies: 1,
       ticks: 1,
       scale: 1,
       // Each jump needs another enemy within `area` of the last one struck.
-      crowd: (d) => 1 + p.count * Math.min(1, d * Math.PI * p.area ** 2),
+      crowd: (d) => {
+        const neighbours = d * Math.PI * p.area ** 2;
+        // The first hop searches a full disc. Further hops overlap already searched ground;
+        // approximate fresh ground as half a disc. A missed hop ends the chain.
+        let chance = -Math.expm1(-neighbours);
+        const next = -Math.expm1(-neighbours / 2);
+        let targets = 1;
+        for (let i = 0; i < p.count; i++) {
+          targets += chance * Math.min(1, p.count - i);
+          chance *= next;
+        }
+        return Math.min(targets, Math.max(1, target.living));
+      },
       onBoss: 1,
       bossTicks: 1,
       knock: 0,
@@ -682,7 +718,7 @@ const volleyModels: Record<Archetype, (cast: Cast) => Volley[]> = {
   sprinkler({ p, rE, rB, scale, disc, reached }) {
     const f = SPRINKLER;
     const jets = f.jets + Math.min(f.jetsMax, Math.floor(p.count));
-    const ticks = Math.round(p.dur / f.jetTick);
+    const ticks = areaTicks(p.dur, 0, f.jetTick);
     const half = f.jetWidth * scale;
     // Each tick a jet strikes what stands in its lane right now; the lanes sweep the whole disc.
     const reachesBoss = p.area + rB >= AIM_DISTANCE;
@@ -755,6 +791,7 @@ function volleys(def: MoveDef<string>, p: MoveParams, target: Target): Volley[] 
     disc(radius)(d) + d * 2 * (radius + rE) * target.speed * life;
   return volleyModels[def.archetype]({
     p,
+    def,
     target,
     rE,
     rB: target.boss.radius,
@@ -828,7 +865,12 @@ function resolvedOutput(
   const reachable = TERRAIN_SIGHT * (short ? MELEE_STEP * target.melee : 1);
   // The guardian is always there to aim at; the swarm only when someone is in range.
   const bossRate = reachable / castPeriod(p.cd);
-  const rate = bossRate * Math.min(1, target.living);
+  const rate =
+    (TERRAIN_SIGHT *
+      (short ? MELEE_STEP : 1) *
+      swarmReach(def.archetype, p.area, target.melee) *
+      Math.min(1, target.living)) /
+    castPeriod(p.cd);
   const [swarmFactor, bossFactor] = damageFactors(def, stats, target);
   const crits = critFactor(p.crit + stats.crit, stats.critDamage);
   const moveDamage = p.dmg * (stats.hit.move ?? 1);
