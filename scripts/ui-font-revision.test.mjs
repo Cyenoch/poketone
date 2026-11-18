@@ -4,6 +4,7 @@ installResources(webResources);
 import assert from "node:assert/strict";
 import test from "node:test";
 import { Texture } from "three";
+import { InstancedGlyphGroup } from "../node_modules/@pmndrs/uikit/dist/text/render/instanced-glyph-group.js";
 import { PageRegistry, RevisionGate } from "../src/ui/gpu/fonts.ts";
 
 // The font surface hold (readiness design §6a): a value commits only when every page it draws from
@@ -345,4 +346,23 @@ test("ready() rejects when the font metrics cannot load", async () => {
   } finally {
     restore();
   }
+});
+
+// The UI draws on demand: glyphs whose page arrives after their text was laid out (a tip opened
+// before a background page) must ask for the frame that shows them, or they stay blank.
+test("a glyph page that arrives asks for a render that shows its glyphs", () => {
+  let renders = 0;
+  const root = { requestRender: () => renders++, requestFrame() {} };
+  const font = { pageReady: [{ value: false }], pages: [{}] };
+  const group = new InstancedGlyphGroup({}, font, 0, root, {}, true, true, 0);
+  group.mesh = { visible: false };
+  group.instanceMatrix = { count: 4 };
+  group.glyphs = [{}];
+  group.onFrame(0.016);
+  assert.equal(group.mesh.visible, false);
+  const before = renders;
+  group.pageReady = true;
+  group.onFrame(0.016);
+  assert.equal(group.mesh.visible, true);
+  assert.ok(renders > before);
 });

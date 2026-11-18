@@ -1,7 +1,8 @@
 diff --git a/dist/components/component.d.ts b/dist/components/component.d.ts
+index 84c89a48a0599e03e83067ca145e34d120e37517..6016db8ca932948127052713506f805d8f64f892 100644
 --- a/dist/components/component.d.ts
 +++ b/dist/components/component.d.ts
-@@ -13,6 +13,7 @@
+@@ -13,6 +13,7 @@ export declare function setGlobalProperties(properties: InProperties<BaseOutProp
  export declare class Component<OutProperties extends BaseOutProperties = BaseOutProperties> extends Mesh<BufferGeometry, Material> {
      protected inputProperties?: InProperties<OutProperties> | undefined;
      protected readonly initialClasses?: Array<InProperties<BaseOutProperties> | string> | undefined;
@@ -9,7 +10,7 @@ diff --git a/dist/components/component.d.ts b/dist/components/component.d.ts
      private abortController;
      readonly handlers: ReadonlySignal<EventHandlersProperties>;
      readonly orderInfo: Signal<OrderInfo | undefined>;
-@@ -69,6 +70,11 @@
+@@ -69,6 +70,11 @@ export declare class Component<OutProperties extends BaseOutProperties = BaseOut
       * allows to overwrite the properties
       */
      resetProperties(inputProperties?: InProperties<OutProperties>): void;
@@ -22,9 +23,10 @@ diff --git a/dist/components/component.d.ts b/dist/components/component.d.ts
       * must only be called for the root component; the component that has a non-uikit component as a parent
       */
 diff --git a/dist/components/component.js b/dist/components/component.js
+index 4599a44de61f60776c6b50aaa56dffe20c51cf5d..662fc4e733ee0d532c410779004f63c3a40bbddc 100644
 --- a/dist/components/component.js
 +++ b/dist/components/component.js
-@@ -35,8 +35,10 @@
+@@ -35,8 +35,10 @@ export function setGlobalProperties(properties) {
  }
  const globalProperties = new PropertiesImplementation(allAliases, new Proxy({}, { get: () => returnFalseFunction }));
  globalProperties.setEnabled(true);
@@ -35,7 +37,7 @@ diff --git a/dist/components/component.js b/dist/components/component.js
      initialClasses;
      abortController = new AbortController();
      handlers;
-@@ -266,8 +268,33 @@
+@@ -266,8 +268,33 @@ export class Component extends Mesh {
       */
      resetProperties(inputProperties) {
          this.inputProperties = inputProperties;
@@ -524,7 +526,7 @@ index f73f2d5a7fac133a0f46df6c157964333bc0772a..7d0449b0a67c52bd81123fd116941374
  export function glyphIntoToUV(info, target, offset) {
      target[offset + 0] = info.uvX;
 diff --git a/dist/text/layout/index.js b/dist/text/layout/index.js
-index d28a318d8bf8748938328c012a3a50243b95305d..09f9f6e896d93892659c00b068628cf1cceaaf4e 100644
+index d28a318d8bf8748938328c012a3a50243b95305d..32b6ddfb779485361b35677a613a284e0bf0f609 100644
 --- a/dist/text/layout/index.js
 +++ b/dist/text/layout/index.js
 @@ -17,11 +17,11 @@ export function setupTextLayout(target) {
@@ -569,7 +571,7 @@ index ff11ef2c113aa4504ab26389736aa824f48e57e6..dbd8cabf611fc76270954efe51767a2a
      delete(glyph: InstancedGlyph): void;
      onFrame(delta: number): void;
 diff --git a/dist/text/render/instanced-glyph-group.js b/dist/text/render/instanced-glyph-group.js
-index 1fcc979279b3a14adaa4b0ecb6d080dcaed566a2..004d59bc3976ab2a4a07352e1369f5c7c08da13f 100644
+index 1fcc979279b3a14adaa4b0ecb6d080dcaed566a2..f3675bde249fcc81110cea1bf382fc425a0f1ea9 100644
 --- a/dist/text/render/instanced-glyph-group.js
 +++ b/dist/text/render/instanced-glyph-group.js
 @@ -1,4 +1,5 @@
@@ -633,16 +635,22 @@ index 1fcc979279b3a14adaa4b0ecb6d080dcaed566a2..004d59bc3976ab2a4a07352e1369f5c7
      }
      requestActivate(glyph) {
          const holeIndex = this.holeIndicies.shift();
-@@ -131,7 +146,7 @@ export class InstancedGlyphGroup {
+@@ -130,8 +145,12 @@ export class InstancedGlyphGroup {
+     }
      onFrame(delta) {
          const requiredSize = this.glyphs.length - this.holeIndicies.length + this.requestedGlyphs.length;
-         if (this.mesh != null) {
+-        if (this.mesh != null) {
 -            this.mesh.visible = requiredSize > 0;
-+            this.mesh.visible = requiredSize > 0 && this.pageReady;
++        //poketone: a page that arrived shows its glyphs; the frame that flips them must be drawn
++        //(an on-demand host draws only what asked for a render).
++        const visible = requiredSize > 0 && this.pageReady;
++        if (this.mesh != null && this.mesh.visible !== visible) {
++            this.mesh.visible = visible;
++            this.root.requestRender?.();
          }
          if (requiredSize === 0) {
              return;
-@@ -160,7 +175,7 @@ export class InstancedGlyphGroup {
+@@ -160,7 +179,7 @@ export class InstancedGlyphGroup {
              this.glyphs[indexOffset + i] = glyph;
          }
          this.mesh.count += requestedGlyphsLength;
@@ -651,7 +659,7 @@ index 1fcc979279b3a14adaa4b0ecb6d080dcaed566a2..004d59bc3976ab2a4a07352e1369f5c7
          this.requestedGlyphs.length = 0;
      }
      resize(neededSize) {
-@@ -212,7 +227,9 @@ export class InstancedGlyphGroup {
+@@ -212,7 +231,9 @@ export class InstancedGlyphGroup {
          this.mesh.count = this.glyphs.length;
          this.object.addUnsafe(this.mesh);
      }

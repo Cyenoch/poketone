@@ -338,8 +338,9 @@ void main() {
   }
   paint(c, cov(d) * (framed ? 1.0 : mix(0.5, 1.0, max(cov(x - end), chipped))));
 
-  // The lost segment pops out past the frame, top and bottom, then settles back into the bar. Enemies
-  // pop further than players (your own bar under chip damage must not jitter); bigger hits further.
+  // The lost segment pops out past the frame, top and bottom, as a square-cornered block, then settles
+  // back into the bar. Enemies pop further than players (your own bar under chip damage must
+  // not jitter); bigger hits further.
   // A segment under a pixel wide keeps a pixel and fades by its width, rather than vanishing.
   float lost = (chip - end) * 0.5;
   float thin = clamp(2.0 * lost / fw, 0.0, 1.0);
@@ -348,7 +349,7 @@ void main() {
     float frameOut = rim + s;
     float reach = (ally ? mix(0.4, 1.0, vChip.y) : mix(0.4, 1.4, vChip.y)) * s;
     float popY = H * 0.5 + (frameOut + reach) * vChip.x;
-    float cd = box(p - vec2(end + lost - W * 0.5, 0.0), vec2(width, popY), min(width, popY));
+    float cd = box(p - vec2(end + lost - W * 0.5, 0.0), vec2(width, popY), 0.0);
     paint(NAVY, cov(cd - s) * thin);
     paint(mix(vec3(1.0, 0.6, 0.3), vec3(1.0), vBar.w * vBar.w), cov(cd) * thin);
   }
