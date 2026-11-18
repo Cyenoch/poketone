@@ -1,8 +1,7 @@
 diff --git a/dist/components/component.d.ts b/dist/components/component.d.ts
-index 84c89a48a0599e03e83067ca145e34d120e37517..6016db8ca932948127052713506f805d8f64f892 100644
 --- a/dist/components/component.d.ts
 +++ b/dist/components/component.d.ts
-@@ -13,6 +13,7 @@ export declare function setGlobalProperties(properties: InProperties<BaseOutProp
+@@ -13,6 +13,7 @@
  export declare class Component<OutProperties extends BaseOutProperties = BaseOutProperties> extends Mesh<BufferGeometry, Material> {
      protected inputProperties?: InProperties<OutProperties> | undefined;
      protected readonly initialClasses?: Array<InProperties<BaseOutProperties> | string> | undefined;
@@ -10,7 +9,7 @@ index 84c89a48a0599e03e83067ca145e34d120e37517..6016db8ca932948127052713506f805d
      private abortController;
      readonly handlers: ReadonlySignal<EventHandlersProperties>;
      readonly orderInfo: Signal<OrderInfo | undefined>;
-@@ -69,6 +70,11 @@ export declare class Component<OutProperties extends BaseOutProperties = BaseOut
+@@ -69,6 +70,11 @@
       * allows to overwrite the properties
       */
      resetProperties(inputProperties?: InProperties<OutProperties>): void;
@@ -23,10 +22,9 @@ index 84c89a48a0599e03e83067ca145e34d120e37517..6016db8ca932948127052713506f805d
       * must only be called for the root component; the component that has a non-uikit component as a parent
       */
 diff --git a/dist/components/component.js b/dist/components/component.js
-index 4599a44de61f60776c6b50aaa56dffe20c51cf5d..662fc4e733ee0d532c410779004f63c3a40bbddc 100644
 --- a/dist/components/component.js
 +++ b/dist/components/component.js
-@@ -35,8 +35,10 @@ export function setGlobalProperties(properties) {
+@@ -35,8 +35,10 @@
  }
  const globalProperties = new PropertiesImplementation(allAliases, new Proxy({}, { get: () => returnFalseFunction }));
  globalProperties.setEnabled(true);
@@ -37,7 +35,7 @@ index 4599a44de61f60776c6b50aaa56dffe20c51cf5d..662fc4e733ee0d532c410779004f63c3
      initialClasses;
      abortController = new AbortController();
      handlers;
-@@ -266,8 +268,33 @@ export class Component extends Mesh {
+@@ -266,8 +268,33 @@
       */
      resetProperties(inputProperties) {
          this.inputProperties = inputProperties;
@@ -526,7 +524,7 @@ index f73f2d5a7fac133a0f46df6c157964333bc0772a..7d0449b0a67c52bd81123fd116941374
  export function glyphIntoToUV(info, target, offset) {
      target[offset + 0] = info.uvX;
 diff --git a/dist/text/layout/index.js b/dist/text/layout/index.js
-index d28a318d8bf8748938328c012a3a50243b95305d..32b6ddfb779485361b35677a613a284e0bf0f609 100644
+index d28a318d8bf8748938328c012a3a50243b95305d..09f9f6e896d93892659c00b068628cf1cceaaf4e 100644
 --- a/dist/text/layout/index.js
 +++ b/dist/text/layout/index.js
 @@ -17,11 +17,11 @@ export function setupTextLayout(target) {

@@ -51,3 +51,6 @@ __pycache__/
 /references/
 /scripts/*pokebonk*
 /.tripo/
+
+# One-off review renders (never committed)
+assets/**/review-*/
