@@ -3,7 +3,9 @@ import type { AppRenderer } from "../rendering/app-renderer";
 import { createRunSession, type RunCover } from "../run/session";
 import { stageDefs } from "../run/sim/content/stages/index";
 import {
+  availableSelection,
   recordRun,
+  partnerBondSetup,
   setBackpack,
   backpackSlots,
   buyLab,
@@ -14,6 +16,7 @@ import {
 } from "../run/progress";
 import { labBonuses } from "../run/lab";
 import { runUnlocks } from "../run/unlocks";
+import type { RuleId } from "../run/sim/content/rules";
 import { lineForms, starters } from "../run/sim/content/lines/index";
 import { validPick, type LobbyPick } from "../lobbyPick";
 import { depart, launch, open as openPrefetch, select } from "../run/prefetch";
@@ -29,7 +32,7 @@ import { createGpuAppHost, type GpuAppHost } from "../ui/gpu/app-host";
 import { GpuDevReadout } from "../ui/gpu/run-dev-readout";
 import { GpuLobby } from "../ui/gpu/lobby";
 import { LobbyScene } from "../ui/gpu/lobby-scene";
-import { GpuLab } from "../ui/gpu/lab";
+import { GpuLab, type LabAt } from "../ui/gpu/lab";
 import type { GpuCodexPage } from "../ui/gpu/codex";
 import { mountMultiplayer } from "../ui/gpu/multiplayer-session";
 import {
@@ -87,9 +90,12 @@ export async function createAppSession(
   let saveWindow: (() => void) | undefined;
   let network: MultiplayerRun | undefined;
   let pick = validPick(progressLoad.progress, initial.pick);
+  let selectedRules = availableSelection(progressLoad.progress);
   let pendingLook: { worn: boolean; hold: Handle<void> } | null = null;
   let runPick = pick;
   let route: AppScreen = "lobby";
+  /** A 图鉴 entry opened from the 研究所, and where to return there. */
+  let labCodex: { key: string; at: LabAt } | undefined;
   let disposed = false;
   let failure: Error | undefined;
   let revealed = false;
@@ -156,9 +162,12 @@ export async function createAppSession(
     if (destination && destination !== "run")
       return { title: SCREEN_TITLES[destination], progress: null };
     if (runCover) return runCover;
-    // A rejoin's map is known only once its world arrives.
-    if (destination === "run")
-      return { title: network?.session.restored ? "" : stageDefs[runPick.stage].name, progress: 0 };
+    // A rejoin's map, and a tower's seeded first floor, are known only once the world exists.
+    if (destination === "run") {
+      const mode = network?.config.mode ?? runPick.mode;
+      const known = !network?.session.restored && mode !== "tower";
+      return { title: known ? stageDefs[runPick.stage].name : "", progress: 0 };
+    }
     return { title: "", progress: null };
   }
   /** What the curtain last showed: it keeps it while opening, and a run's last report after its
@@ -261,7 +270,7 @@ export async function createAppSession(
     if (screen instanceof GpuLab) screen.update(progressLoad.progress);
     else if (screen instanceof GpuLobby) {
       select(withAppearance(pick));
-      screen.update({ progress: progressLoad.progress, pick });
+      screen.update({ progress: progressLoad.progress, pick, rules: selectedRules });
     } else screen?.update(progressLoad.progress);
   }
   /** Disk/browser refusal or locked data leaves the in-memory progress untouched too. */
@@ -299,6 +308,7 @@ export async function createAppSession(
           storage.save(save);
           cancelLook();
           progressLoad = { status: "ready", progress: save.progress, needsSave: false };
+          selectedRules = availableSelection(save.progress);
           settings = save.settings;
           audio.setEnabled(settings.sound);
           refreshScreen();
@@ -332,6 +342,9 @@ export async function createAppSession(
     }
     select(withAppearance(next));
   }
+  function chooseRules(next: readonly RuleId[]) {
+    selectedRules = availableSelection(progressLoad.progress, next);
+  }
   function start(next: LobbyPick, multiplayer?: MultiplayerRun) {
     if (transition.phase !== "idle") return;
     if (!starterUnlocked(progressLoad.progress, next.starter))
@@ -362,14 +375,17 @@ export async function createAppSession(
     route = destination;
     const progress = progressLoad.progress;
     if (destination === "run") {
-      const carried = progress.backpack;
+      const rules = network?.config.rules ?? availableSelection(progress, selectedRules);
+      const carried = rules.includes("no-items") ? [] : progress.backpack;
       run = createRunSession({
+        rules,
         ...withAppearance(runPick),
         multiplayer: network,
         lab: labBonuses(progress.lab),
-        loadout: { archive: progress.archive, backpack: carried },
+        ...partnerBondSetup(progress, runPick.starter),
+        loadout: { archive: progress.archive, backpack: carried, unlocks: progress.unlocks },
         backpack:
-          progressLoad.status === "ready"
+          progressLoad.status === "ready" && !rules.includes("no-items")
             ? {
                 size: backpackSlots(progress),
                 onKeep: (items) => change("背包", (current) => setBackpack(current, items)),
@@ -383,16 +399,31 @@ export async function createAppSession(
         pauseOnBlur: settings.pauseOnBlur,
         autoOpenCards: settings.autoOpenCards,
         onStarted() {
-          if (!network?.session.restored && carried.length)
-            return change("背包", (current) => setBackpack(current, []));
-          return true;
+          if (network?.session.restored) return true;
+          const remember = (!network || network.host) && rules.join() !== progress.rules.join();
+          if (!remember && !carried.length) return true;
+          return change("出发", (current) => ({
+            ...(carried.length ? setBackpack(current, []) : current),
+            rules: remember ? [...rules] : current.rules,
+          }));
         },
         onFinish(result) {
           if (progressLoad.status === "locked") return { ok: false, error: progressLoad.message };
           const previous = progressLoad.progress;
           if (!change("记录保存", (current) => recordRun(current, result)))
             return { ok: false, error: "记录保存失败。" };
-          return { ok: true, note: runUnlocks(previous, progressLoad.progress) };
+          return {
+            ok: true,
+            note: runUnlocks(previous, progressLoad.progress),
+            badges: progressLoad.progress.badges.filter((id) => !previous.badges.includes(id)),
+            bond: {
+              before: previous.bonds[result.starter] ?? 0,
+              after: progressLoad.progress.bonds[result.starter] ?? 0,
+              look:
+                !previous.looks.owned.includes(result.starter) &&
+                progressLoad.progress.looks.owned.includes(result.starter),
+            },
+          };
         },
         onRetry(note) {
           if (network) {
@@ -415,13 +446,17 @@ export async function createAppSession(
       const lobby = new GpuLobby(
         host!.fonts,
         host!.backdrop,
-        { progress, pick },
+        { progress, pick, rules: selectedRules },
         {
           pick: choose,
+          rules: chooseRules,
           shiny: (line, worn) => void wearLook(line, worn),
           start,
           lab: () => transition.navigate("lab"),
-          codex: () => transition.navigate("codex"),
+          codex: () => {
+            labCodex = undefined;
+            transition.navigate("codex");
+          },
           settings: openSettings,
           multiplayer: () => transition.navigate("room"),
           openLink: (url) => surface.openUrl(url),
@@ -448,10 +483,12 @@ export async function createAppSession(
         options.harbor,
         progress,
         pick,
+        selectedRules,
         {
           close: () => transition.navigate("lobby"),
           settings: openSettings,
           pick: choose,
+          rules: chooseRules,
           copy(code) {
             void Promise.resolve()
               .then(() => surface.text.writeClipboard(code))
@@ -465,6 +502,7 @@ export async function createAppSession(
             start(
               {
                 stage: multiplayer.config.stage,
+                mode: multiplayer.config.mode,
                 difficulty: multiplayer.config.difficulty,
                 starter: self.starter,
                 trainer: self.trainer,
@@ -479,12 +517,24 @@ export async function createAppSession(
       );
       if (revealed) audio.music.play("menu");
     } else if (destination === "lab") {
-      const lab = new GpuLab(host!.fonts, host!.backdrop, progress, {
-        buy: (id) => change("购买", (current) => buyLab(current, id)),
-        archive: (items) => change("档案库", (current) => setArchive(current, items)),
-        back: () => transition.navigate("lobby"),
-        settings: openSettings,
-      });
+      const at = from === "codex" ? labCodex?.at : undefined;
+      labCodex = undefined;
+      const lab = new GpuLab(
+        host!.fonts,
+        host!.backdrop,
+        progress,
+        {
+          buy: (id) => change("购买", (current) => buyLab(current, id)),
+          archive: (items) => change("档案库", (current) => setArchive(current, items)),
+          codex: (key, at) => {
+            labCodex = { key, at };
+            transition.navigate("codex");
+          },
+          back: () => transition.navigate("lobby"),
+          settings: openSettings,
+        },
+        at,
+      );
       const unregister = host!.registerScreen(lab);
       screen = lab;
       unmount = () => {
@@ -498,10 +548,15 @@ export async function createAppSession(
       void import("../ui/gpu/codex").then(
         ({ GpuCodexPage }) => {
           if (disposed || route !== "codex" || unmount) return;
-          const codex = new GpuCodexPage(host!.fonts, progressLoad.progress, {
-            back: () => transition.navigate("lobby"),
-            settings: openSettings,
-          });
+          const codex = new GpuCodexPage(
+            host!.fonts,
+            progressLoad.progress,
+            {
+              back: () => transition.navigate(labCodex ? "lab" : "lobby"),
+              settings: openSettings,
+            },
+            labCodex?.key,
+          );
           const unregister = host!.registerScreen(codex);
           screen = codex;
           unmount = () => {

@@ -1,4 +1,8 @@
-import { starters } from "./content/lines/index";
+import { contentAvailable } from "./content/unlocks";
+import { megaDefs, megaStones, starters } from "./content/lines/index";
+import { formOf, heldMega, stageFor } from "./evolution";
+import type { RuleId } from "./content/rules";
+import { HELD_ITEM_STARDUST } from "./content/params/rules";
 import type { ElementType } from "./content/elements";
 import { itemIds, items, type ItemDef, type ItemId } from "./content/items";
 import { enemies } from "./content/enemies";
@@ -7,7 +11,7 @@ import { signatureFusions } from "./content/fusions";
 import { statuses, type EnemyStatusId, type StatusDef } from "./content/statuses";
 import { next, type Rng } from "./rng";
 import { powInt } from "./math";
-import { itemRule, playerStats } from "./stats";
+import { earnStardust, itemRule, playerStats } from "./stats";
 import type { Choice, MoveState, Partner, PendingChoice, Player, Rarity } from "./state/entities";
 import type { World } from "./state/world";
 import {
@@ -62,6 +66,9 @@ export function banishKey(choice: Choice): string | null {
       return offerKey.item(choice.item);
     case "tm-case":
       return offerKey.tmCase;
+    case "ability":
+    case "decline":
+    case "stardust":
     case "train":
       return null;
   }
@@ -96,6 +103,15 @@ export function itemCap(player: Player, id: ItemId): number {
   return max >= BASE_ITEM_LEVEL_CAP ? max + itemRule(player, "itemLevels") : max;
 }
 
+function branchMoves(player: Player): readonly MoveId[] {
+  return player.mega ? megaDefs[player.mega].moves : [];
+}
+
+export function megaMoveToLearn(player: Player): MoveId | undefined {
+  const move = player.mega && megaDefs[player.mega].moves[0];
+  return move && !player.moves.some((m) => m.id === move) ? move : undefined;
+}
+
 /**
  * Types and move categories the player's line and partners hit with: a booster of anything else is
  * never offered (a dead card in a 3-slot build).
@@ -103,8 +119,15 @@ export function itemCap(player: Player, id: ItemId): number {
 function hitTypes(player: Player, partners: readonly Partner[]): Set<ElementType | MoveCategory> {
   const line = starters[player.starter];
   const types = new Set<ElementType | MoveCategory>();
-  for (const move of [...line.kit, ...line.evolutionMoves, signatureFusions[player.starter].result])
-    types.add(moves[move].type).add(moves[move].category);
+  for (const id of [
+    ...line.kit,
+    ...line.evolutionMoves,
+    ...branchMoves(player),
+    signatureFusions[player.starter].result,
+  ]) {
+    const move = moves[id];
+    if (move.category !== "status") types.add(move.type).add(move.category);
+  }
   for (const partner of partners)
     if (partner.owner === player.id) types.add(enemies[partner.species].types[0]!);
   return types;
@@ -120,6 +143,7 @@ export function statusSources(player: Player): Set<EnemyStatusId> {
   for (const move of [
     ...line.kit,
     ...line.evolutionMoves,
+    ...branchMoves(player),
     signatureFusions[player.starter].result,
   ]) {
     const status = moves[move].status;
@@ -150,19 +174,37 @@ export function itemTierOdds(luck: number, level: number, present: readonly bool
 const isElement = (boosts: ItemDef["boosts"]) =>
   boosts !== undefined && boosts !== "physical" && boosts !== "special";
 
+type RewardWorld = Pick<World, "rng" | "partners" | "rules" | "playerUnlocks">;
+
+/** Hidden slots follow the owner's research, including when the current form changes. */
+export function hiddenAbilityAvailable(world: RewardWorld, player: Player): boolean {
+  const hidden = formOf(player).abilities.hidden;
+  return (
+    hidden !== undefined && contentAvailable(world.playerUnlocks[player.id]!, { ability: hidden })
+  );
+}
+
 /** Field items obey the same build, banish and slot limits as cards. */
 export function itemEligible(
   player: Player,
   id: ItemId,
   partners: readonly Partner[],
   guaranteedTier = false,
+  hiddenAvailable = false,
 ): boolean {
-  if (player.banished.includes(offerKey.item(id))) return false;
+  if (megaStones.has(id) || player.banished.includes(offerKey.item(id))) return false;
   const owned = player.items.find((item) => item.id === id);
   if (owned ? owned.level >= itemCap(player, id) : player.items.length >= itemSlots(player))
     return false;
   const gate = ITEM_GATES[items[id].rarity];
   if (!guaranteedTier && !owned && gate && player.level <= gate[0]) return false;
+  if (id === "ability-patch") return hiddenAvailable && player.abilitySlot !== "hidden";
+  if (id === "everstone" && heldMega(player)) return false;
+  if (id === "light-ball") return formOf(player).id === "pikachu";
+  if (id === "linking-cord")
+    return starters[player.starter].stages.some(
+      (stage, index) => index > player.stage && stage.kind === "evolve" && stage.needs === "trade",
+    );
   const { boosts, needs } = items[id];
   return (
     (boosts === undefined || hitTypes(player, partners).has(boosts)) &&
@@ -177,8 +219,9 @@ export function rollItemChoice(
   rng: Rng,
   player: Player,
   partners: readonly Partner[],
+  hiddenAvailable = false,
 ): Extract<Choice, { kind: "item" }> | null {
-  const pool = itemIds.filter((id) => itemEligible(player, id, partners));
+  const pool = itemIds.filter((id) => itemEligible(player, id, partners, false, hiddenAvailable));
   if (pool.length === 0) return null;
   return {
     kind: "item",
@@ -215,40 +258,118 @@ function canUpgrade(player: Player, state: MoveState): boolean {
 
 type RouteOffer = NonNullable<PendingChoice["offer"]>["kind"];
 
-function routeItem(
-  player: Player,
-  id: ItemId,
-  partners: readonly Partner[],
-  kind: RouteOffer,
-): boolean {
-  return items[id].rarity >= (kind === "deal" ? 3 : 2) && itemEligible(player, id, partners, true);
+function routeItem(player: Player, id: ItemId, world: RewardWorld, kind: RouteOffer): boolean {
+  return (
+    items[id].rarity >= (kind === "deal" ? 3 : 2) &&
+    itemEligible(
+      player,
+      id,
+      world.partners,
+      true,
+      id === "ability-patch" && hiddenAbilityAvailable(world, player),
+    )
+  );
 }
 
-export function hasDealItem(world: World, player: Player): boolean {
-  return itemIds.some((id) => routeItem(player, id, world.partners, "deal"));
+/** Level cards omit restricted items; field and route rewards replace them with stardust. */
+export function replacesHeldItem(rules: readonly RuleId[], player: Player, id: ItemId): boolean {
+  if (!rules.includes("no-items") || items[id].noItemsException) return false;
+  if (id !== "thunder-stone") return true;
+  const needsStone = starters[player.starter].stages.some(
+    (stage, index) => index > player.stage && stage.kind === "evolve" && stage.needs === id,
+  );
+  return !needsStone || player.items.some((item) => item.id === id);
+}
+
+export function hasDealItem(world: RewardWorld, player: Player): boolean {
+  return itemIds.some((id) => routeItem(player, id, world, "deal"));
+}
+
+function availableStones(
+  player: Player,
+  offer: PendingChoice["offer"],
+): Extract<Choice, { kind: "item" }>[] {
+  if (
+    offer?.kind !== "trophy" ||
+    !offer.megaStones ||
+    player.mega ||
+    player.items.some((i) => i.id === "everstone") ||
+    heldMega(player)
+  )
+    return [];
+  let drop: ItemId | undefined;
+  if (player.items.length >= itemSlots(player)) {
+    let lowest = Infinity;
+    for (const item of player.items) {
+      if (megaStones.has(item.id) || item.level >= lowest) continue;
+      lowest = item.level;
+      drop = item.id;
+    }
+    if (!drop) return [];
+  }
+  return (starters[player.starter].megas ?? [])
+    .filter(({ stone }) => !player.banished.includes(offerKey.item(stone)))
+    .map(({ stone }) => ({ kind: "item", item: stone, ...(drop ? { drop } : {}) }));
 }
 
 /** Recheck against the live kit: co-op can grant a field item while the card is open. */
 export function rewardChoiceEligible(
-  world: World,
+  world: RewardWorld,
   player: Player,
-  kind: RouteOffer | undefined,
+  pending: PendingChoice,
   choice: Choice,
 ): boolean {
+  const { offer } = pending;
+  const kind = offer?.kind;
+  if (choice.kind === "item" && megaStones.has(choice.item))
+    return availableStones(player, offer).some(
+      (c) => c.item === choice.item && c.drop === choice.drop,
+    );
+  if (choice.kind === "stardust")
+    return (
+      !!kind &&
+      itemIds.some(
+        (id) => replacesHeldItem(world.rules, player, id) && routeItem(player, id, world, kind),
+      )
+    );
   if (choice.kind === "item")
-    return kind
-      ? routeItem(player, choice.item, world.partners, kind)
-      : itemEligible(player, choice.item, world.partners);
+    return (
+      !replacesHeldItem(world.rules, player, choice.item) &&
+      (kind
+        ? routeItem(player, choice.item, world, kind)
+        : itemEligible(
+            player,
+            choice.item,
+            world.partners,
+            false,
+            hiddenAbilityAvailable(world, player),
+          ))
+    );
   if (kind === "deal") return false;
   switch (choice.kind) {
+    case "decline":
+      return pending.source === "mega-move";
+    case "ability":
+      return (
+        !kind &&
+        player.abilitySlot !== "hidden" &&
+        formOf(player).abilities.normal[choice.slot] === choice.ability
+      );
     case "upgrade":
       return player.moves.some((state) => state.id === choice.move && canUpgrade(player, state));
     case "move":
+      if (pending.source === "mega-move")
+        return (
+          choice.move === megaMoveToLearn(player) &&
+          (player.moves.length < moveSlots(player)
+            ? choice.replace === undefined
+            : player.moves.some((m) => m.id === choice.replace))
+        );
       return (
         !kind &&
         player.moves.length < moveSlots(player) &&
         !player.banished.includes(offerKey.move(choice.move)) &&
-        learnable(player).some(({ move }) => move === choice.move)
+        learnable(player, world.rules).some(({ move }) => move === choice.move)
       );
     case "tm-case":
       return !kind && !player.tmCase && !player.banished.includes(offerKey.tmCase);
@@ -256,46 +377,107 @@ export function rewardChoiceEligible(
       return (
         !kind ||
         (!player.moves.some((state) => canUpgrade(player, state)) &&
-          !itemIds.some((id) => routeItem(player, id, world.partners, kind)))
+          !itemIds.some((id) => routeItem(player, id, world, kind)))
       );
   }
 }
 
 /** Only build an upgrade's random stats after its distinct move was actually drawn. */
 export function rollRewardChoices(
-  world: World,
+  world: RewardWorld,
   player: Player,
   pending: PendingChoice,
   kept: readonly Choice[] = [],
 ): Choice[] {
+  if (pending.source === "mega-move") {
+    const move = megaMoveToLearn(player);
+    if (!move) return [];
+    const options: Choice[] =
+      player.moves.length < moveSlots(player)
+        ? [{ kind: "move", move }]
+        : player.moves.map(({ id }) => ({ kind: "move", move, replace: id }));
+    return [...options, { kind: "decline" }];
+  }
+  if (pending.source === "ability") {
+    const [first, second] = formOf(player).abilities.normal;
+    return second && player.abilitySlot !== "hidden"
+      ? [
+          { kind: "ability", slot: 0, ability: first },
+          { kind: "ability", slot: 1, ability: second },
+        ]
+      : [];
+  }
   const kind = pending.offer?.kind;
   if (!kind)
-    return rollChoices(world.rng, player, pending.source, world.partners, pending.minRarity);
+    return rollChoices(
+      world.rng,
+      player,
+      pending.source,
+      world.partners,
+      pending.minRarity,
+      world.rules,
+      hiddenAbilityAvailable(world, player),
+    );
   const keys = new Set(kept.map(banishKey));
-  const pool: (() => Choice)[] = itemIds
-    .filter((id) => !keys.has(offerKey.item(id)) && routeItem(player, id, world.partners, kind))
-    .map((item) => () => ({ kind: "item", item }));
-  if (kind === "trophy") {
-    const { luck } = playerStats(player);
-    for (const state of player.moves)
-      if (!keys.has(offerKey.move(state.id)) && canUpgrade(player, state))
-        pool.push(() => rollUpgrade(world.rng, state.id, 2, luck));
-    if (!pool.length && !kept.length) return training(world.rng, BASE_CHOICES);
-  }
+  const keptStardust = kept.some((choice) => choice.kind === "stardust");
+  let pool: (ItemId | MoveState)[] = itemIds.filter(
+    (id) =>
+      !keys.has(offerKey.item(id)) &&
+      !(keptStardust && replacesHeldItem(world.rules, player, id)) &&
+      routeItem(player, id, world, kind),
+  );
   const options = [...kept];
+  if (kind === "trophy") {
+    for (const stone of availableStones(player, pending.offer))
+      if (!keys.has(offerKey.item(stone.item)) && options.length < BASE_CHOICES)
+        options.push(stone);
+    const cord = pool.indexOf("linking-cord");
+    if (
+      cord >= 0 &&
+      options.length < BASE_CHOICES &&
+      stageFor(player, "trade") > stageFor(player)
+    ) {
+      pool.splice(cord, 1);
+      options.push({ kind: "item", item: "linking-cord" });
+    }
+    for (const state of player.moves)
+      if (!keys.has(offerKey.move(state.id)) && canUpgrade(player, state)) pool.push(state);
+    if (!pool.length && !options.length) return training(world.rng, BASE_CHOICES);
+  }
+  const { luck } = playerStats(player);
   while (pool.length && options.length < BASE_CHOICES) {
-    const [make] = pool.splice(Math.floor(next(world.rng) * pool.length), 1);
-    options.push(make!());
+    const candidate = pool.splice(Math.floor(next(world.rng) * pool.length), 1)[0]!;
+    if (typeof candidate !== "string") options.push(rollUpgrade(world.rng, candidate.id, 2, luck));
+    else if (replacesHeldItem(world.rules, player, candidate)) {
+      options.push({ kind: "stardust" });
+      // All eligible held items keep their original draw weight until the one distinct payout is drawn.
+      pool = pool.filter(
+        (entry) => typeof entry !== "string" || !replacesHeldItem(world.rules, player, entry),
+      );
+    } else options.push({ kind: "item", item: candidate });
   }
   return options;
 }
 /** Moves a card may teach now: kit moves past their gate, then the evolution moves unlocked so far. */
-export function learnable(player: Player): { move: MoveId; weight: number }[] {
+export function learnable(
+  player: Player,
+  rules: readonly RuleId[] = [],
+): { move: MoveId; weight: number }[] {
   const line = starters[player.starter];
+  const allowedTypes = rules.includes("mono-type") ? formOf(player).types : null;
   const offers: { move: MoveId; weight: number }[] = line.kit
-    .filter((_, i) => player.level >= SIGNATURE_GATES[i]!)
+    .filter(
+      (move, i) =>
+        player.level >= SIGNATURE_GATES[i]! &&
+        (!allowedTypes || allowedTypes.includes(moves[move].type)),
+    )
     .map((move) => ({ move, weight: choiceWeights.signature }));
-  for (const move of line.evolutionMoves.slice(0, player.stage))
+  for (const move of [
+    ...line.evolutionMoves.slice(0, player.stage),
+    ...branchMoves(player).filter(
+      (move) => !allowedTypes || allowedTypes.includes(moves[move].type),
+    ),
+  ])
     offers.push({ move, weight: choiceWeights.evolution });
   return offers.filter(({ move }) => !player.moves.some((state) => state.id === move));
 }
@@ -376,6 +558,8 @@ export function rollChoices(
   source: "level" | "chest",
   partners: readonly Partner[] = [],
   minRarity?: Rarity,
+  rules: readonly RuleId[] = [],
+  hiddenAvailable = false,
 ): Choice[] {
   const minimum = Math.max(MIN_UPGRADE_RARITY[source], minRarity ?? 0) as Rarity;
   const open = (key: string) => !player.banished.includes(key);
@@ -403,20 +587,26 @@ export function rollChoices(
       make: () => rollUpgrade(rng, state.id, minimum, luck),
     });
   if (player.moves.length < moveSlots(player)) {
-    for (const { move, weight } of learnable(player)) {
+    for (const { move, weight } of learnable(player, rules)) {
       if (open(offerKey.move(move)))
         candidates.push({ weight, make: () => ({ kind: "move", move }) });
     }
   }
   for (const owned of player.items)
-    if (itemEligible(player, owned.id, partners))
+    if (
+      !replacesHeldItem(rules, player, owned.id) &&
+      itemEligible(player, owned.id, partners, false, hiddenAvailable)
+    )
       candidates.push({
         weight: choiceWeights.ownedItem,
         make: () => ({ kind: "item", item: owned.id }),
       });
   if (player.items.length < itemSlots(player)) {
     const pool = itemIds.filter(
-      (id) => !player.items.some((item) => item.id === id) && itemEligible(player, id, partners),
+      (id) =>
+        !replacesHeldItem(rules, player, id) &&
+        !player.items.some((item) => item.id === id) &&
+        itemEligible(player, id, partners, false, hiddenAvailable),
     );
     const drawn: ItemId[] = [];
     for (let i = 0; i < Math.min(ITEM_DRAWS, pool.length); i++)
@@ -449,7 +639,18 @@ export function rollChoices(
 
 export function applyChoice(player: Player, choice: Choice): void {
   switch (choice.kind) {
+    case "decline":
+      break;
+    case "ability":
+      setAbilitySlot(player, choice.slot);
+      break;
     case "move":
+      if (choice.replace !== undefined) {
+        const index = player.moves.findIndex((m) => m.id === choice.replace);
+        if (index < 0) throw new Error(`未掌握招式 ${choice.replace}。`);
+        player.moves[index] = newMoveState(choice.move);
+        break;
+      }
       if (player.moves.length >= moveSlots(player)) throw new Error("招式栏已满。");
       player.moves.push(newMoveState(choice.move));
       break;
@@ -466,13 +667,22 @@ export function applyChoice(player: Player, choice: Choice): void {
       }
       break;
     }
+    case "stardust":
+      earnStardust(player, HELD_ITEM_STARDUST);
+      break;
     case "item": {
+      if (choice.item === "ability-patch") {
+        setAbilitySlot(player, "hidden");
+        break;
+      }
       const owned = player.items.find((item) => item.id === choice.item);
       const before = playerStats(player).maxHp;
+      if (choice.drop) player.items = player.items.filter((item) => item.id !== choice.drop);
       if (owned) owned.level += 1;
       else player.items.push({ id: choice.item, level: 1 });
       // Max HP gains arrive filled, so HP Up is not a trap pick at low health.
-      player.hp += Math.max(0, playerStats(player).maxHp - before);
+      const after = playerStats(player).maxHp;
+      player.hp = Math.min(after, player.hp + Math.max(0, after - before));
       break;
     }
     case "tm-case":
@@ -485,6 +695,14 @@ export function applyChoice(player: Player, choice: Choice): void {
       break;
     }
   }
+}
+
+function setAbilitySlot(player: Player, slot: Player["abilitySlot"]): void {
+  const before = playerStats(player).maxHp;
+  player.abilitySlot = slot;
+  const { maxHp, dashCharges } = playerStats(player);
+  player.hp = Math.min(maxHp, player.hp + Math.max(0, maxHp - before));
+  player.dashes = Math.min(player.dashes, dashCharges);
 }
 
 const statLabels: Record<UpgradeStat, (value: number) => string> = {

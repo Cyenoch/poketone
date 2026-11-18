@@ -15,16 +15,33 @@ import { TICK, type World } from "../sim/state/world";
 // `applyChoice`, and the outcomes are averaged. HP is a distribution (`survival.ts`), everything else
 // expected value. Method, assumptions and fitted factors: docs/BALANCE.md.
 
+import {
+  CAP_STARDUST_RATE,
+  CHALLENGE_ALPHA,
+  HELD_ITEM_STARDUST,
+  LEVEL_CAP,
+} from "../sim/content/params/rules";
+import type { RuleId } from "../sim/content/rules";
+import {
+  expectedChallengePayout,
+  type ChallengeField,
+  type ChallengeResult,
+} from "./challenge-rules";
 import { BERRY, LOOT, STARDUST } from "../sim/content/params/economy";
 import {
   DASH_COOLDOWN,
+  REVIVE,
   PLAYER_IFRAMES,
   SHIELD,
   EVOLVE_INVULNERABLE,
 } from "../sim/content/params/player";
+import { bondLabModifier } from "../sim/content/bonds";
+import type { TrainerId } from "../sim/content/trainers";
+import { assistPoisonCover } from "./trainer";
+import { BOND_CURE_LEVEL, BOND_ENDURE_LEVEL, BOND_LAB_LEVEL } from "../sim/content/params/bonds";
 import { difficulties, type Difficulty } from "../sim/content/difficulties";
 import { enemies, type EnemyId } from "../sim/content/enemies";
-import { moves as moveDefs, type MoveId } from "../sim/content/moves";
+import { moves as moveDefs, isWeatherMove, weatherMoves, type MoveId } from "../sim/content/moves";
 import { modelOf, setMeasures, type Ledger } from "./triggers";
 import { PER_STATUS_CAP } from "../sim/content/effects";
 import { starters, type StarterId } from "../sim/content/lines/index";
@@ -65,13 +82,19 @@ import {
   ALPHA_HP,
   DIRECTOR_PRESSURE,
   ELITE,
-  ELITE_BODY,
   ELITE_WAVE_SIZE,
   GUARDIAN_REFERENCE_SECONDS,
   STAMPEDE_SIZE,
   SWARM_SIZE,
 } from "../sim/content/params/pacing";
-import { bossHp, enemyHealthScaling, enemyScaling, liveCap, spawnRate } from "../sim/director";
+import {
+  bossHp,
+  enemyBodyScale,
+  enemyHealthScaling,
+  enemyScaling,
+  liveCap,
+  spawnRate,
+} from "../sim/director";
 import { advancePressure, pressureSupply, pressureTarget } from "../sim/director-pressure";
 import { stageDefs, type StageId, type StageZone } from "../sim/content/stages/index";
 import { zoneClock, zoneFactorsFor, zonesOf } from "../sim/content/params/zones";
@@ -112,7 +135,15 @@ import { guardianBrains, type GuardianBrainId } from "../sim/bosses/index";
 
 import { poiseOf } from "../sim/poise";
 import { createRng, next, pick, type Rng } from "../sim/rng";
-import { armorFactor, itemRule, playerStats, xpForLevel, type PlayerStats } from "../sim/stats";
+import {
+  armorFactor,
+  currentAbility,
+  itemRule,
+  noGuardMove,
+  playerStats,
+  xpForLevel,
+  type PlayerStats,
+} from "../sim/stats";
 import type { Choice, Hazard, LabBonuses, Partner, Player, Rarity } from "../sim/state/entities";
 import { items as itemDefs, DICE_FACES, diceKey } from "../sim/content/items";
 import {
@@ -121,13 +152,30 @@ import {
   moveSlots,
   rarityOdds,
   itemEligible,
+  learnable,
+  replacesHeldItem,
   rollItemChoice,
   rollChoices,
+  rollRewardChoices,
   rollsPerUpgrade,
 } from "../sim/upgrades";
 import { MIN_UPGRADE_RARITY, rarityPower } from "../sim/content/params/cards";
 import { fuseMoves } from "../sim/fusion";
 import { evolve, formOf, hazardRadius } from "../sim/evolution";
+import {
+  droughtWindow,
+  evolveMega,
+  megaMove,
+  megaSpeed,
+  MEGA_LINE,
+  MEGA_STONE_STEP,
+  recoilShare,
+  takeMegaStone,
+  type MegaBranch,
+  type MegaGrant,
+} from "./mega";
+import { ignoresGroundHazard } from "../sim/hurt";
+import { contactDamageFactor, type AbilityId } from "../sim/content/abilities";
 import { drainAt } from "../sim/status";
 import { createPlayer } from "../sim/world";
 import { PARTNER_ATTACK, CAPTURE_CHANCE, GUARD } from "../sim/content/params/partners";
@@ -180,7 +228,22 @@ import {
   type ModelSiteRewards,
 } from "./field-events";
 import { SITE } from "../sim/content/params/sites";
+import {
+  advanceDeepForm,
+  castWindow,
+  deepStats,
+  DEEP_PARAMETERS,
+  equipDeepBuild,
+  pledgePair,
+  reservesCordSlot,
+  trophyLinkingCord,
+  type BuildPlayer,
+  type DeepBuild,
+  type PledgeStarter,
+} from "./deep-builds";
 import { weatherDefs } from "../sim/content/weather";
+import { unlockIds } from "../sim/content/unlocks";
+import { towerFields, TOWER_TRIAL, type TowerField, type TowerRunner } from "./tower";
 
 const STEP = 1;
 /** The run is followed this far past the stage end (rampage) before it is called. */
@@ -310,12 +373,13 @@ export function fieldAt(
     weather: null,
     outbreak: null,
   },
+  floor?: TowerField,
 ): Field {
   const stageDef = stageDefs[stage];
-  const z = zoneFactorsFor(step, stageDef, zone);
+  const z = floor?.factors ?? zoneFactorsFor(step, stageDef, zone);
   const zoneDef = stageDef.zones[zone]!;
   const pool = poolAt(zoneDef, time);
-  const clock = zoneClock(step, time);
+  const clock = floor?.clock(time) ?? zoneClock(step, time);
   const rampageSince = rampage ? zoneClock(step, stageDef.duration) : null;
   const base = enemyScaling(clock, difficulty, rampageSince);
   const s = {
@@ -622,15 +686,16 @@ export function occupancy(out: MoveOutput, stats: PlayerStats, target: Target): 
 // --- One build's output ----------------------------------------------------------------------
 
 /** One build's totals against a target, plus each learned move's own output. */
+type ModelMoveId = MoveId;
+
 export interface BuildOutput extends MoveOutput {
   stats: PlayerStats;
   /** The direct hits only (moves, Static's zap): what on-hit triggers and Bonk! read. */
   primary: MoveOutput;
   /** Landed hits per second by the type of the move that landed them (kit moves, swarm and guardian). */
-  typeHits: Partial<Record<ElementType, number>>;
   /** Sustained status DPS a guardian keeps (burn, poison and trigger DoTs). */
   bossBurn: number;
-  perMove: { move: MoveId; out: MoveOutput }[];
+  perMove: { move: ModelMoveId; type: ElementType; drain?: number; out: MoveOutput }[];
 }
 
 const SUMMED = [
@@ -685,15 +750,27 @@ function executeLine(stats: PlayerStats): number {
   return below;
 }
 
-export function buildOutput(player: Player, full: Target): BuildOutput {
-  const stats = playerStats(player);
+export function buildOutput(player: BuildPlayer, full: Target): BuildOutput {
+  const stats = deepStats(player, full.weather ?? null);
   const below = executeLine(stats);
   const target = below > 0 ? { ...full, hp: full.hp * (1 - below) } : full;
   const bonk = bonkFactor(stats);
-  const perMove = player.moves.map((state) => ({
-    move: state.id,
-    out: moveOutput(state, stats, target, bonk),
-  }));
+  const perMove: BuildOutput["perMove"] = player.moves.map((state) => {
+    const overlay = megaMove(player, state.id);
+    return {
+      type: (overlay?.def ?? moveDefs[state.id]).type,
+      drain: moveDefs[state.id].drain,
+      move: state.id,
+      out: moveOutput(
+        state,
+        stats,
+        target,
+        bonk,
+        noGuardMove(player, state.id) ? DEEP_PARAMETERS.noGuardRange : 1,
+        overlay,
+      ),
+    };
+  });
   const primary = blankOutput();
   const secondary = blankOutput();
   // Secondary proc implementations read typeVs directly. Apply weather there once, without
@@ -718,12 +795,7 @@ export function buildOutput(player: Player, full: Target): BuildOutput {
     const output = model.output?.(def, stats, procTarget, player);
     if (output) merge(model.direct ? primary : secondary, output);
   }
-  const typeHits: BuildOutput["typeHits"] = {};
-  for (const { move, out } of perMove) {
-    const { type } = moveDefs[move];
-    typeHits[type] = (typeHits[type] ?? 0) + out.hits + out.bossHits;
-  }
-  const total: BuildOutput = { ...blankOutput(), stats, primary, typeHits, bossBurn: 0, perMove };
+  const total: BuildOutput = { ...blankOutput(), stats, primary, bossBurn: 0, perMove };
   merge(total, primary);
   merge(total, secondary);
   applyScales(total, procTarget, player);
@@ -816,7 +888,7 @@ export interface Defence {
   lifts: { below: number; heal: number; cooldown: number }[];
 }
 
-export function defenceOf(stats: PlayerStats): Defence {
+export function defenceOf(stats: PlayerStats, nuzlocke = false): Defence {
   const defence: Defence = {
     evasion: stats.evasion,
     block: null,
@@ -836,7 +908,7 @@ export function defenceOf(stats: PlayerStats): Defence {
       });
     if (def.kind === "block") defence.block = Math.min(defence.block ?? Infinity, def.every);
     if (def.kind === "overhealShield") defence.overhealShield = true;
-    if (def.kind !== "lethalSave") continue;
+    if (def.kind !== "lethalSave" || (nuzlocke && def.hp >= 0.3)) continue;
     const save = { hp: def.hp, chance: def.chance, iframes: def.iframes };
     if (def.cooldown > 0) {
       defence.fallbackFirst ||= defence.charges.length === 0;
@@ -875,8 +947,7 @@ export function spareDashes(stats: PlayerStats, skill: SkillProfile): number {
  * process): the shield at its readiness, saves at what they hand back, per-stage ones also for the
  * stages still to come at half weight.
  */
-function defenceHp(stats: PlayerStats, stage: number): number {
-  const d = defenceOf(stats);
+function defenceHp(d: Defence, stats: PlayerStats, stage: number): number {
   const back = (hp: number) => Math.max(0.1, hp) * stats.maxHp;
   let total = d.shield * (d.overhealShield ? 1 : 0.5);
   // Sitrus Berry: about one lift a fight of a minute.
@@ -891,10 +962,15 @@ function defenceHp(stats: PlayerStats, stage: number): number {
  * Myopic value of a build, used by the `greedy` card policy and item marginal values: log utility
  * over swarm clearing, guardian damage, effective HP, kiting speed, sustain and XP growth.
  */
-export function buildValue(player: Player, target: Target, skill: SkillProfile): number {
+export function buildValue(
+  player: Player,
+  target: Target,
+  skill: SkillProfile,
+  nuzlocke = false,
+): number {
   const out = buildOutput(player, target);
   const { stats } = out;
-  const d = defenceOf(stats);
+  const d = defenceOf(stats, nuzlocke);
   // Landed-hit share: evasion, and Guard Spec at about one hit a second.
   const lands = (1 - d.evasion) * (1 - blockShare(d.block, 1 - d.evasion));
   const occ = occupancy(out, stats, target);
@@ -908,7 +984,7 @@ export function buildValue(player: Player, target: Target, skill: SkillProfile):
   return (
     Math.log(out.useful + 0.1) +
     0.5 * Math.log(out.single + 0.1) +
-    Math.log((stats.maxHp + defenceHp(stats, player.stage)) / throughShare(stats) / lands) +
+    Math.log((stats.maxHp + defenceHp(d, stats, player.stage)) / throughShare(stats) / lands) +
     Math.log(stats.speed) +
     Math.log(1 + regen / 5) +
     0.5 * Math.log(stats.xp * pickupShare(stats, skill)) +
@@ -934,13 +1010,29 @@ function chooseCard(
   target: Target,
   skill: SkillProfile,
   partners: readonly Partner[],
-): Choice {
+  rules: readonly RuleId[],
+  levelCap: number,
+): Choice | null {
+  if (reservesCordSlot(player)) {
+    options = options.filter((option) => fitsCordReservation(player, option));
+    if (!options.length) return null;
+  }
   const valued = (pool: readonly Choice[]) => {
     let best = pool[0]!;
     let bestValue = -Infinity;
     for (const option of pool) {
-      const trial = previewChoice(player, option, rng, target, skill, policy, partners);
-      const value = buildValue(trial, target, skill);
+      const trial = previewChoice(
+        player,
+        option,
+        rng,
+        target,
+        skill,
+        policy,
+        partners,
+        rules,
+        levelCap,
+      );
+      const value = buildValue(trial, target, skill, rules.includes("nuzlocke"));
       if (value > bestValue) {
         bestValue = value;
         best = option;
@@ -954,27 +1046,54 @@ function chooseCard(
   return options[Math.floor(next(rng) * options.length)]!;
 }
 
+function fitsCordReservation(player: Player, choice: Choice): boolean {
+  return (
+    choice.kind !== "item" ||
+    choice.item === "linking-cord" ||
+    choice.item === "ability-patch" ||
+    player.items.some((item) => item.id === choice.item)
+  );
+}
+
 /** XP and immediate item levels use the same growth path, before the next offer is rolled. */
-function gainXp(player: Player, amount: number, onLevel?: () => void): void {
+function gainXp(
+  player: BuildPlayer,
+  amount: number,
+  onLevel?: () => void,
+  levelCap = Infinity,
+): number {
   player.xp += amount;
-  while (player.xp >= player.xpNext) {
+  while (player.level < levelCap && player.xp >= player.xpNext) {
     player.xp -= player.xpNext;
     player.level += 1;
     player.xpNext = xpForLevel(player.level);
-    evolve(player);
+    if (player.projection) advanceDeepForm(player);
+    else evolve(player);
     onLevel?.();
   }
+  if (player.level < levelCap) return 0;
+  const overflow = player.xp;
+  player.xp = 0;
+  return overflow;
 }
 
-function applyPick(player: Player, choice: Choice, rng: Rng): number {
+function applyPick(player: BuildPlayer, choice: Choice | null, rng: Rng, levelCap: number): number {
+  if (!choice) return 0;
   applyChoice(player, choice);
+  if (player.projection && choice.kind === "item") advanceDeepForm(player);
+  else if (
+    choice.kind === "item" &&
+    (choice.item === "thunder-stone" || choice.item === "linking-cord")
+  )
+    evolve(player);
   if (choice.kind === "item" && itemDefs[choice.item].onPick?.roll) {
     const level = player.items.find((item) => item.id === choice.item)!.level;
     player.fx[diceKey(level)] = Math.floor(next(rng) * DICE_FACES.length);
   }
   const levels = choice.kind === "item" ? (itemDefs[choice.item].onPick?.levels ?? 0) : 0;
-  for (let i = 0; i < levels; i++) gainXp(player, player.xpNext - player.xp);
-  return levels;
+  const granted = Math.min(levels, levelCap - player.level);
+  for (let i = 0; i < granted; i++) gainXp(player, player.xpNext - player.xp);
+  return granted;
 }
 
 /**
@@ -989,18 +1108,21 @@ export function previewChoice(
   skill: SkillProfile,
   policy: PickPolicy = skill.picks,
   partners: readonly Partner[] = [],
+  rules: readonly RuleId[] = [],
+  levelCap = Infinity,
 ): Player {
   const trial = structuredClone(player);
   const draws = { ...rng };
-  let pending = applyPick(trial, choice, draws);
+  let pending = applyPick(trial, choice, draws, levelCap);
   fuseMoves(trial);
   while (pending > 0) {
     pending -= 1;
-    const options = rollChoices(draws, trial, "level", partners);
+    const options = rollChoices(draws, trial, "level", partners, undefined, rules);
     pending += applyPick(
       trial,
-      chooseCard(trial, options, policy, draws, target, skill, partners),
+      chooseCard(trial, options, policy, draws, target, skill, partners, rules, levelCap),
       draws,
+      levelCap,
     );
     fuseMoves(trial);
   }
@@ -1075,6 +1197,7 @@ export interface Exposure {
 }
 
 export interface RunModel {
+  challenge?: ChallengeResult;
   stage: StageId;
   starter: StarterId;
   difficulty: Difficulty;
@@ -1090,13 +1213,13 @@ export interface RunModel {
   bossLeft: number | null;
   beats: BeatSpike[];
   /** Mean second each kit move was learned (over samples that learned it) and the share that did. */
-  learned: { move: MoveId; t: number; share: number }[];
+  learned: { move: ModelMoveId; t: number; share: number }[];
   /** Mean seconds between ultimate casts (null: fewer than two casts). */
   ultEvery: number | null;
   /** Share of samples that fused at Bill's machine and their mean fusion second. */
   fused: { share: number; t: number };
   /** Kit damage share (raw, swarm + guardian) at the end of the run, for comparison with the bot. */
-  damageShare: { move: MoveId; share: number }[];
+  damageShare: { move: ModelMoveId; share: number }[];
   /** Mean second the samples reached each level (`levelAt[level]`, over samples that did). */
   levelAt: number[];
   /** Each reached build's actual field and time; rewards on an exit second belong to the old field. */
@@ -1105,7 +1228,21 @@ export interface RunModel {
     unreached: number;
     points: { step: RouteStep; t: number; local: number; alive: number }[];
   }[];
-  /** Per zone: chance of killing its guardian, and when (clear-weighted; null: none does). */
+  /** Per-field output at encountered density; denominator is surviving sample-seconds. */
+  buildFields: {
+    stage: StageId;
+    survivalSeconds: number;
+    swarmDps: number | null;
+    guardianDps: number | null;
+    selfWeatherShare: number | null;
+    solarHpCost: number;
+  }[];
+  /** Time from the final level gate to evolution, or last observation if still waiting. */
+  tradeWait: { sample: number; eligibleAt: number; evolvedAt: number | null; seconds: number }[];
+  /** Mega samples: the share that evolved and their mean run second (null: no mega branch). */
+  mega: { share: number; at: number | null } | null;
+  pledgePair: ReturnType<typeof pledgePair>;
+  /** Chance of killing each guardian, and clear-weighted kill time. */
   zoneClears: {
     stage: StageId;
     zone: number;
@@ -1173,6 +1310,10 @@ export type RunOptions = (
   samples?: number;
   /** Lab bonuses the run starts with (none by default). */
   lab?: LabBonuses;
+  /** Partner bond (add-partner-bond): level, and bought levels of this partner's bond research. */
+  bond?: { level: number; lab: number };
+  /** Trainer support (add-trainer-support): the assist item as its average over the cooldown, and the numeric passive. */
+  trainer?: TrainerId;
   /** Compare the same route and seeds with neutral elite rates (all other route effects are unmodeled). */
   routeElites?: boolean;
   /** One integer second per field, from 1 through its forced-summon time. Default: reference time. */
@@ -1180,8 +1321,13 @@ export type RunOptions = (
   /** Paired diagnostic: keep the same randomized main beats, omit extra field mechanisms. */
   fieldEvents?: boolean;
   seed?: number;
+  deepBuild?: DeepBuild;
+  /** Mega branch after the final form (add-mega-evolution); the stone comes from the second map's trophy. */
+  mega?: { branch: MegaBranch; grant?: MegaGrant };
   /** Analysis-only historical comparison; defaults are read from shared sim parameters. */
   ultimateTiming?: UltimateTiming;
+  /** Pass [] for the unmodified control with a challenge report. */
+  rules?: readonly RuleId[];
 };
 
 /** What one build sample brings this second, at HP share `frac` (low HP turns on Blaze / Torrent). */
@@ -1209,12 +1355,16 @@ interface Means {
   spareDashes: number;
   /** Contact radius of the current form. */
   radius: number;
+  ability: AbilityId;
+  contactFactor: number;
+  disableShare: number;
 }
 
-function measure(player: Player, target: Target, skill: SkillProfile, frac: number): Means {
+function measure(player: BuildPlayer, target: Target, skill: SkillProfile, frac: number): Means {
   player.hp = frac * playerStats(player).maxHp;
   const out = buildOutput(player, target);
   const { stats } = out;
+  const ability = currentAbility(player);
   return {
     out,
     occ: occupancy(out, stats, target),
@@ -1234,6 +1384,18 @@ function measure(player: Player, target: Target, skill: SkillProfile, frac: numb
     berries: 1 + itemRule(player, "berries"),
     spareDashes: spareDashes(stats, skill),
     radius: formOf(player).radius,
+    ability,
+    contactFactor: contactDamageFactor(ability, player.stage),
+    disableShare:
+      ability === "cursed-body" && player.projection
+        ? 1 -
+          Math.exp(
+            (-player.projection.hurtRate *
+              DEEP_PARAMETERS.cursedBody.chance *
+              DEEP_PARAMETERS.cursedBody.seconds) /
+              Math.max(1, target.living),
+          )
+        : 0,
   };
 }
 
@@ -1250,8 +1412,8 @@ export function bossCycle(difficulty: Difficulty): number {
 const scytherCycle = (tele: number) =>
   CHASE_MEAN + (BOSS_WINDUP + BOSS_RECOVER) * tele + BOSS_DASH_TIME;
 
-/** Guardian hits landed per cycle on a player who dodges nothing: the dash and one chase contact. */
-const BOSS_HITS_PER_CYCLE = { dash: 1, contact: 1 } as const;
+/** A full-damage hit through `enemies.ts` contact, modelled once per chase cycle. */
+const BOSS_CONTACT = { perCycle: 1, share: 1, contact: true } as const;
 
 /** One stream of hits on the player: hits per second and damage per hit after armor. */
 export interface Hits {
@@ -1277,6 +1439,8 @@ interface GuardianCycle {
     poison?: number;
     slow?: number;
     element?: ElementType;
+    landing?: boolean;
+    contact?: boolean;
   }[];
   /** Seconds a cycle it cannot be hit (under ground, mid-teleport). */
   hidden?: number;
@@ -1353,8 +1517,8 @@ function guardianCycle(
       return {
         cycle: scytherCycle(tele),
         hits: [
-          { perCycle: BOSS_HITS_PER_CYCLE.dash, share: 1 },
-          { perCycle: BOSS_HITS_PER_CYCLE.contact, share: 1 },
+          BOSS_CONTACT,
+          BOSS_CONTACT,
           { perCycle: belowHalf ? cover(blades, AIR_SLASH.radius) : 0, share: AIR_SLASH_DMG },
         ],
       };
@@ -1368,8 +1532,8 @@ function guardianCycle(
       return {
         cycle,
         hits: [
-          { perCycle: slams, share: PINSIR.damage },
-          { perCycle: BOSS_HITS_PER_CYCLE.contact, share: 1 },
+          { perCycle: slams, share: PINSIR.damage, landing: true },
+          BOSS_CONTACT,
           {
             perCycle: belowHalf ? slams * cover(SHARD.count, SHARD.radius) : 0,
             share: SHARD.damage,
@@ -1390,7 +1554,7 @@ function guardianCycle(
           { perCycle: 0.5, share: FISSURE.damage },
           { perCycle: 0.5, share: ACID.splash },
           { perCycle: belowHalf ? 0.5 : 0, share: STOMP.damage },
-          { perCycle: BOSS_HITS_PER_CYCLE.contact, share: 1 },
+          BOSS_CONTACT,
         ],
       };
     }
@@ -1403,14 +1567,14 @@ function guardianCycle(
       return {
         cycle: (dig + roll) / 2,
         hits: [
-          { perCycle: 0.5, share: SANDSLASH.damage },
-          { perCycle: 0.5, share: 1 },
+          { perCycle: 0.5, share: SANDSLASH.damage, landing: true },
+          { perCycle: 0.5, share: 1, contact: true },
           {
             perCycle: belowHalf ? 0.5 * cover(SANDSLASH.spikes, SHARD.radius) : 0,
             share: SHARD.damage,
             element: "rock",
           },
-          { perCycle: BOSS_HITS_PER_CYCLE.contact, share: 1 },
+          BOSS_CONTACT,
         ],
       };
     }
@@ -1419,10 +1583,7 @@ function guardianCycle(
       const flight = (2 * MAROWAK.length) / BONEMERANG.speed;
       return {
         cycle: CHASE + MAROWAK.windup * tele + flight,
-        hits: [
-          { perCycle: 1, share: MAROWAK.damage },
-          { perCycle: BOSS_HITS_PER_CYCLE.contact, share: 1 },
-        ],
+        hits: [{ perCycle: 1, share: MAROWAK.damage }, BOSS_CONTACT],
       };
     }
     case "aerodactyl": {
@@ -1433,9 +1594,9 @@ function guardianCycle(
             (AERODACTYL.windup + AERODACTYL.chainWindup + AERODACTYL.recover) * tele +
             2 * AERODACTYL.time,
           hits: [
-            { perCycle: 2, share: 1 },
+            { perCycle: 2, share: 1, contact: true },
             { perCycle: 1, share: AERODACTYL.rockDamage, element: "rock" },
-            { perCycle: BOSS_HITS_PER_CYCLE.contact, share: 1 },
+            BOSS_CONTACT,
           ],
         };
       // Dives and Rock Slides alternate; a slide does not stop its chase.
@@ -1443,9 +1604,9 @@ function guardianCycle(
       return {
         cycle: (dive + CHASE) / 2,
         hits: [
-          { perCycle: 0.5, share: 1 },
+          { perCycle: 0.5, share: 1, contact: true },
           { perCycle: 0.5, share: AERODACTYL.rockDamage, element: "rock" },
-          { perCycle: BOSS_HITS_PER_CYCLE.contact, share: 1 },
+          BOSS_CONTACT,
         ],
       };
     }
@@ -1461,9 +1622,9 @@ function guardianCycle(
               tele +
             KINGLER.sideDashes * KINGLER.sideTime,
           hits: [
-            { perCycle: KINGLER.sideDashes, share: 1 },
+            { perCycle: KINGLER.sideDashes, share: 1, contact: true },
             { perCycle: 1, share: KINGLER.hammerDamage, element: "water" },
-            { perCycle: BOSS_HITS_PER_CYCLE.contact, share: 1 },
+            BOSS_CONTACT,
           ],
         };
       return {
@@ -1474,7 +1635,7 @@ function guardianCycle(
             share: KINGLER.bubbleDamage,
             element: "water",
           },
-          { perCycle: BOSS_HITS_PER_CYCLE.contact, share: 1 },
+          BOSS_CONTACT,
         ],
       };
     }
@@ -1492,7 +1653,7 @@ function guardianCycle(
             GYARADOS.chain * HYDRO_PUMP.active,
           hits: [
             { perCycle: GYARADOS.chain * beamHits, share: HYDRO_PUMP.damage, element: "water" },
-            { perCycle: BOSS_HITS_PER_CYCLE.contact, share: 1 },
+            BOSS_CONTACT,
           ],
         };
       // Pumps and twisters alternate; the twisters are summoned on the run.
@@ -1502,7 +1663,7 @@ function guardianCycle(
         hits: [
           { perCycle: 0.5 * beamHits, share: HYDRO_PUMP.damage, element: "water" },
           { perCycle: 0.5, share: TWISTER.damage },
-          { perCycle: BOSS_HITS_PER_CYCLE.contact, share: 1 },
+          BOSS_CONTACT,
         ],
       };
     }
@@ -1518,9 +1679,9 @@ function guardianCycle(
       return {
         cycle: (spin + volley) / 2,
         hits: [
-          { perCycle: 0.5, share: 1 },
+          { perCycle: 0.5, share: 1, contact: true },
           { perCycle: 0.5, share: STARMIE.boltDamage },
-          { perCycle: BOSS_HITS_PER_CYCLE.contact, share: 1 },
+          BOSS_CONTACT,
         ],
       };
     }
@@ -1562,7 +1723,6 @@ function zoneGuardianCycle(
   const Z = ZONE_GUARDIAN;
   const C = BOSS_CHASE_MIN / chaseRate;
   const duration = (a: readonly [number, number, number]) => (a[0] + a[2]) * tele + a[1];
-  const contact = { perCycle: BOSS_HITS_PER_CYCLE.contact, share: 1 };
   const beamHits = (active: number) => Math.ceil(active / PLAYER_IFRAMES);
   const burst = (count: number, share: number) =>
     belowHalf ? share * cover(count, Z.shotRadius) : 0;
@@ -1578,10 +1738,10 @@ function zoneGuardianCycle(
       return {
         cycle: mean([sneak, shade]),
         hits: [
-          { perCycle: 0.5 * sneaks, share: Z.landing },
+          { perCycle: 0.5 * sneaks, share: Z.landing, landing: true },
           { perCycle: 0.5 * burst(Z.burstCount, 1), share: Z.burst },
           { perCycle: 0.5, share: Z.shot },
-          contact,
+          BOSS_CONTACT,
         ],
         hidden: 0.5 * sinks(sneaks),
       };
@@ -1593,10 +1753,10 @@ function zoneGuardianCycle(
       return {
         cycle: mean([slam, C]),
         hits: [
-          { perCycle: 0.5, share: Z.landing, poison: ACID.poison },
+          { perCycle: 0.5, share: Z.landing, poison: ACID.poison, landing: true },
           { perCycle: 0.5 * burst(Z.burstCount, 1), share: Z.burst, poison: Z.burstPoison },
           { perCycle: 0.5, share: Z.fall, poison: ACID.poison },
-          { ...contact, poison: ACID.poison },
+          { ...BOSS_CONTACT, poison: ACID.poison },
         ],
       };
     }
@@ -1612,7 +1772,7 @@ function zoneGuardianCycle(
             share: Z.cone,
           },
           { perCycle: 0.5, share: Z.beam },
-          contact,
+          BOSS_CONTACT,
         ],
         shield: { seconds: 0.5 * Z.shieldTime, factor: Z.mimeShield },
       };
@@ -1626,10 +1786,10 @@ function zoneGuardianCycle(
       return {
         cycle: mean([dive, sonic]),
         hits: [
-          { perCycle: 0.5 * dives, share: 1 },
+          { perCycle: 0.5 * dives, share: 1, contact: true },
           { perCycle: 0.5 * burst(Z.sonicBurst, 1), share: Z.burst },
           { perCycle: 0.5, share: Z.cone, slow: Z.slow },
-          contact,
+          BOSS_CONTACT,
         ],
       };
     }
@@ -1643,7 +1803,7 @@ function zoneGuardianCycle(
         hits: [
           { perCycle: (belowHalf ? 2 : 1) / 3, share: Z.beam },
           { perCycle: 1 / 3, share: Z.fall },
-          contact,
+          BOSS_CONTACT,
         ],
         hidden: ZA.blink[0] / 3,
       };
@@ -1656,7 +1816,7 @@ function zoneGuardianCycle(
         hits: [
           { perCycle: 2 / 3, share: 1 },
           { perCycle: Z.fires / GYARADOS.twisters / 3, share: 1 },
-          contact,
+          BOSS_CONTACT,
         ],
       };
     }
@@ -1670,13 +1830,13 @@ function zoneGuardianCycle(
         cycle: mean([ball, sneak, C]),
         hits: [
           { perCycle: 1 / 3, share: Z.shot, poison: ACID.poison },
-          { perCycle: sneaks / 3, share: Z.landing },
+          { perCycle: sneaks / 3, share: Z.landing, landing: true },
           { perCycle: burst(Z.burstCount, 1) / 3, share: Z.burst },
           {
             perCycle: (belowHalf ? ZONE_ATTACK.curse.lowCount : ZONE_ATTACK.curse.count) / 3,
             share: Z.cone,
           },
-          contact,
+          BOSS_CONTACT,
         ],
         hidden: sinks(sneaks) / 3,
       };
@@ -1693,7 +1853,7 @@ function zoneGuardianCycle(
       return {
         cycle: mean([slide, beam]),
         hits: [
-          { perCycle: 0.5 * slides, share: 1, element: "ice" },
+          { perCycle: 0.5 * slides, share: 1, contact: true, element: "ice" },
           { perCycle: belowHalf ? 0.5 : 0, share: Z.fall, element: "ice" },
           {
             perCycle: 0.5 * beamHits(ZA["dewgong-beam"][1]),
@@ -1701,7 +1861,7 @@ function zoneGuardianCycle(
             slow: Z.slow,
             element: "ice",
           },
-          contact,
+          BOSS_CONTACT,
         ],
       };
     }
@@ -1715,7 +1875,7 @@ function zoneGuardianCycle(
           { perCycle: 0.5, share: Z.orbit, slow: Z.slow, element: "ice" },
           { perCycle: belowHalf ? 0.5 : 0, share: Z.fall, element: "ice" },
           { perCycle: 0.5, share: Z.shot, slow: Z.slow, element: "ice" },
-          contact,
+          BOSS_CONTACT,
         ],
         shield: { seconds: 0.5 * Z.shieldTime, factor: Z.shellShield },
       };
@@ -1736,7 +1896,7 @@ function zoneGuardianCycle(
           },
           { perCycle: 1 / turns, share: Z.fall, element: "ice" },
           { perCycle: belowHalf ? 1 / turns : 0, share: Z.cone, slow: Z.song },
-          contact,
+          BOSS_CONTACT,
         ],
       };
     }
@@ -1747,11 +1907,11 @@ function zoneGuardianCycle(
       return {
         cycle: mean([dive, fan]),
         hits: [
-          { perCycle: 0.5, share: Z.landing, element: "fire" },
+          { perCycle: 0.5, share: Z.landing, element: "fire", landing: true },
           { perCycle: 0.5, share: Z.pool, element: "fire" },
           { perCycle: 0.5 * burst(Z.magmarBurst, 1), share: Z.burst, element: "fire" },
           { perCycle: 0.5 * beamHits(ZA["flame-fan"][1]), share: Z.beam, element: "fire" },
-          contact,
+          BOSS_CONTACT,
         ],
         hidden: 0.5 * sinks(1),
       };
@@ -1769,12 +1929,12 @@ function zoneGuardianCycle(
       return {
         cycle: mean([rush, C]),
         hits: [
-          { perCycle: 0.5 * Z.extremeDashes, share: 1 },
+          { perCycle: 0.5 * Z.extremeDashes, share: 1, contact: true },
           { perCycle: belowHalf ? 0.5 : 0, share: Z.pool, element: "fire" },
           { perCycle: belowHalf ? 0.5 : 0, share: Z.cone, element: "fire" },
           { perCycle: 0.5, share: Z.fall, element: "fire" },
           { perCycle: 0.5, share: Z.pool, element: "fire" },
-          contact,
+          BOSS_CONTACT,
         ],
       };
     }
@@ -1790,7 +1950,7 @@ function zoneGuardianCycle(
           { perCycle: 1 / turns, share: Z.fall },
           { perCycle: 1 / turns, share: Z.pool },
           { perCycle: belowHalf ? 1 / turns : 0, share: Z.sweep },
-          contact,
+          BOSS_CONTACT,
         ],
       };
     }
@@ -1845,6 +2005,8 @@ export function bossHits(
   fury: GuardianFury | null = null,
   fightSeconds = Infinity,
   weather: WeatherId | null = null,
+  ignoresLanding = false,
+  contactFactor = 1,
 ): Hits[] {
   const dmg = enemies[guardian].dmg * dmgScale * difficulties[difficulty].guardianDmg * armor;
   // Volleys spread evenly; at the kiting distance this share of them is wide enough to hit.
@@ -1861,13 +2023,19 @@ export function bossHits(
   // An interruption lands half way through a cycle on average and throws that half away.
   const restarts = 1 / (1 + (status.interrupts * cycle) / 2);
   const perCycle = ((1 - dodge) * (1 - status.stopped) * restarts) / (cycle + status.delay);
-  const streams = hits.map((hit) => ({
-    rate: perCycle * hit.perCycle,
-    dmg: dmg * hit.share * weatherFactor(weather, hit.element ?? "normal"),
-    element: hit.element ?? "normal",
-    ...(hit.poison ? { poison: hit.poison } : {}),
-    ...(hit.slow ? { slow: hit.slow } : {}),
-  }));
+  const streams = hits
+    .filter((hit) => !ignoresLanding || !hit.landing)
+    .map((hit) => ({
+      rate: perCycle * hit.perCycle,
+      dmg:
+        dmg *
+        hit.share *
+        (hit.contact ? contactFactor : 1) *
+        weatherFactor(weather, hit.element ?? "normal"),
+      element: hit.element ?? "normal",
+      ...(hit.poison ? { poison: hit.poison } : {}),
+      ...(hit.slow ? { slow: hit.slow } : {}),
+    }));
   if (!fury) return streams;
   // Approximate phase postponement by the residual non-chase part of a native cycle. This omits
   // eligible recovery windows and synchronization between both schedules; measured cadence can
@@ -1909,10 +2077,11 @@ function swarmIncoming(
   m: Means,
   skill: SkillProfile,
   slowed = 0,
+  alphaElites = false,
 ) {
   const engaged = living * skill.engage;
   // An elite's body is ELITE_BODY × wider, so it counts that many times toward being caught.
-  const eliteWeight = elites * skill.engage * ELITE_BODY;
+  const eliteWeight = elites * skill.engage * enemyBodyScale(true, alphaElites);
   const ceiling = 1 / PLAYER_IFRAMES;
   const streams = skillStreams(field, engaged, m, skill, slowed);
   // A slowed kiter is caught as if the swarm were that much faster.
@@ -1927,7 +2096,7 @@ function swarmIncoming(
   let contact = caught - Math.min(skill.dash * caught, 1 / DASH_COOLDOWN);
   const eliteShare = eliteWeight / Math.max(1e-9, engaged + eliteWeight);
   const inSporeRange = Math.min(1, (skill.clump * SPORE.range ** 2) / FIELD_RADIUS ** 2);
-  const volleys = SPORE_SHOOTERS.map((id) => ({
+  const volleys = (m.ability === "levitate" ? [] : SPORE_SHOOTERS).map((id) => ({
     rate:
       (field.share(id) *
         engaged *
@@ -1957,8 +2126,17 @@ function swarmIncoming(
     streams.poisoned * squeeze +
     contact * streams.trailShare * ACID.poison;
   const hits: Hits[] = [
-    { rate: contact * (1 - eliteShare), dmg: field.dmg * m.armor, clumped: true },
-    { rate: contact * eliteShare, dmg: field.dmg * ELITE.dmg * m.armor, clumped: true },
+    { rate: contact * (1 - eliteShare), dmg: field.dmg * m.armor * m.contactFactor, clumped: true },
+    {
+      rate: contact * eliteShare,
+      dmg:
+        field.dmg *
+        ELITE.dmg *
+        m.armor *
+        m.contactFactor *
+        (alphaElites ? CHALLENGE_ALPHA.damage : 1),
+      clumped: true,
+    },
     ...volleys.map((v) => ({ rate: v.rate * squeeze, dmg: v.dmg * m.armor })),
     ...streams.hits.map((h) => ({ rate: h.rate * squeeze, dmg: h.dmg * m.armor })),
   ];
@@ -1967,6 +2145,8 @@ function swarmIncoming(
     hits,
     poisonUptime: 1 - Math.exp(-poisoned),
     cancelled: streams.cancelled,
+    slowUptime: streams.slowUptime,
+    electricRate: streams.electricRate,
   };
 }
 
@@ -2005,6 +2185,7 @@ function skillStreams(
   const hits: Hits[] = [];
   let poisoned = 0;
   let slowRate = 0;
+  let electricRate = 0;
   /** Seconds of slow a second from hits that leave a fixed slow (Sing, icicles). */
   let slowSeconds = slowed;
   /** Pool share of sludge trailers, whose pools a catch stands in (`swarmIncoming`). */
@@ -2026,10 +2207,26 @@ function skillStreams(
     const cancel = cancelShare(staggerRate(m.out, give, engaged), skills[kind].windup ?? 0);
     tried += attempts;
     cancelled += attempts * cancel;
-    const rate = attempts * (1 - cancel) * (1 - skill.dodge.telegraph);
+    const rate = (1 - m.disableShare) * attempts * (1 - cancel) * (1 - skill.dodge.telegraph);
     const dmg = def.dmg * field.dmgScale * weatherFactor(field.weather, skillElement(kind));
+    const contactDmg = dmg * m.contactFactor;
     // Bubbles have no wind-up: dodged like spores, a burst is that many volleys.
-    const bubbles = attempts * (1 - skill.dodge.spore);
+    const bubbles = (1 - m.disableShare) * attempts * (1 - skill.dodge.spore);
+    if (
+      m.ability === "levitate" &&
+      [
+        "stun-spore",
+        "trail",
+        "rockfall",
+        "dig",
+        "burrow",
+        "triple-burrow",
+        "leap",
+        "leap-heavy",
+        "body-slam",
+      ].includes(kind)
+    )
+      continue;
     switch (kind) {
       case "stun-spore":
         slowRate += rate;
@@ -2056,7 +2253,7 @@ function skillStreams(
       case "roll":
       case "flame-charge":
       case "horn-attack":
-        hits.push({ rate, dmg });
+        hits.push({ rate, dmg: contactDmg });
         break;
       case "poison-fan":
         // The lanes fan wider than a body at range: one of them can hit.
@@ -2064,6 +2261,8 @@ function skillStreams(
         poisoned += rate * ENEMY_SHOTS[kind].poison;
         break;
       case "thunder-shock":
+        electricRate += rate;
+        if (m.ability === "lightning-rod") break;
         hits.push({ rate, dmg: dmg * ENEMY_SHOTS[kind].damage });
         break;
       case "bubble":
@@ -2099,16 +2298,16 @@ function skillStreams(
       case "double-peck":
       case "triple-peck":
         // Each re-aimed peck is its own dodge; a player who misses the first meets them all.
-        hits.push({ rate: rate * PECK[kind].count, dmg });
+        hits.push({ rate: rate * PECK[kind].count, dmg: contactDmg });
         break;
       case "take-down":
       case "horn-rush":
       case "razor-dash":
-        hits.push({ rate, dmg });
+        hits.push({ rate, dmg: contactDmg });
         break;
       case "flame-trail":
         // The charge, then one burning tick for a player who crosses the trail it leaves.
-        hits.push({ rate, dmg });
+        hits.push({ rate, dmg: contactDmg });
         hits.push({ rate, dmg: dmg * FLAME_TRAIL.damage });
         break;
       case "pay-day":
@@ -2130,7 +2329,7 @@ function skillStreams(
       // Coast (docs/state-machines/simulation.md).
       case "aqua-jet":
       case "megahorn":
-        hits.push({ rate, dmg });
+        hits.push({ rate, dmg: contactDmg });
         break;
       case "psybeam-heavy":
         hits.push({ rate, dmg: dmg * PSYBEAM_HEAVY.dmg });
@@ -2191,11 +2390,11 @@ function skillStreams(
         slowRate += rate;
         break;
       case "belly-slide":
-        hits.push({ rate, dmg });
+        hits.push({ rate, dmg: contactDmg });
         break;
       case "fire-punch":
         // Each re-aimed punch is its own dodge, as with the pecks.
-        hits.push({ rate: rate * FIRE_PUNCHES, dmg });
+        hits.push({ rate: rate * FIRE_PUNCHES, dmg: contactDmg });
         break;
       case "melt":
       case "body-slam":
@@ -2218,6 +2417,7 @@ function skillStreams(
     hits,
     poisoned,
     trailShare,
+    electricRate,
     slowUptime: 1 - Math.exp(-(slowRate * slowFor + slowSeconds)),
     cancelled: tried > 0 ? cancelled / tried : 0,
   };
@@ -2360,7 +2560,14 @@ interface EliteCohort {
 
 /** One build sample's run: its own stocks, build and HP distribution. */
 interface Track {
-  player: Player;
+  player: BuildPlayer;
+  fieldOutput: {
+    weight: number;
+    swarm: number;
+    guardian: number;
+    selfWeather: number;
+    solarCost: number;
+  }[];
   rng: Rng;
   /** Captures and the species they bring (kept apart so they do not shift the card rolls). */
   captureRng: Rng;
@@ -2372,6 +2579,7 @@ interface Track {
     entryAlive: number;
     eliteRate: number;
     income: EventIncome;
+    challenge: ChallengeField;
     earned: { xp: number; cards: number; stardust: number };
     schedule: ScheduledBeat[];
     events: { at: number; id: FieldEventId }[];
@@ -2382,7 +2590,7 @@ interface Track {
   livingEventXp: number;
   livingHorde: number;
   livingHordeHp: number;
-  learnedAt: Map<MoveId, number>;
+  learnedAt: Map<ModelMoveId, number>;
   itemAt: Map<string, number>;
   fusedAt: number | undefined;
   approaching: number;
@@ -2391,6 +2599,7 @@ interface Track {
   eliteKilled: number;
   killRate: number;
   hurtRate: number;
+  bossHitRate: number;
   /** The shared director's smoothed pressure; geometry and recent hits are estimated below. */
   directorPressure: number;
   levelAt: number[];
@@ -2411,7 +2620,7 @@ interface Track {
   weatherCarry: number;
   invulnerable: number;
   ults: number[];
-  damage: Map<MoveId, number>;
+  damage: Map<ModelMoveId, number>;
   rows: Minute[];
   beats: BeatSpike[];
   /** Alive at each second while running (the run's end freezes it). */
@@ -2423,11 +2632,15 @@ interface Track {
   /** Current zone (0-based), the run second it began, its timeline beats fired so far. */
   zone: number;
   zoneStart: number;
+  /** 自己治好 seconds of player status left to remove on this map (0 once used or without the effect). */
+  cureLeft: number;
   /** Zone second an eruption beat stops dropping bombs (0: none running). */
   eruptionUntil: number;
-  /** Run second and alive share at each zone guardian kill. */
+  /** Run second and alive share at each field clear. */
   zoneClears: { t: number; alive: number; level: number }[];
   guardianReach: number[];
+  /** The analysis stopped while this sample could still clear its current floor. */
+  censored?: number;
   /** Per zone: the guardian fight so far (`GuardianFight`). */
   fights: { seconds: number; cost: number; complete: boolean }[];
   /** Run second each zone began, and the entry-pace probes per zone. */
@@ -2436,15 +2649,43 @@ interface Track {
   done: boolean;
 }
 
+/** Seconds of player status 自己治好 removes on a map; the sim cures the first status once. */
+function bondCure(bond: RunOptions["bond"]): number {
+  return bond && bond.level >= BOND_CURE_LEVEL ? statuses.poison.duration : 0;
+}
+
 function newTrack(
   i: number,
   starter: StarterId,
   lab: LabBonuses | undefined,
   seed = 0x5eed,
+  deepBuild?: DeepBuild,
+  mega?: RunOptions["mega"],
+  bond?: RunOptions["bond"],
+  trainer?: TrainerId,
 ): Track {
-  const player = createPlayer(0, starter, 0, lab);
+  const bonded: LabBonuses | undefined =
+    bond && bond.level >= BOND_LAB_LEVEL && bond.lab > 0
+      ? {
+          modifiers: [...(lab?.modifiers ?? []), bondLabModifier(starter, bond.lab)],
+          rules: lab?.rules ?? {},
+        }
+      : lab;
+  const player: BuildPlayer = createPlayer(0, starter, 0, bonded);
+  equipDeepBuild(player, deepBuild ?? {});
+  player.trainerProjection = trainer;
+  if (mega)
+    player.megaProjection = {
+      branch: mega.branch,
+      grant: mega.grant ?? "extra",
+      stone: false,
+      active: false,
+      at: null,
+    };
+  const learnedAt = new Map<ModelMoveId, number>(player.moves.map((s) => [s.id, 0]));
   return {
     player,
+    fieldOutput: [],
     rng: createRng(seed + i * 7919),
     captureRng: createRng(0xca97 + i * 104729),
     fieldRng: createRng(seed + i * 7919),
@@ -2458,8 +2699,8 @@ function newTrack(
     livingEventXp: 0,
     livingHorde: 0,
     livingHordeHp: 0,
-    learnedAt: new Map(player.moves.map((s) => [s.id, 0])),
-    itemAt: new Map(),
+    learnedAt,
+    itemAt: new Map(player.items.map((i) => [i.id, 0])),
     fusedAt: undefined,
     approaching: 0,
     living: 0,
@@ -2467,6 +2708,7 @@ function newTrack(
     eliteKilled: 0,
     killRate: 0,
     hurtRate: 0,
+    bossHitRate: 0,
     directorPressure: 0.5,
     levelAt: [0, 0],
     hp: createHp(),
@@ -2496,6 +2738,7 @@ function newTrack(
     stardust: 0,
     zone: 0,
     zoneStart: 0,
+    cureLeft: bondCure(bond),
     eruptionUntil: 0,
     zoneClears: [],
     guardianReach: [],
@@ -2525,9 +2768,15 @@ function partnerList(track: Track): Partner[] {
   }));
 }
 
+type ModelOptions = Omit<RunOptions, "stage" | "step">;
+type ModelField = ReturnType<typeof routeFields>[number] | TowerField;
+
 interface RunEnv {
-  options: RunOptions;
-  fields: ReturnType<typeof routeFields>;
+  options: ModelOptions;
+  rules: readonly RuleId[];
+  nuzlocke: boolean;
+  alphaElites: boolean;
+  fields: readonly ModelField[];
   zones: number;
   summonSeconds: readonly number[];
   policy: PickPolicy;
@@ -2535,13 +2784,17 @@ interface RunEnv {
   offers: number;
 }
 
-function growthBefore(player: Player) {
+function levelCapAt(env: RunEnv, track: Track): number {
+  return env.rules.includes("level-cap") ? LEVEL_CAP[env.fields[track.zone]!.step] : Infinity;
+}
+
+function growthBefore(player: Player, nuzlocke: boolean) {
   const stats = playerStats(player);
   return {
     level: player.level,
     stage: player.stage,
     maxHp: stats.maxHp,
-    saves: defenceOf(stats).charges,
+    saves: defenceOf(stats, nuzlocke).charges,
   };
 }
 
@@ -2568,15 +2821,18 @@ function offer(
 ) {
   const { player, rng } = track;
   const partners = partnerList(track);
-  const options = rolled ?? rollChoices(rng, player, source, partners, minimum);
+  const { rules } = env;
+  const levelCap = levelCapAt(env, track);
+  const options = rolled ?? rollChoices(rng, player, source, partners, minimum, rules);
   if (source === "level" && !rolled) countExposure(env, player, options);
   // Chest cards are all upgrades, so "prefer" never applies there.
   const rule = source === "chest" ? { prefer: null, greedy: env.policy.greedy } : env.policy;
-  const before = growthBefore(player);
+  const before = growthBefore(player, env.nuzlocke);
   const levels = applyPick(
     player,
-    chooseCard(player, options, rule, rng, target, env.options.skill, partners),
+    chooseCard(player, options, rule, rng, target, env.options.skill, partners, rules, levelCap),
     rng,
+    levelCap,
   );
   recordGrowth(track, before, t);
   if (track.fusedAt === undefined && fuseMoves(player)) track.fusedAt = t;
@@ -2599,7 +2855,9 @@ function settleRewards(
   const earned = track.fieldIncome[track.zone]!.earned;
   earned.xp += track.alive * xp;
   earned.cards += track.alive * (chests + minimums.length);
-  const before = growthBefore(player);
+  const before = growthBefore(player, env.nuzlocke);
+  const { rules } = env;
+  const partners = partnerList(track);
   // Elite/guardian loot queues its chest before its XP. Only the front offer is rolled immediately.
   const pending: { source: "level" | "chest"; minimum?: Rarity }[] = [
     ...Array.from({ length: chests }, () => ({ source: "chest" as const })),
@@ -2607,15 +2865,27 @@ function settleRewards(
   ];
   let first =
     pending.length > 0
-      ? rollChoices(rng, player, "chest", partnerList(track), pending[0]!.minimum)
+      ? rollChoices(rng, player, "chest", partners, pending[0]!.minimum, rules)
       : undefined;
-  gainXp(player, xp, () => {
-    if (pending.length === 0) {
-      first = rollChoices(rng, player, "level", partnerList(track));
-      countExposure(env, player, first);
-    }
-    pending.push({ source: "level" });
-  });
+  const overflow = gainXp(
+    player,
+    xp,
+    () => {
+      if (pending.length === 0) {
+        first = rollChoices(rng, player, "level", partners, undefined, rules);
+        countExposure(env, player, first);
+      }
+      pending.push({ source: "level" });
+    },
+    levelCapAt(env, track),
+  );
+  if (overflow > 0) {
+    const dust = overflow * CAP_STARDUST_RATE;
+    const ledger = track.fieldIncome[track.zone]!.challenge;
+    ledger.cappedXp += track.alive * overflow;
+    ledger.capStardust += track.alive * dust;
+    creditStardust(track, dust);
+  }
   recordGrowth(track, before, t);
   for (let i = 0; i < pending.length; i++) {
     const due = pending[i]!;
@@ -2641,13 +2911,20 @@ function countExposure(env: RunEnv, player: Player, options: readonly Choice[]) 
     env.exposure.set(key, entry);
   };
   const itemRoom = player.items.length < itemSlots(player);
+  const mono = env.rules.includes("mono-type")
+    ? new Set(learnable(player, env.rules).map(({ move }) => move))
+    : null;
   for (const key of env.exposure.keys()) {
     const [kind, id] = key.split(":") as ["item" | "move", string];
     const owned =
       kind === "item"
         ? player.items.some((item) => item.id === id)
         : player.moves.some((state) => state.id === id);
-    if (kind === "item" ? owned || itemRoom : !owned && player.moves.length < moveSlots(player))
+    if (
+      kind === "item"
+        ? !replacesHeldItem(env.rules, player, id as keyof typeof itemDefs) && (owned || itemRoom)
+        : !owned && player.moves.length < moveSlots(player) && (!mono || mono.has(id as MoveId))
+    )
       bump(key, "eligible");
   }
   for (const choice of options) {
@@ -2679,15 +2956,10 @@ export function healPerSecond(
 ): number {
   const { stats } = out;
   const drain = out.perMove.reduce(
-    (sum, { move, out: one }) =>
-      sum + (moveDefs[move].drain ?? 0) * (one.direct * split.swarm + one.single * split.boss),
+    (sum, { drain, out: one }) =>
+      sum + (drain ?? 0) * (one.direct * split.swarm + one.single * split.boss),
     0,
   );
-  const typeHits: Ledger["typeHits"] = {};
-  for (const { move, out: one } of out.perMove) {
-    const { type } = moveDefs[move];
-    typeHits[type] = (typeHits[type] ?? 0) + one.hits * split.swarm + one.bossHits * split.boss;
-  }
   const directShare = out.useful > 0 ? out.direct / out.useful : 0;
   const ledger: Ledger = {
     stats,
@@ -2697,7 +2969,6 @@ export function healPerSecond(
       split.partners +
       out.single * split.boss,
     kills,
-    typeHits,
     ...hp,
   };
   const lifesteal = stats.lifesteal * Math.min(ledger.removed, LIFESTEAL_CAP);
@@ -2736,8 +3007,18 @@ function settleSiteRewards(
       reward.berries += SITE.rewards.fullBagBerries;
       continue;
     }
-    const before = growthBefore(player);
-    let levels = applyPick(player, choice, track.fieldRng);
+    if (reservesCordSlot(player) && !fitsCordReservation(player, choice)) continue;
+    if (choice.kind === "item" && replacesHeldItem(env.rules, player, choice.item)) {
+      const dust = HELD_ITEM_STARDUST * playerStats(player).stardust;
+      const ledger = track.fieldIncome[track.zone]!.challenge;
+      ledger.replacedItems += track.alive;
+      ledger.itemStardust += track.alive * dust;
+      creditStardust(track, dust);
+      eventCredit(track, "stardust", dust);
+      continue;
+    }
+    const before = growthBefore(player, env.nuzlocke);
+    let levels = applyPick(player, choice, track.fieldRng, levelCapAt(env, track));
     recordGrowth(track, before, t);
     while (levels > 0) {
       levels--;
@@ -2798,24 +3079,61 @@ function settleSiteRewards(
 
 /** Advances one sample by one second (`t`: run second). */
 function stepTrack(env: RunEnv, track: Track, t: number): void {
-  const { options } = env;
+  const { options, rules, nuzlocke, alphaElites } = env;
   const { difficulty, skill } = options;
   const diff = difficulties[difficulty];
   const { player } = track;
   const fieldIndex = track.zone;
-  const { stage: stageId, zone, step } = env.fields[fieldIndex]!;
+  const plan = env.fields[fieldIndex]!;
+  const floor = "guardian" in plan ? plan : undefined;
+  const { stage: stageId, zone, step } = plan;
   const stage = stageDefs[stageId];
   const { guardian: zoneGuardian } = stage.zones[zone]!;
   const guardian = zoneGuardian.species;
-  const zoneDef = zoneFactorsFor(step, stage, zone);
+  const zoneDef = floor?.factors ?? zoneFactorsFor(step, stage, zone);
   const guardianXp = enemies[guardian].xp * zoneDef.xp * diff.xp;
   // Stage time in this zone, and the clock the swarm curves read.
   const tz = t - track.zoneStart;
-  const clock = zoneClock(step, tz);
+  const projection = player.projection;
+  if (projection) {
+    projection.time = t;
+    if (
+      projection.eligibleAt !== undefined &&
+      projection.build.tradeDelay !== undefined &&
+      player.stage < starters[player.starter].stages.length - 1 &&
+      t - projection.eligibleAt >= projection.build.tradeDelay
+    ) {
+      const before = growthBefore(player, env.nuzlocke);
+      advanceDeepForm(player);
+      recordGrowth(track, before, t);
+    }
+  }
+  if (
+    player.megaProjection?.stone &&
+    !player.megaProjection.active &&
+    player.stage === starters[player.starter].stages.length - 1
+  ) {
+    const before = growthBefore(player, env.nuzlocke);
+    evolveMega(player, t);
+    track.invulnerable = Math.max(track.invulnerable, EVOLVE_INVULNERABLE);
+    recordGrowth(track, before, t);
+  }
+  const clock = floor?.clock(tz) ?? zoneClock(step, tz);
   const summon = env.summonSeconds[fieldIndex]!;
-  const rampage = tz >= stage.duration && (track.boss !== null || tz >= summon);
+  const rampage = !floor && tz >= stage.duration && (track.boss !== null || tz >= summon);
   if (!track.fieldState) {
-    track.fieldState = newModelFieldEvents(stageId, zone, track.fieldRng, track.eventsUsed, skill);
+    track.fieldState = newModelFieldEvents(
+      stageId,
+      zone,
+      track.fieldRng,
+      track.eventsUsed,
+      skill,
+      rules,
+    );
+    if (floor && !floor.guardian) {
+      const scale = TOWER_TRIAL.seconds / stage.duration;
+      for (const beat of track.fieldState.schedule) beat.at *= scale;
+    }
     // Fixed-route policy: take the first exit to this map. Optional duplicates come later and
     // cannot change its marker. Use a separate stream so the paired control keeps its field beats.
     const tier: readonly StageId[] = ROUTE_TIERS[step];
@@ -2829,6 +3147,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
       eliteRate:
         options.routeElites === false ? 1 : routeSpawnFactors({ marker, modifier }).eliteRate,
       income: emptyEventIncome(),
+      challenge: { cappedXp: 0, capStardust: 0, replacedItems: 0, itemStardust: 0 },
       earned: { xp: 0, cards: 0, stardust: 0 },
       schedule: track.fieldState.schedule,
       events: track.fieldState.trace,
@@ -2862,14 +3181,39 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   for (const beat of fired)
     if (beat.kind === "outbreak" && enabled)
       fieldState.outbreak = { species: beat.species, until: tz + FIELD_EVENTS.outbreak.seconds };
-  const weather = enabled ? modelWeather(fieldState, tz) : null;
+  // Compare activation times, including expired casts, so overwritten weather cannot resume.
+  const weatherMove = player.moves.find(({ id }) => isWeatherMove(id))?.id;
+  const cast = isWeatherMove(weatherMove)
+    ? castWindow(
+        { ...projection?.build, weather: weatherMoves[weatherMove].weather },
+        tz - STEP,
+        (track.itemAt.get(weatherMoves[weatherMove].rock) ?? Infinity) - track.zoneStart,
+        Math.max(0, track.learnedAt.get(weatherMove)! - track.zoneStart),
+      )
+    : null;
+  // 日照 is only its weather occupancy: the latest of the cast and the evolution / map-entry window.
+  const drought = droughtWindow(player.megaProjection, track.zoneStart, tz - STEP);
+  const own = drought && (!cast || drought.from >= cast.from) ? drought : cast;
+  const natural = enabled ? fieldState.weather : null;
+  const ownLatest = own && (!natural || natural.from > tz - STEP || own.from >= natural.from);
+  const ownActive = !!ownLatest && tz - STEP < own.until;
+  const weather = ownLatest
+    ? ownActive
+      ? own.id
+      : null
+    : enabled
+      ? modelWeather(fieldState, tz)
+      : null;
   const outbreak =
     enabled && fieldState.outbreak && tz < fieldState.outbreak.until
       ? fieldState.outbreak.species
       : null;
-  const field = fieldAt(step, stageId, tz, difficulty, rampage, zone, { weather, outbreak });
-  const baseField = outbreak ? fieldAt(step, stageId, tz, difficulty, rampage, zone) : field;
+  const field = fieldAt(step, stageId, tz, difficulty, rampage, zone, { weather, outbreak }, floor);
+  const baseField = outbreak
+    ? fieldAt(step, stageId, tz, difficulty, rampage, zone, undefined, floor)
+    : field;
   const eliteEach = field.hp * ELITE.hp;
+  const challengeEliteHp = alphaElites ? CHALLENGE_ALPHA.hp : 1;
 
   // Timeline beats (fired this second): swarms and stampedes join the crowd, elites the elite stock.
   for (const firedBeat of fired) {
@@ -2943,7 +3287,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
       });
     } else {
       const n = load.elites;
-      const hp = eliteEach * (beat === "alpha" ? ALPHA_HP : 1);
+      const hp = eliteEach * (alphaElites ? challengeEliteHp : beat === "alpha" ? ALPHA_HP : 1);
       const clear = (n * hp) / Math.max(0.1, now.out.raw * ELITE_SHARE);
       track.beats.push({ zone: fieldIndex, t: tz, beat, clear });
       const chance = beat === "alpha" ? CAPTURE_CHANCE.alpha : CAPTURE_CHANCE.elite;
@@ -2986,20 +3330,32 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
       killRate: track.killRate,
       hurtRate: track.hurtRate,
       frac: track.frac,
-      formSpeed: formOf(player).speed,
+      formSpeed: formOf(player).speed + megaSpeed(player),
     },
     playerStats(player),
   );
   const m = measure(player, target, skill, track.frac);
   const { stats } = m.out;
-  const weatherSeconds =
-    enabled && fieldState.weather
+  const totals = (track.fieldOutput[fieldIndex] ??= {
+    weight: 0,
+    swarm: 0,
+    guardian: 0,
+    selfWeather: 0,
+    solarCost: 0,
+  });
+  totals.weight += track.alive;
+  totals.swarm += track.alive * m.out.useful;
+  totals.guardian += track.alive * (m.out.single + m.out.bossBurn);
+  totals.selfWeather += track.alive * Number(ownActive);
+  const weatherSeconds = ownLatest
+    ? Number(ownActive) * STEP
+    : enabled && fieldState.weather
       ? Math.max(
           0,
           Math.min(tz, fieldState.weather.until) - Math.max(tz - STEP, fieldState.weather.from),
         )
       : 0;
-  const chipWeather = weatherSeconds > 0 ? fieldState.weather!.id : null;
+  const chipWeather = ownLatest ? weather : weatherSeconds > 0 ? fieldState.weather!.id : null;
   const siteStep = enabled
     ? stepModelSites(
         fieldState,
@@ -3022,6 +3378,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
           weather,
           outbreak,
           berryMultiplier: m.berries,
+          alphaElites,
           focusedDps: (species, hp) => {
             const def = enemies[species];
             const vs = typeTable((type) => typeMultiplier(type, def.types));
@@ -3046,7 +3403,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
     eventCredit(track, "completed", siteStep.completed);
     eventCredit(track, "unfinished", siteStep.unfinished);
     eventCredit(track, "occupiedSeconds", siteStep.occupied);
-    eventCredit(track, "enemyWeatherHp", siteStep.weatherRemoved);
+    if (!ownActive) eventCredit(track, "enemyWeatherHp", siteStep.weatherRemoved);
     if (siteStep.directStardust > 0) eventCredit(track, "shinyCaught", 1);
     eventCredit(
       track,
@@ -3077,7 +3434,14 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   // The guardian's statuses come from the share of the build's output aimed at it.
   const bossStatus = {
     stopped: m.occ.bossStopped * skill.bossFocus,
-    delay: m.occ.bossDelay * skill.bossFocus,
+    delay:
+      m.occ.bossDelay * skill.bossFocus +
+      (m.ability === "cursed-body"
+        ? waitOut(
+            track.bossHitRate * DEEP_PARAMETERS.cursedBody.chance,
+            DEEP_PARAMETERS.cursedBody.seconds,
+          )
+        : 0),
     interrupts: m.occ.bossInterrupts * skill.bossFocus,
   };
   const guardianHits = boss
@@ -3093,6 +3457,8 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
         fury,
         tz - summon,
         weather,
+        ignoresGroundHazard(player, "landing"),
+        m.contactFactor,
       )
     : [];
   if (boss) {
@@ -3108,6 +3474,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
     m,
     skill,
     sideEffect("slow"),
+    alphaElites,
   );
   const erupting = tz < track.eruptionUntil;
   const eruption = erupting ? eruptionHits(m.speed, hazardRadius(player), skill.dodge.boss) : null;
@@ -3129,7 +3496,22 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   const bossPoison = sideEffect("poison");
   const poisonUptime =
     bossPoison > 0 ? 1 - (1 - swarm.poisonUptime) * Math.exp(-bossPoison) : swarm.poisonUptime;
-  const poison = poisonUptime * drainAt(statuses.poison, clock);
+  if (projection) {
+    projection.poison = poisonUptime;
+    projection.slow = swarm.slowUptime;
+    projection.electricRate = swarm.electricRate;
+  }
+  const poison =
+    (m.ability === "magic-guard"
+      ? 0
+      : m.ability === "shed-skin"
+        ? DEEP_PARAMETERS.shedSkinPoisonFactor
+        : 1) *
+      (1 - (player.trainerProjection ? assistPoisonCover(player.trainerProjection) : 0)) *
+      poisonUptime *
+      drainAt(statuses.poison, clock) +
+    // 闪焰冲锋's recoil wears HP like poison: down to 1 HP, never lethal.
+    m.maxHp * recoilShare(player, stats, weather, track.living);
 
   // Output split: guardian first, then elites; the rest clears the swarm. Partners skip the guardian.
   let useful = (m.out.useful + swarm.contact * Math.min(m.thorns, field.hp)) * (1 - siteFocus);
@@ -3141,7 +3523,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
       boss.max * weatherChip(chipWeather, enemies[guardian].types, true) * weatherSeconds,
     );
     boss.hp -= bossDps * STEP + chip;
-    eventCredit(track, "enemyWeatherHp", chip);
+    if (!ownActive) eventCredit(track, "enemyWeatherHp", chip);
     swarmShare *= 1 - BOSS_TRASH_COST * skill.bossFocus;
   }
   let eliteKills = 0;
@@ -3169,7 +3551,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
     eliteXp = cleared.xp;
     eliteWorth = cleared.rawXp;
     eliteEventXp = cleared.eventXp;
-    eventCredit(track, "enemyWeatherHp", cleared.weatherRemoved);
+    if (!ownActive) eventCredit(track, "enemyWeatherHp", cleared.weatherRemoved);
     swarmShare *= 1 - ELITE_SHARE;
     partnerSwarm *= 1 - ELITE_SHARE;
   }
@@ -3238,7 +3620,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
     1,
     diff.eliteChance * m.elites * track.fieldIncome[fieldIndex]!.eliteRate,
   );
-  const incoming = spawnsNow * (field.hp + eliteChance * (eliteEach - field.hp));
+  const incoming = spawnsNow * (field.hp + eliteChance * (eliteEach * challengeEliteHp - field.hp));
   const eliteStock = track.elites.reduce((sum, cohort) => sum + cohort.n, 0);
   const admits =
     track.living +
@@ -3257,7 +3639,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
     if (elites > 0)
       track.elites.push({
         n: elites,
-        hp: eliteEach,
+        hp: eliteEach * challengeEliteHp,
         chance: CAPTURE_CHANCE.elite,
         xp: field.eliteXp,
         rawXp: field.xp * ELITE.xp,
@@ -3307,7 +3689,8 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
     Math.max(0, track.living - weatherKills),
     (useful * STEP) / ordinaryHp,
   );
-  const kills = weatherKills + personalKills;
+  // 浮点加法可能让合计击杀略超存量，长局里会把剩余怪群生命和经验变成负数。
+  const kills = Math.min(track.living, weatherKills + personalKills);
   const killShare = track.living > 0 ? kills / track.living : 0;
   const hordeKills = track.livingHorde * killShare;
   track.livingHorde *= 1 - killShare;
@@ -3323,7 +3706,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
 
   const xp = (swarmXp + eliteXp) * m.xp * m.pickup;
   eventCredit(track, "xp", (eventXp + eliteEventXp) * m.xp * m.pickup);
-  eventCredit(track, "enemyWeatherHp", weatherKills * ordinaryHp);
+  if (!ownActive) eventCredit(track, "enemyWeatherHp", weatherKills * ordinaryHp);
   if (!ultimateBusy)
     track.ultCharge +=
       ultChargeRate(
@@ -3402,11 +3785,25 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
     m.spareDashes,
     heal * full,
   );
+  track.bossHitRate =
+    guardianHits.reduce((sum, h) => sum + h.rate, 0) * exposed * (1 - m.defence.evasion);
   track.hurtRate = landed;
-  const weatherHp = m.maxHp * weatherChip(chipWeather, formOf(player).types) * weatherSeconds;
+  if (projection) projection.hurtRate = landed;
+  const solarCost =
+    m.ability === "solar-power" && chipWeather === "sun"
+      ? m.maxHp * (projection?.build.solarCost ?? DEEP_PARAMETERS.solarCost) * weatherSeconds
+      : 0;
+  const weatherHp =
+    solarCost +
+    (m.ability === "magic-guard"
+      ? 0
+      : m.maxHp * weatherChip(chipWeather, formOf(player).types) * weatherSeconds);
   const weatherLoss = weatherHp * ultimateExposed;
-  eventCredit(track, "weatherSeconds", weatherSeconds);
-  eventCredit(track, "weatherHpCost", weatherLoss);
+  totals.solarCost += track.alive * solarCost * ultimateExposed;
+  if (!ownActive) {
+    eventCredit(track, "weatherSeconds", weatherSeconds);
+    eventCredit(track, "weatherHpCost", weatherLoss - solarCost * ultimateExposed);
+  }
   if (ultimateExposed < 1) {
     const unprotected = damageEvents(
       hits,
@@ -3428,12 +3825,34 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
       1e-9,
       caught.reduce((sum, h) => sum + h.rate, 0),
     );
-  const saves = savesOf(m.defence, m.maxHp, catchHit || m.maxHp, skill.burst);
+  const defence = nuzlocke ? defenceOf(m.out.stats, true) : m.defence;
+  const bondLevel = env.options.bond?.level ?? 0;
+  // Explicit rule analysis also projects personal revive research as trailing HP charges.
+  if (options.rules && !nuzlocke)
+    for (let i = 0; i < player.revives; i++)
+      defence.charges.push({ ...REVIVE, iframes: REVIVE.invulnerable, chance: 1, perStage: false });
+  const saves = savesOf(defence, m.maxHp, catchHit || m.maxHp, skill.burst);
+  // 挺住: one more charge, 1 HP and the hit i-frames. It is spent first in the sim; trailing here
+  // leaves the count of holds unchanged and only reorders it against other saves.
+  if (bondLevel >= BOND_ENDURE_LEVEL)
+    saves.charges.push(
+      ...savesOf(
+        { ...defence, charges: [{ hp: 0, chance: 1, iframes: PLAYER_IFRAMES, perStage: false }] },
+        m.maxHp,
+        catchHit || m.maxHp,
+        skill.burst,
+      ).charges,
+    );
+  // 自己治好: removes the first poison episode of the map (sustained sources reapply it, so this
+  // is the upper bound of its value).
+  const cured = Math.min(track.cureLeft, poisonUptime * STEP);
+  track.cureLeft -= cured;
+  const curedDrain = (cured / STEP) * drainAt(statuses.poison, clock);
   const aliveBefore = track.alive;
   stepHp(track.hp, {
     events,
     heal: heal / m.maxHp,
-    poison: (poison * ultimateExposed) / m.maxHp,
+    poison: (Math.max(0, poison - curedDrain) * ultimateExposed) / m.maxHp,
     floor: DRAIN_FLOOR / m.maxHp,
     charges: saves.charges,
     fallback: saves.fallback,
@@ -3462,7 +3881,7 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
     elites +
     Number(!!fieldState.shiny) +
     Number(!!fieldState.active?.encounter);
-  if (options.route) {
+  if (options.route || options.rules || floor) {
     const rawShare = (list: readonly { rate: number; dmg: number }[]) =>
       list.reduce((sum, h) => sum + h.rate * h.dmg, 0) / m.maxHp;
     track.probes[fieldIndex]!.push({
@@ -3495,11 +3914,51 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
   track.chestCredit = Math.max(0, track.chestCredit - chests);
   settleRewards(env, track, target, t, xp, chests);
   if (siteStep) settleSiteRewards(env, track, target, t, siteStep);
-  if (boss && boss.hp <= 0) {
+  const guardianCleared = boss !== null && boss.hp <= 0 && (!floor || track.alive >= 1e-4);
+  if (guardianCleared) {
     track.fights[fieldIndex]!.complete = true;
-    // combat.ts drops six individually rounded candies and one chest; the exit collects all of them.
+    // The exit collects the individually rounded candies, the chest and the personal trophy.
     const rewardXp = LOOT.eliteXpCount * Math.ceil(guardianXp / LOOT.eliteXpCount);
+    if (floor) {
+      stepHp(track.hp, {
+        events: [],
+        heal: TOWER_TRIAL.heal,
+        poison: 0,
+        floor: 0,
+        charges: [],
+        fallback: null,
+      });
+      track.frac = hpShare(track.hp);
+      player.hp = track.frac * playerStats(player).maxHp;
+    }
     settleRewards(env, track, target, t, rewardXp * playerStats(player).xp, 1);
+    if (floor) {
+      track.fieldIncome[fieldIndex]!.earned.cards += track.alive;
+      const rewardWorld = {
+        rng: track.rng,
+        partners: partnerList(track),
+        rules,
+        playerUnlocks: [unlockIds],
+      } satisfies Pick<World, "rng" | "partners" | "rules" | "playerUnlocks">;
+      const trophy = rollRewardChoices(rewardWorld as unknown as World, player, {
+        id: 0,
+        source: "chest",
+        options: [],
+        offer: { kind: "trophy" },
+      });
+      for (let levels = offer(env, track, "chest", target, t, trophy); levels > 0; levels--)
+        levels += offer(env, track, "level", target, t);
+      track.eventsUsed.length = 0;
+    } else if (fieldIndex === MEGA_STONE_STEP && player.megaProjection) {
+      // The second map's trophy offers both stones; the sample takes its branch and gives up a slot.
+      track.fieldIncome[fieldIndex]!.earned.cards += track.alive;
+      takeMegaStone(player);
+    } else if (trophyLinkingCord(player, partnerList(track))) {
+      track.fieldIncome[fieldIndex]!.earned.cards += track.alive;
+      const before = growthBefore(player, nuzlocke);
+      applyPick(player, { kind: "item", item: "linking-cord" }, track.rng, levelCapAt(env, track));
+      recordGrowth(track, before, t);
+    }
   }
   if (t % 60 === 0) {
     const capacity =
@@ -3534,23 +3993,26 @@ function stepTrack(env: RunEnv, track: Track, t: number): void {
       fieldState.active = null;
     }
   }
-  if (boss && boss.hp <= 0) {
+  const timedFloorCleared = floor && !floor.guardian && tz >= TOWER_TRIAL.seconds && !track.done;
+  if (guardianCleared || timedFloorCleared) {
     if (fieldState.active) {
       eventCredit(track, "unfinished", 1);
       fieldState.active = null;
     }
-    creditStardust(track, STARDUST.guardian * stats.stardust);
+    if (guardianCleared) creditStardust(track, STARDUST.guardian * stats.stardust);
     track.zoneClears.push({ t, alive: track.alive, level: player.level });
     if (fieldIndex < env.zones - 1) {
       // The next zone: a fresh field and timeline; the build, HP and partners carry over.
       track.zone += 1;
       track.zoneStart = t;
+      track.cureLeft = bondCure(env.options.bond);
       track.zoneStarts.push(t);
       track.probes.push([]);
       track.fieldState = null;
       track.eruptionUntil = 0;
       track.boss = null;
       track.bossTtk = null;
+      track.bossHitRate = 0;
       track.living = 0;
       track.approaching = 0;
       track.approachingXp = 0;
@@ -3661,9 +4123,43 @@ function entryComparisons(tracks: readonly Track[], env: RunEnv): EntryCompariso
   });
 }
 
-/** The samples' runs, averaged. */
-export function runModel(options: RunOptions): RunModel {
-  const { starter, difficulty } = options;
+/** Independent pressure windows on each map, including the forest and tower. */
+function challengePressure(tracks: readonly Track[], env: RunEnv): ChallengeResult["pressure"] {
+  return env.fields.map((_, zone) => {
+    const at = (from: number, to: number) =>
+      windowOf(
+        tracks.flatMap((track) => {
+          const probes = track.probes[zone]?.filter((probe) => probe.tz > from && probe.tz <= to);
+          if (!probes?.length) return [];
+          const end = track.zoneStarts[zone]! + probes.at(-1)!.tz;
+          const complete = probes.length === ENTRY_WINDOW;
+          return [
+            {
+              probes,
+              aliveStart: probes[0]!.alive,
+              aliveEnd: track.survival[end - 1]!,
+              seconds: probes.length,
+              complete,
+              resolved: complete || (track.zone === zone && track.alive < 1e-4),
+            },
+          ];
+        }),
+      );
+    const summon = env.summonSeconds[zone]! - 1;
+    return {
+      entry: at(0, ENTRY_WINDOW),
+      preSummon: at(Math.max(0, summon - ENTRY_WINDOW), summon),
+    };
+  });
+}
+
+function simulate(
+  options: ModelOptions,
+  fields: readonly ModelField[],
+  summonSeconds: readonly number[],
+) {
+  const { starter } = options;
+  const rules = options.rules ?? [];
   const count = options.samples ?? BUILD_SAMPLES;
   if (!Number.isInteger(count) || count < 1)
     throw new RangeError("runModel: samples must be a positive integer");
@@ -3671,8 +4167,83 @@ export function runModel(options: RunOptions): RunModel {
   if (![timing.windup, timing.protection].every((value) => Number.isFinite(value) && value >= 0))
     throw new RangeError("runModel: ultimate timing must be finite and nonnegative");
   const tracks = Array.from({ length: count }, (_, i) =>
-    newTrack(i, starter, options.lab, options.seed),
+    newTrack(
+      i,
+      starter,
+      options.lab,
+      options.seed,
+      options.deepBuild,
+      options.mega,
+      options.bond,
+      options.trainer,
+    ),
   );
+  const env: RunEnv = {
+    options,
+    rules,
+    nuzlocke: rules.includes("nuzlocke"),
+    alphaElites: rules.includes("alpha-elites"),
+    fields,
+    summonSeconds,
+    zones: fields.length,
+    policy: options.picks ?? options.skill.picks,
+    exposure: new Map(
+      exposureKeys(starter, Object.keys(itemDefs)).map((key) => [key, { eligible: 0, offered: 0 }]),
+    ),
+    offers: 0,
+  };
+  const limits = fields.map((field) =>
+    "guardian" in field && !field.guardian
+      ? TOWER_TRIAL.seconds
+      : stageDefs[field.stage].duration + OVERTIME,
+  );
+  const horizon = limits.reduce((sum, seconds) => sum + seconds, 0);
+  for (let t = STEP; t <= horizon; t += STEP) {
+    let running = false;
+    for (const track of tracks) {
+      if (track.done) continue;
+      if (t - track.zoneStart > limits[track.zone]!) {
+        if ("guardian" in fields[track.zone]!) track.censored = track.zone;
+        if (track.fieldState?.active) {
+          eventCredit(track, "unfinished", 1);
+          track.fieldState.active = null;
+        }
+        track.done = true;
+        continue;
+      }
+      stepTrack(env, track, t);
+      running = true;
+    }
+    if (!running) break;
+  }
+  return { tracks, env, horizon, timing, count };
+}
+
+function summarizeFight(tracks: readonly Track[], field: number): GuardianFight | null {
+  const fights = tracks.flatMap((track) => (track.fights[field] ? [track.fights[field]!] : []));
+  if (fights.length === 0) return null;
+  const completed = fights.filter((fight) => fight.complete);
+  return {
+    seconds: completed.length > 0 ? mean(completed.map((fight) => fight.seconds)) : null,
+    cost: completed.length > 0 ? mean(completed.map((fight) => fight.cost)) : null,
+    completed: completed.length,
+    attempted: fights.length,
+  };
+}
+
+/** The samples' expedition runs, averaged. */
+export function runModel(options: RunOptions): RunModel {
+  const { starter, difficulty, deepBuild } = options;
+  const rules = options.rules ?? [];
+  if (options.mega && starter !== MEGA_LINE)
+    throw new RangeError(`runModel: ${starter} has no mega evolution`);
+  if (
+    rules.includes("no-items") &&
+    (deepBuild?.weatherRock ||
+      deepBuild?.form === "light-ball" ||
+      deepBuild?.form === "everstone-eviolite")
+  )
+    throw new RangeError("禁止携带道具与预装天气岩石、电气球或进化奇石的分析配置冲突。");
   const fields = options.route
     ? routeFields(options.route)
     : [{ stage: options.stage, step: options.step, zone: 0 }];
@@ -3696,39 +4267,7 @@ export function runModel(options: RunOptions): RunModel {
     throw new RangeError(
       `runModel: summonSeconds needs ${fields.length} field times within 1–duration`,
     );
-  const env: RunEnv = {
-    options,
-    fields,
-    summonSeconds,
-    zones,
-    policy: options.picks ?? options.skill.picks,
-    exposure: new Map(
-      exposureKeys(starter, Object.keys(itemDefs)).map((key) => [key, { eligible: 0, offered: 0 }]),
-    ),
-    offers: 0,
-  };
-  const horizon = env.fields.reduce(
-    (sum, field) => sum + stageDefs[field.stage].duration + OVERTIME,
-    0,
-  );
-  for (let t = STEP; t <= horizon; t += STEP) {
-    let running = false;
-    for (const track of tracks) {
-      if (track.done) continue;
-      // Past its zone's rampage window the sample is called (as the single-zone horizon did).
-      if (t - track.zoneStart > stageDefs[env.fields[track.zone]!.stage].duration + OVERTIME) {
-        if (track.fieldState?.active) {
-          eventCredit(track, "unfinished", 1);
-          track.fieldState.active = null;
-        }
-        track.done = true;
-        continue;
-      }
-      stepTrack(env, track, t);
-      running = true;
-    }
-    if (!running) break;
-  }
+  const { tracks, env, horizon, timing, count } = simulate(options, fields, summonSeconds);
 
   // Averages. A finished sample keeps its last alive (cleared: its clear chance; dead: ~0).
   const steps = Math.max(...tracks.map((tr) => tr.survival.length));
@@ -3755,8 +4294,8 @@ export function runModel(options: RunOptions): RunModel {
   const cleared = tracks.filter((tr) => tr.clearAt !== null);
   const clearWeight = cleared.reduce((sum, tr) => sum + tr.clear, 0);
   const reached = tracks.filter((tr) => tr.bossTtk !== null);
-  const kit = [...starters[starter].kit, ...starters[starter].evolutionMoves];
-  const damage = new Map<MoveId, number>();
+  const kit: ModelMoveId[] = [...starters[starter].kit, ...starters[starter].evolutionMoves];
+  const damage = new Map<ModelMoveId, number>();
   for (const tr of tracks)
     for (const [move, value] of tr.damage) damage.set(move, (damage.get(move) ?? 0) + value);
   const total = [...damage.values()].reduce((sum, value) => sum + value, 0) || 1;
@@ -3792,7 +4331,28 @@ export function runModel(options: RunOptions): RunModel {
   const beats = [...spikes.values()]
     .map(({ spike, clears }) => ({ ...spike, clear: mean(clears) }))
     .sort((a, b) => a.zone - b.zone || a.t - b.t);
+  const stardust = mean(tracks.map((tr) => tr.stardust));
   return {
+    ...(options.rules
+      ? {
+          challenge: {
+            rules,
+            ...expectedChallengePayout(rules, stardust),
+            fields: fields.map((_, index) => {
+              const ledger = tracks.map((track) => track.fieldIncome[index]?.challenge);
+              const avg = (key: keyof ChallengeField) =>
+                mean(ledger.map((part) => part?.[key] ?? 0));
+              return {
+                cappedXp: avg("cappedXp"),
+                capStardust: avg("capStardust"),
+                replacedItems: avg("replacedItems"),
+                itemStardust: avg("itemStardust"),
+              };
+            }),
+            pressure: challengePressure(tracks, env),
+          },
+        }
+      : {}),
     stage: fields[0]!.stage,
     starter,
     difficulty,
@@ -3828,39 +4388,69 @@ export function runModel(options: RunOptions): RunModel {
     })),
     ultEvery: intervals.length > 0 ? mean(intervals) : null,
     levelAt,
-    evolutions: starters[starter].stages.slice(1).map(({ at: level }) => {
+    evolutions: starters[starter].stages.slice(1).map(({ at: level }, index) => {
       const points = tracks.flatMap((tr) => {
-        const t = tr.levelAt[level];
+        const t = tr.player.projection!.stageAt[index + 1];
         if (t === undefined) return [];
-        const index = tr.zoneStarts.findLastIndex((start) => start < t);
+        const z = tr.zoneStarts.findLastIndex((start) => start < t);
         return [
           {
-            step: fields[index]!.step,
+            step: fields[z]!.step,
             t,
-            local: t - tr.zoneStarts[index]!,
+            local: t - tr.zoneStarts[z]!,
             alive: tr.survival[t - 1]!,
           },
         ];
       });
       return { level, unreached: count - points.length, points };
     }),
-    fights: Array.from({ length: zones }, (_, z) => {
-      const fights = tracks.flatMap((tr) => (tr.fights[z] ? [tr.fights[z]!] : []));
-      const completed = fights.filter((fight) => fight.complete);
-      return fights.length > 0
-        ? {
-            seconds: completed.length > 0 ? mean(completed.map((f) => f.seconds)) : null,
-            cost: completed.length > 0 ? mean(completed.map((f) => f.cost)) : null,
-            completed: completed.length,
-            attempted: fights.length,
-          }
-        : null;
+    fights: fields.map((_, index) => summarizeFight(tracks, index)),
+    mega: options.mega
+      ? {
+          share: tracks.filter((tr) => tr.player.megaProjection?.active).length / count,
+          at: tracks.some((tr) => tr.player.megaProjection?.active)
+            ? mean(
+                tracks.flatMap((tr) =>
+                  tr.player.megaProjection?.at == null ? [] : [tr.player.megaProjection.at],
+                ),
+              )
+            : null,
+        }
+      : null,
+    tradeWait: tracks.flatMap((track, sample) => {
+      const p = track.player.projection;
+      if (p?.eligibleAt === undefined) return [];
+      const evolvedAt = p.stageAt[starters[starter].stages.length - 1] ?? null;
+      return [
+        {
+          sample,
+          eligibleAt: p.eligibleAt,
+          evolvedAt,
+          seconds: (evolvedAt ?? p.time) - p.eligibleAt,
+        },
+      ];
+    }),
+    pledgePair: options.deepBuild?.pledgePartner
+      ? pledgePair([starter as PledgeStarter, options.deepBuild.pledgePartner])
+      : null,
+    buildFields: fields.map(({ stage }, i) => {
+      const sum = (key: keyof Track["fieldOutput"][number]) =>
+        tracks.reduce((n, tr) => n + (tr.fieldOutput[i]?.[key] ?? 0), 0);
+      const weight = sum("weight");
+      return {
+        stage,
+        survivalSeconds: (weight * STEP) / count,
+        swarmDps: weight ? sum("swarm") / weight : null,
+        guardianDps: weight ? sum("guardian") / weight : null,
+        selfWeatherShare: weight ? sum("selfWeather") / weight : null,
+        solarHpCost: sum("solarCost") / count,
+      };
     }),
     zoneClears: Array.from({ length: zones }, (_, z) => {
       const at = tracks.flatMap((tr) => (tr.zoneClears[z] ? [tr.zoneClears[z]!] : []));
       const weight = at.reduce((sum, c) => sum + c.alive, 0);
       return {
-        ...env.fields[z]!,
+        ...fields[z]!,
         reach: mean(tracks.map((tr) => tr.guardianReach[z] ?? 0)),
         clear: at.reduce((sum, c) => sum + c.alive, 0) / count,
         t: weight > 0 ? at.reduce((sum, c) => sum + c.t * c.alive, 0) / weight : null,
@@ -3876,7 +4466,7 @@ export function runModel(options: RunOptions): RunModel {
       elites: mean(tracks.map((tr) => tr.eliteKilled)),
       guardian: mean(tracks.map((tr) => tr.clear)),
     },
-    stardust: mean(tracks.map((tr) => tr.stardust)),
+    stardust,
     exposure,
     entryWindows: options.route ? entryComparisons(tracks, env) : [],
     fieldEvents: fields.map((field, index) => {
@@ -3927,3 +4517,57 @@ export function runModel(options: RunOptions): RunModel {
     },
   };
 }
+
+/** 对战塔和远征共用逐秒分析；每层窗口独立汇总，不借用其他层的探针。 */
+export const runTowerModel: TowerRunner = ({ slope, ...options }) => {
+  const fields = towerFields(options.seed, slope);
+  const { tracks } = simulate(
+    options,
+    fields,
+    fields.map((floor) => (floor.guardian ? STEP : Infinity)),
+  );
+  return fields.map(({ stage, guardian }, index) => {
+    const parts: WindowSample[] = [];
+    let clear = 0;
+    let censored = 0;
+    let clearAt = 0;
+    let clearSeconds = 0;
+    let level = 0;
+    for (const track of tracks) {
+      const entered = track.fieldIncome[index];
+      if (!entered) continue;
+      const result = track.zoneClears[index];
+      const probes = track.probes[index]!;
+      const resolved = track.censored !== index;
+      if (!resolved) censored += track.alive;
+      if (result) {
+        clear += result.alive;
+        clearAt += result.t * result.alive;
+        clearSeconds += (result.t - track.zoneStarts[index]!) * result.alive;
+        level += result.level * result.alive;
+      }
+      parts.push({
+        probes,
+        aliveStart: entered.entryAlive,
+        aliveEnd: result?.alive ?? track.alive,
+        seconds: probes.length * STEP,
+        resolved,
+        complete: !!result,
+      });
+    }
+    return {
+      stage,
+      guardian,
+      reach:
+        tracks.reduce((sum, track) => sum + (track.fieldIncome[index]?.entryAlive ?? 0), 0) /
+        tracks.length,
+      clear: clear / tracks.length,
+      censored: censored / tracks.length,
+      clearAt: clear > 0 ? clearAt / clear : null,
+      clearSeconds: clear > 0 ? clearSeconds / clear : null,
+      level: clear > 0 ? level / clear : null,
+      window: windowOf(parts),
+      fight: summarizeFight(tracks, index),
+    };
+  });
+};

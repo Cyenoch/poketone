@@ -123,7 +123,8 @@ export class CodexBall {
 
 /**
  * The entry's picture at `size`: icon on its plate, portrait, model still, or a type initial. A
- * `silhouette` portrait is drawn in ink (a partner not yet unlocked).
+ * `silhouette` portrait or model still is drawn in ink (a partner not yet unlocked, a species
+ * never met).
  */
 export function createArt(
   entry: Pick<CodexEntry, "art" | "types" | "name" | "model">,
@@ -153,7 +154,7 @@ export function createArt(
   if (art.kind === "model") {
     const inset = Math.round(size * 0.9);
     const still = stack(new Container({ width: inset, height: inset }), 1);
-    still.add(thumbs.mount(entry.model!));
+    still.add(thumbs.mount(entry.model!, silhouette));
     root.add(still);
   } else if (art.kind === "mark")
     root.add(
@@ -264,7 +265,7 @@ export class CodexRow {
       this.art = art;
       this.panel.add(badge);
     } else {
-      const art = createArt(entry, 36, thumbs);
+      const art = createArt(entry, 36, thumbs, silhouette);
       this.art = art;
       this.panel.add(stack(art.root, 1));
     }

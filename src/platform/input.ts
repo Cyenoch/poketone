@@ -33,6 +33,7 @@ export const bindings = {
   turnRight: { context: "gameplay", keys: ["KeyE"] },
   dash: { context: "gameplay", keys: ["Space", "ShiftLeft", "ShiftRight"], pad: "south" },
   ult: { context: "gameplay", keys: ["KeyF"], pad: "north" },
+  assist: { context: "gameplay", keys: ["KeyG"], pad: "rb" },
   interact: { context: "gameplay", keys: ["KeyR"], pad: "west" },
   pause: { context: "gameplay", keys: ["Escape", "KeyP"], pad: "menu" },
   back: { context: "gameplay", keys: [], pad: "east" },
@@ -70,7 +71,15 @@ export function navigationAction(code: string, shift: boolean): NavigationAction
   for (const [action, binding] of entries)
     if (isNavigationAction(action) && binding.keys.includes(code)) return action;
 }
-export type GameplayAction = "dash" | "ult" | "interact" | "pause" | "back" | "stats" | "map";
+export type GameplayAction =
+  | "dash"
+  | "ult"
+  | "assist"
+  | "interact"
+  | "pause"
+  | "back"
+  | "stats"
+  | "map";
 export const stickTuning = { moveDead: 0.18, moveCurve: 1, turnDead: 0.22, turnCurve: 1.4 };
 export function radialStick(x: number, y: number): [number, number] {
   const r = Math.hypot(x, y);
@@ -105,6 +114,23 @@ const entries = Object.entries(bindings) as [
   InputAction,
   { context: string; keys: readonly string[]; pad?: PadButton },
 ][];
+
+const directions = ["up", "down", "left", "right"] as const;
+/** The non-direction actions `pressed` pad buttons trigger in `context`; choice keeps gameplay's. */
+function buttonActions(pressed: ReadonlySet<PadButton>, context: InputContext): InputAction[] {
+  return entries
+    .filter(
+      ([action, binding]) =>
+        (binding.context === context ||
+          (context === "choice" &&
+            binding.context === "gameplay" &&
+            binding.pad !== bindings.choiceConfirm.pad)) &&
+        binding.pad !== undefined &&
+        pressed.has(binding.pad) &&
+        !(directions as readonly string[]).includes(action),
+    )
+    .map(([action]) => action);
+}
 
 /** One application input state; only the host chooses its context and consumes its actions. */
 export class ActionInput {
@@ -209,6 +235,11 @@ export class ActionInput {
         this.cancel();
         actions.length = 0;
         this.onActivity({ kind: "gamepad", token: pad.token, family: pad.family });
+        // A browser exposes a pad only on its first press, so that press acts, once; held sticks
+        // and buttons then wait for release and recentring (neutral) like any window change.
+        actions.push(...buttonActions(pressed, context));
+        const dpad = directions.find((key) => pressed.has(key));
+        if (dpad && (context === "navigation" || context === "choice")) actions.push(dpad);
         continue;
       }
       if (this.activeToken !== pad.token) continue;
@@ -239,7 +270,12 @@ export class ActionInput {
       )
         this.onActivity({ kind: "gamepad", token: pad.token, family: pad.family });
       if (this.neutral) {
+        // The host cancelled input from inside `onActivity` (leaving touch mode). As with the
+        // claim, this frame's new presses act once; held sticks and buttons wait for recentring.
         actions.length = 0;
+        actions.push(...buttonActions(pressed, context));
+        const dpad = directions.find((key) => pressed.has(key));
+        if (dpad && (context === "navigation" || context === "choice")) actions.push(dpad);
         continue;
       }
       if (moved && (move[0] || move[1])) this.moveOwner = "gamepad";
@@ -247,19 +283,9 @@ export class ActionInput {
       this.padMove = move;
       this.padTurn = turn;
       this.padScroll = scroll;
-      for (const [action, binding] of entries)
-        if (
-          (binding.context === context ||
-            (context === "choice" && binding.context === "gameplay")) &&
-          binding.pad &&
-          pressed.has(binding.pad) &&
-          !["up", "down", "left", "right"].includes(action)
-        )
-          actions.push(action);
+      actions.push(...buttonActions(pressed, context));
       if (context === "navigation" || context === "choice") {
-        const dpad = (["up", "down", "left", "right"] as const).find(
-          (key) => pad.buttons.has(key) || pressed.has(key),
-        );
+        const dpad = directions.find((key) => pad.buttons.has(key) || pressed.has(key));
         const magnitude = Math.max(Math.abs(pad.axes[0]), Math.abs(pad.axes[1]));
         const threshold = this.direction ? 0.35 : 0.55;
         const direction =

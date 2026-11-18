@@ -39,6 +39,13 @@ export interface StatusDef {
 }
 
 const table = {
+  disable: {
+    name: "定身法",
+    appliesTo: "enemy",
+    duration: 4,
+    stacking: "refresh",
+    blocksAttacks: true,
+  },
   burn: { name: "灼伤", appliesTo: "enemy", duration: 3, stacking: "max-power", dotShare: 0.3 },
   paralysis: {
     name: "麻痹",

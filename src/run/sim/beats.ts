@@ -14,7 +14,6 @@ import type { Player } from "./state/entities";
 import { cos, sin } from "./math";
 import {
   BEAT_RINGS,
-  ALPHA_HP,
   ELITE_WAVE_SIZE,
   STAMPEDE_SIZE,
   STAMPEDE_SPEEDUP,
@@ -108,11 +107,8 @@ const beatRules: { [K in BeatKind]: BeatRule<Extract<Beat, { kind: K }>> } = {
   },
   alpha(world, _beat, player) {
     const { min, max } = BEAT_RINGS.alpha;
-    const enemy = spawnOnRing(world, pick(world.rng, world.spawn.pool), player, min, max, true);
+    const enemy = spawnOnRing(world, pick(world.rng, world.spawn.pool), player, min, max, "alpha");
     if (!enemy) return;
-    enemy.alpha = true;
-    enemy.hp *= ALPHA_HP;
-    enemy.maxHp *= ALPHA_HP;
     world.events.push({
       t: "banner",
       text: `头目 ${enemyDefs[enemy.species].name} 出现`,

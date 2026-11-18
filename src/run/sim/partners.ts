@@ -1,3 +1,5 @@
+import { trainerKits } from "./content/trainers";
+import { TRAINER } from "./content/params/trainers";
 // 支援队伍: a defeated elite (头目 most often) may join its killer as a partner for the rest of the run.
 // Partners fight the swarm within a range around their owner (never the guardian: that fight stays the
 // player's), the enemy nearest the owner first, with their species' own attack shape; a partner that
@@ -10,10 +12,9 @@ import { currentStats, itemRule } from "./stats";
 import { enemies as enemyDefs, type EnemyDef, type EnemyId } from "./content/enemies";
 import { damageEnemy, findPlayer, type Ctx } from "./combat";
 import { enemyScaling } from "./director";
-import { zoneClock, zonesOf } from "./content/params/zones";
-import { routeStep } from "./content/campaign";
+import { zonesOf } from "./content/params/zones";
 import { stageDefs } from "./content/stages/index";
-import { zoneTime } from "./currentZone";
+import { zoneGrowthClock } from "./currentZone";
 import { ELITE } from "./content/params/pacing";
 import { flowDirection, hasWalkableLine, moveWithSlope, type Direction } from "./nav/index";
 import { chance } from "./rng";
@@ -55,9 +56,18 @@ export function partnerHit(world: World, partner: Partner): number {
   const zone = world.zone.index;
   const stage = stageDefs[world.stage];
   const scale =
-    enemyScaling(zoneClock(routeStep(world), zoneTime(world)), world.difficulty, null).hp *
-    zonesOf(stage)[zone]!.hp;
-  return enemyDefs[partner.species].dmg * ELITE.dmg * scale;
+    enemyScaling(zoneGrowthClock(world), world.difficulty, null).hp * zonesOf(stage)[zone]!.hp;
+  const caretaker = trainerKits[findPlayer(world, partner.owner).trainer].passive === "caretaker";
+  return (
+    enemyDefs[partner.species].dmg * ELITE.dmg * scale * (caretaker ? TRAINER.caretaker.damage : 1)
+  );
+}
+
+function partnerInterval(owner: Player, style: PartnerStyle): number {
+  return (
+    PARTNER_ATTACK[style].every *
+    (trainerKits[owner.trainer].passive === "caretaker" ? TRAINER.caretaker.interval : 1)
+  );
 }
 
 export function partnerSlots(player: Player): number {
@@ -96,7 +106,7 @@ export function grantPartner(
     pz: at.z,
     faceX: at.faceX,
     faceZ: at.faceZ,
-    cooldown: PARTNER_ATTACK[styleOf(enemyDefs[species])].every,
+    cooldown: partnerInterval(owner, styleOf(enemyDefs[species])),
     guard: 0,
     target: null,
     returning: false,
@@ -369,7 +379,7 @@ function strike(
   style: PartnerStyle,
 ): void {
   const def = enemyDefs[partner.species];
-  partner.cooldown = PARTNER_ATTACK[style].every / currentStats(owner).partnerRate;
+  partner.cooldown = partnerInterval(owner, style) / currentStats(owner).partnerRate;
   ctx.world.events.push({
     t: "partner-attack",
     partner: partner.id,
@@ -400,8 +410,8 @@ function strike(
 function cloud(ctx: Ctx, partner: Partner, owner: Player, style: "cloud" | "pulse"): void {
   const { world } = ctx;
   const def = enemyDefs[partner.species];
-  const { reach, dmg, every } = PARTNER_ATTACK[style];
-  partner.cooldown = every / currentStats(owner).partnerRate;
+  const { reach, dmg } = PARTNER_ATTACK[style];
+  partner.cooldown = partnerInterval(owner, style) / currentStats(owner).partnerRate;
   const ground = heightAt(world.map.terrain, partner.x, partner.z);
   world.events.push({
     t: "partner-attack",

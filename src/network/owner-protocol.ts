@@ -1,6 +1,7 @@
 import { record } from "./protocol";
 import type { OwnerFrame } from "./owner";
-import { moves } from "../run/sim/content/moves";
+import { isWeatherMove, moves } from "../run/sim/content/moves";
+import { isPledgeMove } from "../run/sim/content/pledges";
 import { statuses } from "../run/sim/content/statuses";
 import { typeNames } from "../run/sim/content/elements";
 import { starters } from "../run/sim/content/lines";
@@ -17,8 +18,8 @@ export function validateOwner(frame: OwnerFrame, player: Player): void {
   const events: OwnerFrame["events"] = [];
   const eventAges: number[] = [];
   for (const [i, event] of frame.events.entries()) {
-    // Route feedback comes from the shared world, never the owner's presentation.
-    if (record(event) && event.t === "route") continue;
+    // Route and assist feedback come from the shared world, never the owner's presentation.
+    if (record(event) && (event.t === "route" || event.t === "assist")) continue;
     if (record(event) && (event.t === "ult" || event.t === "ult-release")) {
       // A broken cut-in must not interrupt movement or hits in the same packet.
       if (
@@ -63,7 +64,19 @@ export function validateOwner(frame: OwnerFrame, player: Player): void {
   if (
     frame.events.some(
       (event) =>
-        !record(event) || ["banner", "capture", "evolve", "revive", "down"].includes(event.t),
+        !record(event) ||
+        [
+          "banner",
+          "capture",
+          "evolve",
+          "mega",
+          "revive",
+          "down",
+          "pledge",
+          "weather",
+          "bond-endure",
+          "bond-cure",
+        ].includes(event.t),
     )
   )
     throw new Error("玩家状态不能提交共享通知或奖励。");
@@ -181,6 +194,7 @@ export function validateOwner(frame: OwnerFrame, player: Player): void {
   }
   for (const area of frame.areas) {
     if (
+      area.pledgeField !== undefined ||
       (area.move !== null && !Object.hasOwn(moves, area.move)) ||
       !Object.hasOwn(areaRules, area.kind) ||
       !Object.hasOwn(typeNames, area.type) ||
@@ -209,9 +223,29 @@ export function validateOwner(frame: OwnerFrame, player: Player): void {
   }
   for (const effect of frame.effects) {
     if (!record(effect)) throw new Error("玩家战斗数据无效。");
-    if (effect.t !== "heal" && !Number.isSafeInteger(effect.enemy))
+    if (
+      (effect.t === "hit" || effect.t === "status" || effect.t === "pull") &&
+      !Number.isSafeInteger(effect.enemy)
+    )
       throw new Error("命中目标无效。");
     switch (effect.t) {
+      case "weather-cast":
+        if (!isWeatherMove(effect.move) || !finite(effect.at) || effect.at < 0)
+          throw new Error("天气招式施放数据无效。");
+        break;
+      case "pledge-hit":
+        if (
+          !isPledgeMove(effect.move) ||
+          !finite(effect.x) ||
+          !finite(effect.z) ||
+          !finite(effect.at) ||
+          effect.at < 0 ||
+          !Array.isArray(effect.enemies) ||
+          !effect.enemies.length ||
+          !effect.enemies.every(Number.isSafeInteger)
+        )
+          throw new Error("誓约命中数据无效。");
+        break;
       case "hit": {
         const hit = effect.hit;
         if (

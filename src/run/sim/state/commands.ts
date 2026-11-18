@@ -10,6 +10,7 @@ export type Command =
   | { t: "reroll"; player: PlayerId; card: number }
   | { t: "skip"; player: PlayerId; card: number }
   | { t: "banish"; player: PlayerId; card: number; index: number }
+  | { t: "assist"; player: PlayerId }
   | { t: "ult"; player: PlayerId }
   | { t: "choices"; player: PlayerId; open: boolean }
   /** Solo: level-up cards wait for the interact key (manual) instead of opening at once. */

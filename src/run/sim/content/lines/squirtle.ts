@@ -1,11 +1,12 @@
 import type { LineDef } from "./index";
 
+const traits = { normal: ["torrent"], hidden: "rain-dish" } as const;
+
 export const squirtle = {
   id: "squirtle",
   role: "坚壳防御",
-  ability: "torrent-shell",
   ultimate: "hydro-cannon",
-  kit: ["water-gun", "bubble", "hydro-pump", "rapid-spin"],
+  kit: ["water-gun", "bubble", "hydro-pump", "rapid-spin", "rain-dance", "water-pledge"],
   evolutionMoves: ["surf", "whirlpool"],
   stages: [
     {
@@ -13,6 +14,7 @@ export const squirtle = {
       at: 1,
       form: {
         id: "squirtle",
+        abilities: traits,
         name: "杰尼龟",
         types: ["water"],
         hp: 95,
@@ -27,6 +29,7 @@ export const squirtle = {
       at: 28,
       form: {
         id: "wartortle",
+        abilities: traits,
         name: "卡咪龟",
         types: ["water"],
         hp: 110,
@@ -41,6 +44,7 @@ export const squirtle = {
       at: 55,
       form: {
         id: "blastoise",
+        abilities: traits,
         name: "水箭龟",
         types: ["water"],
         hp: 127,

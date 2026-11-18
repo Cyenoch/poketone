@@ -3,6 +3,7 @@ import { routeTo } from "./fixtures/route.mjs";
 import test from "node:test";
 import { moveParams, updateAreas, updateMoves, updateProjectiles } from "../src/run/sim/attacks.ts";
 import { playerStats, xpForLevel } from "../src/run/sim/stats.ts";
+import { evolve } from "../src/run/sim/evolution.ts";
 import { spawnEnemy } from "../src/run/sim/director.ts";
 import { updateEnemies } from "../src/run/sim/enemies.ts";
 import { updateHazards } from "../src/run/sim/hazards.ts";
@@ -18,6 +19,7 @@ import {
 import { statuses } from "../src/run/sim/content/statuses.ts";
 import { apply, find, has, inflict } from "../src/run/sim/status.ts";
 import { addHazard } from "../src/run/sim/skills/kit.ts";
+import { landingHit } from "../src/run/sim/skills/landing.ts";
 import { EnemyGrid } from "../src/run/sim/grid.ts";
 import { addCircleBlocker } from "../src/run/sim/nav/index.ts";
 import { TERRAIN_HALF } from "../src/run/sim/terrain.ts";
@@ -69,12 +71,14 @@ const wall = (x0, x1, z0, z1, top) => (x, z) =>
   x >= x0 && x <= x1 && z >= z0 && z <= z1 ? top : 0;
 
 /** A world on a hand-made heightfield with the player at the origin, starting with no moves. */
-function arena(height) {
+function arena(height, starter = "bulbasaur") {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 3,
     difficulty: 0,
-    players: [{ starter: "bulbasaur" }],
+    players: [{ trainer: "chengxi", starter }],
   });
   world.map.terrain = terrainOf(height);
   const player = world.players[0];
@@ -280,6 +284,48 @@ test("contact needs level footing, and hovering elites still touch", () => {
   assert.ok(contactHits(flat, "pidgey", 0.6, 0, true) > 0, "an elite pidgey hovers 1.7 up");
 });
 
+test("坚硬脑袋随进化减轻碰撞伤害，不减轻弹体或落点伤害", () => {
+  const losses = [1, 28, 54].map((level) => {
+    const world = arena(flat, "geodude");
+    const player = world.players[0];
+    player.level = level;
+    if (level === 54) player.items.push({ id: "linking-cord", level: 1 });
+    evolve(player);
+    const enemy = dummy(world, "caterpie", player.x, player.z);
+    enemy.speed = 0;
+    enemy.dmg = 20;
+    const hit = (settle) => {
+      player.invulnerable = 0;
+      const before = player.hp;
+      settle();
+      return before - player.hp;
+    };
+    const contact = hit(() => updateEnemies({ world, grid: new EnemyGrid() }, TICK));
+    for (const kind of ["slash", "landing"]) {
+      const damage = hit(() => {
+        const hazard = addHazard(world, {
+          kind,
+          x: player.x,
+          y: 0,
+          z: player.z,
+          dmg: enemy.dmg,
+          radius: 1,
+          life: TICK,
+          caster: -1,
+        });
+        if (kind === "landing") landingHit(world, hazard);
+        else updateHazards(world, TICK);
+      });
+      assert.equal(damage, enemy.dmg, `${kind} damage at Lv.${level}`);
+    }
+    return contact;
+  });
+  assert.ok(
+    losses[0] < 20 && losses[0] > losses[1] && losses[1] > losses[2] && losses[2] > 0,
+    `contact damage by form: ${losses.join(", ")}`,
+  );
+});
+
 test("a beam ends at the ridge it runs into", () => {
   const world = arena(wall(-3, 3, 7.5, 8.5, 3));
   const target = dummy(world, "caterpie", 0, 4);
@@ -372,10 +418,12 @@ test("a flyer can be hit over a ridge that hides a ground enemy", () => {
 test("combat on real terrain is deterministic", () => {
   const run = () => {
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       seed: 77,
       difficulty: 1,
-      players: [{ starter: "squirtle" }],
+      players: [{ trainer: "chengxi", starter: "squirtle" }],
     });
     const player = world.players[0];
     player.hp = 1e6;
@@ -407,10 +455,12 @@ test("combat on real terrain is deterministic", () => {
 test("cards queued by one burst of XP stay legal when picked in turn, and a stale pick is ignored", () => {
   for (const seed of [1, 2, 3, 4, 5, 6]) {
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       seed,
       difficulty: 0,
-      players: [{ starter: "charmander" }],
+      players: [{ trainer: "chengxi", starter: "charmander" }],
     });
     const player = world.players[0];
     player.moves.push(newMoveState("fire-spin"), newMoveState("flamethrower"));
@@ -446,10 +496,12 @@ test("cards queued by one burst of XP stay legal when picked in turn, and a stal
 test("solo manual card mode lets the run continue on a level-up until the player opens the cards", () => {
   const level = (manual) => {
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       seed: 1,
       difficulty: 0,
-      players: [{ starter: "charmander" }],
+      players: [{ trainer: "chengxi", starter: "charmander" }],
     });
     const player = world.players[0];
     if (manual) stepWorld(world, [{ t: "cardMode", player: 0, manual: true }]);
@@ -490,10 +542,12 @@ test("solo manual card mode lets the run continue on a level-up until the player
 
 test("a player standing at the arena wall gets spawns at full ring distance, never on top of them", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 5,
     difficulty: 0,
-    players: [{ starter: "squirtle" }],
+    players: [{ trainer: "chengxi", starter: "squirtle" }],
   });
   const player = world.players[0];
   const [x, z] = [43.9, -20];
@@ -980,10 +1034,12 @@ test("venonat's psybeam hits along its charged lane only, and a ridge cuts it sh
 test("runs with every new species and attack stay deterministic", () => {
   const play = () => {
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       seed: 21,
       difficulty: 2,
-      players: [{ starter: "pikachu" }],
+      players: [{ trainer: "chengxi", starter: "pikachu" }],
     });
     const player = world.players[0];
     player.hp = 1e6;
@@ -1008,10 +1064,12 @@ test("runs with every new species and attack stay deterministic", () => {
 
 test("area upgrades keep growing a move but a late build stays under 1.7× its base size", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 3,
     difficulty: 0,
-    players: [{ starter: "charmander" }],
+    players: [{ trainer: "chengxi", starter: "charmander" }],
   });
   const player = world.players[0];
   const state = newMoveState("fire-spin");
@@ -1029,10 +1087,12 @@ test("area upgrades keep growing a move but a late build stays under 1.7× its b
 
 test("a reroll makes a new card: a pick still aimed at the old card is ignored", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 4,
     difficulty: 0,
-    players: [{ starter: "charmander" }],
+    players: [{ trainer: "chengxi", starter: "charmander" }],
   });
   const player = world.players[0];
   player.rerolls = 1;
@@ -1109,10 +1169,15 @@ test("a poison hit wears an enemy down at its DoT share and then ends", () => {
 /** Two players far apart on flat ground, kept alive and still. */
 function duo() {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 3,
     difficulty: 0,
-    players: [{ starter: "charmander" }, { starter: "squirtle" }],
+    players: [
+      { trainer: "chengxi", starter: "charmander" },
+      { trainer: "chengxi", starter: "squirtle" },
+    ],
   });
   world.map.terrain = terrainOf(flat);
   const [left, right] = world.players;
@@ -1192,11 +1257,16 @@ test("a burn kill credits the player whose hit burned the enemy, not the one sta
 
 function lavaWorld() {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "volcano",
     route: routeTo("volcano"),
     seed: 13, // The stage-derived map has lava at the combat fixture's (7, -24).
     difficulty: 0,
-    players: [{ starter: "charmander" }, { starter: "squirtle" }],
+    players: [
+      { trainer: "chengxi", starter: "charmander" },
+      { trainer: "chengxi", starter: "squirtle" },
+    ],
   });
   for (const player of world.players) player.moves = [];
   assert.equal(sampleSurface(world.map.terrain.surface, 7, -24).kind, "lava");

@@ -28,6 +28,13 @@ export function uploadRange(buffer: BufferAttribute | InterleavedBuffer, count: 
   buffer.needsUpdate = true;
 }
 
+/**
+ * Whose flames the effects written right now belong to. Mega Charizard X burns blue: while `blue` is
+ * set, every primitive marks what it writes and its shader turns the warm pixels azure (`blueFlame`),
+ * hard-coded inks included. Set around one caster's fire only, and cleared after.
+ */
+export const flame = { blue: false };
+
 /** Time shared by every effect material (one object, many references). */
 export interface FxUniforms {
   uTime: { value: number };
@@ -83,6 +90,14 @@ float noise3(vec3 p) {
 /** Premultiplied layer: colour, coverage and how additive it is. */
 vec4 layer(vec3 c, float a, float add) {
   return vec4(c * a, a * (1.0 - add));
+}
+/**
+ * Mega Charizard X's flames: a warm pixel (red over blue) swaps its red and blue and loses a little
+ * green, so orange reads azure and soot navy; white, ink and cool colours stay as they are.
+ */
+vec3 blueFlame(vec3 c) {
+  float warm = clamp((c.r - c.b) * 4.0, 0.0, 1.0);
+  return c.r > c.b ? vec3(c.b, c.g * (1.0 - 0.18 * warm), c.r) : c;
 }
 /** Paints \`top\` over \`base\` (both premultiplied). */
 vec4 over(vec4 top, vec4 base) {

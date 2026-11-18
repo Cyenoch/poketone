@@ -3,7 +3,7 @@ import { PSYBEAM, VINE, PSYBEAM_HEAVY } from "../content/params/enemy-skills";
 // after the charge. The vines also slow whoever they catch.
 
 import { statuses } from "../content/statuses";
-import { damagePlayer } from "../hurt";
+import { damageFromHazard } from "./kit";
 import { formOf, hazardRadius } from "../evolution";
 import { coverHit } from "../sight";
 import { sustain } from "../status";
@@ -77,11 +77,7 @@ function beamRule(active: number, slows: boolean): HazardRule {
         return;
       }
       for (const player of world.players)
-        if (
-          player.alive &&
-          beamHits(world, beam, player) &&
-          damagePlayer(world, player, beam.dmg, beam.element)
-        )
+        if (player.alive && beamHits(world, beam, player) && damageFromHazard(world, player, beam))
           if (slows) sustain(player, "slow", statuses.slow.duration, -1);
     },
   };

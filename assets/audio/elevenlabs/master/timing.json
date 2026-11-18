@@ -1,4 +1,44 @@
 {
+  "assist-dire-hit-1.flac": {
+    "lenMs": 600,
+    "hitMs": 200,
+    "peakMs": 261
+  },
+  "assist-dire-hit-2.flac": {
+    "lenMs": 600,
+    "hitMs": 501,
+    "peakMs": 536
+  },
+  "assist-full-heal.flac": {
+    "lenMs": 581,
+    "hitMs": 5,
+    "peakMs": 35
+  },
+  "assist-super-potion-1.flac": {
+    "lenMs": 600,
+    "hitMs": 0,
+    "peakMs": 180
+  },
+  "assist-super-potion-2.flac": {
+    "lenMs": 506,
+    "hitMs": 0,
+    "peakMs": 381
+  },
+  "assist-x-speed.flac": {
+    "lenMs": 441,
+    "hitMs": 135,
+    "peakMs": 200
+  },
+  "badge-1.flac": {
+    "lenMs": 1303,
+    "hitMs": 0,
+    "peakMs": 481
+  },
+  "badge-2.flac": {
+    "lenMs": 1288,
+    "hitMs": 90,
+    "peakMs": 531
+  },
   "berry.flac": {
     "lenMs": 391,
     "hitMs": 0,
@@ -64,6 +104,26 @@
     "hitMs": 110,
     "peakMs": 200
   },
+  "cast-fire-pledge-1.flac": {
+    "lenMs": 450,
+    "hitMs": 105,
+    "peakMs": 135
+  },
+  "cast-fire-pledge-2.flac": {
+    "lenMs": 450,
+    "hitMs": 0,
+    "peakMs": 236
+  },
+  "cast-fire-pledge-3.flac": {
+    "lenMs": 450,
+    "hitMs": 90,
+    "peakMs": 135
+  },
+  "cast-fire-pledge-4.flac": {
+    "lenMs": 450,
+    "hitMs": 10,
+    "peakMs": 25
+  },
   "cast-ghost-1.flac": {
     "lenMs": 566,
     "hitMs": 125,
@@ -83,6 +143,21 @@
     "lenMs": 526,
     "hitMs": 0,
     "peakMs": 15
+  },
+  "cast-grass-pledge-1.flac": {
+    "lenMs": 241,
+    "hitMs": 155,
+    "peakMs": 160
+  },
+  "cast-grass-pledge-2.flac": {
+    "lenMs": 406,
+    "hitMs": 220,
+    "peakMs": 226
+  },
+  "cast-grass-pledge-3.flac": {
+    "lenMs": 195,
+    "hitMs": 5,
+    "peakMs": 20
   },
   "cast-ground-1.flac": {
     "lenMs": 90,
@@ -114,6 +189,21 @@
     "hitMs": 205,
     "peakMs": 296
   },
+  "cast-rain-dance-1.flac": {
+    "lenMs": 306,
+    "hitMs": 0,
+    "peakMs": 0
+  },
+  "cast-rain-dance-2.flac": {
+    "lenMs": 251,
+    "hitMs": 10,
+    "peakMs": 15
+  },
+  "cast-rain-dance-3.flac": {
+    "lenMs": 406,
+    "hitMs": 95,
+    "peakMs": 95
+  },
   "cast-rock-1.flac": {
     "lenMs": 240,
     "hitMs": 5,
@@ -124,6 +214,36 @@
     "hitMs": 0,
     "peakMs": 5
   },
+  "cast-sandstorm-1.flac": {
+    "lenMs": 286,
+    "hitMs": 70,
+    "peakMs": 110
+  },
+  "cast-sandstorm-2.flac": {
+    "lenMs": 321,
+    "hitMs": 20,
+    "peakMs": 45
+  },
+  "cast-sandstorm-3.flac": {
+    "lenMs": 246,
+    "hitMs": 20,
+    "peakMs": 35
+  },
+  "cast-sunny-day-1.flac": {
+    "lenMs": 767,
+    "hitMs": 0,
+    "peakMs": 271
+  },
+  "cast-sunny-day-2.flac": {
+    "lenMs": 1000,
+    "hitMs": 185,
+    "peakMs": 722
+  },
+  "cast-sunny-day-3.flac": {
+    "lenMs": 1000,
+    "hitMs": 120,
+    "peakMs": 321
+  },
   "cast-water-1.flac": {
     "lenMs": 486,
     "hitMs": 5,
@@ -133,6 +253,21 @@
     "lenMs": 466,
     "hitMs": 65,
     "peakMs": 90
+  },
+  "cast-water-pledge-1.flac": {
+    "lenMs": 336,
+    "hitMs": 0,
+    "peakMs": 45
+  },
+  "cast-water-pledge-2.flac": {
+    "lenMs": 381,
+    "hitMs": 5,
+    "peakMs": 15
+  },
+  "cast-water-pledge-3.flac": {
+    "lenMs": 386,
+    "hitMs": 0,
+    "peakMs": 65
   },
   "chest.flac": {
     "lenMs": 456,
@@ -208,6 +343,76 @@
     "lenMs": 356,
     "hitMs": 0,
     "peakMs": 20
+  },
+  "field-rainbow-1.flac": {
+    "lenMs": 105,
+    "hitMs": 20,
+    "peakMs": 20
+  },
+  "field-rainbow-2.flac": {
+    "lenMs": 180,
+    "hitMs": 110,
+    "peakMs": 115
+  },
+  "field-rainbow-3.flac": {
+    "lenMs": 331,
+    "hitMs": 30,
+    "peakMs": 45
+  },
+  "field-rainbow-4.flac": {
+    "lenMs": 105,
+    "hitMs": 15,
+    "peakMs": 20
+  },
+  "field-sea-of-fire-1.flac": {
+    "lenMs": 600,
+    "hitMs": 55,
+    "peakMs": 70
+  },
+  "field-sea-of-fire-2.flac": {
+    "lenMs": 600,
+    "hitMs": 120,
+    "peakMs": 421
+  },
+  "field-sea-of-fire-3.flac": {
+    "lenMs": 600,
+    "hitMs": 135,
+    "peakMs": 236
+  },
+  "field-swamp-1.flac": {
+    "lenMs": 600,
+    "hitMs": 5,
+    "peakMs": 15
+  },
+  "field-swamp-2.flac": {
+    "lenMs": 600,
+    "hitMs": 0,
+    "peakMs": 5
+  },
+  "field-swamp-3.flac": {
+    "lenMs": 600,
+    "hitMs": 246,
+    "peakMs": 261
+  },
+  "flare-blitz-1.flac": {
+    "lenMs": 450,
+    "hitMs": 120,
+    "peakMs": 165
+  },
+  "flare-blitz-2.flac": {
+    "lenMs": 450,
+    "hitMs": 30,
+    "peakMs": 100
+  },
+  "flare-blitz-3.flac": {
+    "lenMs": 450,
+    "hitMs": 65,
+    "peakMs": 200
+  },
+  "flare-blitz-4.flac": {
+    "lenMs": 450,
+    "hitMs": 110,
+    "peakMs": 190
   },
   "freeze-1.flac": {
     "lenMs": 416,
@@ -419,6 +624,16 @@
     "hitMs": 0,
     "peakMs": 45
   },
+  "mega-evolve-1.flac": {
+    "lenMs": 1243,
+    "hitMs": 220,
+    "peakMs": 626
+  },
+  "mega-evolve-2.flac": {
+    "lenMs": 1253,
+    "hitMs": 231,
+    "peakMs": 361
+  },
   "reaction-1.flac": {
     "lenMs": 436,
     "hitMs": 0,
@@ -558,6 +773,11 @@
     "lenMs": 251,
     "hitMs": 40,
     "peakMs": 40
+  },
+  "trade-evolve.flac": {
+    "lenMs": 626,
+    "hitMs": 10,
+    "peakMs": 15
   },
   "trophy-1.flac": {
     "lenMs": 907,

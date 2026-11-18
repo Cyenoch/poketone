@@ -1,6 +1,6 @@
 import { Component, Container, reversePainterSortStable } from "@pmndrs/uikit";
 import { setLayoutGrid } from "@pmndrs/uikit/dist/flex/yoga.js";
-import { NoToneMapping, OrthographicCamera, Scene, type WebGLRenderer } from "three";
+import { NoToneMapping, OrthographicCamera, Scene, type Object3D, type WebGLRenderer } from "three";
 import { releaseUploads } from "../../rendering/releaseUploads";
 import { UiMotion } from "./motion";
 import { ui } from "./tokens";
@@ -136,11 +136,17 @@ export class UiStage {
 
   dispose(): void {
     this.motion.dispose();
-    const components: { dispose(): void }[] = [];
-    this.root.traverse((object) => {
-      if (object instanceof Component) components.push(object);
-    });
-    for (const component of components.reverse()) component.dispose();
+    disposeTree(this.root);
     this.scene.clear();
   }
+}
+
+/** Disposes a subtree children before parents: a component's own dispose does not reach its
+ *  children, and a detached subtree is outside the stage's context-loss sweep. */
+export function disposeTree(root: Object3D): void {
+  const components: { dispose(): void }[] = [];
+  root.traverse((object) => {
+    if (object instanceof Component) components.push(object);
+  });
+  for (const component of components.reverse()) component.dispose();
 }

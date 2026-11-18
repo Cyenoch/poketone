@@ -35,10 +35,12 @@ const flat = () => 0;
 /** Charmander (no grass or drain healing of its own) at the origin on a hand-made heightfield. */
 function arena(height = flat) {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 5,
     difficulty: 0,
-    players: [{ starter: "charmander" }],
+    players: [{ trainer: "chengxi", starter: "charmander" }],
   });
   world.map.terrain = terrainOf(height);
   world.map.obstacles = [];
@@ -246,8 +248,9 @@ test("every sim module loads first on its own (no load-order cycle)", () => {
   }
 });
 
-test("every move casts through its archetype and damages an enemy in front of the caster", () => {
+test("every damaging move casts through its archetype and damages an enemy in front of the caster", () => {
   for (const id of Object.keys(moves)) {
+    if (moves[id].category === "status") continue;
     const world = arena();
     const target = dummy(world, 1.5, 0);
     fight(world, [id], 2);

@@ -1,3 +1,5 @@
+import { trainerKits } from "./content/trainers";
+import { TRAINER } from "./content/params/trainers";
 import type { Ctx } from "./combat";
 import { FIELD_EVENTS, SHINY } from "./content/params/field-events";
 import { chance, range } from "./rng";
@@ -27,7 +29,8 @@ export function encounterSpecies(world: World): EnemyId {
 }
 
 export function recordEncounter(world: World, enemy: Enemy): void {
-  for (const player of present(world)) {
+  const team = present(world);
+  for (const player of team) {
     const entry = (player.dex[enemy.species] ??= { seen: 0, defeated: 0, shiny: 0 });
     entry.seen++;
   }
@@ -35,7 +38,11 @@ export function recordEncounter(world: World, enemy: Enemy): void {
   if (
     !chance(
       world.rng,
-      SHINY.chance * (outbreakActive(world, enemy.species) ? FIELD_EVENTS.outbreak.shiny : 1),
+      SHINY.chance *
+        (team.some((p) => trainerKits[p.trainer].passive === "naturalist")
+          ? TRAINER.naturalist.shiny
+          : 1) *
+        (outbreakActive(world, enemy.species) ? FIELD_EVENTS.outbreak.shiny : 1),
     )
   )
     return;
@@ -51,6 +58,15 @@ export function recordEncounter(world: World, enemy: Enemy): void {
     x: enemy.x,
     z: enemy.z,
   });
+}
+
+/** Apply personal research credit only to the copy banked at settlement. */
+export function settlementDex(player: Player): Player["dex"] {
+  const dex = structuredClone(player.dex);
+  if (trainerKits[player.trainer].passive === "naturalist")
+    for (const entry of Object.values(dex))
+      entry.seen = Math.round(entry.seen * TRAINER.naturalist.seen);
+  return dex;
 }
 
 export function recordDefeat(world: World, enemy: Enemy, killer: Player | null): void {

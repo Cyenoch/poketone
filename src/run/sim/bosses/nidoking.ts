@@ -128,7 +128,7 @@ function toxicSpikes(world: World, boss: Enemy, target: Player): void {
   const y = mouthY(world, boss);
   const dmg = boss.dmg * ACID.splash;
   const base = atan2(target.z - boss.z, target.x - boss.x);
-  lobAcid(world, boss.x, y, boss.z, target.x, target.z, dmg);
+  lobAcid(world, boss.x, y, boss.z, target.x, target.z, dmg, boss.id);
   for (let i = 1; i < NIDOKING.spikes; i++) {
     const angle = base + (i / (NIDOKING.spikes - 1)) * Math.PI * 2;
     lobAcid(
@@ -139,6 +139,7 @@ function toxicSpikes(world: World, boss: Enemy, target: Player): void {
       target.x + cos(angle) * NIDOKING.spikeRing,
       target.z + sin(angle) * NIDOKING.spikeRing,
       dmg,
+      boss.id,
     );
   }
   tell(world, boss, "danger", ACID.flight);

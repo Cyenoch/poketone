@@ -183,6 +183,8 @@ MODELS = {
     "heracross": ("enemies/heracross/blender/model.glb", "enemies/heracross.glb", 900, 512),
     "munchlax": ("enemies/munchlax/blender/model.glb", "enemies/munchlax.glb", 900, 512),
     "magikarp": ("enemies/magikarp/blender/model.glb", "enemies/magikarp.glb", 900, 512),
+    "charizard-x": ("characters/charizard-x/blender/model.glb", "charizard-x.glb", None, 1024),
+    "charizard-y": ("characters/charizard-y/blender/model.glb", "charizard-y.glb", None, 1024),
     "gengar-altar": ("field-sites/gengar-altar/generation/tripo-out/model.glb", "field-sites/gengar-altar.glb", None, 512),
     "honey-tree": ("field-sites/honey-tree/blender/model.glb", "field-sites/honey-tree.glb", None, 256),
     "item-ball": ("field-sites/item-ball/blender/model.glb", "field-sites/item-ball.glb", None, 256),

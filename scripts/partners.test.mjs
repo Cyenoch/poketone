@@ -20,7 +20,14 @@ import { apply } from "../src/run/sim/status.ts";
 import { createWorld, stepWorld } from "../src/run/sim/world.ts";
 
 const world = (lab, seed = 7) =>
-  createWorld({ stage: "forest", seed, difficulty: 0, players: [{ starter: "charmander", lab }] });
+  createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed,
+    difficulty: 0,
+    players: [{ trainer: "chengxi", starter: "charmander", lab }],
+  });
 
 function spawnAlpha(w, species, x, z) {
   const enemy = spawnEnemy(w, species, x, z, true);
@@ -223,10 +230,12 @@ test("a partner past its roam follows back without fighting, then fights again",
 test("runs with partners fighting stay deterministic", () => {
   const play = () => {
     const w = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       seed: 33,
       difficulty: 1,
-      players: [{ starter: "bulbasaur" }],
+      players: [{ trainer: "chengxi", starter: "bulbasaur" }],
     });
     const player = w.players[0];
     player.hp = 1e6;

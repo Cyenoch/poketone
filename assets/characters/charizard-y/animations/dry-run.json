@@ -1,0 +1,67 @@
+{
+  "note": "CLI --then parser splits commas inside JSON arrays; validate each preset separately. Submit the documented anim retarget --animation preset:idle preset:run command on the same rig task.",
+  "plans": [
+    {
+      "dry_run": true,
+      "valid": true,
+      "input": "5cca2fbb-ada1-4a93-b8e5-13c6da1e0c50",
+      "source_task_id": "5cca2fbb-ada1-4a93-b8e5-13c6da1e0c50",
+      "steps": [
+        {
+          "name": "retarget",
+          "endpoint": "/v3/animations/retarget",
+          "task_type": "animate_retarget",
+          "payload": {
+            "input": "<upstream>",
+            "animation": "preset:idle",
+            "animate_in_place": true,
+            "out_format": "glb"
+          }
+        }
+      ],
+      "pending_uploads": [],
+      "deliverables": [],
+      "candidates": 1,
+      "warnings": [
+        "chain legality unverified: upstream task type unknown (no local history for 5cca2fbb-ada1-4a93-b8e5-13c6da1e0c50); the real run checks it via the API"
+      ],
+      "errors": [],
+      "generation_credits_estimate": null,
+      "cost_notes": [
+        "cost not estimated (not zero credits); notes below are cost impacts only; check regional official pricing and balance before running",
+        "retarget 1 animation(s): billed per animation"
+      ]
+    },
+    {
+      "dry_run": true,
+      "valid": true,
+      "input": "5cca2fbb-ada1-4a93-b8e5-13c6da1e0c50",
+      "source_task_id": "5cca2fbb-ada1-4a93-b8e5-13c6da1e0c50",
+      "steps": [
+        {
+          "name": "retarget",
+          "endpoint": "/v3/animations/retarget",
+          "task_type": "animate_retarget",
+          "payload": {
+            "input": "<upstream>",
+            "animation": "preset:run",
+            "animate_in_place": true,
+            "out_format": "glb"
+          }
+        }
+      ],
+      "pending_uploads": [],
+      "deliverables": [],
+      "candidates": 1,
+      "warnings": [
+        "chain legality unverified: upstream task type unknown (no local history for 5cca2fbb-ada1-4a93-b8e5-13c6da1e0c50); the real run checks it via the API"
+      ],
+      "errors": [],
+      "generation_credits_estimate": null,
+      "cost_notes": [
+        "cost not estimated (not zero credits); notes below are cost impacts only; check regional official pricing and balance before running",
+        "retarget 1 animation(s): billed per animation"
+      ]
+    }
+  ]
+}

@@ -95,7 +95,9 @@ export function createLandmark(
   return {
     root,
     update(current, elapsed) {
-      const quiet = current.zone.phase !== "active" || current.bossId !== null,
+      // Tower floors never summon: their exit opens here when the floor timer ends.
+      const quiet =
+          current.zone.phase !== "active" || current.bossId !== null || current.mode === "tower",
         pulse = 0.5 + 0.5 * Math.sin(elapsed * 2.4);
       ringMaterial.opacity = quiet ? 0.09 : 0.22 + 0.1 * pulse;
       column.visible = !quiet;

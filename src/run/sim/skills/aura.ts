@@ -27,7 +27,7 @@ function auraSkill(poison: boolean): SkillDef {
       for (const player of world.players)
         if (
           inCircle(world, enemy.x, enemy.z, radius, player, ground) &&
-          damagePlayer(world, player, enemy.dmg * AURA.dmg, poison ? "poison" : "fire")
+          damagePlayer(world, player, enemy.dmg * AURA.dmg, poison ? "poison" : "fire", enemy)
         )
           if (poison) sustain(player, "poison", AURA.poison, -1);
       return null;

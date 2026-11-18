@@ -1,5 +1,8 @@
+import { routeStep } from "./content/campaign";
+import { starters } from "./content/lines/index";
+import { CAP_STARDUST_RATE, LEVEL_CAP } from "./content/params/rules";
 import { DICE_FACES, diceKey, items, type ItemId } from "./content/items";
-import { evolveInWorld } from "./evolution";
+import { evolveInWorld, heldMega } from "./evolution";
 import { next, type Rng } from "./rng";
 import type { PendingChoice, Player, Rarity } from "./state/entities";
 import type { World } from "./state/world";
@@ -31,42 +34,68 @@ export function manualCards(world: World, player: Player): boolean {
 
 export function nextCard(world: World, player: Player): void {
   player.pending.shift();
-  const front = player.pending[0];
-  if (front) front.options = rollRewardChoices(world, player, front);
-  else if (manualCards(world, player)) player.choosing = false;
+  while (player.pending[0]) {
+    const front = player.pending[0];
+    front.options = rollRewardChoices(world, player, front);
+    if (front.source !== "mega-move" || front.options.length) return;
+    // An earlier level card may already have taught the signature move.
+    player.pending.shift();
+  }
+  if (manualCards(world, player)) player.choosing = false;
 }
 
 /**
- * An item level's immediate effects (`ItemDef.onPick`): whole player levels (Rare Candy; their cards
- * queue behind the one being answered) and a die roll stored for the fold (Loaded Dice).
+ * World effects after applying an item: resolving evolution, retiring an obsolete ability card,
+ * rolling a die (Loaded Dice), or granting levels behind the current card (Rare Candy).
  */
 export function pickEffects(world: World, player: Player, id: ItemId): void {
+  if (id === "thunder-stone" || id === "linking-cord") evolveInWorld(world, player);
+  if (id === "ability-patch") {
+    const index = player.pending.findIndex((card) => card.source === "ability");
+    if (index === 0) nextCard(world, player);
+    else if (index > 0) player.pending.splice(index, 1);
+    return;
+  }
   const { onPick } = items[id];
   if (!onPick) return;
   if (onPick.roll) {
     const level = player.items.find((item) => item.id === id)!.level;
     rollDice(world.rng, player, level);
   }
-  for (let i = 0; i < (onPick.levels ?? 0); i++) gainXp(world, player, player.xpNext - player.xp);
+  for (let i = 0; i < (onPick.levels ?? 0) && player.level < mapLevelCap(world); i++)
+    gainXp(world, player, player.xpNext - player.xp);
 }
 
 export function rollDice(rng: Rng, player: Player, level: number): void {
   player.fx[diceKey(level)] = Math.floor(next(rng) * DICE_FACES.length);
 }
 
+function mapLevelCap(world: World): number {
+  return world.rules.includes("level-cap") ? LEVEL_CAP[routeStep(world)] : Infinity;
+}
+
 export function gainXp(world: World, player: Player, amount: number): void {
+  const cap = mapLevelCap(world);
   player.xp += amount;
-  while (player.xp >= player.xpNext) {
+  while (player.level < cap && player.xp >= player.xpNext) {
     player.xp -= player.xpNext;
     player.level += 1;
     player.xpNext = xpForLevel(player.level);
     // Before the card is rolled, so a new stage's evolution move is already in the pool.
     evolveInWorld(world, player);
     if (!player.alive) player.hp = 0;
-    if (world.players.length > 1) player.cardHold = 0;
+    if (
+      world.players.length > 1 &&
+      !(player.stage === starters[player.starter].stages.length - 1 && heldMega(player))
+    )
+      player.cardHold = 0;
     // Level and stage feed the stats: later pickups this tick (berries, candy) read the new ones.
     refreshStats();
     queueCard(world, player, "level");
     world.events.push({ t: "level", player: player.id, level: player.level });
+  }
+  if (player.level >= cap && player.xp > 0) {
+    player.stardust += player.xp * CAP_STARDUST_RATE;
+    player.xp = 0;
   }
 }

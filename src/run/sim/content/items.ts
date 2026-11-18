@@ -14,6 +14,8 @@ export interface ItemDef<Id extends string = ItemId> {
   name: string;
   /** Effect summary at level 1, derived from `effect`. */
   desc: string;
+  /** What the item does beyond its modifiers (it is read by the sim directly), at every level. */
+  note?: string;
   /**
    * Card tier (the upgrade cards' 普通 / 稀有 / 史诗 / 传说): how rarely a new-item card rolls it
    * (params/cards.ts `ITEM_GATES`). Reference tiers 普通 + 罕见 → 普通, 稀有 → 稀有, 史诗 → 史诗, 传说 → 传说.
@@ -36,6 +38,8 @@ export interface ItemDef<Id extends string = ItemId> {
   /** Run rules the item changes, per level (`stats.ts` `itemRule`). */
   rules?: ItemRules;
   onPick?: OnPick;
+  /** These rewards are exempt from the held-item ban regardless of the recipient's form. */
+  noItemsException?: "vitamin" | "evolution";
 }
 
 export type ItemRules = Partial<Record<ItemRule, number>>;
@@ -52,6 +56,8 @@ export interface OnPick {
 export type ItemRule = "partners" | "itemLevels" | "capture" | "berries";
 
 interface Spec {
+  note?: string;
+  noItemsException?: ItemDef<string>["noItemsException"];
   rules?: ItemRules;
   onPick?: OnPick;
   rarity: Rarity;
@@ -72,6 +78,8 @@ function item<Id extends string>(id: Id, name: string, spec: Spec): ItemDef<Id> 
     needs,
     rules,
     onPick,
+    note,
+    noItemsException,
   } = spec;
   for (const trigger of triggers)
     for (const value of Object.values(trigger))
@@ -83,6 +91,7 @@ function item<Id extends string>(id: Id, name: string, spec: Spec): ItemDef<Id> 
     ...modifiers.map(modifierText),
     ...triggers.map((trigger) => triggerText(resolveTrigger(trigger, 0))),
     ...Object.entries(rules ?? {}).map(([rule, value]) => ruleText(rule as ItemRule, value)),
+    ...(note ? [note] : []),
   ].join("，");
   return {
     id,
@@ -94,6 +103,8 @@ function item<Id extends string>(id: Id, name: string, spec: Spec): ItemDef<Id> 
     ...(needs ? { needs } : {}),
     ...(rules ? { rules } : {}),
     ...(onPick ? { onPick } : {}),
+    ...(noItemsException ? { noItemsException } : {}),
+    ...(note ? { note } : {}),
     effect: { modifiers, triggers },
   };
 }
@@ -168,7 +179,11 @@ const itemsTable = {
   "wide-lens": item("wide-lens", "广角镜", { rarity: 0, mods: [add("area", 0.1)] }),
   honey: item("honey", "甜甜蜜", { rarity: 0, mods: [pct("pickup", 0.35)] }),
   "lucky-egg": item("lucky-egg", "幸运蛋", { rarity: 0, mods: [add("xp", 0.12)] }),
-  "hp-up": item("hp-up", "HP增强剂", { rarity: 0, mods: [add("maxHp", 15)] }),
+  "hp-up": item("hp-up", "HP增强剂", {
+    rarity: 0,
+    noItemsException: "vitamin",
+    mods: [add("maxHp", 15)],
+  }),
   "rocky-helmet": item("rocky-helmet", "凸凸头盔", {
     rarity: 0,
     mods: [add("armor", 4), add("thorns", 8)],
@@ -246,7 +261,11 @@ const itemsTable = {
     max: 3,
     mods: [add("spawns", -0.06), pct("speed", 0.04)],
   }),
-  zinc: item("zinc", "特防增强剂", { rarity: 0, mods: [add("shield", 8)] }),
+  zinc: item("zinc", "特防增强剂", {
+    rarity: 0,
+    noItemsException: "vitamin",
+    mods: [add("shield", 8)],
+  }),
   "super-lure": item("super-lure", "白银香水", {
     rarity: 0,
     mods: [add("elites", 0.12), add("damage", 0.04, "elite")],
@@ -297,7 +316,12 @@ const itemsTable = {
   }),
 
   // 史诗
-  "pp-max": item("pp-max", "PP极限提升剂", { rarity: 2, max: 2, mods: [add("projectiles", 1)] }),
+  "pp-max": item("pp-max", "PP极限提升剂", {
+    rarity: 2,
+    max: 2,
+    noItemsException: "vitamin",
+    mods: [add("projectiles", 1)],
+  }),
   "max-elixir": item("max-elixir", "PP多项全补剂", { rarity: 2, mods: [mul("cooldown", 0.9)] }),
   "shiny-stone": item("shiny-stone", "光之石", {
     rarity: 2,
@@ -730,6 +754,7 @@ const itemsTable = {
     rarity: 0,
     max: 3,
     mods: [add("pierce", 1), add("projSpeed", 0.08)],
+    note: "延长自己施放的沙暴",
   }),
   "enigma-berry": item("enigma-berry", "谜芝果", {
     rarity: 0,
@@ -937,6 +962,42 @@ const itemsTable = {
         resetCooldowns: true,
       },
     ],
+  }),
+  "charizardite-x": item("charizardite-x", "喷火龙进化石Ｘ", {
+    rarity: 3,
+    max: 1,
+    noItemsException: "evolution",
+    note: "让喷火龙超级进化为超级喷火龙Ｘ",
+  }),
+  "charizardite-y": item("charizardite-y", "喷火龙进化石Ｙ", {
+    rarity: 3,
+    max: 1,
+    noItemsException: "evolution",
+    note: "让喷火龙超级进化为超级喷火龙Ｙ",
+  }),
+  everstone: item("everstone", "不变之石", {
+    rarity: 1,
+    max: 1,
+    noItemsException: "evolution",
+    note: "持有时不会进化",
+  }),
+  "light-ball": item("light-ball", "电气球", {
+    rarity: 2,
+    max: 1,
+    mods: [{ stat: "damage", op: "mul", value: 1.5, when: "move", requires: "pikachu" }],
+  }),
+  "heat-rock": item("heat-rock", "炽热岩石", { rarity: 1, max: 1, note: "延长自己施放的大晴天" }),
+  "damp-rock": item("damp-rock", "潮湿岩石", { rarity: 1, max: 1, note: "延长自己施放的求雨" }),
+  "linking-cord": item("linking-cord", "联系绳", {
+    rarity: 2,
+    max: 1,
+    noItemsException: "evolution",
+    note: "满足等级时进行通信进化，并消耗联系绳",
+  }),
+  "ability-patch": item("ability-patch", "特性膏药", {
+    rarity: 3,
+    max: 1,
+    note: "换成隐藏特性",
   }),
 };
 

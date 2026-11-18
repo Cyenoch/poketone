@@ -2,6 +2,7 @@
 // lone guardian, from the same parameters the sim casts with (`moveParams`, the archetype modules, combat rules).
 
 import { moveParams } from "../sim/attacks";
+import type { MoveOverlay } from "./mega";
 import {
   BARRAGE,
   BEAM,
@@ -46,7 +47,7 @@ import type { Resolved, TriggerDef } from "../sim/content/triggers";
 import type { ElementType } from "../sim/content/elements";
 import { reactions } from "../sim/content/reactions";
 import { statuses, type EnemyStatusId, type StatusDef } from "../sim/content/statuses";
-import type { PlayerStats } from "../sim/stats";
+import { type PlayerStats } from "../sim/stats";
 import { TICK } from "../sim/state/world";
 import type { MoveState } from "../sim/state/entities";
 import type { WeatherId } from "../sim/state/field";
@@ -377,6 +378,7 @@ const steered = ({ p }: Cast): Volley[] => [
 
 /** Per archetype, the volleys of one cast (sim/archetypes/index.ts mirrors this record). */
 const volleyModels: Record<Archetype, (cast: Cast) => Volley[]> = {
+  weather: () => [],
   bolt: (c) => straight(c, c.p.area, false),
   orb: (c) => straight(c, ORB.radius, true),
   barrage({ p, rE, rB, n }) {
@@ -744,7 +746,7 @@ const volleyModels: Record<Archetype, (cast: Cast) => Volley[]> = {
   },
 };
 
-function volleys(def: MoveDef, p: MoveParams, target: Target): Volley[] {
+function volleys(def: MoveDef<string>, p: MoveParams, target: Target): Volley[] {
   const rE = target.radius;
   const disc = (radius: number) => (d: number) => Math.max(1, d * Math.PI * (radius + rE) ** 2);
   // Enemies a standing (rod) or following (sprinkler) area reaches over its life: those inside it,
@@ -776,7 +778,7 @@ const ELITE_SHARE = 0.05;
  * move's type and category factors, the elite factor (all of the guardian, a small share of the
  * swarm) and the super-effective factor on the share of the pool weak to the move.
  */
-function damageFactors(def: MoveDef, stats: PlayerStats, target: Target): [number, number] {
+function damageFactors(def: MoveDef<string>, stats: PlayerStats, target: Target): [number, number] {
   const { hit } = stats;
   const weather = target.weather ? (weatherDefs[target.weather].element[def.type] ?? 1) : 1;
   const base = stats.damage * (hit[def.type] ?? 1) * (hit[def.category] ?? 1) * weather;
@@ -801,9 +803,27 @@ export function moveOutput(
   stats: PlayerStats,
   target: Target,
   bonk = 1,
+  rangeFactor = 1,
+  overlay?: MoveOverlay,
 ): MoveOutput {
-  const def = moves[state.id];
+  const def = overlay?.def ?? moves[state.id];
   const p = moveParams(state, stats, target.weather ?? null);
+  p.area *= rangeFactor;
+  if (overlay) {
+    // Same geometry and card stats as the state's sim move; only damage and cooldown differ.
+    p.dmg *= overlay.def.dmg / overlay.base.dmg;
+    p.cd *= overlay.def.cd / overlay.base.cd;
+  }
+  return resolvedOutput(def, p, stats, target, bonk);
+}
+
+function resolvedOutput(
+  def: MoveDef<string>,
+  p: MoveParams,
+  stats: PlayerStats,
+  target: Target,
+  bonk: number,
+) {
   const short = archetypes[def.archetype].shortReach;
   const reachable = TERRAIN_SIGHT * (short ? MELEE_STEP * target.melee : 1);
   // The guardian is always there to aim at; the swarm only when someone is in range.
@@ -811,8 +831,9 @@ export function moveOutput(
   const rate = bossRate * Math.min(1, target.living);
   const [swarmFactor, bossFactor] = damageFactors(def, stats, target);
   const crits = critFactor(p.crit + stats.crit, stats.critDamage);
-  const base = p.dmg * swarmFactor * crits * bonk;
-  const bossBase = p.dmg * bossFactor * crits * bonk;
+  const moveDamage = p.dmg * (stats.hit.move ?? 1);
+  const base = moveDamage * swarmFactor * crits * bonk;
+  const bossBase = moveDamage * bossFactor * crits * bonk;
   const shock =
     def.type === "electric"
       ? PUDDLE_WET *

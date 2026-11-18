@@ -89,7 +89,7 @@ const HOST_SILENCE = 2;
 interface GuestState {
   /** The map this guest was last sent; 0 means it holds no map of the current world. */
   revision: number;
-  field?: { stage: World["stage"]; zoneIndex: number };
+  field?: { stage: World["stage"]; zoneIndex: number; routeLength: number };
   /** offline: unreachable; loading: map sent, waiting for ready; playing: receives frames. */
   phase: "offline" | "loading" | "playing" | "departed";
   receivedSequence: number;
@@ -309,7 +309,9 @@ export class MultiplayerRun {
           previous &&
           packet.revision > this.revision &&
           world.outcome === "playing" &&
-          (world.stage !== previous.stage || world.zone.index !== previous.zone.index);
+          (world.stage !== previous.stage ||
+            world.zone.index !== previous.zone.index ||
+            world.route.length !== previous.route.length);
         this.terminal = world.outcome !== "playing";
         this.revision = packet.revision;
         this.revisions.set(world, packet.revision);
@@ -405,7 +407,9 @@ export class MultiplayerRun {
     if (world.outcome === "playing") throw new Error("终局仍在进行中。");
     const changedField =
       this.world &&
-      (this.world.stage !== world.stage || this.world.zone.index !== world.zone.index);
+      (this.world.stage !== world.stage ||
+        this.world.zone.index !== world.zone.index ||
+        this.world.route.length !== world.route.length);
     world.events = [
       ...(changedField ? [] : this.events.flatMap((batch) => batch.events)),
       ...packet.events[this.player]!.flatMap((batch) => batch.events),
@@ -742,7 +746,11 @@ export class MultiplayerRun {
     const guest = this.guests.get(id)!;
     const player = world.players[id]!;
     guest.revision = ++this.revision;
-    guest.field = { stage: world.stage, zoneIndex: world.zone.index };
+    guest.field = {
+      stage: world.stage,
+      zoneIndex: world.zone.index,
+      routeLength: world.route.length,
+    };
     guest.phase = "loading";
     guest.receivedSequence = guest.ack = 0;
     guest.elapsed = 0;
@@ -868,7 +876,11 @@ export class MultiplayerRun {
         snapshot,
         events: world.players.map(({ id }) => {
           const guest = this.guests.get(id);
-          if (guest?.field?.stage !== world.stage || guest.field.zoneIndex !== world.zone.index)
+          if (
+            guest?.field?.stage !== world.stage ||
+            guest.field.zoneIndex !== world.zone.index ||
+            guest.field.routeLength !== world.route.length
+          )
             return [];
           return guest.events.map(({ clock, events }) => ({ clock, events }));
         }),

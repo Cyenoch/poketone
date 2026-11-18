@@ -106,7 +106,10 @@
     "trianglesBefore": 2013,
     "trianglesAfter": 2013,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 299448
   },
   "squirtle": {
@@ -116,7 +119,10 @@
     "trianglesBefore": 1948,
     "trianglesAfter": 1724,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 697172
   },
   "pikachu": {
@@ -126,7 +132,10 @@
     "trianglesBefore": 1682,
     "trianglesAfter": 1682,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 656648
   },
   "spearow": {
@@ -196,7 +205,10 @@
     "trianglesBefore": 2163,
     "trianglesAfter": 2163,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 773772
   },
   "blastoise": {
@@ -206,7 +218,10 @@
     "trianglesBefore": 2251,
     "trianglesAfter": 2251,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 794048
   },
   "raichu": {
@@ -216,7 +231,10 @@
     "trianglesBefore": 1602,
     "trianglesAfter": 1996,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 696544
   },
   "charmeleon": {
@@ -226,7 +244,10 @@
     "trianglesBefore": 2164,
     "trianglesAfter": 2164,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 712308
   },
   "ivysaur": {
@@ -236,7 +257,10 @@
     "trianglesBefore": 2016,
     "trianglesAfter": 2016,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 307696
   },
   "venusaur": {
@@ -246,7 +270,10 @@
     "trianglesBefore": 2179,
     "trianglesAfter": 2179,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 341284
   },
   "charizard": {
@@ -256,7 +283,10 @@
     "trianglesBefore": 2361,
     "trianglesAfter": 2361,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 756740
   },
   "hypno": {
@@ -486,7 +516,10 @@
     "trianglesBefore": 1846,
     "trianglesAfter": 1846,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 685196
   },
   "nidorina": {
@@ -1976,7 +2009,10 @@
     "trianglesBefore": 2536,
     "trianglesAfter": 2536,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 273264
   },
   "player-haunter": {
@@ -1986,7 +2022,10 @@
     "trianglesBefore": 2192,
     "trianglesAfter": 2192,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 242908
   },
   "player-gengar": {
@@ -1996,7 +2035,10 @@
     "trianglesBefore": 2550,
     "trianglesAfter": 2550,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 318660
   },
   "player-dratini": {
@@ -2006,7 +2048,10 @@
     "trianglesBefore": 1809,
     "trianglesAfter": 1809,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 241868
   },
   "player-dragonair": {
@@ -2016,7 +2061,10 @@
     "trianglesBefore": 2120,
     "trianglesAfter": 2120,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 257980
   },
   "player-dragonite": {
@@ -2026,7 +2074,10 @@
     "trianglesBefore": 2425,
     "trianglesAfter": 2425,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 335576
   },
   "player-machop": {
@@ -2036,7 +2087,10 @@
     "trianglesBefore": 2546,
     "trianglesAfter": 2546,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 284944
   },
   "player-machoke": {
@@ -2046,7 +2100,10 @@
     "trianglesBefore": 3252,
     "trianglesAfter": 3252,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 373744
   },
   "player-machamp": {
@@ -2056,7 +2113,10 @@
     "trianglesBefore": 3178,
     "trianglesAfter": 3178,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 373164
   },
   "player-abra": {
@@ -2066,7 +2126,10 @@
     "trianglesBefore": 2268,
     "trianglesAfter": 2268,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 342488
   },
   "player-kadabra": {
@@ -2076,7 +2139,10 @@
     "trianglesBefore": 2489,
     "trianglesAfter": 2489,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 390324
   },
   "player-alakazam": {
@@ -2086,7 +2152,10 @@
     "trianglesBefore": 2239,
     "trianglesAfter": 2239,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 368640
   },
   "player-geodude": {
@@ -2096,7 +2165,10 @@
     "trianglesBefore": 2462,
     "trianglesAfter": 2462,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 264048
   },
   "player-graveler": {
@@ -2106,7 +2178,10 @@
     "trianglesBefore": 1956,
     "trianglesAfter": 1956,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 302644
   },
   "player-golem": {
@@ -2116,7 +2191,10 @@
     "trianglesBefore": 2190,
     "trianglesAfter": 2190,
     "texture": 1024,
-    "clips": ["idle", "run"],
+    "clips": [
+      "idle",
+      "run"
+    ],
     "bytes": 373044
   },
   "heracross": {
@@ -2228,5 +2306,31 @@
     "texture": 256,
     "clips": [],
     "bytes": 37592
+  },
+  "charizard-x": {
+    "name": "charizard-x",
+    "source": "characters/charizard-x/blender/model.glb",
+    "output": "public/models/charizard-x.glb",
+    "trianglesBefore": 3558,
+    "trianglesAfter": 3558,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 922684
+  },
+  "charizard-y": {
+    "name": "charizard-y",
+    "source": "characters/charizard-y/blender/model.glb",
+    "output": "public/models/charizard-y.glb",
+    "trianglesBefore": 2732,
+    "trianglesAfter": 2732,
+    "texture": 1024,
+    "clips": [
+      "idle",
+      "run"
+    ],
+    "bytes": 846048
   }
 }

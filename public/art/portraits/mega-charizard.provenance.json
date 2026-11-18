@@ -1,0 +1,25 @@
+{
+  "createdAt": "2026-11-18",
+  "assets": ["charizard-x", "charizard-y"],
+  "generator": "Local Pillow derivation from preserved character multiview front drawings; no new portrait generation, no Magpie credits spent.",
+  "source": "assets/icons/source/portraits-mega/<asset>.png (byte-identical copies of assets/characters/<asset>/generation-v2/split/v-front.png, front cell of generation-v2/sheet.jpg)",
+  "sourceSha256": {
+    "charizard-x": "7efe90314b1ca3e8f1c4f571289c00a68eb3c65bb9de17ffd07ae0345e9ac992",
+    "charizard-y": "96f86cf59d0c10efd3f714358c37e55b221a59384b08aaba26ca8f89c201eede"
+  },
+  "processing": "assets/icons/source/portraits-mega/prepare.py: same outline treatment as psychic-rock.provenance.json (border flood-fill at tolerance 38, alpha trim, 8% padding, #142f50 MaxFilter(13) outline, MinFilter(7) matte removal, 960px work size, Lanczos to 320x320, WebP q90), plus clearing of enclosed near-white background pockets larger than 600 px (tail/wing gaps), plus the small wedge between the right wing and the tail flame of charizard-x (SMALL_POCKETS seed in prepare.py).",
+  "shiny": "<asset>-shiny.webp generated with shinyPortrait() from scripts/shiny-portraits.mjs on the normal portrait and the palette in assets/shiny-forms/palettes.json (lossless WebP). No texture recipe in `forms`: the in-game shiny is the palette shader on the model texture.",
+  "palettes": {
+    "charizard-x": "blue flames, wings and belly hue 205 -> 160 (green-teal); black body tinted teal-green via grey (hue 165, amount 0.3)",
+    "charizard-y": "orange body hue 26 -> 275 (purple, width 14 so cream belly shading stays untouched); teal wing membrane 181 -> 350 (crimson, width 24 so the navy outline is not tinted). The tail flame keeps its flame colours in the portrait through texture-recipes.json portraitOnly.charizard-y.keepPortrait; in game the palette shader recolours the model texture and its flame is not masked."
+  },
+  "paletteSources": "Community sources (game8, thenerdstash, pokemondb Pokebase; Bulbapedia was not fetchable) agree on green/teal Shiny Mega Charizard X and purple Shiny Mega Charizard Y with crimson wing interiors; exact shades are approximations, not sampled from official art.",
+  "sha256": {
+    "charizard-x.webp": "677964c0440d3d951ac3c205c9dba98eed533df99791be7dc49150e25aeab167",
+    "charizard-x-shiny.webp": "0d7ed7c092d1c3379976d2a22272548d2a57d1e064a6bd90319ea729cde0afc7",
+    "charizard-y.webp": "67640f7a779e8c303cf0d8b309e5e72225a11649ad88438b53187499a9de484c",
+    "charizard-y-shiny.webp": "0bc42e82d3fe8136e343f630013536216629be31ac873ad078782916cb65bd46"
+  },
+  "purpose": "Shared player portraits and codex form art for Mega Charizard X / Y.",
+  "rights": "Derived Pokémon fan artwork; Pokémon designs and trademarks belong to Nintendo, Game Freak, Creatures and The Pokémon Company. Noncommercial fan project; not licensed as standalone open art."
+}

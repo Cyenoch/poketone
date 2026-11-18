@@ -1,7 +1,7 @@
 import type { Difficulty } from "../sim/content/difficulties";
 import type { StageId } from "../sim/content/stages/index";
 import type { StarterId } from "../sim/content/lines/index";
-import type { Choice, LabBonuses, Player } from "../sim/state/entities";
+import type { Choice, LabBonuses, PendingChoice, Player } from "../sim/state/entities";
 import type { CardAction, RunEvent } from "../sim/state/events";
 import type { World } from "../sim/state/world";
 import { cardShown, type Loadout } from "../sim/world";
@@ -29,7 +29,7 @@ type Entry =
   | (At & {
       kind: "exposure";
       card: number;
-      source: "level" | "chest";
+      source: PendingChoice["source"];
       options: Choice[];
       moves: { id: string; level: number }[];
       items: { id: string; level: number }[];

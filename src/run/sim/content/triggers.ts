@@ -34,8 +34,6 @@ export type StrikeTarget = "nearest" | "strongest" | "random" | "self";
 export type BuffCue = "hurt" | "still" | "ult" | "dash";
 
 export type TriggerDef =
-  /** A hit of `type` heals this share of max HP, at most `perSecond` times a second (Photosynthesis). */
-  | { kind: "healOnHit"; type: ElementType; heal: Scaled; perSecond: number }
   /** The thorns hit an enemy takes for touching the player lands as `type` with `status` (Static). */
   | { kind: "contactStatus"; type: ElementType; status: EnemyStatusId }
   /** Every `seconds`, a `dmg` hit of `type` with `status` on the nearest enemy within `range` (Static). */
@@ -264,8 +262,6 @@ function afflicts(trigger: { status?: EnemyStatusId; statusChance: number }): st
 
 export function triggerText(trigger: ResolvedTrigger): string {
   switch (trigger.kind) {
-    case "healOnHit":
-      return `${typeNames[trigger.type]}属性命中回复 ${percent(trigger.heal)} HP（每秒至多 ${trigger.perSecond} 次）`;
     case "contactStatus":
       return `接触你的敌人会${statuses[trigger.status].name}`;
     case "zap":

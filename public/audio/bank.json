@@ -1,244 +1,602 @@
 {
   "sfx": {
     "hit": {
-      "files": ["sfx/hit-1.flac", "sfx/hit-2.flac", "sfx/hit-3.flac"],
-      "hitMs": [0, 0, 5]
+      "files": [
+        "sfx/hit-1.flac",
+        "sfx/hit-2.flac",
+        "sfx/hit-3.flac"
+      ],
+      "hitMs": [
+        0,
+        0,
+        5
+      ]
     },
     "kill": {
-      "files": ["sfx/kill-1.flac", "sfx/kill-2.flac", "sfx/kill-3.flac"],
-      "hitMs": [20, 10, 65]
+      "files": [
+        "sfx/kill-1.flac",
+        "sfx/kill-2.flac",
+        "sfx/kill-3.flac"
+      ],
+      "hitMs": [
+        20,
+        10,
+        65
+      ]
     },
     "candy": {
-      "files": ["sfx/candy-1.flac", "sfx/candy-2.flac", "sfx/candy-3.flac"],
-      "hitMs": [0, 0, 0]
+      "files": [
+        "sfx/candy-1.flac",
+        "sfx/candy-2.flac",
+        "sfx/candy-3.flac"
+      ],
+      "hitMs": [
+        0,
+        0,
+        0
+      ]
     },
     "dash": {
-      "files": ["sfx/dash-1.flac", "sfx/dash-2.flac", "sfx/dash-3.flac"],
-      "hitMs": [20, 35, 30]
+      "files": [
+        "sfx/dash-1.flac",
+        "sfx/dash-2.flac",
+        "sfx/dash-3.flac"
+      ],
+      "hitMs": [
+        20,
+        35,
+        30
+      ]
     },
     "crit": {
-      "files": ["sfx/crit-1.flac", "sfx/crit-2.flac"],
-      "hitMs": [0, 5]
+      "files": [
+        "sfx/crit-1.flac",
+        "sfx/crit-2.flac"
+      ],
+      "hitMs": [
+        0,
+        5
+      ]
     },
     "hurt": {
-      "files": ["sfx/hurt-1.flac", "sfx/hurt-2.flac"],
-      "hitMs": [30, 0]
+      "files": [
+        "sfx/hurt-1.flac",
+        "sfx/hurt-2.flac"
+      ],
+      "hitMs": [
+        30,
+        0
+      ]
     },
     "ui-move": {
-      "files": ["sfx/ui-move-1.flac", "sfx/ui-move-2.flac", "sfx/ui-move-3.flac"],
-      "hitMs": [20, 30, 15]
+      "files": [
+        "sfx/ui-move-1.flac",
+        "sfx/ui-move-2.flac",
+        "sfx/ui-move-3.flac"
+      ],
+      "hitMs": [
+        20,
+        30,
+        15
+      ]
     },
     "reaction": {
-      "files": ["sfx/reaction-1.flac", "sfx/reaction-2.flac"],
-      "hitMs": [0, 0]
+      "files": [
+        "sfx/reaction-1.flac",
+        "sfx/reaction-2.flac"
+      ],
+      "hitMs": [
+        0,
+        0
+      ]
     },
     "berry": {
-      "files": ["sfx/berry.flac"],
-      "hitMs": [0]
+      "files": [
+        "sfx/berry.flac"
+      ],
+      "hitMs": [
+        0
+      ]
     },
     "elite-kill": {
-      "files": ["sfx/elite-kill.flac"],
-      "hitMs": [0]
+      "files": [
+        "sfx/elite-kill.flac"
+      ],
+      "hitMs": [
+        0
+      ]
     },
     "chest": {
-      "files": ["sfx/chest.flac"],
-      "hitMs": [266]
+      "files": [
+        "sfx/chest.flac"
+      ],
+      "hitMs": [
+        266
+      ]
     },
     "level": {
-      "files": ["sfx/level-1.flac", "sfx/level-2.flac"],
-      "hitMs": [0, 0]
+      "files": [
+        "sfx/level-1.flac",
+        "sfx/level-2.flac"
+      ],
+      "hitMs": [
+        0,
+        0
+      ]
     },
     "boss": {
-      "files": ["sfx/boss.flac"],
-      "hitMs": [0]
+      "files": [
+        "sfx/boss.flac"
+      ],
+      "hitMs": [
+        0
+      ]
     },
     "danger": {
-      "files": ["sfx/danger-1.flac", "sfx/danger-2.flac", "sfx/danger-3.flac"],
-      "hitMs": [0, 20, 30]
+      "files": [
+        "sfx/danger-1.flac",
+        "sfx/danger-2.flac",
+        "sfx/danger-3.flac"
+      ],
+      "hitMs": [
+        0,
+        20,
+        30
+      ]
     },
     "evolve": {
-      "files": ["sfx/evolve.flac"],
-      "hitMs": [341]
+      "files": [
+        "sfx/evolve.flac"
+      ],
+      "hitMs": [
+        341
+      ]
     },
     "ult": {
-      "files": ["sfx/ult.flac"],
-      "hitMs": [0]
+      "files": [
+        "sfx/ult.flac"
+      ],
+      "hitMs": [
+        0
+      ]
     },
     "revive": {
-      "files": ["sfx/revive-1.flac", "sfx/revive-2.flac"],
-      "hitMs": [0, 0]
+      "files": [
+        "sfx/revive-1.flac",
+        "sfx/revive-2.flac"
+      ],
+      "hitMs": [
+        0,
+        0
+      ]
     },
     "capture": {
-      "files": ["sfx/capture.flac"],
-      "hitMs": [0]
+      "files": [
+        "sfx/capture.flac"
+      ],
+      "hitMs": [
+        0
+      ]
     },
     "cast-fire": {
-      "files": ["sfx/cast-fire-1.flac", "sfx/cast-fire-2.flac"],
-      "hitMs": [10, 110]
+      "files": [
+        "sfx/cast-fire-1.flac",
+        "sfx/cast-fire-2.flac"
+      ],
+      "hitMs": [
+        10,
+        110
+      ]
     },
     "cast-water": {
-      "files": ["sfx/cast-water-1.flac", "sfx/cast-water-2.flac"],
-      "hitMs": [5, 65]
+      "files": [
+        "sfx/cast-water-1.flac",
+        "sfx/cast-water-2.flac"
+      ],
+      "hitMs": [
+        5,
+        65
+      ]
     },
     "cast-grass": {
-      "files": ["sfx/cast-grass-1.flac", "sfx/cast-grass-2.flac"],
-      "hitMs": [70, 0]
+      "files": [
+        "sfx/cast-grass-1.flac",
+        "sfx/cast-grass-2.flac"
+      ],
+      "hitMs": [
+        70,
+        0
+      ]
     },
     "cast-electric": {
-      "files": ["sfx/cast-electric.flac"],
-      "hitMs": [0]
+      "files": [
+        "sfx/cast-electric.flac"
+      ],
+      "hitMs": [
+        0
+      ]
     },
     "ui-confirm": {
-      "files": ["sfx/ui-confirm.flac"],
-      "hitMs": [15]
+      "files": [
+        "sfx/ui-confirm.flac"
+      ],
+      "hitMs": [
+        15
+      ]
     },
     "ui-back": {
-      "files": ["sfx/ui-back.flac"],
-      "hitMs": [0]
+      "files": [
+        "sfx/ui-back.flac"
+      ],
+      "hitMs": [
+        0
+      ]
     },
     "ui-denied": {
-      "files": ["sfx/ui-denied.flac"],
-      "hitMs": [0]
+      "files": [
+        "sfx/ui-denied.flac"
+      ],
+      "hitMs": [
+        0
+      ]
     },
     "ui-start": {
-      "files": ["sfx/ui-start.flac"],
-      "hitMs": [371]
+      "files": [
+        "sfx/ui-start.flac"
+      ],
+      "hitMs": [
+        371
+      ]
     },
     "ui-transition": {
-      "files": ["sfx/ui-transition.flac"],
-      "hitMs": [311]
+      "files": [
+        "sfx/ui-transition.flac"
+      ],
+      "hitMs": [
+        311
+      ]
     },
     "victory": {
-      "files": ["sfx/victory.flac"],
-      "hitMs": [5]
+      "files": [
+        "sfx/victory.flac"
+      ],
+      "hitMs": [
+        5
+      ]
     },
     "defeat": {
-      "files": ["sfx/defeat.flac"],
-      "hitMs": [70]
+      "files": [
+        "sfx/defeat.flac"
+      ],
+      "hitMs": [
+        70
+      ]
     },
     "tell": {
-      "files": ["sfx/tell-1.flac", "sfx/tell-2.flac", "sfx/tell-3.flac", "sfx/tell-4.flac"],
-      "hitMs": [30, 70, 80, 55]
+      "files": [
+        "sfx/tell-1.flac",
+        "sfx/tell-2.flac",
+        "sfx/tell-3.flac",
+        "sfx/tell-4.flac"
+      ],
+      "hitMs": [
+        30,
+        70,
+        80,
+        55
+      ]
     },
     "tell-danger": {
-      "files": ["sfx/tell-danger-1.flac", "sfx/tell-danger-2.flac", "sfx/tell-danger-3.flac"],
-      "hitMs": [30, 20, 25]
+      "files": [
+        "sfx/tell-danger-1.flac",
+        "sfx/tell-danger-2.flac",
+        "sfx/tell-danger-3.flac"
+      ],
+      "hitMs": [
+        30,
+        20,
+        25
+      ]
     },
     "enemy-heal": {
-      "files": ["sfx/enemy-heal.flac"],
-      "hitMs": [120]
+      "files": [
+        "sfx/enemy-heal.flac"
+      ],
+      "hitMs": [
+        120
+      ]
     },
     "hit-fire": {
-      "files": ["sfx/hit-fire-1.flac", "sfx/hit-fire-2.flac", "sfx/hit-fire-3.flac"],
-      "hitMs": [15, 5, 0]
+      "files": [
+        "sfx/hit-fire-1.flac",
+        "sfx/hit-fire-2.flac",
+        "sfx/hit-fire-3.flac"
+      ],
+      "hitMs": [
+        15,
+        5,
+        0
+      ]
     },
     "hit-water": {
-      "files": ["sfx/hit-water-1.flac", "sfx/hit-water-2.flac", "sfx/hit-water-3.flac"],
-      "hitMs": [0, 0, 0]
+      "files": [
+        "sfx/hit-water-1.flac",
+        "sfx/hit-water-2.flac",
+        "sfx/hit-water-3.flac"
+      ],
+      "hitMs": [
+        0,
+        0,
+        0
+      ]
     },
     "hit-grass": {
-      "files": ["sfx/hit-grass-1.flac", "sfx/hit-grass-2.flac", "sfx/hit-grass-3.flac"],
-      "hitMs": [0, 0, 50]
+      "files": [
+        "sfx/hit-grass-1.flac",
+        "sfx/hit-grass-2.flac",
+        "sfx/hit-grass-3.flac"
+      ],
+      "hitMs": [
+        0,
+        0,
+        50
+      ]
     },
     "hit-electric": {
-      "files": ["sfx/hit-electric-1.flac", "sfx/hit-electric-2.flac", "sfx/hit-electric-3.flac"],
-      "hitMs": [20, 0, 30]
+      "files": [
+        "sfx/hit-electric-1.flac",
+        "sfx/hit-electric-2.flac",
+        "sfx/hit-electric-3.flac"
+      ],
+      "hitMs": [
+        20,
+        0,
+        30
+      ]
     },
     "freeze": {
-      "files": ["sfx/freeze-1.flac", "sfx/freeze-2.flac"],
-      "hitMs": [0, 0]
+      "files": [
+        "sfx/freeze-1.flac",
+        "sfx/freeze-2.flac"
+      ],
+      "hitMs": [
+        0,
+        0
+      ]
     },
     "cast-ghost": {
-      "files": ["sfx/cast-ghost-1.flac", "sfx/cast-ghost-2.flac"],
-      "hitMs": [125, 95]
+      "files": [
+        "sfx/cast-ghost-1.flac",
+        "sfx/cast-ghost-2.flac"
+      ],
+      "hitMs": [
+        125,
+        95
+      ]
     },
     "cast-poison": {
-      "files": ["sfx/cast-poison-1.flac", "sfx/cast-poison-2.flac"],
-      "hitMs": [60, 75]
+      "files": [
+        "sfx/cast-poison-1.flac",
+        "sfx/cast-poison-2.flac"
+      ],
+      "hitMs": [
+        60,
+        75
+      ]
     },
     "cast-dragon": {
-      "files": ["sfx/cast-dragon-1.flac", "sfx/cast-dragon-2.flac"],
-      "hitMs": [30, 145]
+      "files": [
+        "sfx/cast-dragon-1.flac",
+        "sfx/cast-dragon-2.flac"
+      ],
+      "hitMs": [
+        30,
+        145
+      ]
     },
     "cast-fighting": {
-      "files": ["sfx/cast-fighting-1.flac", "sfx/cast-fighting-2.flac"],
-      "hitMs": [15, 5]
+      "files": [
+        "sfx/cast-fighting-1.flac",
+        "sfx/cast-fighting-2.flac"
+      ],
+      "hitMs": [
+        15,
+        5
+      ]
     },
     "hit-ghost": {
-      "files": ["sfx/hit-ghost-1.flac", "sfx/hit-ghost-2.flac"],
-      "hitMs": [35, 10]
+      "files": [
+        "sfx/hit-ghost-1.flac",
+        "sfx/hit-ghost-2.flac"
+      ],
+      "hitMs": [
+        35,
+        10
+      ]
     },
     "hit-poison": {
-      "files": ["sfx/hit-poison-1.flac", "sfx/hit-poison-2.flac", "sfx/hit-poison-3.flac"],
-      "hitMs": [0, 0, 0]
+      "files": [
+        "sfx/hit-poison-1.flac",
+        "sfx/hit-poison-2.flac",
+        "sfx/hit-poison-3.flac"
+      ],
+      "hitMs": [
+        0,
+        0,
+        0
+      ]
     },
     "hit-dragon": {
-      "files": ["sfx/hit-dragon-1.flac", "sfx/hit-dragon-2.flac"],
-      "hitMs": [15, 0]
+      "files": [
+        "sfx/hit-dragon-1.flac",
+        "sfx/hit-dragon-2.flac"
+      ],
+      "hitMs": [
+        15,
+        0
+      ]
     },
     "cast-psychic": {
-      "files": ["sfx/cast-psychic-1.flac", "sfx/cast-psychic-2.flac"],
-      "hitMs": [195, 205]
+      "files": [
+        "sfx/cast-psychic-1.flac",
+        "sfx/cast-psychic-2.flac"
+      ],
+      "hitMs": [
+        195,
+        205
+      ]
     },
     "hit-psychic": {
-      "files": ["sfx/hit-psychic-1.flac", "sfx/hit-psychic-2.flac"],
-      "hitMs": [15, 20]
+      "files": [
+        "sfx/hit-psychic-1.flac",
+        "sfx/hit-psychic-2.flac"
+      ],
+      "hitMs": [
+        15,
+        20
+      ]
     },
     "cast-rock": {
-      "files": ["sfx/cast-rock-1.flac", "sfx/cast-rock-2.flac"],
-      "hitMs": [5, 0]
+      "files": [
+        "sfx/cast-rock-1.flac",
+        "sfx/cast-rock-2.flac"
+      ],
+      "hitMs": [
+        5,
+        0
+      ]
     },
     "hit-rock": {
-      "files": ["sfx/hit-rock-1.flac", "sfx/hit-rock-2.flac"],
-      "hitMs": [0, 5]
+      "files": [
+        "sfx/hit-rock-1.flac",
+        "sfx/hit-rock-2.flac"
+      ],
+      "hitMs": [
+        0,
+        5
+      ]
     },
     "cast-ground": {
-      "files": ["sfx/cast-ground-1.flac", "sfx/cast-ground-2.flac"],
-      "hitMs": [15, 0]
+      "files": [
+        "sfx/cast-ground-1.flac",
+        "sfx/cast-ground-2.flac"
+      ],
+      "hitMs": [
+        15,
+        0
+      ]
     },
     "hit-ground": {
-      "files": ["sfx/hit-ground-1.flac", "sfx/hit-ground-2.flac"],
-      "hitMs": [10, 40]
+      "files": [
+        "sfx/hit-ground-1.flac",
+        "sfx/hit-ground-2.flac"
+      ],
+      "hitMs": [
+        10,
+        40
+      ]
     },
     "hit-fighting": {
-      "files": ["sfx/hit-fighting-1.flac", "sfx/hit-fighting-2.flac", "sfx/hit-fighting-3.flac"],
-      "hitMs": [15, 5, 15]
+      "files": [
+        "sfx/hit-fighting-1.flac",
+        "sfx/hit-fighting-2.flac",
+        "sfx/hit-fighting-3.flac"
+      ],
+      "hitMs": [
+        15,
+        5,
+        15
+      ]
     },
     "weather-sun": {
-      "files": ["sfx/weather-sun-1.flac", "sfx/weather-sun-2.flac"],
-      "hitMs": [0, 0]
+      "files": [
+        "sfx/weather-sun-1.flac",
+        "sfx/weather-sun-2.flac"
+      ],
+      "hitMs": [
+        0,
+        0
+      ]
     },
     "weather-rain": {
-      "files": ["sfx/weather-rain-1.flac", "sfx/weather-rain-2.flac"],
-      "hitMs": [5, 15]
+      "files": [
+        "sfx/weather-rain-1.flac",
+        "sfx/weather-rain-2.flac"
+      ],
+      "hitMs": [
+        5,
+        15
+      ]
     },
     "weather-sand": {
-      "files": ["sfx/weather-sand-1.flac", "sfx/weather-sand-2.flac"],
-      "hitMs": [145, 25]
+      "files": [
+        "sfx/weather-sand-1.flac",
+        "sfx/weather-sand-2.flac"
+      ],
+      "hitMs": [
+        145,
+        25
+      ]
     },
     "weather-hail": {
-      "files": ["sfx/weather-hail-1.flac", "sfx/weather-hail-2.flac"],
-      "hitMs": [90, 65]
+      "files": [
+        "sfx/weather-hail-1.flac",
+        "sfx/weather-hail-2.flac"
+      ],
+      "hitMs": [
+        90,
+        65
+      ]
     },
     "site-flute": {
-      "files": ["sfx/site-flute-1.flac", "sfx/site-flute-2.flac"],
-      "hitMs": [872, 100]
+      "files": [
+        "sfx/site-flute-1.flac",
+        "sfx/site-flute-2.flac"
+      ],
+      "hitMs": [
+        872,
+        100
+      ]
     },
     "site-fishing": {
-      "files": ["sfx/site-fishing-1.flac", "sfx/site-fishing-2.flac"],
-      "hitMs": [336, 5]
+      "files": [
+        "sfx/site-fishing-1.flac",
+        "sfx/site-fishing-2.flac"
+      ],
+      "hitMs": [
+        336,
+        5
+      ]
     },
     "site-den": {
-      "files": ["sfx/site-den-1.flac", "sfx/site-den-2.flac"],
-      "hitMs": [526, 236]
+      "files": [
+        "sfx/site-den-1.flac",
+        "sfx/site-den-2.flac"
+      ],
+      "hitMs": [
+        526,
+        236
+      ]
     },
     "shiny": {
-      "files": ["sfx/shiny-1.flac", "sfx/shiny-2.flac"],
-      "hitMs": [0, 0]
+      "files": [
+        "sfx/shiny-1.flac",
+        "sfx/shiny-2.flac"
+      ],
+      "hitMs": [
+        0,
+        0
+      ]
     },
     "egg-hatch": {
-      "files": ["sfx/egg-hatch-1.flac", "sfx/egg-hatch-2.flac"],
-      "hitMs": [15, 10]
+      "files": [
+        "sfx/egg-hatch-1.flac",
+        "sfx/egg-hatch-2.flac"
+      ],
+      "hitMs": [
+        15,
+        10
+      ]
     },
     "site-dig": {
       "files": [
@@ -247,23 +605,242 @@
         "sfx/site-dig-3.flac",
         "sfx/site-dig-4.flac"
       ],
-      "hitMs": [10, 25, 20, 20]
+      "hitMs": [
+        10,
+        25,
+        20,
+        20
+      ]
     },
     "tell-voltorb": {
-      "files": ["sfx/tell-voltorb-1.flac", "sfx/tell-voltorb-2.flac", "sfx/tell-voltorb-3.flac"],
-      "hitMs": [25, 20, 40]
+      "files": [
+        "sfx/tell-voltorb-1.flac",
+        "sfx/tell-voltorb-2.flac",
+        "sfx/tell-voltorb-3.flac"
+      ],
+      "hitMs": [
+        25,
+        20,
+        40
+      ]
     },
     "exit-pick": {
-      "files": ["sfx/exit-pick.flac"],
-      "hitMs": [0]
+      "files": [
+        "sfx/exit-pick.flac"
+      ],
+      "hitMs": [
+        0
+      ]
     },
     "gengar-deal": {
-      "files": ["sfx/gengar-deal-1.flac", "sfx/gengar-deal-2.flac"],
-      "hitMs": [0, 25]
+      "files": [
+        "sfx/gengar-deal-1.flac",
+        "sfx/gengar-deal-2.flac"
+      ],
+      "hitMs": [
+        0,
+        25
+      ]
     },
     "trophy": {
-      "files": ["sfx/trophy-1.flac", "sfx/trophy-2.flac"],
-      "hitMs": [0, 0]
+      "files": [
+        "sfx/trophy-1.flac",
+        "sfx/trophy-2.flac"
+      ],
+      "hitMs": [
+        0,
+        0
+      ]
+    },
+    "badge": {
+      "files": [
+        "sfx/badge-1.flac",
+        "sfx/badge-2.flac"
+      ],
+      "hitMs": [
+        0,
+        90
+      ]
+    },
+    "trade-evolve": {
+      "files": [
+        "sfx/trade-evolve.flac"
+      ],
+      "hitMs": [
+        10
+      ]
+    },
+    "cast-sunny-day": {
+      "files": [
+        "sfx/cast-sunny-day-1.flac",
+        "sfx/cast-sunny-day-2.flac",
+        "sfx/cast-sunny-day-3.flac"
+      ],
+      "hitMs": [
+        0,
+        185,
+        120
+      ]
+    },
+    "cast-rain-dance": {
+      "files": [
+        "sfx/cast-rain-dance-1.flac",
+        "sfx/cast-rain-dance-2.flac",
+        "sfx/cast-rain-dance-3.flac"
+      ],
+      "hitMs": [
+        0,
+        10,
+        95
+      ]
+    },
+    "cast-sandstorm": {
+      "files": [
+        "sfx/cast-sandstorm-1.flac",
+        "sfx/cast-sandstorm-2.flac",
+        "sfx/cast-sandstorm-3.flac"
+      ],
+      "hitMs": [
+        70,
+        20,
+        20
+      ]
+    },
+    "cast-grass-pledge": {
+      "files": [
+        "sfx/cast-grass-pledge-1.flac",
+        "sfx/cast-grass-pledge-2.flac",
+        "sfx/cast-grass-pledge-3.flac"
+      ],
+      "hitMs": [
+        155,
+        220,
+        5
+      ]
+    },
+    "cast-fire-pledge": {
+      "files": [
+        "sfx/cast-fire-pledge-1.flac",
+        "sfx/cast-fire-pledge-2.flac",
+        "sfx/cast-fire-pledge-3.flac",
+        "sfx/cast-fire-pledge-4.flac"
+      ],
+      "hitMs": [
+        105,
+        0,
+        90,
+        10
+      ]
+    },
+    "cast-water-pledge": {
+      "files": [
+        "sfx/cast-water-pledge-1.flac",
+        "sfx/cast-water-pledge-2.flac",
+        "sfx/cast-water-pledge-3.flac"
+      ],
+      "hitMs": [
+        0,
+        5,
+        0
+      ]
+    },
+    "field-sea-of-fire": {
+      "files": [
+        "sfx/field-sea-of-fire-1.flac",
+        "sfx/field-sea-of-fire-2.flac",
+        "sfx/field-sea-of-fire-3.flac"
+      ],
+      "hitMs": [
+        55,
+        120,
+        135
+      ]
+    },
+    "field-rainbow": {
+      "files": [
+        "sfx/field-rainbow-1.flac",
+        "sfx/field-rainbow-2.flac",
+        "sfx/field-rainbow-3.flac",
+        "sfx/field-rainbow-4.flac"
+      ],
+      "hitMs": [
+        20,
+        110,
+        30,
+        15
+      ]
+    },
+    "field-swamp": {
+      "files": [
+        "sfx/field-swamp-1.flac",
+        "sfx/field-swamp-2.flac",
+        "sfx/field-swamp-3.flac"
+      ],
+      "hitMs": [
+        5,
+        0,
+        246
+      ]
+    },
+    "flare-blitz": {
+      "files": [
+        "sfx/flare-blitz-1.flac",
+        "sfx/flare-blitz-2.flac",
+        "sfx/flare-blitz-3.flac",
+        "sfx/flare-blitz-4.flac"
+      ],
+      "hitMs": [
+        120,
+        30,
+        65,
+        110
+      ]
+    },
+    "mega-evolve": {
+      "files": [
+        "sfx/mega-evolve-1.flac",
+        "sfx/mega-evolve-2.flac"
+      ],
+      "hitMs": [
+        220,
+        231
+      ]
+    },
+    "assist-x-speed": {
+      "files": [
+        "sfx/assist-x-speed.flac"
+      ],
+      "hitMs": [
+        135
+      ]
+    },
+    "assist-super-potion": {
+      "files": [
+        "sfx/assist-super-potion-1.flac",
+        "sfx/assist-super-potion-2.flac"
+      ],
+      "hitMs": [
+        0,
+        0
+      ]
+    },
+    "assist-full-heal": {
+      "files": [
+        "sfx/assist-full-heal.flac"
+      ],
+      "hitMs": [
+        5
+      ]
+    },
+    "assist-dire-hit": {
+      "files": [
+        "sfx/assist-dire-hit-1.flac",
+        "sfx/assist-dire-hit-2.flac"
+      ],
+      "hitMs": [
+        200,
+        501
+      ]
     }
   },
   "music": {

@@ -1,9 +1,10 @@
 import type { LineDef } from "./index";
 
+const traits = { normal: ["guts", "no-guard"], hidden: "steadfast" } as const;
+
 export const machop = {
   id: "machop",
   role: "近身连打",
-  ability: "guts",
   ultimate: "seismic-barrage",
   kit: ["karate-chop", "low-sweep", "brick-break", "focus-blast"],
   evolutionMoves: ["seismic-toss", "cross-chop"],
@@ -13,6 +14,7 @@ export const machop = {
       at: 1,
       form: {
         id: "machop",
+        abilities: traits,
         name: "腕力",
         types: ["fighting"],
         hp: 125,
@@ -27,6 +29,7 @@ export const machop = {
       at: 28,
       form: {
         id: "machoke",
+        abilities: traits,
         name: "豪力",
         types: ["fighting"],
         hp: 134,
@@ -39,8 +42,10 @@ export const machop = {
     {
       kind: "evolve",
       at: 54,
+      needs: "trade",
       form: {
         id: "machamp",
+        abilities: traits,
         name: "怪力",
         types: ["fighting"],
         hp: 142,

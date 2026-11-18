@@ -33,11 +33,13 @@ import { createWorld, stepWorld } from "../src/run/sim/world.ts";
 // Same flat heightfield and real navigation setup as late-zones.test.mjs.
 function arena(stage = "tower", local = 0) {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage,
     route: routeTo(stage),
     seed: 3,
     difficulty: 0,
-    players: [{ starter: "bulbasaur" }],
+    players: [{ trainer: "chengxi", starter: "bulbasaur" }],
   });
   const samples = TERRAIN_HALF * 4 + 1;
   world.map.terrain = {

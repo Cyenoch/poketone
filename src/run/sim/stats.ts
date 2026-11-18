@@ -1,4 +1,5 @@
-import { abilities, type AbilityId } from "./content/abilities";
+import { TRAINER } from "./content/params/trainers";
+import { ABILITY_PARAMS, abilities, abilityForSlot, type AbilityId } from "./content/abilities";
 import { weatherDefs } from "./content/weather";
 import type { WeatherId } from "./state/field";
 import type { MoveId } from "./content/moves";
@@ -12,11 +13,13 @@ import {
   type ModifierDef,
   type ModifierOp,
   type ModifierSource,
+  type PlayerCondition,
   type StatId,
 } from "./content/effects";
 import { boosted, resolveTrigger, scaled, type ResolvedTrigger } from "./content/triggers";
 import { DICE_FACES, diceKey, itemIds, items, type ItemId, type ItemRule } from "./content/items";
-import { starters } from "./content/lines/index";
+import { megaDefs, starters } from "./content/lines/index";
+import { signatureFusions } from "./content/fusions";
 import { formOf } from "./evolution";
 import type { LabBonuses, Player, TrainStat } from "./state/entities";
 import { exp } from "./math";
@@ -26,6 +29,21 @@ import { TRAIN } from "./content/params/cards";
 import { AREA_GROWTH_MAX, ARMOR_HALF, BASE, LEVEL } from "./content/params/player";
 
 export type StatKey = StatId;
+
+export function currentAbility(player: Player): AbilityId {
+  return abilityForSlot(formOf(player).abilities, player.abilitySlot);
+}
+
+/** No Guard only changes the owner's line moves, including its signature fusion. */
+export function noGuardMove(player: Player, move: MoveId): boolean {
+  if (currentAbility(player) !== "no-guard") return false;
+  const line = starters[player.starter];
+  return (
+    line.kit.includes(move) ||
+    line.evolutionMoves.includes(move) ||
+    signatureFusions[line.id].result === move
+  );
+}
 
 /** The caller chooses live weather or explicit null for a weather-free model. */
 export function weatherMoveStats(
@@ -52,7 +70,7 @@ export interface ActiveTrigger {
   def: ResolvedTrigger;
 }
 
-function triggersOf(player: Player): ActiveTrigger[] {
+function triggersOf(player: Player, ability: AbilityId): ActiveTrigger[] {
   const list: ActiveTrigger[] = [];
   for (const id of itemIds) {
     const level = player.items.find((item) => item.id === id)?.level ?? 0;
@@ -61,7 +79,6 @@ function triggersOf(player: Player): ActiveTrigger[] {
       list.push({ key: `item:${id}#${i}`, def: resolveTrigger(def, level - 1) }),
     );
   }
-  const { ability } = starters[player.starter];
   abilities[ability].effect.triggers.forEach((def, i) =>
     list.push({ key: `ability:${ability}#${i}`, def: resolveTrigger(def, player.stage) }),
   );
@@ -117,6 +134,7 @@ export interface StatSource {
   ability?: AbilityId;
   /** The condition the modifier waits on (低血量, 火属性招式). */
   when?: Modifier["when"];
+  requires?: PlayerCondition;
   /** Whether the source is in `value` now; a conditional one that does not hold is listed but not counted. */
   active: boolean;
 }
@@ -142,7 +160,7 @@ const neutral = (op: ModifierOp) => (op === "mul" || op === "div" ? 1 : 0);
  * training → ability. Sums and products in this order are the bit-exact numbers the game was tuned
  * and recorded on (golden); the display order is `SOURCE_ORDER`.
  */
-function modifiersOf(player: Player): Modifier[] {
+function modifiersOf(player: Player, ability: AbilityId): Modifier[] {
   const list: Modifier[] = [];
   const push = (def: ModifierDef<number>, source: ModifierSource) => {
     if (def.value !== neutral(def.op)) list.push({ ...def, source });
@@ -153,6 +171,8 @@ function modifiersOf(player: Player): Modifier[] {
   // Sterbenz: the forms of a line are within 2× of each other, so start + (form − start) is exactly form.
   push({ stat: "maxHp", op: "add", value: form.hp - start.hp }, { kind: "evolution" });
   push({ stat: "speed", op: "add", value: form.speed - start.speed }, { kind: "evolution" });
+  if (player.mega)
+    for (const mod of megaDefs[player.mega].modifiers) push(mod, { kind: "evolution" });
   for (const id of itemIds) {
     const count = player.items.find((item) => item.id === id)?.level ?? 0;
     if (count === 0) continue;
@@ -197,21 +217,17 @@ function modifiersOf(player: Player): Modifier[] {
     const count = player.training[stat];
     push({ ...def, value: atLevel(def.op, def.value, count) }, { kind: "train", count });
   }
-  for (const def of abilities[line.ability].effect.modifiers)
-    push({ ...def, value: def.value[player.stage]! }, { kind: "ability", ability: line.ability });
+  for (const def of abilities[ability].effect.modifiers)
+    push({ ...def, value: def.value[player.stage]! }, { kind: "ability", ability });
   return list;
 }
 
-interface PlayerState {
-  lowHp: boolean;
-  canEvolve: boolean;
-}
+type PlayerState = Record<PlayerCondition, boolean>;
 
 /** Whether a modifier counts in its stat's value; a hit condition never does (it is `hit`). */
 const holds = (modifier: Modifier, state: PlayerState) =>
-  modifier.when === undefined ||
-  (modifier.when === "lowHp" && state.lowHp) ||
-  (modifier.when === "canEvolve" && state.canEvolve);
+  (modifier.requires === undefined || state[modifier.requires]) &&
+  (modifier.when === undefined || (!isHitCondition(modifier.when) && state[modifier.when]));
 
 /** Whether a later stage still brings a new form (Eviolite). */
 export function canEvolve(player: Player): boolean {
@@ -242,26 +258,72 @@ interface Folded {
 }
 
 /** The one fold behind both `playerStats` and the stats sheet, so the two can never disagree. */
-function evaluate(player: Player): Folded {
+function evaluate(player: Player, weather: WeatherId | null): Folded {
+  const ability = currentAbility(player);
   const byStat = {} as Record<StatId, Modifier[]>;
   for (const stat of statIds) byStat[stat] = [];
-  for (const modifier of modifiersOf(player)) byStat[modifier.stat].push(modifier);
+  for (const modifier of modifiersOf(player, ability)) byStat[modifier.stat].push(modifier);
   const start = starters[player.starter].stages[0].form;
   const bases: Record<StatId, number> = { ...BASE, maxHp: start.hp, speed: start.speed };
-  const stats = { hit: {}, triggers: triggersOf(player) } as unknown as PlayerStats;
-  const evolving = canEvolve(player);
-  // Max HP decides the low-HP condition, so it never depends on it.
-  stats.maxHp =
-    player.tradeHp *
-    fold(bases.maxHp, byStat.maxHp, (m) => holds(m, { lowHp: false, canEvolve: evolving }));
-  const state = { lowHp: player.hp < LOW_HP * stats.maxHp, canEvolve: evolving };
+  const stats = { hit: {}, triggers: triggersOf(player, ability) } as unknown as PlayerStats;
+  const state: PlayerState = {
+    lowHp: false,
+    fullHp: false,
+    canEvolve: canEvolve(player),
+    pikachu: formOf(player).id === "pikachu",
+    sun: weather === "sun",
+    rain: weather === "rain",
+    sandstorm: weather === "sandstorm",
+    poisoned: player.statuses.some((s) => s.id === "poison"),
+    slowed: player.statuses.some((s) => s.id === "slow"),
+    charged: player.lightningRodTime > 0,
+  };
   const counts = (m: Modifier) => holds(m, state);
+  // Compute capacity first: HP thresholds and Rain Dish both use the final maximum.
+  stats.maxHp = player.tradeHp * fold(bases.maxHp, byStat.maxHp, counts);
+  state.lowHp = player.hp < LOW_HP * stats.maxHp;
+  state.fullHp = player.hp >= stats.maxHp;
+  if (ability === "rain-dish")
+    byStat.regen.push({
+      stat: "regen",
+      op: "add",
+      value: stats.maxHp * ABILITY_PARAMS.rainDishHealing,
+      when: "rain",
+      source: { kind: "ability", ability },
+    });
   for (const stat of statIds)
     if (stat !== "maxHp") stats[stat] = fold(bases[stat], byStat[stat], counts);
-  for (const { when } of byStat.damage) {
-    if (when === undefined || !isHitCondition(when) || when in stats.hit) continue;
-    stats.hit[when] = fold(1, byStat.damage, (m) => m.when === when);
+  if (ability === "sand-veil") {
+    // Sand Veil evades a share of the attacks left after the player's other evasion.
+    const value = (1 - stats.evasion) * ABILITY_PARAMS.sandVeil;
+    byStat.evasion.push({
+      stat: "evasion",
+      op: "extra",
+      value,
+      when: "sandstorm",
+      source: { kind: "ability", ability },
+    });
+    if (state.sandstorm) stats.evasion += value;
   }
+  for (const { when, requires } of byStat.damage) {
+    if (
+      when === undefined ||
+      !isHitCondition(when) ||
+      when in stats.hit ||
+      (requires && !state[requires])
+    )
+      continue;
+    stats.hit[when] = fold(
+      1,
+      byStat.damage,
+      (m) => m.when === when && (!m.requires || state[m.requires]),
+    );
+  }
+  if (player.assistBuffs.xSpeed) {
+    stats.speed *= TRAINER.xSpeed.movement;
+    stats.cooldown /= TRAINER.xSpeed.attackRate;
+  }
+  if (player.assistBuffs.direHit) stats.crit = 1;
   return { stats, byStat, bases, state };
 }
 
@@ -272,13 +334,13 @@ export function itemRule(player: Player, rule: ItemRule): number {
   return total;
 }
 
-export function playerStats(player: Player): PlayerStats {
-  return evaluate(player).stats;
+export function playerStats(player: Player, weather: WeatherId | null = null): PlayerStats {
+  return evaluate(player, weather).stats;
 }
 
 /** Where every stat comes from, for the stats panel: the same fold, grouped by stat with its sources. */
-export function statBreakdown(player: Player): StatBreakdown {
-  const { stats, byStat, bases, state } = evaluate(player);
+export function statBreakdown(player: Player, weather: WeatherId | null = null): StatBreakdown {
+  const { stats, byStat, bases, state } = evaluate(player, weather);
   const lines = {} as StatBreakdown;
   for (const stat of statIds)
     lines[stat] = {
@@ -289,7 +351,8 @@ export function statBreakdown(player: Player): StatBreakdown {
         op: modifier.op,
         amount: modifier.value,
         when: modifier.when,
-        active: holds(modifier, { ...state, lowHp: state.lowHp && stat !== "maxHp" }),
+        ...(modifier.requires ? { requires: modifier.requires } : {}),
+        active: holds(modifier, state),
       })),
       value: stats[stat],
     };
@@ -300,24 +363,42 @@ export function statBreakdown(player: Player): StatBreakdown {
 }
 
 /**
- * `playerStats` memo for the per-hit, per-heal and per-kill paths inside a step. Within one generation the
- * inputs only change through HP crossing `LOW_HP` (checked on every read); `refreshStats` opens a new
- * generation at every tick and after a level-up (level, stage). Items, training and moves change through
- * commands, which run before the tick's refresh.
+ * Memo for the per-hit, per-heal and per-kill paths inside a step. Between refreshes even the
+ * form, slot, weather and active HP/status conditions may change. The same player can
+ * also be queried for a weather-independent stat (e.g. healing) between two hits in live weather.
  */
 let generation = 0;
-const memo = new WeakMap<Player, { generation: number; low: boolean; stats: PlayerStats }>();
+interface StatsMemo {
+  generation: number;
+  stage: number;
+  slot: Player["abilitySlot"];
+  state: PlayerState;
+  stats: PlayerStats;
+}
+const memo = new WeakMap<Player, Partial<Record<WeatherId | "clear", StatsMemo>>>();
 
 export function refreshStats(): void {
   generation++;
 }
 
-export function currentStats(player: Player): PlayerStats {
-  const entry = memo.get(player);
-  if (entry?.generation === generation && entry.low === player.hp < LOW_HP * entry.stats.maxHp)
+export function currentStats(player: Player, weather: WeatherId | null = null): PlayerStats {
+  let entries = memo.get(player);
+  if (!entries) memo.set(player, (entries = {}));
+  const key = weather ?? "clear";
+  const entry = entries[key];
+  if (
+    entry?.generation === generation &&
+    entry.stage === player.stage &&
+    entry.slot === player.abilitySlot &&
+    entry.state.lowHp === player.hp < LOW_HP * entry.stats.maxHp &&
+    entry.state.fullHp === player.hp >= entry.stats.maxHp &&
+    entry.state.charged === player.lightningRodTime > 0 &&
+    entry.state.poisoned === player.statuses.some((s) => s.id === "poison") &&
+    entry.state.slowed === player.statuses.some((s) => s.id === "slow")
+  )
     return entry.stats;
-  const stats = playerStats(player);
-  memo.set(player, { generation, low: player.hp < LOW_HP * stats.maxHp, stats });
+  const { stats, state } = evaluate(player, weather);
+  entries[key] = { generation, stage: player.stage, slot: player.abilitySlot, state, stats };
   return stats;
 }
 

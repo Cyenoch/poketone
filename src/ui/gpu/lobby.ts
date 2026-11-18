@@ -17,19 +17,23 @@ import {
   trainerArt,
   trainerOrder,
   trainers,
+  kitTip,
   trainerUnlocked,
   XIAQING_UNLOCK_KILLS,
   type TrainerId,
 } from "../../trainers";
-import { ROUTE_TIERS } from "../../run/sim/content/campaign";
 import { formatTime, typeNames } from "../../run/labels";
 import { difficultyLock, starterLock } from "../../run/locks";
-import { starterUnlocked, type Progress } from "../../run/progress";
+import { ruleAvailable, starterUnlocked, type Progress } from "../../run/progress";
+import { ruleIds, totalDanger, type RuleId } from "../../run/sim/content/rules";
+import { ChallengeWindow, RulesKey } from "./challenge-rules";
+import { modeKeys, modeOrder, towerLock, TowerRecord } from "./tower-mode";
 import { difficulties, type Difficulty } from "../../run/sim/content/difficulties";
 import { items, type ItemId } from "../../run/sim/content/items";
 import { starterOrder, starters, type StarterId } from "../../run/sim/content/lines/index";
 import { type StageId } from "../../run/sim/content/stages/index";
 import { BallBadge, portraitSrc } from "./ball";
+import { BondMeter, bondTip } from "./bond-meter";
 import { CURRENCY_ICON, CURRENCY_NAME } from "./currency";
 import { GameButton } from "./game-button";
 import { createMenuIcon } from "./icons";
@@ -49,18 +53,23 @@ import { UiStage } from "./stage";
 import { slantTag } from "./tag";
 import { HARD_SHADOW, slantOf, ui } from "./tokens";
 import { GpuTooltip } from "./tooltip";
+import { TrainerKit } from "./trainer-kit";
 import type { UiInsets } from "./viewport";
 
 export interface LobbyState {
   progress: Progress;
   /** The host's warm-up copies name no map: they open on the first one. */
   pick: LobbyPick;
+  /** The challenge rules the next run starts with (the app's draft, already filtered). */
+  rules: readonly RuleId[];
 }
 export interface LobbyCallbacks {
   /** 出发 with the current pick: one press, the run's own loading screen follows. */
   start(pick: LobbyPick): void;
   /** The pick changed (kept by the app for the next visit and the next session). */
   pick(pick: LobbyPick): void;
+  /** The rules window changed the draft (kept by the app, saved only when a run starts). */
+  rules(next: readonly RuleId[]): void;
   /**
    * The player asks for `line`'s shiny look: `worn` from a direction (← off, → on), sent even when
    * it matches the saved look (it may cancel a look still loading); a press or click leaves it out
@@ -134,7 +143,11 @@ type ControlKind =
   | "next"
   | "tile"
   | "shiny"
+  | "bond"
+  | "rules"
+  | "mode"
   | "trainer"
+  | "kit"
   | "difficulty"
   | "start"
   | "info";
@@ -427,6 +440,8 @@ export class GpuLobby {
   /** Beside the plate while a locked trainer is previewed: a padlock and the KO count. */
   private readonly trainerLock = new LockChip();
   private readonly trainerHead = new Container({ flexDirection: "row", alignItems: "center" });
+  /** Under the name: the previewed trainer's item and passive. */
+  private readonly trainerKit: TrainerKit;
   private readonly avatars = new Container({ flexDirection: "row", alignItems: "flex-end" });
   private readonly avatarBoxes: Container[] = [];
   private readonly column = new Container({
@@ -470,10 +485,13 @@ export class GpuLobby {
     alignItems: "center",
     gap: 8,
   });
+  /** Wraps on a narrow column: the tower record then sits under the mode keys. */
   private readonly route = new Container({
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "flex-end",
     alignItems: "center",
+    gapRow: 6,
   });
   /** Compact: the route and the backpack share the column's last row (wrapping when full). */
   private readonly belt = new Container({
@@ -483,13 +501,10 @@ export class GpuLobby {
     alignItems: "center",
     flexShrink: 0,
   });
-  private readonly routeName = new Text({
-    text: `${ROUTE_TIERS.length} 关探险`,
-    fontWeight: 800,
-    color: ui.muted,
-    whiteSpace: "pre",
-  });
   private readonly routeMap = new RouteMap();
+  /** In 对战塔 the partner's best floor stands where the route map does. */
+  private readonly towerRecord = new TowerRecord();
+  private readonly modes: Control[] = [];
   private readonly go = new Container({
     positionType: "absolute",
     flexDirection: "row",
@@ -522,6 +537,12 @@ export class GpuLobby {
   private ribbonPlate: NamePlate | null = null;
   /** Before the name plate while the picked partner's shiny look is owned. */
   private readonly shinyKey: ShinyKey;
+  /** The picked partner's bond: before the evolution chain (in the tag row when compact). */
+  private readonly bondMeter: BondMeter;
+  /** 规则 by the route, once the first clear opens the rules; the window it opens. */
+  private readonly rulesKey: RulesKey;
+  private readonly challenge: ChallengeWindow;
+  private rules: readonly RuleId[];
   private readonly carryTips: { panel: Container; item: ItemId }[] = [];
   private readonly inverse = new Matrix4();
   private readonly point = new Vector3();
@@ -532,6 +553,7 @@ export class GpuLobby {
   private trainerPreview: TrainerId | null = null;
   private difficulty: Difficulty;
   private map: StageId;
+  private mode: LobbyPick["mode"];
   private focused = -1;
   private hovered = -1;
   private pressed = -1;
@@ -566,7 +588,23 @@ export class GpuLobby {
   ) {
     this.callbacks = callbacks;
     this.progress = state.progress;
+    this.rules = state.rules;
+    this.challenge = new ChallengeWindow(
+      this.stage,
+      (next) => {
+        // A draft: the app keeps it for 出发; the key reads it at once.
+        this.rules = next;
+        this.callbacks.rules(next);
+        this.paintRules();
+      },
+      () => {
+        this.coverScene();
+        this.focus(this.index("rules"));
+        this.repaint();
+      },
+    );
     this.selected = state.pick.starter;
+    this.mode = state.pick.mode;
     this.trainer = state.pick.trainer;
     this.difficulty = state.pick.difficulty;
     this.map = "forest";
@@ -653,7 +691,21 @@ export class GpuLobby {
     this.disposables.push(this.trainerPlate);
     this.buildTrainers();
     this.trainerHead.add(stack(this.trainerPlate.panel, 2), stack(this.trainerLock.panel, 2));
-    this.trainerBox.add(this.trainerHead, this.avatars);
+    this.trainerKit = new TrainerKit(this.stage);
+    this.trainerKit.set(this.trainer);
+    this.disposables.push(this.trainerKit);
+    this.controls.push({
+      kind: "kit",
+      panel: this.trainerKit.panel,
+      index: 0,
+      tip: () => kitTip(this.trainerPreview ?? this.trainer),
+      locked: () => false,
+      activate: () => {},
+      paint: ({ focused, focusVisible }) => this.trainerKit.paint(focused && focusVisible),
+      update: () => {},
+      dispose: () => {},
+    });
+    this.trainerBox.add(this.trainerHead, stack(this.trainerKit.panel, 2), this.avatars);
 
     // ‹ › beside the stage.
     this.prev = this.switchButton(-1);
@@ -665,6 +717,19 @@ export class GpuLobby {
       ...this.keyControl("shiny", this.shinyKey, () => this.requestShiny()),
       tip: () => "异色",
     });
+    this.bondMeter = new BondMeter(this.stage);
+    this.disposables.push(this.bondMeter);
+    this.controls.push({
+      kind: "bond",
+      panel: this.bondMeter.panel,
+      index: 0,
+      tip: () => bondTip(this.bondMeter.points),
+      locked: () => false,
+      activate: () => {},
+      paint: ({ focused, focusVisible }) => this.bondMeter.paint(focused && focusVisible),
+      update: () => {},
+      dispose: () => {},
+    });
     for (const [index, id] of starterOrder.entries()) this.tile(id, index);
     this.columnContent.add(
       stack(this.ribbon, 2),
@@ -675,7 +740,35 @@ export class GpuLobby {
       stack(this.belt, 1),
     );
     this.belt.add(this.backpack);
-    this.route.add(this.routeName, this.routeMap.panel);
+    this.rulesKey = new RulesKey(this.stage);
+    this.rulesKey.panel.setProperties({ marginRight: "auto" });
+    const modes = modeKeys(this.stage);
+    modes.row.setProperties({ marginLeft: 10, marginRight: 10 });
+    this.route.add(this.rulesKey.panel, modes.row, this.routeMap.panel, this.towerRecord.panel);
+    this.controls.push(this.keyControl("rules", this.rulesKey, () => this.openRules()));
+    for (const [index, key] of modes.keys.entries()) {
+      const mode = modeOrder[index]!;
+      const reason = () => (mode === "tower" ? towerLock(this.progress) : null);
+      const base = this.keyControl("mode", key, () => {
+        if (reason() || this.mode === mode) return;
+        this.mode = mode;
+        getAudio().sfx("ui-move");
+        this.paintMode();
+        this.changed();
+      });
+      const control: Control = {
+        ...base,
+        index,
+        tip: reason,
+        locked: () => reason() !== null,
+        paint: (state) => {
+          key.set(this.mode === mode, reason() !== null);
+          base.paint(state);
+        },
+      };
+      this.controls.push(control);
+      this.modes.push(control);
+    }
     this.column.add(this.columnContent);
 
     // Bottom right: the route, then the difficulty tray and 出发.
@@ -696,8 +789,11 @@ export class GpuLobby {
       stack(this.column, 2),
       stack(this.corner, 3),
       stack(this.tabs, 3),
+      stack(this.challenge.root, 10),
     );
     this.buildPartner();
+    this.paintRules();
+    this.paintMode();
   }
 
   /** The world scene this lobby lays out and themes (absent on the host's warm-up copies). */
@@ -909,6 +1005,7 @@ export class GpuLobby {
     this.departing = true;
     this.repaint();
     this.callbacks.start({
+      mode: this.mode,
       starter: this.selected,
       difficulty: this.difficulty,
       stage: this.map,
@@ -937,6 +1034,7 @@ export class GpuLobby {
   private showPartner(): void {
     const form = starters[this.selected].stages[0].form;
     this.buildPartner();
+    this.paintMode();
     this.scene?.show(form.id, form.types[0]!, this.wears(this.selected));
   }
 
@@ -974,6 +1072,7 @@ export class GpuLobby {
 
   private changed(): void {
     this.callbacks.pick({
+      mode: this.mode,
       starter: this.selected,
       difficulty: this.difficulty,
       stage: this.map,
@@ -993,6 +1092,7 @@ export class GpuLobby {
     );
     this.trainerPlate.enter(180);
     this.scene?.showTrainer(id, locked);
+    this.trainerKit.set(id);
     this.repaint();
   }
 
@@ -1001,8 +1101,9 @@ export class GpuLobby {
     for (let i = this.controls.length - 1; i >= 0; i--)
       if (this.controls[i]!.kind === "info") this.controls.splice(i, 1);
     for (const part of this.partnerParts.splice(0)) part.dispose();
-    // The shiny key outlives the partner's parts.
+    // The shiny key and the bond outlive the partner's parts.
     this.shinyKey.panel.removeFromParent();
+    this.bondMeter.panel.removeFromParent();
     for (const node of [this.ribbon, this.meta, this.chain, this.backpack])
       for (const child of node.children.slice()) {
         child.removeFromParent();
@@ -1032,6 +1133,11 @@ export class GpuLobby {
     this.ribbon.add(this.shinyKey.panel, plate.panel);
     if (!owned && this.controls[this.focused]?.kind === "shiny")
       this.focused = this.picked(this.tiles, starterOrder.indexOf(shown));
+    // The bond leads the chain's row (the tag row when compact), across from the forms.
+    this.bondMeter.panel.setProperties({ marginRight: "auto" });
+    if (this.compact) this.meta.add(this.bondMeter.panel);
+    else this.chain.add(this.bondMeter.panel);
+    this.bondMeter.set(this.progress.bonds[shown] ?? 0);
     // The type tag (crest + name), then the best record on desktop.
     const tag = slantTag(
       typeNames[type],
@@ -1057,7 +1163,15 @@ export class GpuLobby {
       );
     // The evolution chain: the line's forms in circles, the partner's own ringed in its colour.
     const forms = starter.stages.flatMap((s) => (s.kind === "evolve" && s.form ? [s.form] : []));
-    const chainHost = this.compact ? this.meta : this.chain;
+    // One block, so a tight row (a long bond title) moves the whole chain onto a line of its own.
+    const chainHost = new Container({
+      flexDirection: "row",
+      alignItems: "center",
+      flexShrink: 0,
+      marginLeft: "auto",
+      gap: 8,
+    });
+    (this.compact ? this.meta : this.chain).add(chainHost);
     this.chain.setProperties({ display: this.compact ? "none" : "flex" });
     for (const [i, step] of forms.entries()) {
       if (i > 0) {
@@ -1146,7 +1260,11 @@ export class GpuLobby {
       this.showPartner();
     } else if (changed) this.showPartner();
     this.difficulty = state.pick.difficulty;
+    this.mode = state.pick.mode;
     this.map = "forest";
+    this.rules = state.rules;
+    this.paintRules();
+    this.paintMode();
     if (state.pick.trainer !== this.trainer || (changed && this.trainerPreview)) {
       this.trainerPreview = null;
       this.trainer = state.pick.trainer;
@@ -1160,7 +1278,7 @@ export class GpuLobby {
     if (revealed === this.revealed) return;
     this.revealed = revealed;
     this.stage.root.visible = revealed;
-    this.scene?.setCovered(this.covered || !revealed);
+    this.coverScene();
     this.stage.invalidate();
   }
 
@@ -1168,7 +1286,53 @@ export class GpuLobby {
   setCovered(covered: boolean): void {
     if (covered === this.covered) return;
     this.covered = covered;
-    this.scene?.setCovered(covered || !this.revealed);
+    this.coverScene();
+  }
+
+  /** The scene holds still under a screen, before the reveal and under the rules window. */
+  private coverScene(): void {
+    this.scene?.setCovered(this.covered || !this.revealed || this.challenge.open);
+  }
+
+  /** The rules are open once the first 普通 clear makes any of them available. */
+  private rulesOpen(): boolean {
+    return ruleIds.some((id) => ruleAvailable(this.progress, id));
+  }
+
+  private paintRules(): void {
+    const open = this.rulesOpen();
+    this.rulesKey.panel.setProperties({ display: open ? "flex" : "none" });
+    this.rulesKey.setDanger(totalDanger(this.rules));
+    if (!open && this.controls[this.focused]?.kind === "rules") this.focused = this.index("start");
+    this.challenge.update(this.context());
+    this.stage.invalidate();
+  }
+
+  /** The route map in 探险; the partner's best floor in 对战塔. */
+  private paintMode(): void {
+    const tower = this.mode === "tower";
+    this.routeMap.panel.setProperties({ display: tower ? "none" : "flex" });
+    this.towerRecord.set(this.progress, this.selected, tower);
+    this.stage.invalidate();
+  }
+
+  private context() {
+    return {
+      selected: this.rules,
+      difficulty: this.difficulty,
+      owned: this.progress.badges,
+      available: (id: RuleId) => ruleAvailable(this.progress, id),
+    };
+  }
+
+  private openRules(): void {
+    if (!this.rulesOpen() || this.challenge.open) return;
+    getAudio().sfx("ui-confirm");
+    this.tooltip.show(null, "");
+    this.challenge.setFocusVisible(this.focusVisible);
+    this.challenge.show(this.context());
+    this.coverScene();
+    this.repaint();
   }
 
   private repaint(): void {
@@ -1191,6 +1355,7 @@ export class GpuLobby {
     this.compact = compact;
     if (rebuild) this.buildPartner();
     this.applySizes();
+    this.sizeChallenge();
     this.placed = "";
     this.repaint();
   }
@@ -1247,6 +1412,7 @@ export class GpuLobby {
     this.avatars.setProperties({ gap: this.compact ? 8 : 10 });
     this.trainerHead.setProperties({ gap: this.compact ? 8 : 10 });
     this.trainerLock.size(t.plate, this.compact);
+    this.trainerKit.size(t.plate, this.compact, min);
     const avatar = Math.max(t.avatar, min);
     for (const box of this.avatarBoxes) box.setProperties({ width: avatar, height: avatar });
     const colW = this.colW();
@@ -1255,8 +1421,21 @@ export class GpuLobby {
       width: colW + COLUMN_ROOM * 2,
     });
     this.ribbonPlate?.size(t.ribbon, t.name, this.compact ? 18 : 24);
-    this.meta.setProperties({ marginTop: t.section, flexShrink: 0, gap: this.compact ? 8 : 10 });
-    this.chain.setProperties({ marginTop: t.section, flexShrink: 0 });
+    // Its row's height: the compact tag row's forms, or the desktop chain.
+    this.bondMeter.size(this.compact, min, t.chain);
+    this.meta.setProperties({
+      marginTop: t.section,
+      flexShrink: 0,
+      flexWrap: "wrap",
+      gapColumn: this.compact ? 8 : 10,
+      gapRow: t.section,
+    });
+    this.chain.setProperties({
+      marginTop: t.section,
+      flexShrink: 0,
+      flexWrap: "wrap",
+      gapRow: t.section,
+    });
     this.divider.setProperties({ marginTop: t.section, marginBottom: t.section + 4 });
     const { badge, gap } = this.rosterSize();
     this.roster.setProperties({ width: colW, gap, flexShrink: 0 });
@@ -1269,12 +1448,9 @@ export class GpuLobby {
           width: Math.max(t.slot, min),
           height: Math.max(t.slot, min),
         });
-    // Compact drops the route's name: the lattice alone fits beside a packed backpack.
-    this.routeName.setProperties({
-      display: this.compact ? "none" : "flex",
-      fontSize: 13,
-      marginRight: 10,
-    });
+    this.towerRecord.size(this.compact);
+    // The row keeps the route map's height in 对战塔 too, so the mode keys hold still under a press.
+    this.route.setProperties({ minHeight: 2 * t.swatch + t.pairGap });
     this.routeMap.resize({ swatch: t.swatch, column: t.tierGap, row: t.pairGap, links: true });
     // The tray and 出发 span the column's width: one block with the column above it.
     this.go.setProperties({
@@ -1397,8 +1573,11 @@ export class GpuLobby {
     if (tabsS[1] !== barH) this.tabs.setProperties({ minHeight: barH });
     if (cornerS[1] !== barH) this.corner.setProperties({ minHeight: barH });
     const barBottom = pad.top + barH;
-    const top = barBottom + (this.compact ? 8 : 20);
-    const bottom = this.compact ? goTop - 8 : routeTop - 16;
+    // The column's box reaches COLUMN_ROOM past its rows and clips there: both edges stay 4 or
+    // more clear of the top bar and of the block below (出发 on a phone, the route otherwise), so
+    // scrolled rows never draw over them.
+    const top = barBottom + (this.compact ? COLUMN_ROOM + 4 : 20);
+    const bottom = (this.compact ? goTop : routeTop) - COLUMN_ROOM - 4;
     const maxH = bottom - top + 2 * COLUMN_ROOM;
     this.column.setProperties({
       positionTop: top - COLUMN_ROOM,
@@ -1500,10 +1679,11 @@ export class GpuLobby {
 
   hit(x: number, y: number): number {
     if (!this.revealed || this.departing) return -1;
+    if (this.challenge.open) return this.challenge.hit(x, y);
     for (let i = this.controls.length - 1; i >= 0; i--) {
       const control = this.controls[i]!;
       // The column clips its rows: one scrolled out of it is not there.
-      if (inColumn(control.kind) && !this.contains(this.column, x, y)) continue;
+      if (this.columnRow(control.kind) && !this.contains(this.column, x, y)) continue;
       if (this.contains(control.panel, x, y)) return i;
     }
     return this.contains(this.column, x, y) && (this.column.maxScrollPosition.value[1] ?? 0) > 0
@@ -1512,6 +1692,7 @@ export class GpuLobby {
   }
 
   focus(index: number): void {
+    if (this.challenge.open) return this.challenge.focus(index);
     if (index === this.focused) return;
     this.focused = index;
     this.reveal();
@@ -1519,30 +1700,39 @@ export class GpuLobby {
   }
 
   hover(index: number | null): void {
+    if (this.challenge.open) return this.challenge.hover(index);
     this.hovered = index ?? -1;
     this.repaint();
   }
 
   setPressed(index: number | null): void {
+    if (this.challenge.open) return this.challenge.setPressed(index);
     this.pressed = index ?? -1;
     this.repaint();
   }
 
   activate(index: number): void {
     if (this.departing) return;
+    if (this.challenge.open) return this.challenge.activate(index);
     this.controls[index]?.activate();
   }
 
   private reveal(): void {
     const control = this.controls[this.focused];
-    if (control && inColumn(control.kind))
+    if (control && this.columnRow(control.kind))
       revealInScroller(control.panel, this.column, COLUMN_ROOM);
+  }
+
+  /** Rows inside the clipped column: the roster and backpack, and on short screens the route row
+   *  (规则 with it). */
+  private columnRow(kind: ControlKind): boolean {
+    return inColumn(kind) || ((kind === "rules" || kind === "mode") && this.compact);
   }
 
   /** The column scrolls; the wheel over the stage switches partner, one per step. */
   scroll(delta: number): void {
     const at = this.pointer;
-    if (this.departing) return;
+    if (this.departing || this.challenge.open) return;
     if (
       this.columnDrag ||
       currentInputMode().kind === "gamepad" ||
@@ -1559,7 +1749,8 @@ export class GpuLobby {
           ),
         ),
       ];
-      this.touchTip = -1;
+      // The rows moved under the resting mouse: its tip waits for the next move.
+      this.touchTip = this.hoveredTip = -1;
       this.tipPress = null;
       this.stage.invalidate();
       return;
@@ -1572,13 +1763,32 @@ export class GpuLobby {
   }
 
   setFocusVisible(visible: boolean): void {
+    this.challenge.setFocusVisible(visible);
     if (visible === this.focusVisible) return;
     this.focusVisible = visible;
+    // Keyboard or pad took over: the tip follows focus, not where the mouse last rested.
+    if (visible) this.hoveredTip = -1;
     this.repaint();
   }
 
   setCoarsePointer(coarse: boolean): void {
-    this.coarse = coarse;
+    if (coarse !== this.coarse) {
+      this.coarse = coarse;
+      this.hoveredTip = -1;
+      this.sizeChallenge();
+    }
+  }
+
+  /** The rules window inside the safe area, with room for its focus ring. */
+  private sizeChallenge(): void {
+    const v = this.stage.viewport;
+    const s = v.safeArea;
+    this.challenge.resize(
+      this.compact,
+      this.coarse,
+      v.width - Math.max(16, s.left) - Math.max(16, s.right),
+      v.height - Math.max(16, s.top) - Math.max(16, s.bottom),
+    );
   }
 
   /** Opens on 出发, the lobby's one action. */
@@ -1606,7 +1816,9 @@ export class GpuLobby {
         ? this.segments
         : control.kind === "trainer"
           ? this.trainerControls
-          : null;
+          : control.kind === "mode"
+            ? this.modes
+            : null;
   }
 
   private picked(list: Control[], index: number): number {
@@ -1630,20 +1842,29 @@ export class GpuLobby {
     return this.owns(this.selected) ? [this.index("shiny")] : [];
   }
 
-  /** Tab stops: the top row, the picked trainer, ‹ ›, the shiny key, the picked partner, the
+  /** Tab stops: the top row, the trainer's kit, the picked trainer, ‹ ›, the shiny key, the picked partner, the
    *  backpack, the picked difficulty, 出发. */
   private tabStops(): number[] {
     return [
       ...this.topRow(),
+      this.index("kit"),
       this.picked(this.trainerControls, trainerOrder.indexOf(this.trainer)),
       this.index("prev"),
       this.index("next"),
       ...this.shinyStop(),
+      this.index("bond"),
       this.picked(this.tiles, starterOrder.indexOf(this.selected)),
       ...this.stops("info"),
+      ...this.rulesStop(),
+      this.picked(this.modes, modeOrder.indexOf(this.mode)),
       this.picked(this.segments, this.difficulty),
       this.index("start"),
     ];
+  }
+
+  /** 规则, once the rules are open. */
+  private rulesStop(): number[] {
+    return this.rulesOpen() ? [this.index("rules")] : [];
   }
 
   private tabAt(stops: number[]): number {
@@ -1656,6 +1877,7 @@ export class GpuLobby {
   }
 
   tabEdge(shift: boolean): boolean {
+    if (this.challenge.open) return false;
     const stops = this.tabStops();
     return this.tabAt(stops) === (shift ? 0 : stops.length - 1);
   }
@@ -1670,6 +1892,8 @@ export class GpuLobby {
     )
       return true;
     if (!["KeyQ", "KeyE"].includes(event.code)) return false;
+    // The window over the lobby keeps its partner.
+    if (this.challenge.open) return true;
     if (!this.departing) {
       this.touchTip = -1;
       this.cycle(event.code === "KeyQ" ? -1 : 1);
@@ -1678,8 +1902,9 @@ export class GpuLobby {
   }
 
   navigate(action: NavigationAction): boolean {
-    if (this.touchTip >= 0) this.touchTip = -1;
+    this.touchTip = this.hoveredTip = -1;
     if (this.departing) return true;
+    if (this.challenge.open) return this.challenge.navigate(action);
     if (action === "previousPage" || action === "nextPage") {
       this.cycle(action === "previousPage" ? -1 : 1);
       return true;
@@ -1721,8 +1946,8 @@ export class GpuLobby {
   }
 
   /** Arrows: the groups pick sideways, 出发 switches partner sideways; up and down walk the
-   *  screen's regions (top row, trainer, stage, column, tray). With the look owned, ↑ from the
-   *  tray reaches the shiny key, so a partner in the roster's second row wears it without a pick. */
+   *  screen's regions (top row, trainer, stage, column, tray). ↑ from below the roster reaches the
+   *  shiny key (the look owned) or the bond, so a partner in the roster's second row keeps its pick. */
   private arrow(current: Control, action: NavigationDirection): void {
     const sideways = action === "left" || action === "right";
     const step = action === "left" || action === "up" ? -1 : 1;
@@ -1732,8 +1957,16 @@ export class GpuLobby {
     const infos = this.stops("info");
     const row = this.topRow();
     const group = this.group(current);
+    const mode = this.picked(this.modes, modeOrder.indexOf(this.mode));
+    const rules = this.rulesStop()[0];
     if (sideways) {
-      if (group) {
+      if (current.kind === "mode" && current.index === 0 && step < 0 && rules !== undefined) {
+        // 规则 stands left of the mode keys in their row.
+        this.focus(rules);
+      } else if (current.kind === "rules") {
+        // → reaches the mode keys; ← keeps the partner (and so the run) as it is.
+        if (step > 0) this.focus(mode);
+      } else if (group) {
         // A radio arrow moves focus and picks; a locked option takes the focus only.
         const at = group.indexOf(current);
         const next = group[(at + step + group.length) % group.length]!;
@@ -1768,24 +2001,32 @@ export class GpuLobby {
         return;
       }
     }
-    const below = infos[0] ?? segment;
     const shiny = this.shinyStop()[0];
+    const bond = this.index("bond");
+    // The route row (规则, then the modes) stands between the column and the tray: ↓ from the
+    // column, ↑ from the tray.
+    const route = rules ?? mode;
+    const below = infos[0] ?? route;
     const targets: Record<ControlKind, [number, number]> = {
-      lab: [this.focused, trainer],
-      codex: [this.focused, trainer],
+      lab: [this.focused, this.index("kit")],
+      codex: [this.focused, this.index("kit")],
       multiplayer: [this.focused, this.index("prev")],
       link: [this.focused, tile],
       settings: [this.focused, tile],
       fullscreen: [this.focused, tile],
-      trainer: [this.index("lab"), this.focused],
+      kit: [this.index("lab"), trainer],
+      trainer: [this.index("kit"), this.focused],
       prev: [this.index("multiplayer"), trainer],
       next: [this.index("multiplayer"), segment],
-      shiny: [this.index("settings"), tile],
-      tile: [shiny ?? this.index("settings"), below],
-      info: [tile, segment],
-      // An owned look's key takes the tray's ↑: the picked partner wears it by ↓ ↑ and confirm
-      // without crossing the roster's rows (which pick), and its ↓ returns to that medal.
-      difficulty: [shiny ?? infos.at(-1) ?? tile, this.index("start")],
+      shiny: [this.index("settings"), bond],
+      bond: [shiny ?? this.index("settings"), tile],
+      tile: [bond, below],
+      // ↑ from below the roster skips its rows (which pick): it reaches the owned look's key, else
+      // the bond, so both stay the picked partner's; their ↓ returns to the medal.
+      info: [shiny ?? bond, route],
+      rules: [shiny ?? infos.at(-1) ?? bond, segment],
+      mode: [shiny ?? infos.at(-1) ?? bond, segment],
+      difficulty: [route, this.index("start")],
       start: [segment, this.focused],
     };
     this.focus(targets[current.kind][up ? 0 : 1]);
@@ -1793,6 +2034,10 @@ export class GpuLobby {
 
   pointerDown(x: number, y: number, touch: boolean): void {
     this.pointer = { x, y };
+    if (this.challenge.open) {
+      this.tipPress = this.swipe = null;
+      return this.challenge.pointerDown(x, y, touch);
+    }
     this.columnDrag = touch && this.contains(this.column, x, y);
     const index = this.tipTarget(x, y);
     if (this.touchTip >= 0 && index !== this.touchTip) this.touchTip = -1;
@@ -1802,6 +2047,7 @@ export class GpuLobby {
 
   pointerMove(x: number, y: number): void {
     this.pointer = { x, y };
+    if (this.challenge.open) return this.challenge.pointerMove(x, y);
     const press = this.tipPress;
     if (press && !press.fired && Math.hypot(x - press.x, y - press.y) > 10) this.tipPress = null;
     if (!this.coarse) this.hoveredTip = this.tipTarget(x, y);
@@ -1818,14 +2064,20 @@ export class GpuLobby {
     }
   }
 
+  pointerLeave(): void {
+    this.hoveredTip = -1;
+  }
+
   pointerUp(touch: boolean): boolean {
     this.columnDrag = false;
     this.swipe = null;
+    if (this.challenge.open) return this.challenge.pointerUp();
     const press = this.tipPress;
     this.tipPress = null;
     if (!press || !touch) return false;
     if (press.fired) return true;
-    if (this.tipFor(press.index).locked || this.controls[press.index]?.kind === "info")
+    const kind = this.controls[press.index]?.kind;
+    if (this.tipFor(press.index).locked || kind === "info" || kind === "bond" || kind === "kit")
       this.touchTip = this.touchTip === press.index ? -1 : press.index;
     return false;
   }
@@ -1881,8 +2133,13 @@ export class GpuLobby {
       this.focusVisible && current && (current.tip() || current.kind === "tile")
         ? this.focused
         : -1;
-    const shown =
-      this.touchTip >= 0 ? this.touchTip : this.hoveredTip >= 0 ? this.hoveredTip : keyed;
+    const shown = this.challenge.open
+      ? -1
+      : this.touchTip >= 0
+        ? this.touchTip
+        : this.hoveredTip >= 0
+          ? this.hoveredTip
+          : keyed;
     const tip = this.tipFor(shown);
     this.tooltip.show(
       tip.text ? tip.panel : null,
@@ -1892,6 +2149,7 @@ export class GpuLobby {
       [this.prev.panel, this.next.panel],
     );
     this.tooltip.update();
+    this.challenge.afterLayout(deltaMs);
     for (const control of this.controls) control.update(deltaMs);
     this.routeMap.update();
     // 出发's light sweep steps on the idle clock while the lobby shows.
@@ -1909,6 +2167,7 @@ export class GpuLobby {
     for (const button of this.keyed) button.dispose();
     for (const { entry } of this.badges) this.stage.motion.cancel(entry);
     this.balancePlate.dispose();
+    this.challenge.dispose();
     this.tooltip.dispose();
     this.stage.dispose();
   }
@@ -1916,5 +2175,5 @@ export class GpuLobby {
 
 /** Rows of the scrolling decision column (hit-tested and revealed inside it). */
 function inColumn(kind: ControlKind): boolean {
-  return kind === "tile" || kind === "info" || kind === "shiny";
+  return kind === "tile" || kind === "info" || kind === "shiny" || kind === "bond";
 }

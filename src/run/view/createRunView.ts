@@ -28,7 +28,7 @@ import { stopped } from "../sim/status";
 import { heightAt } from "../sim/terrain";
 import { TICK, type World } from "../sim/state/world";
 import type { Obstacle, Player, PlayerId } from "../sim/state/entities";
-import type { FormId } from "../sim/content/lines/index";
+import { starters, type FormId } from "../sim/content/lines/index";
 import type { RunEvent, UltLook } from "../sim/state/events";
 import { windAt } from "../sim/wind";
 import { releaseUploads } from "../../rendering/releaseUploads";
@@ -50,6 +50,7 @@ import { creatureLook, lambertCopy, ownShadowDepth } from "./materials";
 import { mountRig, type PlayerRig } from "./playerRig";
 import { conformToTerrain, createTerrainMesh, createTerrainUniforms, ditherFade } from "./terrain";
 import { formOf } from "../sim/evolution";
+import { shownForm, type ShownMega } from "./shownForm";
 import { Vfx, type Muzzle } from "./vfx";
 import { statusTint } from "./vfx/status";
 import type { PropLook } from "./stageThemes";
@@ -64,6 +65,7 @@ import { playerRings } from "./player-rings";
 import { Deployment } from "./deployment";
 import { createFieldSites } from "./fieldSites";
 import { createWeather } from "./weather";
+import { moveWeather } from "./vfx/weatherMoves";
 import { shinyLook } from "./shiny";
 import { isUnidentifiedGhost } from "../sim/combat";
 
@@ -131,7 +133,11 @@ export interface RunView {
     events: readonly RunEvent[],
     yaw: number,
     remotePlayerSpeeds?: ReadonlyMap<PlayerId, number>,
-  ): void;
+  ): PlayerId;
+  /** Players whose mega shell broke during the last `frame`. */
+  megaShatters: readonly PlayerId[];
+  /** Trainer items drawn popping during the last `frame` (`Vfx.assistPops`). */
+  assistPops: Vfx["assistPops"];
   /** World point (y relative to the ground) → CSS pixels inside the canvas, or null when behind the camera. */
   project(x: number, y: number, z: number, width: number, height: number): [number, number] | null;
   /** Frees the GPU copies of the scene and the textures only shader closures hold; the view stays usable. */
@@ -165,6 +171,8 @@ interface Avatar {
   muzzle: Muzzle;
   /** Whether the player was alive last frame: the frame it turns false draws the faint. */
   alive: boolean;
+  /** The mega drawn: it changes with the ceremony event, not with the state that leads it. */
+  shown: ShownMega;
 }
 
 interface PropLayer {
@@ -176,7 +184,7 @@ interface PropLayer {
 }
 
 /**
- * Draws `world` for the player `local`: the camera, occlusion, foliage and screen shake follow them.
+ * Draws `world` for the player `local`; a permanent knockout changes the camera subject, not the seat.
  * Built in steps (`prepare/steps.ts`) so the construction never becomes one long task.
  */
 export function* createRunView(
@@ -221,6 +229,10 @@ export function* createRunView(
     world.stage,
     { fog, background, hemi, sun, add: (mesh) => scene.add(mesh) },
     coarsePointer,
+    world.players.flatMap(({ starter }) => {
+      const line = starters[starter];
+      return [...line.kit, ...line.evolutionMoves].flatMap((move) => moveWeather[move] ?? []);
+    }),
   );
   if (weather) disposables.push(weather);
   // Light-space axes of the shadow camera (it looks back along the sun offset with +Y up), for texel snapping.
@@ -538,6 +550,7 @@ export function* createRunView(
       runWeight: 0,
       muzzle: { x: 0, y: 0, z: 0, faceX: 0, faceZ: 1 },
       alive: player.alive,
+      shown: { mega: player.mega, lag: 0 },
     };
   });
   const self = avatars.find((avatar) => avatar.player.id === local);
@@ -547,7 +560,8 @@ export function* createRunView(
   disposables.push(deployment);
   if (!self) throw new Error(`本地玩家 ${local} 不在这一局。`);
   const player = self.player;
-  const avatar = self.group;
+  const nuzlocke = world.rules.includes("nuzlocke");
+  let followed = self;
   const identities = playerRings(world, local);
   scene.add(identities.root);
   disposables.push(identities);
@@ -746,7 +760,7 @@ export function* createRunView(
 
   function frameAvatar(body: Avatar, alpha: number, dt: number, remoteSpeed?: number): void {
     const { player, group } = body;
-    const form = formOf(player).id;
+    const form = shownForm(body.shown, player, dt).id;
     if (form !== body.form) {
       body.forms.get(body.form)!.holder.visible = false;
       Object.assign(body, show(body.forms, form));
@@ -811,12 +825,12 @@ export function* createRunView(
   }
 
   /** Fade props whose screen footprint covers the player and that sit nearer the camera. */
-  function frameOcclusion(dt: number): void {
+  function frameOcclusion(feet: Vector3, dt: number): void {
     toPlayer
-      .copy(avatar.position)
-      .setY(avatar.position.y + 0.6)
+      .copy(feet)
+      .setY(feet.y + 0.6)
       .project(camera);
-    const playerDepth = camera.position.distanceTo(avatar.position);
+    const playerDepth = camera.position.distanceTo(feet);
     const ease = Math.min(1, dt * 8);
     for (const layer of props) {
       const values = layer.fade.array as Float32Array;
@@ -847,10 +861,10 @@ export function* createRunView(
     }
   }
 
-  function frameStations(dt: number): void {
+  function frameStations(subject: Player, dt: number): void {
     for (const { station, mesh } of stationMeshes) {
       if (station.kind === "bill") continue;
-      const goal = Math.atan2(player.x - station.x, player.z - station.z);
+      const goal = Math.atan2(subject.x - station.x, subject.z - station.z);
       const delta = Math.atan2(Math.sin(goal - mesh.rotation.y), Math.cos(goal - mesh.rotation.y));
       mesh.rotation.y += delta * Math.min(1, dt * 3);
       mesh.rotation.z = Math.sin(elapsed * 1.6) * 0.04;
@@ -858,14 +872,14 @@ export function* createRunView(
   }
 
   /** The guardian's dash ending near the player lands as a knock (no sim event marks it). */
-  function frameGuardianDash(): void {
+  function frameGuardianDash(subject: Player): void {
     const guardian = world.enemies.find((enemy) => enemy.id === world.bossId);
     const dashing = guardian?.phase === "dash";
     if (
       guardian &&
       guardianWasDashing &&
       !dashing &&
-      Math.hypot(guardian.x - player.x, guardian.z - player.z) < DASH_FELT_WITHIN
+      Math.hypot(guardian.x - subject.x, guardian.z - subject.z) < DASH_FELT_WITHIN
     ) {
       shake.add(TRAUMA.guardianDash);
     }
@@ -896,14 +910,23 @@ export function* createRunView(
     camera,
     background,
     debugHeight: (x, z) => Math.max(ground(x, z), uniforms.uLiquidTop.value) + 0.12,
-    frame(alpha, dt, events, yaw, remotePlayerSpeeds) {
+    megaShatters: vfx.megaShatters,
+    assistPops: vfx.assistPops,
+    frame(alpha, dt, events, localYaw, remotePlayerSpeeds) {
       elapsed += dt;
+      // Seats stay in order. On a team wipe hold the last fight, rather than cutting back to the body.
+      const subject =
+        nuzlocke && !player.alive ? (avatars.find((body) => body.player.alive) ?? followed) : self;
+      // Share the survivor's heading: their view is already protected from on-screen spawns.
+      const yaw = subject === self ? localYaw : subject.player.viewYaw;
       for (const event of events) {
         vfx.handle(event);
         // The camera is the local player's: only their own hurt, evolution and ultimate knock it.
         const mine = "player" in event && event.player === local;
         if (event.t === "player-hit" && mine) shake.add(TRAUMA.playerHit);
-        if (event.t === "evolve" && mine) shake.add(TRAUMA.evolve);
+        if ((event.t === "evolve" || event.t === "mega") && mine) shake.add(TRAUMA.evolve);
+        if (event.t === "mega")
+          avatars.find((body) => body.player.id === event.player)!.shown.mega = event.form;
         if (event.t === "ult" && mine) shake.add(TRAUMA.ultCast);
         if (event.t === "ult-pulse" && mine) shake.add(ULT_KNOCK[event.look] ?? 0);
         // combat flags the guardian's death as elite too.
@@ -913,16 +936,16 @@ export function* createRunView(
         if (event.t === "shiny")
           fieldSites.burst(event.x, ground(event.x, event.z) + 0.8, event.z, "#ffe27a", 26, 2.8);
       }
-      frameGuardianDash();
+      frameGuardianDash(subject.player);
       updateWindUniforms(wind, windAt(world.seed, world.time), dt);
       // Real time drives the hit shake so it keeps going through hit-stop (dt slowed), but it stops
       // with the game while frozen (dt 0: pause, level-up choice, end screen).
       const now = performance.now() / 1000;
       if (dt > 0) hitClock += now - lastFrameAt;
       lastFrameAt = now;
-      vfx.tells.select(world, alpha, ground, player);
+      vfx.tells.select(world, alpha, ground, subject.player);
       frameEnemies(alpha, yaw, hitClock, dt);
-      frameStations(dt);
+      frameStations(subject.player, dt);
       fieldSites.frame(world, alpha, elapsed, dt);
       landmark.update(world, elapsed);
       exitPortal.update(world, elapsed, local);
@@ -932,9 +955,13 @@ export function* createRunView(
       deployment.frame(yaw);
       identities.update(alpha, dt);
       footprints?.update(alpha, dragBone);
-      vfx.update(world, alpha, dt, yaw, player, muzzles);
+      vfx.update(world, alpha, dt, yaw, player, muzzles, subject.player);
 
-      cameraTarget.lerp(avatar.position, Math.min(1, dt * 6));
+      const feet = subject.group.position;
+      // Cut between seats (also on a fresh map); never fly over terrain outside either player's view.
+      if (subject !== followed) cameraTarget.copy(feet);
+      else cameraTarget.lerp(feet, subject === self ? Math.min(1, dt * 6) : -Math.expm1(-dt * 6));
+      followed = subject;
       camera.position.set(
         cameraTarget.x + Math.sin(yaw) * CAMERA_BACK,
         cameraTarget.y + CAMERA_HEIGHT,
@@ -943,8 +970,8 @@ export function* createRunView(
       camera.lookAt(cameraTarget.x, cameraTarget.y + 0.6, cameraTarget.z);
       shake.apply(camera, dt);
       camera.updateMatrixWorld();
-      frameOcclusion(dt);
-      foliage.update(camera, avatar.position);
+      frameOcclusion(feet, dt);
+      foliage.update(camera, feet);
       dressing.update(camera);
       decoration?.update?.(cameraTarget);
       water?.update(cameraTarget.x, cameraTarget.z);
@@ -952,6 +979,7 @@ export function* createRunView(
       mist.frame(world.modifier === "fog", dt);
       darkness.update(world, alpha, ground, camera, dt);
       frameSun(yaw);
+      return subject.player.id;
     },
     project(x, y, z, width, height) {
       projected.set(x, ground(x, z) + y, z).project(camera);

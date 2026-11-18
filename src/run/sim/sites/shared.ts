@@ -2,10 +2,9 @@ import type { EnemyId } from "../content/enemies";
 import { enemies } from "../content/enemies";
 import { SITE } from "../content/params/sites";
 import { BERRY } from "../content/params/economy";
-import { ELITE_BODY } from "../content/params/pacing";
 import { mobilityClasses } from "../content/mobility";
 import type { ItemId } from "../content/items";
-import { spawnEnemy } from "../director";
+import { enemyBodyScale, spawnEnemy } from "../director";
 import { formOf } from "../evolution";
 import { cos, hypot, sin } from "../math";
 import { bodyFits, cellAt, routeReach, removeBlocker } from "../nav/index";
@@ -13,7 +12,13 @@ import type { Enemy, Player } from "../state/entities";
 import type { Site } from "../state/field";
 import { ARENA_HALF, type World } from "../state/world";
 import { refreshStats } from "../stats";
-import { applyChoice, itemEligible, rollItemChoice } from "../upgrades";
+import {
+  applyChoice,
+  hiddenAbilityAvailable,
+  itemEligible,
+  replacesHeldItem,
+  rollItemChoice,
+} from "../upgrades";
 import { pickEffects } from "../progression";
 
 export function announce(
@@ -88,7 +93,7 @@ export function siteSpawnPoint(
   avoidPlayers = true,
 ): { x: number; z: number } | null {
   const def = enemies[species];
-  const radius = def.radius * (elite ? ELITE_BODY : 1) * scale;
+  const radius = def.radius * enemyBodyScale(elite, world.rules.includes("alpha-elites")) * scale;
   const home = world.map.pads.find((pad) => pad.tag === "spawn");
   const mobility = def.mobility.flying ? mobilityClasses.ground : def.mobility;
   const reachable = routeReach(
@@ -134,13 +139,18 @@ export function berries(world: World, site: Pick<Site, "x" | "z">, count = 1): v
 }
 
 export function rewardItem(world: World, player: Player, item?: ItemId): void {
+  const hidden = hiddenAbilityAvailable(world, player);
   const choice = item
-    ? itemEligible(player, item, world.partners)
+    ? itemEligible(player, item, world.partners, false, hidden)
       ? { kind: "item" as const, item }
       : null
-    : rollItemChoice(world.rng, player, world.partners);
+    : rollItemChoice(world.rng, player, world.partners, hidden);
   if (!choice) {
     berries(world, player, SITE.rewards.fullBagBerries);
+    return;
+  }
+  if (replacesHeldItem(world.rules, player, choice.item)) {
+    applyChoice(player, { kind: "stardust" });
     return;
   }
   applyChoice(player, choice);

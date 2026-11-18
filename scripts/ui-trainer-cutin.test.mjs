@@ -21,7 +21,8 @@ bindImages({
 globalThis.fetch = () => new Promise(() => {});
 const { UiStage } = await import("../src/ui/gpu/stage.ts");
 const { GpuTrainerCutin } = await import("../src/ui/gpu/trainer-cutin.ts");
-const { deployCall, ultimateCall } = await import("../src/run/trainer-cues.ts");
+const { assistCall, deployCall, ultimateCall } = await import("../src/run/trainer-cues.ts");
+const { assistNames } = await import("../src/run/sim/content/trainers.ts");
 const { trainers, trainerOrder } = await import("../src/trainers.ts");
 const { starters, lineForms } = await import("../src/run/sim/content/lines/index.ts");
 
@@ -51,13 +52,15 @@ const font = {
 };
 const safe = { left: 0, right: 0, top: 0, bottom: 0 };
 
-/** Every string a trainer band can draw: names, every line, every opening and teammate call. */
+/** Every string a trainer band can draw: names, every bond tier's lines, every opening, teammate
+ *  and item call. */
 function cueStrings() {
   const strings = ["P1", "P2", "P3", "P4"];
   for (const id of trainerOrder) {
     const { name, lines, ultimate, clear, evolve, revive } = trainers[id];
-    strings.push(name, ...lines, ultimate, clear, evolve, revive);
+    strings.push(name, ...Object.values(lines).flat(), ultimate, clear, evolve, revive);
   }
+  for (const item of Object.keys(assistNames)) strings.push(assistCall(item));
   for (const line of Object.keys(starters)) {
     for (const form of lineForms(line)) strings.push(deployCall(form.name));
     for (let stage = 0; stage < starters[line].stages.length; stage++)
@@ -230,6 +233,37 @@ test("release reaches only the ultimate band on screen", async () => {
     assert.equal(cutin.root.properties.peek().display, "flex");
     cutin.clear();
     assert.equal(cutin.release(null, true), false, "cleared bands do not come back");
+  } finally {
+    cutin.dispose();
+  }
+});
+
+test("an item called during the player's ultimate draws beside the band it leaves whole", async () => {
+  const pages = pagesLater();
+  pages.arrive();
+  const { cutin } = mount(pages.glyphs);
+  const texts = () => {
+    const shown = [];
+    cutin.root.traverse((o) => {
+      if (o.constructor.name !== "Text") return;
+      let node = o;
+      while (node && node !== cutin.root && node.properties.peek().display !== "none")
+        node = node.parent;
+      if (node === cutin.root) shown.push(o.properties.peek().text);
+    });
+    return shown;
+  };
+  try {
+    cutin.show(ult());
+    cutin.frame({ bottom: 120, top: 100 });
+    await new Promise((done) => setTimeout(done, 0));
+    cutin.frame({ bottom: 120, top: 100 });
+    const call = assistCall("superPotion");
+    assert.equal(cutin.show({ ...ult(), kind: "assist", text: call }), true);
+    cutin.frame({ bottom: 120, top: 100 });
+    assert.equal(cutin.showing?.kind, "ultimate");
+    assert.ok(texts().includes(trainers.chengxi.ultimate), "the ultimate line stays");
+    assert.ok(texts().includes(call), "the item call is on screen");
   } finally {
     cutin.dispose();
   }

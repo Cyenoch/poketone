@@ -1,7 +1,13 @@
+import { bondMilestones } from "./sim/content/bonds";
 import type { Archetype } from "./sim/content/moves";
 import type { ReactionId } from "./sim/content/reactions";
 
 export { typeNames } from "./sim/content/elements";
+
+/** A bond level's title; none before the first level. */
+export function bondTitle(level: number): string | null {
+  return bondMilestones[level - 1]?.title ?? null;
+}
 
 export const reactionNames: Record<ReactionId, string> = {
   shock: "感电",
@@ -32,6 +38,7 @@ export const archetypeNames: Record<Archetype, string> = {
   rod: "融合",
   tempest: "融合",
   combo: "连击",
+  weather: "天气",
 };
 
 export function formatTime(seconds: number): string {

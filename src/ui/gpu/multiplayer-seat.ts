@@ -106,6 +106,27 @@ export class MultiplayerSeat {
     whiteSpace: "pre",
     wordBreak: "keep-all",
   });
+  /** The partner's bond title over the name plate, for every player to see. */
+  private readonly bondChip = new Container({
+    height: 21,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingLeft: 5,
+    paddingRight: 7,
+    borderRadius: 4,
+    backgroundColor: ui.white,
+    flexShrink: 0,
+  });
+  private readonly bondHeart = createMenuIcon("heart");
+  private readonly bondTitle = new Text({
+    text: "",
+    fontSize: 12,
+    fontWeight: 800,
+    color: ui.ink,
+    whiteSpace: "pre",
+    wordBreak: "keep-all",
+  });
   private readonly chip = new Container({
     height: 23,
     flexDirection: "row",
@@ -174,7 +195,9 @@ export class MultiplayerSeat {
     this.facts.add(this.trainerChip);
     this.namePlate.set({ depth: 3 });
     this.nameBox.add(this.namePlate.content, stack(this.name, 1));
-    this.foot.add(stack(this.nameBox, 1), stack(this.facts, 1));
+    this.bondHeart.setProperties({ width: 13, height: 13, color: ui.ball });
+    this.bondChip.add(this.bondHeart, this.bondTitle);
+    this.foot.add(stack(this.bondChip, 1), stack(this.nameBox, 1), stack(this.facts, 1));
     this.chipPlate.set({ depth: 2 });
     for (const icon of [this.spinner, this.check]) icon.setProperties({ width: 13, height: 13 });
     this.chip.add(
@@ -233,6 +256,8 @@ export class MultiplayerSeat {
     this.waiting.setProperties({ display: taken ? "none" : "flex" });
     this.art.setProperties({ display: taken ? "flex" : "none" });
     this.foot.setProperties({ display: taken ? "flex" : "none" });
+    this.bondTitle.setProperties({ text: view.title ?? "" });
+    this.bondChip.setProperties({ display: view.title ? "flex" : "none" });
     this.chip.setProperties({ display: taken ? "flex" : "none" });
     if (taken) fade(this.ball.panel, 1);
     if (view.trainer !== this.trainer) {

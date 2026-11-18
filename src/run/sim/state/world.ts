@@ -1,4 +1,6 @@
+import type { UnlockId } from "../content/unlocks";
 import type { Difficulty } from "../content/difficulties";
+import type { RuleId } from "../content/rules";
 import type { EnemyId } from "../content/enemies";
 import type { StageId } from "../content/stages/index";
 import type { GeneratedMap } from "../mapgen/index";
@@ -45,6 +47,7 @@ export interface ZoneState {
 }
 
 export interface World {
+  mode: "expedition" | "tower";
   stage: StageId;
   /** Entered maps, including the current one; append only when field preparation commits. */
   route: StageId[];
@@ -54,6 +57,9 @@ export interface World {
   seed: number;
   rng: Rng;
   difficulty: Difficulty;
+  rules: readonly RuleId[];
+  unlocks: readonly UnlockId[];
+  playerUnlocks: readonly (readonly UnlockId[])[];
   time: number;
   tick: number;
   paused: boolean;
@@ -70,6 +76,16 @@ export interface World {
   sites: Site[];
   eventsUsed: FieldEventId[];
   weather: WeatherState | null;
+  /** Last accepted weather change in this field, including weather that has since ended. */
+  weatherSetAt: number;
+  pledgeHits: {
+    player: number;
+    move: "grass-pledge" | "water-pledge" | "fire-pledge";
+    x: number;
+    z: number;
+    at: number;
+  }[];
+  rainbowUntil: number;
   silphScope: boolean;
   /** Complete static generation result; navigation remains runtime state. */
   map: GeneratedMap;

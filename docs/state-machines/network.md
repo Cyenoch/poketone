@@ -48,6 +48,7 @@
 - **逻辑状态**：空房建成/招募 → 成员已入但链路未双向确认 → 实际成员全就绪 → 已出发
 - **事件、守卫与转换**：publish：host socket 存在即 ready；客机需 socket 存在且 0→id 和 id→0 两条 readyLinks。仅 host、未 started、>=2 席、ready.length===sockets.length 可 start；写 started/config，先 publish room 后广播 start。开始后忽略 transport-ready；拒绝新 enter
 - **终态/异常/取消**：lobby 中客机离开只移除其席位（后续席位顺移并重算可出发），房主离开销毁整房；start 无独立超时/撤销；客户端 state.starting 锁重复请求，收到 start 解锁并进入 playing
+- **伙伴切换**：`setup` 按发送者席位同时替换伙伴及 `bond`/`bondLab`，出发后冻结；恢复用原始开局配置和当前世界快照，不按重返时的大厅选择重算。
 - **关键不变量**：“ready”是传输握手，不是玩家手动准备，也不是 GPU 地图资源就绪；不等满4人；实际人数变化会重新计算可出发
 - **测试与缺口**：[network.test.mjs](../../scripts/network.test.mjs)；[ui-multiplayer.test.mjs](../../scripts/ui-multiplayer.test.mjs)。UI 测试只保护投影，不证明真实握手；readyLinks 是只增集合，依赖房间重建/开局后不用它，不承担运行中健康检查。已知缺口：席位顺移时，发往旧席位号且尚在途中的信令（如 mode:relay）会被 Harbor 投给顺移进该号的成员，使其在大厅退回中继；开局后房主会重新提供直连
 

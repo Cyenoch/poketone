@@ -1,3 +1,4 @@
+import { unlockIds } from "../src/run/sim/content/unlocks.ts";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { killEnemy } from "../src/run/sim/combat.ts";
@@ -40,10 +41,12 @@ function run(route = ["forest"], starters = ["charmander", "squirtle"]) {
   let seed = 5;
   return createWorldFromSeeds(
     {
+      mode: "expedition",
+      rules: [],
       stage: route.at(-1),
       route,
       difficulty: 0,
-      players: starters.map((starter) => ({ starter })),
+      players: starters.map((starter) => ({ trainer: "chengxi", starter })),
     },
     () => seed++,
   );
@@ -385,10 +388,16 @@ test("full inventory offers only legal owned upgrades; exhausted trophy becomes 
 for (const source of ["level", "trophy"]) {
   test(`a co-op item ball filling the last slot refreshes the open ${source} card once`, () => {
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
+      unlocks: unlockIds,
       seed: 6,
       difficulty: 0,
-      players: [{ starter: "charmander" }, { starter: "squirtle" }],
+      players: [
+        { trainer: "chengxi", starter: "charmander" },
+        { trainer: "chengxi", starter: "squirtle" },
+      ],
     });
     const [player] = world.players;
     player.items = itemIds

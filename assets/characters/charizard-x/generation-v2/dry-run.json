@@ -1,0 +1,45 @@
+{
+  "dry_run": true,
+  "valid": true,
+  "input": "assets/characters/charizard-x/generation-v2/split-corrected/v-front.png assets/characters/charizard-x/generation-v2/split-corrected/v-left.png assets/characters/charizard-x/generation-v2/split-corrected/v-back.png assets/characters/charizard-x/generation-v2/split-corrected/v-right.png",
+  "model": "v3.1-20260211",
+  "model_reason": "explicit --model",
+  "steps": [
+    {
+      "name": "multiview-to-model",
+      "endpoint": "/v3/generation/multiview-to-model",
+      "task_type": "multiview_to_model",
+      "payload": {
+        "inputs": [
+          {
+            "front": "<upload:assets/characters/charizard-x/generation-v2/split-corrected/v-front.png>"
+          },
+          {
+            "left": "<upload:assets/characters/charizard-x/generation-v2/split-corrected/v-left.png>"
+          },
+          {
+            "back": "<upload:assets/characters/charizard-x/generation-v2/split-corrected/v-back.png>"
+          },
+          {
+            "right": "<upload:assets/characters/charizard-x/generation-v2/split-corrected/v-right.png>"
+          }
+        ],
+        "smart_low_poly": true,
+        "face_limit": 1500,
+        "model": "v3.1-20260211"
+      }
+    }
+  ],
+  "pending_uploads": [
+    "assets/characters/charizard-x/generation-v2/split-corrected/v-front.png",
+    "assets/characters/charizard-x/generation-v2/split-corrected/v-left.png",
+    "assets/characters/charizard-x/generation-v2/split-corrected/v-back.png",
+    "assets/characters/charizard-x/generation-v2/split-corrected/v-right.png"
+  ],
+  "deliverables": ["GLB"],
+  "candidates": 1,
+  "warnings": [],
+  "errors": [],
+  "generation_credits_estimate": 40,
+  "cost_notes": ["estimated generation cost: 40 credits (official list price)"]
+}

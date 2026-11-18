@@ -1,3 +1,4 @@
+import { contentAvailable, unlockIds, type UnlockId } from "./unlocks";
 import { chance, next, type Rng } from "../rng";
 import type { MarkerId, ModifierId } from "../state/route";
 import { MARKER_WEIGHTS, MODIFIER_WEIGHTS, ROUTE_REWARD } from "./params/route";
@@ -31,11 +32,16 @@ export function markerAllowed(marker: MarkerId, stage: StageId): boolean {
   return marker !== "pokecenter" || stage !== "tower";
 }
 
-export function rollExitMarkers(rng: Rng, targets: readonly StageId[]): MarkerId[] {
+export function rollExitMarkers(
+  rng: Rng,
+  targets: readonly StageId[],
+  owned: readonly UnlockId[] = unlockIds,
+): MarkerId[] {
   const result: MarkerId[] = [];
   for (const to of targets) {
     const eligible = (Object.keys(MARKER_WEIGHTS) as MarkerId[]).filter(
-      (id) => !result.includes(id) && markerAllowed(id, to),
+      (id) =>
+        contentAvailable(owned, { marker: id }) && !result.includes(id) && markerAllowed(id, to),
     );
     result.push(draw(rng, eligible, MARKER_WEIGHTS));
   }

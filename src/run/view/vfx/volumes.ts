@@ -17,7 +17,7 @@ import {
 } from "three";
 import type { Area } from "../../sim/state/entities";
 import { TERRAIN_GLSL, type TerrainUniforms } from "../terrain";
-import { FX_GLSL, fxMaterial, uploadRange, type FxUniforms, type Rgb } from "./gl";
+import { flame, FX_GLSL, fxMaterial, uploadRange, type FxUniforms, type Rgb } from "./gl";
 
 const STRIDE = 12;
 
@@ -71,6 +71,7 @@ float fresnel() {
 ${shade}
 void main() {
   vec4 c = shade() * vA.a;
+  if (vB.a > 0.5) c.rgb = blueFlame(c.rgb);
   if (c.r + c.g + c.b + c.a < 0.004) discard;
   gl_FragColor = c;
 }
@@ -277,6 +278,8 @@ export class Volume {
     d[o + 4] = b[0];
     d[o + 5] = b[1];
     d[o + 6] = b[2];
+    // B's alpha is free in every volume shader: it marks Mega Charizard X's blue flames.
+    d[o + 7] = flame.blue ? 1 : 0;
     d[o + 8] = style;
     d[o + 9] = seed;
   }

@@ -14,7 +14,8 @@ import { nextCard, queueCard } from "./progression";
 import { pick } from "./rng";
 import type { Choice, PendingChoice, Pickup, Player } from "./state/entities";
 import { ARENA_HALF, type World } from "./state/world";
-import { playerStats, refreshStats } from "./stats";
+import { setDrought } from "./weather";
+import { currentAbility, playerStats, refreshStats } from "./stats";
 import { rollRewardChoices, rewardChoiceEligible } from "./upgrades";
 
 export { rollRewardChoices } from "./upgrades";
@@ -90,6 +91,8 @@ export function prepareRouteField(world: World): void {
 }
 
 export function applyRouteEntry(world: World): void {
+  if (world.players.some((p) => p.alive && !p.departed && currentAbility(p) === "drought"))
+    setDrought(world);
   if (world.marker !== "pokecenter") return;
   for (const player of world.players)
     if (player.alive && !player.departed) {
@@ -126,7 +129,10 @@ export function collectRoutePickup(world: World, pickup: Pickup, player: Player)
   const { kind, x, z } = pickup;
   if (kind === "trophy") {
     if (pickup.owner !== player.id || player.departed) return false;
-    queueCard(world, player, "chest", undefined, { kind });
+    queueCard(world, player, "chest", undefined, {
+      kind,
+      ...(world.route.length >= 2 ? { megaStones: true } : {}),
+    });
   } else if (
     (kind === "flash" && world.modifier === "dark-cave") ||
     (kind === "defog" && world.modifier === "fog")
@@ -145,9 +151,9 @@ export function pickRouteReward(
 ): boolean {
   const offer = pending.offer;
   if (player.pending[0] !== pending || !pending.options.includes(choice)) return false;
-  if (!rewardChoiceEligible(world, player, offer?.kind, choice)) {
+  if (!rewardChoiceEligible(world, player, pending, choice)) {
     const kept = offer
-      ? pending.options.filter((option) => rewardChoiceEligible(world, player, offer.kind, option))
+      ? pending.options.filter((option) => rewardChoiceEligible(world, player, pending, option))
       : [];
     pending.options = rollRewardChoices(world, player, pending, kept);
     pending.id = world.nextId++;

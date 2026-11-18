@@ -90,6 +90,7 @@ function fire(world: World, warning: Hazard, enemy: Enemy, kind: ShotKind): void
   const shot = ENEMY_SHOTS[kind];
   addHazard(world, {
     kind,
+    source: enemy.id,
     x: warning.x,
     y: warning.y,
     z: warning.z,

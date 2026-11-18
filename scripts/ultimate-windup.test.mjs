@@ -30,10 +30,12 @@ import { selectTestExit } from "./fixtures/route.mjs";
 
 function fixture(ids = ["bulbasaur"]) {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 3,
     difficulty: 0,
-    players: ids.map((starter) => ({ starter })),
+    players: ids.map((starter) => ({ trainer: "chengxi", starter })),
   });
   world.zone.schedule = [];
   world.spawn.credit = -1e6;

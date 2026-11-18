@@ -38,10 +38,15 @@ const fields = ROUTE_TIERS.flat().map((stage) => {
   return { stage, route: path.slice(0, path.indexOf(stage) + 1) };
 });
 const config = {
+  mode: "expedition",
+  rules: [],
   stage: "forest",
   seed: 7,
   difficulty: 0,
-  players: [{ starter: "charmander" }, { starter: "squirtle" }],
+  players: [
+    { trainer: "chengxi", starter: "charmander" },
+    { trainer: "chengxi", starter: "squirtle" },
+  ],
 };
 
 test("direct starts require a legal, explicit entered prefix outside the forest", () => {
@@ -647,7 +652,10 @@ function encodedSessions(count) {
 }
 
 test("encoded network maps carry the four-field campaign through current-map ready barriers and one terminal result", async (t) => {
-  const settings = { ...config, players: [...config.players, { starter: "bulbasaur" }] };
+  const settings = {
+    ...config,
+    players: [...config.players, { trainer: "chengxi", starter: "bulbasaur" }],
+  };
   const world = createWorld(settings);
   const { sessions, packets } = encodedSessions(settings.players.length);
   const runs = sessions.map((session) => new MultiplayerRun(session, settings));

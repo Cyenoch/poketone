@@ -1,6 +1,7 @@
+import type { AssistItem } from "../content/trainers";
 import type { ElementType } from "../content/elements";
 import type { EnemyId } from "../content/enemies";
-import type { FormId, Stage, StarterId } from "../content/lines/index";
+import type { FormId, MegaId, Stage, StarterId } from "../content/lines/index";
 import type { Archetype, MoveId } from "../content/moves";
 import type { ReactionId } from "../content/reactions";
 import type { EnemyStatusId } from "../content/statuses";
@@ -10,6 +11,9 @@ import type { BuffCue } from "../content/triggers";
 import type { SiteKind, WeatherId } from "./field";
 
 export type RunEvent =
+  /** Thrown from `x, z`; `to` lists every player it reached, the thrower included. */
+  | { t: "assist"; player: PlayerId; item: AssistItem; x: number; z: number; to: PlayerId[] }
+  | { t: "pledge"; result: "sea-of-fire" | "swamp" | "rainbow"; x: number; z: number }
   | {
       t: "route";
       kind: "exit" | "trophy" | "deal" | "flash" | "defog";
@@ -49,6 +53,8 @@ export type RunEvent =
       confirmedContact?: boolean;
     }
   | { t: "player-hit"; player: PlayerId; amount: number }
+  | { t: "bond-endure"; player: PlayerId }
+  | { t: "bond-cure"; player: PlayerId }
   /** Co-op only: `player` was knocked out without a personal revive remaining. */
   | { t: "down"; player: PlayerId }
   /** A hit on `player` was evaded (evasion stat): no damage. */
@@ -98,6 +104,8 @@ export type RunEvent =
   | {
       t: "projectile-feedback";
       id: number;
+      /** The caster: a shot born and landed between frames still draws in its flame. */
+      owner: PlayerId;
       tick: number;
       move: MoveId;
       archetype: Archetype;
@@ -148,6 +156,7 @@ export type RunEvent =
       tx: number;
       tz: number;
     }
+  | { t: "mega"; player: PlayerId; form: MegaId }
   | { t: "evolve"; player: PlayerId; stage: Stage; form: FormId }
   /** An ultimate fired at its tier; its pulses follow as `ult-pulse`. */
   | { t: "ult"; player: PlayerId; line: StarterId; stage: Stage }

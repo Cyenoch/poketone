@@ -1,0 +1,8 @@
+{
+  "reason": "Front/back reference tail side was inconsistent; generated tail wraps across the abdomen. Mega Y silhouette also lacked the central horn/forearm winglets.",
+  "taskId": "442ad8d8-6d30-48f5-befb-e3c70be52f35",
+  "credits": 40,
+  "source": "generation-1/tripo-out/model.glb",
+  "replacement": "../generation-v2",
+  "notPublished": true
+}

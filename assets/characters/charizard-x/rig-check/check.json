@@ -1,0 +1,11 @@
+{
+  "type": "animate_prerigcheck",
+  "status": "success",
+  "progress": 100,
+  "input": { "original_model_id": "d0f5e4b4-ac2d-4161-8ac1-c63ecc660950" },
+  "output": { "riggable": true, "rig_type": "biped" },
+  "task_id": "d222ff3c-b918-4633-89c8-b37aa0b8902d",
+  "created_at": "2026-11-17T15:07:26.252001Z",
+  "completed_at": "2026-11-17T15:07:26.599137Z",
+  "credits_consumed": 0
+}

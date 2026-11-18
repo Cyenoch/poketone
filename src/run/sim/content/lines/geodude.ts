@@ -1,11 +1,12 @@
 import type { LineDef } from "./index";
 
+const traits = { normal: ["rock-head", "sturdy"], hidden: "sand-veil" } as const;
+
 export const geodude = {
   id: "geodude",
   role: "重装岩崩",
-  ability: "sturdy",
   ultimate: "rockslide-quake",
-  kit: ["rock-throw", "rollout", "magnitude", "rock-slide"],
+  kit: ["rock-throw", "rollout", "magnitude", "rock-slide", "sandstorm"],
   evolutionMoves: ["earthquake", "stone-edge"],
   stages: [
     {
@@ -13,6 +14,7 @@ export const geodude = {
       at: 1,
       form: {
         id: "geodude",
+        abilities: traits,
         name: "小拳石",
         types: ["rock", "ground"],
         hp: 135,
@@ -27,6 +29,7 @@ export const geodude = {
       at: 28,
       form: {
         id: "graveler",
+        abilities: traits,
         name: "隆隆石",
         types: ["rock", "ground"],
         hp: 158,
@@ -39,8 +42,10 @@ export const geodude = {
     {
       kind: "evolve",
       at: 54,
+      needs: "trade",
       form: {
         id: "golem",
+        abilities: traits,
         name: "隆隆岩",
         types: ["rock", "ground"],
         hp: 191,

@@ -26,6 +26,7 @@ import { tempest, tempestArea } from "./tempest";
 import { vortex, vortexArea } from "./vortex";
 import { wave } from "./wave";
 import { combo, comboArea } from "./combo";
+import { weather } from "./weather";
 
 export const archetypes: Record<Archetype, ArchetypeDef> = {
   bolt,
@@ -50,6 +51,7 @@ export const archetypes: Record<Archetype, ArchetypeDef> = {
   rod,
   tempest,
   combo,
+  weather,
 };
 
 export const areaRules = {

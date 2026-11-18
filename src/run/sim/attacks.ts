@@ -4,9 +4,18 @@
 import { archetypes, areaRules } from "./archetypes/index";
 import { chestOf, hitFrom, launchPoint, type MoveParams, type Zone } from "./archetypes/kit";
 import { moves } from "./content/moves";
-import { damageEnemy, findPlayer, type Ctx } from "./combat";
+import { isPledgeMove } from "./content/pledges";
+import {
+  canSettleHit,
+  damageEnemy,
+  expirePledgeHits,
+  findPlayer,
+  settlePledgeHit,
+  type Ctx,
+} from "./combat";
 import { MOVE_LIMITS, MOVE_RETRY } from "./content/params/moves";
-import { areaGrowth, currentStats, weatherMoveStats, type PlayerStats } from "./stats";
+import { areaGrowth, currentStats, noGuardMove, weatherMoveStats, type PlayerStats } from "./stats";
+import { ABILITY_PARAMS } from "./content/abilities";
 import { activeWeather } from "./content/weather";
 import type { WeatherId } from "./state/field";
 import { heightAt } from "./terrain";
@@ -40,12 +49,16 @@ export function moveParams(
 }
 
 export function updateMoves(ctx: Ctx, player: Player, dt: number): void {
-  const stats = currentStats(player);
   for (const state of player.moves) {
     state.cooldown -= dt;
     if (state.cooldown > 0) continue;
-    const params = moveParams(state, stats, activeWeather(ctx.world));
+    const weather = activeWeather(ctx.world);
+    const params = moveParams(state, currentStats(player, weather), weather);
     const def = moves[state.id];
+    if (noGuardMove(player, state.id)) {
+      params.area *= ABILITY_PARAMS.noGuardRange;
+      params.immediate = true;
+    } else if (weather === "rain" && state.id === "thunder") params.immediate = true;
     if (!archetypes[def.archetype].cast(ctx, player, def, params)) {
       // Nothing in range: retry soon instead of wasting the full cooldown.
       state.cooldown = MOVE_RETRY;
@@ -59,7 +72,7 @@ export function updateMoves(ctx: Ctx, player: Player, dt: number): void {
       t: "cast",
       player: player.id,
       move: def.id,
-      windup: typeof windup === "function" ? windup(params) : windup,
+      windup: params.immediate ? 0 : typeof windup === "function" ? windup(params) : windup,
     });
   }
 }
@@ -104,6 +117,7 @@ export function updateProjectiles(ctx: Ctx, dt: number): void {
       world.events.push({
         t: "projectile-feedback",
         id: shot.id,
+        owner: shot.owner,
         tick: world.tick,
         move: shot.move,
         archetype: shot.archetype,
@@ -125,7 +139,9 @@ export function updateProjectiles(ctx: Ctx, dt: number): void {
 
 export function updateAreas(ctx: Ctx, dt: number): void {
   const { world } = ctx;
+  if (!ctx.report) expirePledgeHits(world);
   for (const a of world.areas) {
+    if (a.pledgeField) continue; // Shared enemy movement advances these ground fields.
     if (ctx.attackOwner !== undefined && a.owner !== ctx.attackOwner && a.id < 0) continue;
     a.life -= dt;
     const owner = findPlayer(world, a.owner);
@@ -165,6 +181,19 @@ function strikeZone(ctx: Ctx, a: Area, owner: Player, zone: Zone, dt: number): v
     if (enemy.hp > 0 && zone.shape(a, enemy) && zone.reaches(world, a, ground, enemy))
       targets.push(enemy);
   });
+  if (isPledgeMove(a.move) && targets.length) {
+    if (ctx.report)
+      ctx.report({
+        t: "pledge-hit",
+        move: a.move,
+        x: a.x,
+        z: a.z,
+        at: world.time,
+        enemies: targets.map((enemy) => enemy.id),
+      });
+    else if (targets.some((enemy) => canSettleHit(world, enemy)))
+      settlePledgeHit(world, owner, a.move, a.x, a.z, world.time);
+  }
   for (const enemy of targets)
     damageEnemy(ctx, enemy, hitFrom(owner, def, a, a.x, a.z, zone.knockFor?.(a) ?? zone.knock));
 }

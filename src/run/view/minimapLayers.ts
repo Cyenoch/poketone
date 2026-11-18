@@ -3,6 +3,7 @@ import { playerColors } from "../../ui/player-colors";
 import { Container, Text } from "@pmndrs/uikit";
 import { type Texture } from "three";
 import { findPlayer } from "../sim/combat";
+import { canBeRescued } from "../sim/rescue";
 import { signatureFusions } from "../sim/content/fusions";
 import { stationIcon } from "../../screens/runArt";
 import { stationNames } from "../sim/content/stations";
@@ -34,6 +35,21 @@ export function project(
 }
 export function heading(map: MapTransform, dx: number, dz: number): number {
   return Math.atan2(map.zx * dx + map.zz * dz, map.xx * dx + map.xz * dz);
+}
+/** Locations beyond normal sight can have a rim marker; the map itself keeps its scale. */
+export function scoutPin(
+  x: number,
+  y: number,
+  centre: number,
+  radius: number,
+  range: number,
+): [number, number] | null {
+  const dx = x - centre,
+    dy = y - centre,
+    distance = Math.hypot(dx, dy);
+  if (distance <= radius) return [x, y];
+  if (distance > radius * range) return null;
+  return [centre + (dx * radius) / distance, centre + (dy * radius) / distance];
 }
 /** Bill's icon is the local player's signature fusion. */
 export function stationIconUrls(world: World, local: PlayerId): [string, string] {
@@ -145,6 +161,8 @@ export class MapLayers {
     radius: number,
     strength: number,
     full: boolean,
+    subject = this.local,
+    markerRange = 1,
   ): void {
     for (const ink of this.inks) {
       ink.begin();
@@ -222,7 +240,7 @@ export class MapLayers {
     }
     const player = findPlayer(world, this.local);
     if (full) {
-      const [x, y] = project(map, player, alpha),
+      const [x, y] = project(map, findPlayer(world, subject), alpha),
         length = 16 * map.xx;
       this.cone.add(
         x,
@@ -261,10 +279,11 @@ export class MapLayers {
         continue;
       const x = map.ox + map.xx * pickup.x + map.xz * pickup.z,
         y = map.oy + map.zx * pickup.x + map.zz * pickup.z;
-      if (!inside(x, y)) continue;
+      const point = scoutPin(x, y, centre, radius, markerRange);
+      if (!point) continue;
       if (pickup.kind === "chest" || pickup.kind === "trophy")
-        this.markers.add(x, y, unit * 6.8, unit * 6.8, 2, YELLOW, "#b48129", unit * 1.25);
-      else circle(x, y, unit * 3, "#4fb952");
+        this.markers.add(...point, unit * 6.8, unit * 6.8, 2, YELLOW, "#b48129", unit * 1.25);
+      else circle(...point, unit * 3, "#4fb952");
     }
     const seen = new Set<number>();
     /** Where a label centred on `x` with its top at `top` is drawn: whole, inside the map. Map names
@@ -337,6 +356,7 @@ export class MapLayers {
       let x = map.ox + map.xx * station.x + map.xz * station.z,
         y = map.oy + map.zx * station.x + map.zz * station.z;
       if (!sight(station.x, station.z)) continue;
+      const named = scoutPin(x, y, centre, radius, markerRange) !== null;
       const onMap = inside(x, y),
         usable = stationUsable(player, station);
       if (!onMap) {
@@ -358,7 +378,7 @@ export class MapLayers {
         0,
         usable ? 1 : 0.6,
       );
-      if (onMap) {
+      if (named) {
         const name = stationNames[station.kind],
           box = labelBox(name, x, y + (y <= centre ? unit * 8.8 : -unit * 20.8), 7.5);
         taken.push(box);
@@ -375,7 +395,10 @@ export class MapLayers {
       if (inside(x, y))
         this.markers.add(x, y, unit * 8.4, unit * 8.4, 1, "#9a4fc7", INK, unit * 1.25);
     }
-    if (boss || (world.bossId === null && world.zone.phase === "active")) {
+    if (
+      boss ||
+      (world.bossId === null && world.zone.phase === "active" && world.mode !== "tower")
+    ) {
       // The zone's one guardian: a big gold-edged red crest inside a spreading ring, pinned to the rim
       // with an outward wedge while it is off the map.
       const landmark = landmarkOf(world);
@@ -420,11 +443,11 @@ export class MapLayers {
       const named: { index: number; x: number; y: number; away: 1 | -1; name: string }[] = [];
       for (const [index, exit] of world.zone.exits.entries()) {
         const accent = exitAccent(exit);
-        const { x, y, angle } = pin(
-          map.ox + map.xx * exit.x + map.xz * exit.z,
-          map.oy + map.zx * exit.x + map.zz * exit.z,
-        );
-        const k = angle === null ? 1 : 0.75;
+        const ex = map.ox + map.xx * exit.x + map.xz * exit.z,
+          ey = map.oy + map.zx * exit.x + map.zz * exit.z;
+        const { x, y, angle } = pin(ex, ey);
+        // Exits always guide the team. Scouting resolves their full reward badge farther away.
+        const k = scoutPin(ex, ey, centre, radius, markerRange) ? 1 : 0.75;
         ring(x, y, unit * (20 + 18 * wave) * k, accent.light);
         this.markers.add(x, y, unit * 16 * k, unit * 16 * k, 0, BADGE, accent.light, unit * 2 * k);
         const art = exit.marker ? this.markerInks.get(exit.marker) : undefined;
@@ -495,7 +518,9 @@ export class MapLayers {
         if (inside(tx, ty)) circle(tx, ty, unit * 4, playerColors[slot]!, unit * 1.5);
         continue;
       }
-      // Downed: the seat dot inside a spreading red ring, pinned to the rim while off the map.
+      // Rescuable: the seat dot inside a spreading red ring, pinned to the rim while off the map. A
+      // permanent knockout has no place to come to (the team bar still lists the seat).
+      if (!canBeRescued(world, teammate)) continue;
       const { x, y } = pin(tx, ty);
       ring(x, y, unit * (14 + 18 * wave), DOWN);
       circle(x, y, unit * 4, playerColors[slot]!, unit * 1.5);

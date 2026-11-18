@@ -5,6 +5,7 @@ import { signatureFusions } from "../src/run/sim/content/fusions.ts";
 import { spawnEnemy } from "../src/run/sim/director.ts";
 import { EnemyGrid } from "../src/run/sim/grid.ts";
 import { createRng } from "../src/run/sim/rng.ts";
+import { forgettableItem, stationUsable } from "../src/run/sim/stations.ts";
 import { FORGET } from "../src/run/sim/content/params/economy.ts";
 import { TICK } from "../src/run/sim/state/world.ts";
 import { applyChoice, newMoveState, rarityOdds, rollChoices } from "../src/run/sim/upgrades.ts";
@@ -12,7 +13,14 @@ import { MAX_MOVE_LEVEL, RARITY_ODDS } from "../src/run/sim/content/params/cards
 import { createWorld, isFrozen, stepWorld } from "../src/run/sim/world.ts";
 
 const world = (starter = "charmander", seed = 5) =>
-  createWorld({ stage: "forest", seed, difficulty: 0, players: [{ starter }] });
+  createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed,
+    difficulty: 0,
+    players: [{ trainer: "chengxi", starter }],
+  });
 
 const station = (w, kind) => w.stations.find((s) => s.kind === kind);
 
@@ -100,6 +108,20 @@ test("Hypno frees a slot, refunds stardust by level and never forgets the last m
   stepWorld(w, [{ t: "leave", player: 0, dialog: dialog.id }]);
   assert.equal(player.dialog, null);
   assert.ok(!isFrozen(w));
+});
+
+test("进化石不属于引梦貘人可遗忘的道具，伪造选择不腾栏或退款", () => {
+  const w = world(),
+    player = w.players[0];
+  player.items = [{ id: "charizardite-x", level: 1 }];
+  const dialog = visit(w, "hypno");
+  assert.deepEqual(player.items.filter(forgettableItem), []);
+  assert.equal(stationUsable(player, station(w, "hypno")), false);
+  stepWorld(w, [
+    { t: "forget", player: 0, dialog: dialog.id, target: { kind: "item", id: "charizardite-x" } },
+  ]);
+  assert.deepEqual(player.items, [{ id: "charizardite-x", level: 1 }]);
+  assert.equal(player.stardust, 0);
 });
 
 test("a station waits for queued cards, and forget never changes the kit under one", () => {

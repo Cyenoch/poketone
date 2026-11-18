@@ -27,6 +27,7 @@ const { GpuRunOverlays } = await import("../src/ui/gpu/run-overlays.ts");
 const { GpuRunHud } = await import("../src/ui/gpu/run-hud.ts");
 const { runWindowSamples } = await import("../src/ui/gpu/run-overlays-samples.ts");
 const { items } = await import("../src/run/sim/content/items.ts");
+const { fitScale } = await import("../src/ui/gpu/viewport.ts");
 
 const core = new URL("../public/fonts/gpu/core/", import.meta.url);
 const manifest = JSON.parse(readFileSync(new URL("manifest.json", core), "utf8"));
@@ -134,7 +135,8 @@ test("co-op cards leave the center and touch corners open, with persistent 44px 
       assert.equal(overlays.dimMaterial.opacity, 0);
       assert.equal(overlays.hit(width / 2, height / 2), -1);
       assert.equal(overlays.hit(60, height - 50), -1);
-      assert.equal(overlays.hit(width - 60, height - 50), -1);
+      // On touch the right corner is the HUD's measured action row (tested with the real HUD below).
+      if (!touch) assert.equal(overlays.hit(width - 60, height - 50), -1);
       const frame = box(overlays.stage, overlays.frame);
       for (const card of overlays.content.cards) {
         const panel = box(overlays.stage, card.panel);
@@ -266,6 +268,7 @@ test("opening co-op cards keeps a held touch turn and the skill controls availab
       turn: (direction) => turns.push(direction),
       dash: () => skills.push("dash"),
       ultimate: () => skills.push("ultimate"),
+      assist: () => skills.push("assist"),
     },
     glyphs,
   );
@@ -294,11 +297,69 @@ test("opening co-op cards keeps a held touch turn and the skill controls availab
     assert.deepEqual(turns, [1], "opening choices must not release the held right control");
     press("dash", 2);
     press("ultimate", 3);
-    assert.deepEqual(skills, ["dash", "ultimate"]);
+    press("assist", 4);
+    assert.deepEqual(skills, ["dash", "ultimate", "assist"]);
     hud.setChoiceOpen(false);
     hud.update(state);
     assert.deepEqual(turns, [1], "closing choices must not release the turn either");
   } finally {
     hud.dispose();
   }
+});
+
+// A touch on the HUD's corner actions reaches the HUD while co-op cards are docked: the host gives
+// a touch to the dock only where the dock has a control (app-host `pointerDown`).
+test("docked co-op cards keep clear of the trainer's item, the ultimate, dash and the turn pair", async () => {
+  for (const { width, height, insets } of [
+    { width: 844, height: 390, insets: { left: 47, right: 47, top: 0, bottom: 21 } },
+    { width: 667, height: 375, insets: safe },
+  ]) {
+    setGlyphInputMode({ kind: "touch" });
+    setUiPixelRatio(2);
+    const scale = fitScale(1, width, height, insets, { width: 667, height: 375 });
+    const skills = [];
+    const hud = new GpuRunHud(
+      fonts,
+      "charmander",
+      {
+        pause() {},
+        stats() {},
+        interact() {},
+        turn: (direction) => skills.push(direction < 0 ? "left" : "right"),
+        dash: () => skills.push("dash"),
+        ultimate: () => skills.push("ultimate"),
+        assist: () => skills.push("assist"),
+      },
+      glyphs,
+    );
+    const overlays = new GpuRunOverlays(fonts, callbacks);
+    try {
+      hud.setCoarsePointer(true);
+      hud.resize(width, height, scale, insets);
+      hud.setChoiceOpen(true);
+      hud.update({ snapshot: null, theme: "fire", visible: true, blocked: false, notice: null });
+      await settle(hud);
+      overlays.resize(width, height, scale, insets);
+      overlays.setCoarsePointer(true);
+      overlays.setActionReach(hud.actionReach);
+      overlays.update({ ...sample, dismissible: true });
+      await settle(overlays);
+      assert.ok(overlays.content.docked, "co-op cards dock");
+      const where = `${width}x${height}`;
+      let id = 1;
+      for (const action of ["assist", "ultimate", "dash", "left", "right"]) {
+        const b = box(hud.stage, hud.controls.find((c) => c.action === action).panel);
+        const x = b.x + b.width / 2,
+          y = b.y + b.height / 2;
+        assert.equal(overlays.hit(x, y), -1, `${where}: the dock takes the ${action} touch`);
+        assert.equal(hud.down(id++, x, y), true, `${where}: ${action} answers`);
+        assert.equal(skills.at(-1), action, `${where}: ${action} answers`);
+      }
+    } finally {
+      overlays.dispose();
+      hud.dispose();
+      setUiPixelRatio(1);
+    }
+  }
+  setGlyphInputMode({ kind: "keyboardMouse", pointer: false });
 });

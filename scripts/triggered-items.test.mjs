@@ -15,7 +15,14 @@ import { createWorld } from "../src/run/sim/world.ts";
 
 /** One player at the origin with `items`, no moves, and `n` sturdy caterpies in a row along +x. */
 function setup(items = [], n = 1, starter = "charmander") {
-  const world = createWorld({ stage: "forest", seed: 3, difficulty: 0, players: [{ starter }] });
+  const world = createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed: 3,
+    difficulty: 0,
+    players: [{ trainer: "chengxi", starter }],
+  });
   const player = world.players[0];
   player.x = player.z = 0;
   player.moves = [];

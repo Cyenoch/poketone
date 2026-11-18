@@ -83,7 +83,7 @@ class WeatherGlyph {
 /**
  * The weather in the HUD's purse row: its glyph and one bar. Forecast: the glyph breathes and the
  * bar charges in mist to the start, nothing more (no harm is implied before it begins). Active:
- * the bar drains in the weather's colour over its seventy-five seconds. No words.
+ * the bar drains in the weather's colour over its own length. No words.
  */
 export class WeatherChip {
   readonly root = new Container({
@@ -111,7 +111,12 @@ export class WeatherChip {
   }
 
   set(
-    weather: { id: WeatherId; phase: "forecast" | "active"; remaining: number } | null,
+    weather: {
+      id: WeatherId;
+      phase: "forecast" | "active";
+      remaining: number;
+      seconds: number;
+    } | null,
     compact: boolean,
   ): void {
     this.root.setProperties({
@@ -132,7 +137,7 @@ export class WeatherChip {
     this.glyph.uniforms.glyphColor.value.set(weatherAccent[weather.id]);
     const fill = this.forecast
       ? 1 - weather.remaining / WEATHER.forecast
-      : weather.remaining / WEATHER.seconds;
+      : weather.remaining / weather.seconds;
     this.bar.uniforms.hudFill.value = this.bar.uniforms.hudTrail.value = Math.max(
       0,
       Math.min(1, fill),

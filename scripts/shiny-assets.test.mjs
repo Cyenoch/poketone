@@ -86,7 +86,10 @@ test("转台和局内同形态可同时穿两种外观，已预载的进化形�
     stage: "forest",
     enemies: [],
     partners: [],
-    players: [{ starter: "squirtle" }, { starter: "squirtle" }],
+    players: [
+      { trainer: "chengxi", starter: "squirtle" },
+      { trainer: "chengxi", starter: "squirtle" },
+    ],
   };
   const run = await loadRunAssets(world, new AbortController().signal, undefined, [false, true]);
   try {

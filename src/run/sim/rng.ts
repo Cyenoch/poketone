@@ -7,6 +7,14 @@ export function createRng(seed: number): Rng {
   return { state: seed >>> 0 };
 }
 
+/** A deterministic stream for a numbered floor, map or subsystem. */
+export function mixSeed(seed: number, salt: number): number {
+  let h = (seed ^ Math.imul(salt, 0x9e3779b1)) >>> 0;
+  h = Math.imul(h ^ (h >>> 16), 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+  return (h ^ (h >>> 16)) >>> 0;
+}
+
 export function next(rng: Rng): number {
   rng.state = (rng.state + 0x6d2b79f5) >>> 0;
   let t = rng.state;

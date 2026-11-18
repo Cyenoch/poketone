@@ -2568,74 +2568,6 @@
         "date": "2026-11-17"
       }
     },
-    "site-dig": {
-      "ship": "site-dig",
-      "kind": "sfx",
-      "model": "eleven_text_to_sound_v2",
-      "params": {
-        "duration_seconds": 0.5,
-        "prompt_influence": 0.5,
-        "loop": false
-      },
-      "node": "lQh1pDlWTpYyG1AJTeRL",
-      "prompt": "A rounded cartoon hollow wood knock, one firm chunky tok with a thick rubbery body, immediate attack and short damped tail, midrange, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
-      "takes": [
-        {
-          "file": "sfx-site-dig-9.mp3",
-          "generationId": "bFEVXKu0aEKOp00WGthu",
-          "prompt": "Rounded hollow coconut knock, a single thick tok with a full midrange wooden body and a quick muted tail. Cartoon percussion, immediate attack, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
-          "params": {
-            "duration_seconds": 0.5,
-            "prompt_influence": 0.5,
-            "loop": false
-          }
-        },
-        {
-          "file": "sfx-site-dig-13.mp3",
-          "generationId": "RcYOT47VGlBYsKnip2jE",
-          "prompt": "A rounded cartoon hollow wood knock, one firm chunky tok with a thick rubbery body, immediate attack and short damped tail, midrange, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
-          "params": {
-            "duration_seconds": 0.5,
-            "prompt_influence": 0.5,
-            "loop": false
-          }
-        },
-        {
-          "file": "sfx-site-dig-14.mp3",
-          "generationId": "sYzcr5ACPKn5ofgxVPK9",
-          "prompt": "A rounded cartoon hollow wood knock, one firm chunky tok with a thick rubbery body, immediate attack and short damped tail, midrange, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
-          "params": {
-            "duration_seconds": 0.5,
-            "prompt_influence": 0.5,
-            "loop": false
-          }
-        },
-        {
-          "file": "sfx-site-dig-16.mp3",
-          "generationId": "NOZMoVk0gk7XHhDkLlNM",
-          "prompt": "A rounded cartoon hollow wood knock, one firm chunky tok with a thick rubbery body, immediate attack and short damped tail, midrange, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
-          "params": {
-            "duration_seconds": 0.5,
-            "prompt_influence": 0.5,
-            "loop": false
-          }
-        }
-      ],
-      "pick": [
-        "sfx-site-dig-9.mp3",
-        "sfx-site-dig-13.mp3",
-        "sfx-site-dig-14.mp3",
-        "sfx-site-dig-16.mp3"
-      ],
-      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published.",
-      "tier": "small",
-      "frequent": true,
-      "maxMs": 220,
-      "spend": {
-        "credits": 30.6636,
-        "date": "2026-11-17"
-      }
-    },
     "site-den": {
       "ship": "site-den",
       "kind": "sfx",
@@ -2745,6 +2677,239 @@
         "date": "2026-11-17"
       }
     },
+    "exit-pick": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "yye6nANx47X428O7RDyA",
+      "prompt": "A soft warm rounded whoosh sweeping forward like stepping through a doorway, with a gentle low wooden thud at the start, mid-range audible on a small speaker, no sparkle, no bell, no high-pitched tone, no hiss, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-exit-pick-1.mp3",
+          "generationId": "JvsJTPgl4MFxWVx0TmBi",
+          "prompt": "A soft warm rounded whoosh sweeping forward like stepping through a doorway, with a gentle low wooden thud at the start, mid-range audible on a small speaker, no sparkle, no bell, no high-pitched tone, no hiss, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-exit-pick-1.mp3"],
+      "ship": "exit-pick",
+      "note": "按测量选取并发布；未作真人试听。",
+      "tier": "medium",
+      "frequent": false,
+      "maxMs": 1000,
+      "spend": {
+        "credits": 6.666,
+        "date": "2026-11-17"
+      }
+    },
+    "gengar-deal": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "VjTLlr3gwVsQcReQBcnc",
+      "prompt": "A mischievous cartoon hollow wooden knock followed by a rubbery descending wobble, throaty midrange body, no sub-bass, no voice, no laugh, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music.",
+      "takes": [
+        {
+          "file": "sfx-gengar-deal-3.mp3",
+          "generationId": "Lyu0OVdG03jGdIMIhH3F",
+          "prompt": "A mischievous cartoon hollow wooden knock followed by a rubbery descending wobble, throaty midrange body, no sub-bass, no voice, no laugh, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-gengar-deal-4.mp3",
+          "generationId": "Pq1eCQhsDdyuWxGuz1ZO",
+          "prompt": "A mischievous cartoon hollow wooden knock followed by a rubbery descending wobble, throaty midrange body, no sub-bass, no voice, no laugh, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music.",
+          "params": {
+            "duration_seconds": 1,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": ["sfx-gengar-deal-3.mp3", "sfx-gengar-deal-4.mp3"],
+      "ship": "gengar-deal",
+      "note": "按测量选取并发布；未作真人试听。",
+      "tier": "medium",
+      "frequent": false,
+      "maxMs": 1800,
+      "spend": {
+        "credits": 18.6648,
+        "date": "2026-11-17"
+      }
+    },
+    "trophy": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1.5,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "zaYK2xgCdn5QKGyZUzLO",
+      "prompt": "A warm rounded mini fanfare of two short mellow brass notes rising, with a soft felt-mallet marimba flourish, triumphant but gentle, no bell, no sparkle, no shrill, no high-pitched tone, dry close-mic, no reverb, no voice",
+      "takes": [
+        {
+          "file": "sfx-trophy-1.mp3",
+          "generationId": "ih0wJzdSpblyUjl3jkAl",
+          "prompt": "A warm rounded mini fanfare of two short mellow brass notes rising, with a soft felt-mallet marimba flourish, triumphant but gentle, no bell, no sparkle, no shrill, no high-pitched tone, dry close-mic, no reverb, no voice"
+        },
+        {
+          "file": "sfx-trophy-2.mp3",
+          "generationId": "05RKTyBK3BXM52VbDzYW",
+          "prompt": "A warm rounded mini fanfare of two short mellow brass notes rising, with a soft felt-mallet marimba flourish, triumphant but gentle, no bell, no sparkle, no shrill, no high-pitched tone, dry close-mic, no reverb, no voice"
+        }
+      ],
+      "pick": ["sfx-trophy-1.mp3", "sfx-trophy-2.mp3"],
+      "ship": "trophy",
+      "note": "按测量选取并发布；未作真人试听。",
+      "tier": "large",
+      "frequent": false,
+      "maxMs": 1500,
+      "spend": {
+        "credits": 9.999,
+        "date": "2026-11-17"
+      }
+    },
+    "trade-evolve": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1.5,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "BEhpl8Oey3CRgTTXXomE",
+      "prompt": "Two soft wooden clicks like a link being connected, then a gentle swirling exchange whoosh sweeping from one side to the other and a soft rounded pop, muted and warm, mid-range audible on a small speaker, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-trade-evolve-1.mp3",
+          "generationId": "cWtgiso8OXOqEiVXNYK6",
+          "prompt": "Two soft wooden clicks like a link being connected, then a gentle swirling exchange whoosh sweeping from one side to the other and a soft rounded pop, muted and warm, mid-range audible on a small speaker, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-trade-evolve-1.mp3"],
+      "ship": "trade-evolve",
+      "note": "按测量选取并发布；未作真人试听。",
+      "tier": "large",
+      "frequent": false,
+      "maxMs": 1500,
+      "spend": {
+        "credits": 9.999,
+        "date": "2026-11-17"
+      }
+    },
+    "badge": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 2,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "6mPeSbJHGIoBrViZWGku",
+      "prompt": "A short warm triumphant achievement phrase: three mellow muted brass notes rising, finished by a soft felt-mallet marimba chord, rounded and satisfying, no bell, no sparkle, no shrill, no high-pitched tone, dry close-mic, no reverb, no voice",
+      "takes": [
+        {
+          "file": "sfx-badge-1.mp3",
+          "generationId": "ySJZroyoRzpuKoD9kh4w",
+          "prompt": "A short warm triumphant achievement phrase: three mellow muted brass notes rising, finished by a soft felt-mallet marimba chord, rounded and satisfying, no bell, no sparkle, no shrill, no high-pitched tone, dry close-mic, no reverb, no voice"
+        },
+        {
+          "file": "sfx-badge-2.mp3",
+          "generationId": "pjtDUPaiapzRqCfzZxJL",
+          "prompt": "A short warm triumphant achievement phrase: three mellow muted brass notes rising, finished by a soft felt-mallet marimba chord, rounded and satisfying, no bell, no sparkle, no shrill, no high-pitched tone, dry close-mic, no reverb, no voice"
+        }
+      ],
+      "pick": ["sfx-badge-1.mp3", "sfx-badge-2.mp3"],
+      "ship": "badge",
+      "note": "按测量选取并发布；未作真人试听。",
+      "tier": "large",
+      "frequent": false,
+      "maxMs": 2000,
+      "spend": {
+        "credits": 13.332,
+        "date": "2026-11-17"
+      }
+    },
+    "site-dig": {
+      "ship": "site-dig",
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "lQh1pDlWTpYyG1AJTeRL",
+      "prompt": "A rounded cartoon hollow wood knock, one firm chunky tok with a thick rubbery body, immediate attack and short damped tail, midrange, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-site-dig-9.mp3",
+          "generationId": "bFEVXKu0aEKOp00WGthu",
+          "prompt": "Rounded hollow coconut knock, a single thick tok with a full midrange wooden body and a quick muted tail. Cartoon percussion, immediate attack, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-site-dig-13.mp3",
+          "generationId": "RcYOT47VGlBYsKnip2jE",
+          "prompt": "A rounded cartoon hollow wood knock, one firm chunky tok with a thick rubbery body, immediate attack and short damped tail, midrange, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-site-dig-14.mp3",
+          "generationId": "sYzcr5ACPKn5ofgxVPK9",
+          "prompt": "A rounded cartoon hollow wood knock, one firm chunky tok with a thick rubbery body, immediate attack and short damped tail, midrange, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-site-dig-16.mp3",
+          "generationId": "NOZMoVk0gk7XHhDkLlNM",
+          "prompt": "A rounded cartoon hollow wood knock, one firm chunky tok with a thick rubbery body, immediate attack and short damped tail, midrange, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": [
+        "sfx-site-dig-9.mp3",
+        "sfx-site-dig-13.mp3",
+        "sfx-site-dig-14.mp3",
+        "sfx-site-dig-16.mp3"
+      ],
+      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published.",
+      "tier": "small",
+      "frequent": true,
+      "maxMs": 220,
+      "spend": {
+        "credits": 30.6636,
+        "date": "2026-11-17"
+      }
+    },
     "tell-voltorb": {
       "ship": "tell-voltorb",
       "kind": "sfx",
@@ -2795,6 +2960,653 @@
       "maxMs": 350,
       "spend": {
         "credits": 47.9952,
+        "date": "2026-11-17"
+      }
+    },
+    "cast-sunny-day": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1.2,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "ilVa0R8gRKHQ3pyaOH4a",
+      "prompt": "A warm soft rising burst of glowing air with a rounded low whoomp at the end, full-bodied, short, mid-range audible on a small speaker, no sparkle, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-cast-sunny-day-1.mp3",
+          "generationId": "fncssN1gNqp24MZJlRQR",
+          "prompt": "A warm soft rising burst of glowing air with a rounded low whoomp at the end, full-bodied, short, mid-range audible on a small speaker, no sparkle, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-cast-sunny-day-2.mp3",
+          "generationId": "NXAy7P3XC3jV3wOrYlz9",
+          "prompt": "A warm soft rising burst of glowing air with a rounded low whoomp at the end, full-bodied, short, mid-range audible on a small speaker, no sparkle, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-cast-sunny-day-3.mp3",
+          "generationId": "A3hnTLmvvO9j7de7q9Ic",
+          "prompt": "A warm soft rising burst of glowing air with a rounded low whoomp at the end, full-bodied, short, mid-range audible on a small speaker, no sparkle, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-cast-sunny-day-1.mp3", "sfx-cast-sunny-day-2.mp3", "sfx-cast-sunny-day-3.mp3"],
+      "ship": "cast-sunny-day",
+      "note": "按测量选取并发布；未作真人试听。",
+      "tier": "medium",
+      "frequent": true,
+      "maxMs": 1000,
+      "spend": {
+        "credits": 15.9984,
+        "date": "2026-11-17"
+      }
+    },
+    "cast-rain-dance": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "LlRARF2TYZi1QLCU2AB0",
+      "prompt": "A rounded cartoon hollow wood knock splashing into a thick watery gulp, immediate attack with an even sustained midrange body and short damped tail, no needle clicks, no hiss, no bass boom, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-cast-rain-dance-5.mp3",
+          "generationId": "9wSFVSii7I8KHN6DHypl",
+          "prompt": "A rounded cartoon hollow wood knock splashing into a thick watery gulp, immediate attack with an even sustained midrange body and short damped tail, no needle clicks, no hiss, no bass boom, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-cast-rain-dance-6.mp3",
+          "generationId": "j6Mj1786XW6akBhFzqmy",
+          "prompt": "A rounded cartoon hollow wood knock splashing into a thick watery gulp, immediate attack with an even sustained midrange body and short damped tail, no needle clicks, no hiss, no bass boom, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-cast-rain-dance-8.mp3",
+          "generationId": "MjJJlOjKhH0OcEmY4tzp",
+          "prompt": "A rounded cartoon hollow wood knock splashing into a thick watery gulp, immediate attack with an even sustained midrange body and short damped tail, no needle clicks, no hiss, no bass boom, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": [
+        "sfx-cast-rain-dance-5.mp3",
+        "sfx-cast-rain-dance-6.mp3",
+        "sfx-cast-rain-dance-8.mp3"
+      ],
+      "ship": "cast-rain-dance",
+      "note": "按测量选取并发布；未作真人试听。",
+      "tier": "medium",
+      "frequent": true,
+      "maxMs": 1000,
+      "spend": {
+        "credits": 22.6644,
+        "date": "2026-11-17"
+      }
+    },
+    "cast-sandstorm": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "XYxAkVHqTgJMJWotfFEg",
+      "prompt": "A rounded leathery swish ending in a hollow rubbery wooden thwop, full midrange body, tightly damped cartoon impact, no rumble, no hiss, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-cast-sandstorm-9.mp3",
+          "generationId": "MdsqkBMofW4MYOhtRPjT",
+          "prompt": "A rounded leathery swish ending in a hollow rubbery wooden thwop, full midrange body, tightly damped cartoon impact, no rumble, no hiss, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-cast-sandstorm-10.mp3",
+          "generationId": "DF7Aiz6TStXq3eXARWtb",
+          "prompt": "A rounded leathery swish ending in a hollow rubbery wooden thwop, full midrange body, tightly damped cartoon impact, no rumble, no hiss, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-cast-sandstorm-11.mp3",
+          "generationId": "PtU8plkmP953OjdZu0aE",
+          "prompt": "A rounded leathery swish ending in a hollow rubbery wooden thwop, full midrange body, tightly damped cartoon impact, no rumble, no hiss, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": [
+        "sfx-cast-sandstorm-9.mp3",
+        "sfx-cast-sandstorm-10.mp3",
+        "sfx-cast-sandstorm-11.mp3"
+      ],
+      "ship": "cast-sandstorm",
+      "note": "按测量选取并发布；未作真人试听。",
+      "tier": "medium",
+      "frequent": true,
+      "maxMs": 600,
+      "spend": {
+        "credits": 29.3304,
+        "date": "2026-11-17"
+      }
+    },
+    "cast-grass-pledge": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.7,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "9Jz6BkJ112ZI8POExHWW",
+      "prompt": "A cartoon spring release popping with a rounded hollow wooden whop, full midrange body, quick attack and short damped tail, no hiss, no bass rumble, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-cast-grass-pledge-13.mp3",
+          "generationId": "qaVTZVmJ9N2eprv6JfxL",
+          "prompt": "A cartoon spring release popping with a rounded hollow wooden whop, full midrange body, quick attack and short damped tail, no hiss, no bass rumble, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-cast-grass-pledge-14.mp3",
+          "generationId": "9a3KfH3296DrYRFHmyCM",
+          "prompt": "A cartoon spring release popping with a rounded hollow wooden whop, full midrange body, quick attack and short damped tail, no hiss, no bass rumble, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-cast-grass-pledge-15.mp3",
+          "generationId": "2ekoKi9VHTPRILlyfgaP",
+          "prompt": "A cartoon spring release popping with a rounded hollow wooden whop, full midrange body, quick attack and short damped tail, no hiss, no bass rumble, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": [
+        "sfx-cast-grass-pledge-13.mp3",
+        "sfx-cast-grass-pledge-14.mp3",
+        "sfx-cast-grass-pledge-15.mp3"
+      ],
+      "ship": "cast-grass-pledge",
+      "note": "按测量选取并发布；未作真人试听。",
+      "tier": "medium",
+      "frequent": true,
+      "maxMs": 450,
+      "spend": {
+        "credits": 35.9964,
+        "date": "2026-11-17"
+      }
+    },
+    "cast-fire-pledge": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "fuPKvdZt7nQzd9tfkYyM",
+      "prompt": "A column of fire rising up out of the ground with a warm soft whoosh and a rounded low crackle, short, muted, mid-range audible on a small speaker, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-cast-fire-pledge-1.mp3",
+          "generationId": "iAsO7fUdPAR8ODh2JptZ",
+          "prompt": "A column of fire rising up out of the ground with a warm soft whoosh and a rounded low crackle, short, muted, mid-range audible on a small speaker, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-cast-fire-pledge-2.mp3",
+          "generationId": "g5B9OCAybKIyq5YwaGVq",
+          "prompt": "A column of fire rising up out of the ground with a warm soft whoosh and a rounded low crackle, short, muted, mid-range audible on a small speaker, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-cast-fire-pledge-3.mp3",
+          "generationId": "2m8AI5yp0QBks50xDh65",
+          "prompt": "A column of fire rising up out of the ground with a warm soft whoosh and a rounded low crackle, short, muted, mid-range audible on a small speaker, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-cast-fire-pledge-4.mp3",
+          "generationId": "eduFOsuWehIfbUKYQUr8",
+          "prompt": "A column of fire rising up out of the ground with a warm soft whoosh and a rounded low crackle, short, muted, mid-range audible on a small speaker, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": [
+        "sfx-cast-fire-pledge-1.mp3",
+        "sfx-cast-fire-pledge-2.mp3",
+        "sfx-cast-fire-pledge-3.mp3",
+        "sfx-cast-fire-pledge-4.mp3"
+      ],
+      "ship": "cast-fire-pledge",
+      "note": "按测量选取并发布；未作真人试听。",
+      "tier": "medium",
+      "frequent": true,
+      "maxMs": 450,
+      "spend": {
+        "credits": 13.332,
+        "date": "2026-11-17"
+      }
+    },
+    "cast-water-pledge": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "Qt09inWET0qqw9kthtQd",
+      "prompt": "One cartoon water impact, a rounded hollow wet plonk with a thick gulping body, immediate attack, midrange and short damped tail, no spray hiss, no bass boom, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-cast-water-pledge-6.mp3",
+          "generationId": "Af6VOBCHip8CJafJmuAT",
+          "prompt": "One cartoon water impact, a rounded hollow wet plonk with a thick gulping body, immediate attack, midrange and short damped tail, no spray hiss, no bass boom, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-cast-water-pledge-7.mp3",
+          "generationId": "N771rDmenQPHv0wiCqkD",
+          "prompt": "One cartoon water impact, a rounded hollow wet plonk with a thick gulping body, immediate attack, midrange and short damped tail, no spray hiss, no bass boom, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-cast-water-pledge-8.mp3",
+          "generationId": "JLbdr90DENcIIhR84Qfd",
+          "prompt": "One cartoon water impact, a rounded hollow wet plonk with a thick gulping body, immediate attack, midrange and short damped tail, no spray hiss, no bass boom, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": [
+        "sfx-cast-water-pledge-6.mp3",
+        "sfx-cast-water-pledge-7.mp3",
+        "sfx-cast-water-pledge-8.mp3"
+      ],
+      "ship": "cast-water-pledge",
+      "note": "按测量选取并发布；未作真人试听。",
+      "tier": "medium",
+      "frequent": true,
+      "maxMs": 450,
+      "spend": {
+        "credits": 19.998,
+        "date": "2026-11-17"
+      }
+    },
+    "field-sea-of-fire": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 2,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "1cnQVetRqRcNhPHkrXoH",
+      "prompt": "A wide area of ground bursting into low rolling flames, a warm rounded crackling whoosh spreading outward and settling into a soft low flame crackle, full-bodied, mid-range audible on a small speaker, no explosion boom, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-field-sea-of-fire-1.mp3",
+          "generationId": "IEKvzvG7MSVUwr4vj1Xb",
+          "prompt": "A wide area of ground bursting into low rolling flames, a warm rounded crackling whoosh spreading outward and settling into a soft low flame crackle, full-bodied, mid-range audible on a small speaker, no explosion boom, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-field-sea-of-fire-3.mp3",
+          "generationId": "JzRglDwTAxL7lfoDRhTR",
+          "prompt": "A wide area of ground bursting into low rolling flames, a warm rounded crackling whoosh spreading outward and settling into a soft low flame crackle, full-bodied, mid-range audible on a small speaker, no explosion boom, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-field-sea-of-fire-4.mp3",
+          "generationId": "aAqzo7sLPN1Pq0YwHxhT",
+          "prompt": "A wide area of ground bursting into low rolling flames, a warm rounded crackling whoosh spreading outward and settling into a soft low flame crackle, full-bodied, mid-range audible on a small speaker, no explosion boom, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": [
+        "sfx-field-sea-of-fire-1.mp3",
+        "sfx-field-sea-of-fire-3.mp3",
+        "sfx-field-sea-of-fire-4.mp3"
+      ],
+      "ship": "field-sea-of-fire",
+      "note": "按测量选取并发布；未作真人试听。",
+      "tier": "medium",
+      "frequent": true,
+      "maxMs": 600,
+      "spend": {
+        "credits": 26.664,
+        "date": "2026-11-17"
+      }
+    },
+    "field-rainbow": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.7,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "n6cxx059dq5WcRa9PeVr",
+      "prompt": "A cartoon expanding bubble popping with a rounded hollow wooden-watery whop, full midrange body, quick attack and short damped tail, no hiss, no bass rumble, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-field-rainbow-5.mp3",
+          "generationId": "12JqiFx1uVo3DgBJ2EuW",
+          "prompt": "A cartoon expanding bubble popping with a rounded hollow wooden-watery whop, full midrange body, quick attack and short damped tail, no hiss, no bass rumble, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-field-rainbow-6.mp3",
+          "generationId": "9WCiVBnj4JLZeBn9pnmM",
+          "prompt": "A cartoon expanding bubble popping with a rounded hollow wooden-watery whop, full midrange body, quick attack and short damped tail, no hiss, no bass rumble, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-field-rainbow-7.mp3",
+          "generationId": "XNfxsrYeU7aaG0AKmDoJ",
+          "prompt": "A cartoon expanding bubble popping with a rounded hollow wooden-watery whop, full midrange body, quick attack and short damped tail, no hiss, no bass rumble, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-field-rainbow-8.mp3",
+          "generationId": "BtUpxFHz8EWed9cTHzFg",
+          "prompt": "A cartoon expanding bubble popping with a rounded hollow wooden-watery whop, full midrange body, quick attack and short damped tail, no hiss, no bass rumble, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": [
+        "sfx-field-rainbow-5.mp3",
+        "sfx-field-rainbow-6.mp3",
+        "sfx-field-rainbow-7.mp3",
+        "sfx-field-rainbow-8.mp3"
+      ],
+      "ship": "field-rainbow",
+      "note": "按测量选取并发布；未作真人试听。",
+      "tier": "medium",
+      "frequent": true,
+      "maxMs": 600,
+      "spend": {
+        "credits": 35.9964,
+        "date": "2026-11-17"
+      }
+    },
+    "field-swamp": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 2,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "gdAYEkLd6WEhvrno8kIk",
+      "prompt": "A patch of thick mud swamp spreading out, a slow wet squelch followed by soft bubbling gloop, low-mid and muted, rounded, mid-range audible on a small speaker, no hiss, no high-pitched tone, no voice, dry close-mic, no reverb, no music",
+      "takes": [
+        {
+          "file": "sfx-field-swamp-2.mp3",
+          "generationId": "VyxH37uhGHL7DxhRSvFw",
+          "prompt": "A patch of thick mud swamp spreading out, a slow wet squelch followed by soft bubbling gloop, low-mid and muted, rounded, mid-range audible on a small speaker, no hiss, no high-pitched tone, no voice, dry close-mic, no reverb, no music"
+        },
+        {
+          "file": "sfx-field-swamp-3.mp3",
+          "generationId": "NOzIan40dvNXMNwKeFEH",
+          "prompt": "A patch of thick mud swamp spreading out, a slow wet squelch followed by soft bubbling gloop, low-mid and muted, rounded, mid-range audible on a small speaker, no hiss, no high-pitched tone, no voice, dry close-mic, no reverb, no music"
+        },
+        {
+          "file": "sfx-field-swamp-4.mp3",
+          "generationId": "ETDoye20lFdyzvLh4brI",
+          "prompt": "A patch of thick mud swamp spreading out, a slow wet squelch followed by soft bubbling gloop, low-mid and muted, rounded, mid-range audible on a small speaker, no hiss, no high-pitched tone, no voice, dry close-mic, no reverb, no music"
+        }
+      ],
+      "pick": ["sfx-field-swamp-2.mp3", "sfx-field-swamp-3.mp3", "sfx-field-swamp-4.mp3"],
+      "ship": "field-swamp",
+      "note": "按测量选取并发布；未作真人试听。",
+      "tier": "medium",
+      "frequent": true,
+      "maxMs": 600,
+      "spend": {
+        "credits": 26.664,
+        "date": "2026-11-17"
+      }
+    },
+    "flare-blitz": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.9,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "GRpAvt8suvlN6BzjLljy",
+      "prompt": "A fast fiery dash: a short rounded fire whoosh rushing forward ending with a dull rounded impact thump, warm crackle, muted, mid-range audible on a small speaker, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-flare-blitz-1.mp3",
+          "generationId": "wXLkggJ7jClz9FqjgVXG",
+          "prompt": "A fast fiery dash: a short rounded fire whoosh rushing forward ending with a dull rounded impact thump, warm crackle, muted, mid-range audible on a small speaker, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-flare-blitz-2.mp3",
+          "generationId": "ndJSDzm2ernO2tYetM0T",
+          "prompt": "A fast fiery dash: a short rounded fire whoosh rushing forward ending with a dull rounded impact thump, warm crackle, muted, mid-range audible on a small speaker, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-flare-blitz-3.mp3",
+          "generationId": "OE7yYZWE5FGzSKn3A5Jw",
+          "prompt": "A fast fiery dash: a short rounded fire whoosh rushing forward ending with a dull rounded impact thump, warm crackle, muted, mid-range audible on a small speaker, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-flare-blitz-4.mp3",
+          "generationId": "CGeHX4rHs0gYpLiTLkzm",
+          "prompt": "A fast fiery dash: a short rounded fire whoosh rushing forward ending with a dull rounded impact thump, warm crackle, muted, mid-range audible on a small speaker, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": [
+        "sfx-flare-blitz-1.mp3",
+        "sfx-flare-blitz-2.mp3",
+        "sfx-flare-blitz-3.mp3",
+        "sfx-flare-blitz-4.mp3"
+      ],
+      "ship": "flare-blitz",
+      "note": "Measured masters shipped 2026-11-18; not auditioned. Played from the launch frame (keyMs 0), so each take skips straight to its hit.",
+      "tier": "medium",
+      "frequent": true,
+      "maxMs": 450,
+      "spend": {
+        "credits": 11.9988,
+        "date": "2026-11-17"
+      }
+    },
+    "mega-evolve": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1.5,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "Lzj1h0hCLDCIU001dDlG",
+      "prompt": "A powerful rounded rising whoosh sweeping upward into a thick wooden impact, a cartoon magical transformation, full-bodied warm midrange, brief elastic tail, no bass boom, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-mega-evolve-7.mp3",
+          "generationId": "0KmwP6KVC9OnSYeBKkVK",
+          "prompt": "A powerful rounded rising whoosh sweeping upward into a thick wooden impact, a cartoon magical transformation, full-bodied warm midrange, brief elastic tail, no bass boom, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "file": "sfx-mega-evolve-8.mp3",
+          "generationId": "YGjrcIKCEg4D1jCmR99w",
+          "prompt": "A powerful rounded rising whoosh sweeping upward into a thick wooden impact, a cartoon magical transformation, full-bodied warm midrange, brief elastic tail, no bass boom, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 1.5,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": ["sfx-mega-evolve-7.mp3", "sfx-mega-evolve-8.mp3"],
+      "ship": "mega-evolve",
+      "note": "Measured masters shipped 2026-11-18; not auditioned. The hit lands on the shell's shatter (keyMs 585), the rising lead-in under the shell.",
+      "tier": "large",
+      "frequent": false,
+      "maxMs": 2500,
+      "spend": {
+        "credits": 46.662,
+        "date": "2026-11-17"
+      }
+    },
+    "assist-x-speed": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.9,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "kLLbP5z4I3LAPeBeeJsL",
+      "prompt": "A quick soft energetic swish rising in pitch like a speed boost, ending with a soft rounded pop, muted, short, mid-range audible on a small speaker, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-assist-x-speed-1.mp3",
+          "generationId": "XoZR6s4DMGF1KYql7U27",
+          "prompt": "A quick soft energetic swish rising in pitch like a speed boost, ending with a soft rounded pop, muted, short, mid-range audible on a small speaker, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-assist-x-speed-1.mp3"],
+      "ship": "assist-x-speed",
+      "note": "Measured masters shipped 2026-11-18; not auditioned. The hit lands on the item's pop overhead (keyMs 240, view/vfx/assist.ts ASSIST_POP).",
+      "tier": "medium",
+      "frequent": false,
+      "maxMs": 600,
+      "spend": {
+        "credits": 5.9994,
+        "date": "2026-11-17"
+      }
+    },
+    "assist-super-potion": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 1.2,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "00We58sdyeX3C8GSXGKb",
+      "prompt": "A soft rounded potion bottle puff with a damped cork pop and a brief warm liquid burble, mid-range audible on a small speaker, no ring, no bell, no pitched tone, no hiss, dry close-mic, no reverb, no music, no voice",
+      "takes": [
+        {
+          "file": "sfx-assist-super-potion-1.mp3",
+          "generationId": "84DNhSbMcglWzVwISOw7",
+          "prompt": "A soft rounded potion bottle puff with a damped cork pop and a brief warm liquid burble, mid-range audible on a small speaker, no ring, no bell, no pitched tone, no hiss, dry close-mic, no reverb, no music, no voice"
+        },
+        {
+          "file": "sfx-assist-super-potion-2.mp3",
+          "generationId": "ztNgZORjrotHjEfjML2c",
+          "prompt": "A soft rounded potion bottle puff with a damped cork pop and a brief warm liquid burble, mid-range audible on a small speaker, no ring, no bell, no pitched tone, no hiss, dry close-mic, no reverb, no music, no voice"
+        }
+      ],
+      "pick": ["sfx-assist-super-potion-1.mp3", "sfx-assist-super-potion-2.mp3"],
+      "ship": "assist-super-potion",
+      "note": "Measured masters shipped 2026-11-18; not auditioned. The hit lands on the item's pop overhead (keyMs 240, view/vfx/assist.ts ASSIST_POP).",
+      "tier": "medium",
+      "frequent": false,
+      "maxMs": 600,
+      "spend": {
+        "credits": 7.9992,
+        "date": "2026-11-17"
+      }
+    },
+    "assist-full-heal": {
+      "kind": "sfx",
+      "model": "eleven_text_to_sound_v2",
+      "params": {
+        "duration_seconds": 0.7,
+        "prompt_influence": 0.5,
+        "loop": false
+      },
+      "node": "AZvwz6LaCQfaaMwYy2Oj",
+      "prompt": "A cartoon cleansing gulp, rounded rubbery water bloop with a hollow wooden body and a short smooth tail, midrange, no spray hiss, no bass boom, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+      "takes": [
+        {
+          "file": "sfx-assist-full-heal-4.mp3",
+          "generationId": "UhvhB6MeMH0CU805BdCA",
+          "prompt": "A cartoon cleansing gulp, rounded rubbery water bloop with a hollow wooden body and a short smooth tail, midrange, no spray hiss, no bass boom, no ring, no bell, no pitched tone, no high-pitched sound, dry close-mic, no reverb, no music, no voice.",
+          "params": {
+            "duration_seconds": 0.7,
+            "prompt_influence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "pick": ["sfx-assist-full-heal-4.mp3"],
+      "ship": "assist-full-heal",
+      "note": "Measured masters shipped 2026-11-18; not auditioned. The hit lands on the item's pop overhead (keyMs 240, view/vfx/assist.ts ASSIST_POP).",
+      "tier": "medium",
+      "frequent": false,
+      "maxMs": 600,
+      "spend": {
+        "credits": 13.332,
         "date": "2026-11-17"
       }
     },
@@ -2858,31 +3670,6 @@
         "date": "2026-11-17"
       }
     },
-    "loop-weather-sand": {
-      "ship": "sandstorm",
-      "kind": "ambience",
-      "model": "eleven_text_to_sound_v2",
-      "params": {
-        "duration_seconds": 16,
-        "prompt_influence": 0.5,
-        "loop": true
-      },
-      "node": "FuCMGtWh4KUAQBa3dIho",
-      "prompt": "Steady low wind blowing fine dry sand across the ground, a soft even rustling rush, muted and warm, constant, no whistle, no sudden gusts, no thunder, no hiss, no music, no voice",
-      "takes": [
-        {
-          "file": "sfx-loop-weather-sand-1.mp3",
-          "generationId": "0B9f7MXrtP5Xz2UPxLnl",
-          "prompt": "Steady low wind blowing fine dry sand across the ground, a soft even rustling rush, muted and warm, constant, no whistle, no sudden gusts, no thunder, no hiss, no music, no voice"
-        }
-      ],
-      "pick": ["sfx-loop-weather-sand-1.mp3"],
-      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published. Independent -28 LUFS ambience mastering with 250ms seam; no BPM or bars.",
-      "spend": {
-        "credits": 106.656,
-        "date": "2026-11-17"
-      }
-    },
     "loop-weather-hail": {
       "ship": "hail",
       "kind": "ambience",
@@ -2923,109 +3710,63 @@
         "date": "2026-11-17"
       }
     },
-    "exit-pick": {
+    "assist-dire-hit": {
       "kind": "sfx",
       "model": "eleven_text_to_sound_v2",
       "params": {
-        "duration_seconds": 1,
+        "duration_seconds": 0.8,
         "prompt_influence": 0.5,
         "loop": false
       },
-      "node": "yye6nANx47X428O7RDyA",
-      "prompt": "A soft warm rounded whoosh sweeping forward like stepping through a doorway, with a gentle low wooden thud at the start, mid-range audible on a small speaker, no sparkle, no bell, no high-pitched tone, no hiss, dry close-mic, no reverb, no music, no voice",
+      "node": "mJyiL6k28KouOXnOVmil",
+      "prompt": "A firm focused punchy rounded whoomp with a quick tightening rising swish before it, like a power-up focus, short, muted, mid-range audible on a small speaker, no sharp tone, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice",
       "takes": [
         {
-          "file": "sfx-exit-pick-1.mp3",
-          "generationId": "JvsJTPgl4MFxWVx0TmBi",
-          "prompt": "A soft warm rounded whoosh sweeping forward like stepping through a doorway, with a gentle low wooden thud at the start, mid-range audible on a small speaker, no sparkle, no bell, no high-pitched tone, no hiss, dry close-mic, no reverb, no music, no voice"
-        }
-      ],
-      "pick": ["sfx-exit-pick-1.mp3"],
-      "note": "按测量选取并发布；未作真人试听。",
-      "tier": "medium",
-      "frequent": false,
-      "maxMs": 1000,
-      "spend": {
-        "credits": 6.666,
-        "date": "2026-11-17"
-      },
-      "ship": "exit-pick"
-    },
-    "gengar-deal": {
-      "kind": "sfx",
-      "model": "eleven_text_to_sound_v2",
-      "params": {
-        "duration_seconds": 1,
-        "prompt_influence": 0.5,
-        "loop": false
-      },
-      "node": "VjTLlr3gwVsQcReQBcnc",
-      "prompt": "A mischievous cartoon hollow wooden knock followed by a rubbery descending wobble, throaty midrange body, no sub-bass, no voice, no laugh, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music.",
-      "takes": [
-        {
-          "file": "sfx-gengar-deal-3.mp3",
-          "generationId": "Lyu0OVdG03jGdIMIhH3F",
-          "prompt": "A mischievous cartoon hollow wooden knock followed by a rubbery descending wobble, throaty midrange body, no sub-bass, no voice, no laugh, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music.",
-          "params": {
-            "duration_seconds": 1,
-            "prompt_influence": 0.5,
-            "loop": false
-          }
+          "file": "sfx-assist-dire-hit-1.mp3",
+          "generationId": "OlYgKNP3SFRWsNrIFlkv",
+          "prompt": "A firm focused punchy rounded whoomp with a quick tightening rising swish before it, like a power-up focus, short, muted, mid-range audible on a small speaker, no sharp tone, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
         },
         {
-          "file": "sfx-gengar-deal-4.mp3",
-          "generationId": "Pq1eCQhsDdyuWxGuz1ZO",
-          "prompt": "A mischievous cartoon hollow wooden knock followed by a rubbery descending wobble, throaty midrange body, no sub-bass, no voice, no laugh, no hiss, no ring, no bell, no high-pitched sound, dry close-mic, no reverb, no music.",
-          "params": {
-            "duration_seconds": 1,
-            "prompt_influence": 0.5,
-            "loop": false
-          }
+          "file": "sfx-assist-dire-hit-2.mp3",
+          "generationId": "kEVZml8hJ3FOq9x5jHII",
+          "prompt": "A firm focused punchy rounded whoomp with a quick tightening rising swish before it, like a power-up focus, short, muted, mid-range audible on a small speaker, no sharp tone, no bell, no hiss, no high-pitched tone, dry close-mic, no reverb, no music, no voice"
         }
       ],
-      "pick": ["sfx-gengar-deal-3.mp3", "sfx-gengar-deal-4.mp3"],
-      "note": "按测量选取并发布；未作真人试听。",
+      "pick": ["sfx-assist-dire-hit-1.mp3", "sfx-assist-dire-hit-2.mp3"],
+      "ship": "assist-dire-hit",
+      "note": "Measured masters shipped 2026-11-18; not auditioned. The hit lands on the item's pop overhead (keyMs 240, view/vfx/assist.ts ASSIST_POP).",
       "tier": "medium",
       "frequent": false,
-      "maxMs": 1800,
+      "maxMs": 600,
       "spend": {
-        "credits": 18.6648,
+        "credits": 5.3328,
         "date": "2026-11-17"
-      },
-      "ship": "gengar-deal"
+      }
     },
-    "trophy": {
-      "kind": "sfx",
+    "loop-weather-sand": {
+      "ship": "sandstorm",
+      "kind": "ambience",
       "model": "eleven_text_to_sound_v2",
       "params": {
-        "duration_seconds": 1.5,
+        "duration_seconds": 16,
         "prompt_influence": 0.5,
-        "loop": false
+        "loop": true
       },
-      "node": "zaYK2xgCdn5QKGyZUzLO",
-      "prompt": "A warm rounded mini fanfare of two short mellow brass notes rising, with a soft felt-mallet marimba flourish, triumphant but gentle, no bell, no sparkle, no shrill, no high-pitched tone, dry close-mic, no reverb, no voice",
+      "node": "FuCMGtWh4KUAQBa3dIho",
+      "prompt": "Steady low wind blowing fine dry sand across the ground, a soft even rustling rush, muted and warm, constant, no whistle, no sudden gusts, no thunder, no hiss, no music, no voice",
       "takes": [
         {
-          "file": "sfx-trophy-1.mp3",
-          "generationId": "ih0wJzdSpblyUjl3jkAl",
-          "prompt": "A warm rounded mini fanfare of two short mellow brass notes rising, with a soft felt-mallet marimba flourish, triumphant but gentle, no bell, no sparkle, no shrill, no high-pitched tone, dry close-mic, no reverb, no voice"
-        },
-        {
-          "file": "sfx-trophy-2.mp3",
-          "generationId": "05RKTyBK3BXM52VbDzYW",
-          "prompt": "A warm rounded mini fanfare of two short mellow brass notes rising, with a soft felt-mallet marimba flourish, triumphant but gentle, no bell, no sparkle, no shrill, no high-pitched tone, dry close-mic, no reverb, no voice"
+          "file": "sfx-loop-weather-sand-1.mp3",
+          "generationId": "0B9f7MXrtP5Xz2UPxLnl",
+          "prompt": "Steady low wind blowing fine dry sand across the ground, a soft even rustling rush, muted and warm, constant, no whistle, no sudden gusts, no thunder, no hiss, no music, no voice"
         }
       ],
-      "pick": ["sfx-trophy-1.mp3", "sfx-trophy-2.mp3"],
-      "note": "按测量选取并发布；未作真人试听。",
-      "tier": "large",
-      "frequent": false,
-      "maxMs": 1500,
+      "pick": ["sfx-loop-weather-sand-1.mp3"],
+      "note": "Measured candidate masters selected; not auditioned, runtime-registered, VFX-aligned, shipped or published. Independent -28 LUFS ambience mastering with 250ms seam; no BPM or bars.",
       "spend": {
-        "credits": 9.999,
+        "credits": 106.656,
         "date": "2026-11-17"
-      },
-      "ship": "trophy"
+      }
     }
   }
 }

@@ -1,9 +1,12 @@
+import { trainerKits } from "./content/trainers";
+import { TRAINER } from "./content/params/trainers";
 // Map stations (openspec/specs/combat-builds/spec.md 换招): Hypno (引梦貘人) forgets a move or an item for 星星沙子, Bill's
 // machine (正辉的机器) fuses the line's signature pair once per run. Each stands on one of the map's
 // guaranteed building pads (docs/MAPGEN.md); standing in its zone shows a prompt, and the interact
 // command (R / the touch prompt) opens its dialog, which freezes the run like a level-up card.
 
 import { stageDefs } from "./content/stages/index";
+import { megaStones } from "./content/lines/index";
 import { addCircleBlocker } from "./nav/index";
 import { formOf } from "./evolution";
 import { fusionStatus } from "./fusion";
@@ -32,7 +35,8 @@ export function placeStations(world: World): Station[] {
 
 /** Whether walking in now does something: something left to forget, or the fusion ready and unused. */
 export function stationUsable(player: Player, station: Station): boolean {
-  if (station.kind === "hypno") return player.moves.length > 1 || player.items.length > 0;
+  if (station.kind === "hypno")
+    return player.moves.length > 1 || player.items.some(forgettableItem);
   return !station.used.includes(player.id) && fusionStatus(player).ready;
 }
 
@@ -61,8 +65,20 @@ export function interact(world: World, player: Player): void {
   if (station) player.dialog = { id: world.nextId++, station: station.id };
 }
 
-export function forgetRefund(entry: MoveState | ItemState, kind: "move" | "item"): number {
-  return entry.level * FORGET[kind];
+export function forgetRefund(
+  player: Player,
+  entry: MoveState | ItemState,
+  kind: "move" | "item",
+): number {
+  return (
+    entry.level *
+    FORGET[kind] *
+    (trainerKits[player.trainer].passive === "tinker" ? TRAINER.tinker.refund : 1)
+  );
+}
+
+export function forgettableItem(item: ItemState): boolean {
+  return !megaStones.has(item.id);
 }
 
 /**
@@ -78,14 +94,14 @@ export function forget(
     if (!state || player.moves.length <= 1) return false;
     player.moves = player.moves.filter((move) => move !== state);
     player.banished.push(offerKey.move(state.id));
-    earnStardust(player, forgetRefund(state, "move"));
+    earnStardust(player, forgetRefund(player, state, "move"));
     return true;
   }
   const item = player.items.find((owned) => owned.id === target.id);
-  if (!item) return false;
+  if (!item || !forgettableItem(item)) return false;
   player.items = player.items.filter((owned) => owned !== item);
   player.banished.push(offerKey.item(item.id));
-  earnStardust(player, forgetRefund(item, "item"));
+  earnStardust(player, forgetRefund(player, item, "item"));
   // Max HP from HP Up goes with it.
   player.hp = Math.min(player.hp, playerStats(player).maxHp);
   return true;

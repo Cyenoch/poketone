@@ -19,7 +19,8 @@ export function update(world: World, site: Site): void {
   }
   const enemy = spawnAtSite(world, site, site.data.species!, true, SITE.raid.scale);
   if (enemy) {
-    enemy.hp = enemy.maxHp *= SITE.raid.hp;
+    // The director applies the same HP slot for challenge elites at birth.
+    if (!world.rules.includes("alpha-elites")) enemy.hp = enemy.maxHp *= SITE.raid.hp;
     enemy.alpha = true;
     site.until = world.time + SITE.raid.seconds;
   }

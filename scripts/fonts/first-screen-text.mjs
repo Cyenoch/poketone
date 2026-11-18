@@ -7,13 +7,16 @@ import { LEGAL_NOTICE } from "../../src/legalNotice.ts";
 import { difficultyLock, starterLock } from "../../src/run/locks.ts";
 import { emptyProgress } from "../../src/run/progress.ts";
 import { abilities } from "../../src/run/sim/content/abilities.ts";
+import { bondMilestones } from "../../src/run/sim/content/bonds.ts";
 import { difficulties } from "../../src/run/sim/content/difficulties.ts";
 import { items } from "../../src/run/sim/content/items.ts";
 import { starters } from "../../src/run/sim/content/lines/index.ts";
+import { kitTip, trainerOrder, trainers } from "../../src/trainers.ts";
 
 /**
  * Partner names and roles, every ability's name and description (the name-plate tip), difficulty
- * names, the legal notice, the partner and difficulty lock lines, every item name (backpack tips).
+ * names, the legal notice, the partner and difficulty lock lines, every item name (backpack tips),
+ * the bond titles and rewards (the bond's tip), each trainer's name and kit with its tip.
  */
 export function firstScreenText() {
   const parts = [LEGAL_NOTICE];
@@ -25,6 +28,8 @@ export function firstScreenText() {
     parts.push(difficulty.name, difficultyLock(progress, index) ?? ""),
   );
   for (const item of Object.values(items)) parts.push(item.name);
+  for (const { title, reward } of bondMilestones) parts.push(title, reward ?? "");
+  for (const id of trainerOrder) parts.push(trainers[id].name, kitTip(id));
   return parts.join("");
 }
 

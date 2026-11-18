@@ -27,7 +27,7 @@
 | 8    | `add-partner-bond`    | 伙伴羁绊                                                            |
 | 9    | `add-mega-evolution`  | 超级进化分支（喷火龙 X / Y 起步）                                   |
 | 10   | `add-battle-tower`    | 对战塔无尽模式                                                      |
-| 11   | `add-seed-challenges` | 已取消（2026-11-18 用户决定），移出本版本范围                        |
+| 11   | `add-seed-challenges` | 已取消（2026-11-18 用户决定），移出本版本范围                       |
 | 12   | `add-trainer-support` | 训练师道具（主动）与被动；对白按伙伴羁绊分档                        |
 
 ### 共用约定

@@ -1,5 +1,6 @@
 import type { SessionState } from "../../network/session";
 import type { RoomErrorCode } from "../../network/protocol";
+import { bondTitle } from "../../run/labels";
 import type { StarterId } from "../../run/sim/content/lines";
 import type { TrainerId } from "../../trainers";
 
@@ -14,6 +15,8 @@ export interface SeatView {
   label: string;
   starter: StarterId | null;
   trainer: TrainerId | null;
+  /** The partner's bond title, seen by every player; none before Lv.1. */
+  title: string | null;
   self: boolean;
   chip: string;
   pending: boolean;
@@ -29,6 +32,7 @@ export function seatView(state: SessionState) {
     label: `P${slot + 1}`,
     starter: state.room?.players[slot]?.starter ?? null,
     trainer: state.room?.players[slot]?.trainer ?? null,
+    title: bondTitle(state.room?.players[slot]?.bond ?? 0),
     self: state.self === slot && slot < count,
     chip:
       slot === 0

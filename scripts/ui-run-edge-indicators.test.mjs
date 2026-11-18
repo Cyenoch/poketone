@@ -53,7 +53,9 @@ async function fixture(width = 844, height = 390, scale = 0.8, insets = safe) {
       pz: 0,
       z: 0,
       alive: true,
+      revives: 0,
     })),
+    rules: [],
     enemies: [],
     map: { terrain: { origin: -100, resolution: 0.01, samples: 3, heights: new Float32Array(9) } },
   };
@@ -353,6 +355,28 @@ test("a downed teammate keeps an urgent locator until revival or departure", asy
     mate.departed = true;
     f.frame(1, 0.2);
     assert.equal(marker.root.displayed.value, false, "a departed seat needs no rescue");
+  } finally {
+    f.dispose();
+  }
+});
+
+test("a Nuzlocke knockout has no locator or name: there is no rescue to point to", async () => {
+  const f = await fixture();
+  try {
+    f.world.rules = ["nuzlocke"];
+    const mate = f.world.players[1];
+    const marker = f.indicators.players[1];
+    for (const x of [60, 2]) {
+      f.move(x, 0);
+      mate.alive = true;
+      f.frame(1, 0.2);
+      const shown = x === 60 ? marker.root : f.indicators.names[1];
+      assert.ok(shown.displayed.value, "alive, the teammate is locatable");
+      mate.alive = false;
+      f.frame(1, 0.2);
+      assert.equal(marker.root.displayed.value, false, "no offscreen locator");
+      assert.equal(f.indicators.names[1].displayed.value, false, "no name over an empty seat");
+    }
   } finally {
     f.dispose();
   }

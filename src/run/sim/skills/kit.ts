@@ -7,6 +7,7 @@ import { escaping } from "../encounters";
 import { formOf, hazardRadius } from "../evolution";
 import { aimHeight, enemyFeet, enemyHeight, lineOfFire } from "../sight";
 import { interrupted } from "../status";
+import { damagePlayer, ignoresGroundHazard } from "../hurt";
 import { heightAt } from "../terrain";
 import type { World } from "../state/world";
 import type { Enemy, Hazard, Player } from "../state/entities";
@@ -71,6 +72,7 @@ export function addHazard(world: World, init: HazardInit): Hazard {
     length: 0,
     rise: 0,
     caster: -1,
+    ...(init.caster !== undefined && init.caster >= 0 ? { source: init.caster } : {}),
     ...(hazardElements[init.kind] ? { element: hazardElements[init.kind] } : {}),
     ...init,
   };
@@ -139,7 +141,16 @@ export function inCircle(
 
 /** True for the players standing in a ground patch (pool or cloud) centred at `hazard`. */
 export function inPatch(world: World, hazard: Hazard, player: Player, ground: number): boolean {
-  return inCircle(world, hazard.x, hazard.z, hazard.radius, player, ground);
+  return (
+    !ignoresGroundHazard(player, hazard.kind) &&
+    inCircle(world, hazard.x, hazard.z, hazard.radius, player, ground)
+  );
+}
+
+export function damageFromHazard(world: World, player: Player, hazard: Hazard): boolean {
+  const source = hazard.source ?? hazard.caster;
+  const attacker = source >= 0 ? world.enemies.find((e) => e.id === source && e.hp > 0) : undefined;
+  return damagePlayer(world, player, hazard.dmg, hazard.element, attacker);
 }
 
 /** Height of the middle of the player's body. */

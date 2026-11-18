@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   AnimationClip,
   Bone,
+  Box3,
   BufferGeometry,
   Float32BufferAttribute,
   Group,
@@ -36,6 +37,15 @@ import { createWindUniforms } from "../src/run/view/environment/wind.ts";
 import { stageThemes } from "../src/run/view/stageThemes.ts";
 import { advanceGait } from "../src/run/view/enemyMotion.ts";
 import { SnapshotBuffer } from "../src/network/interpolation.ts";
+import { installResources } from "../src/platform/resources.ts";
+import { nativeResources } from "../src/platform/native/resources.ts";
+import { runAll } from "../src/prepare/steps.ts";
+import { snapshotWorld } from "../src/run/sim/snapshot.ts";
+import { departPlayer } from "../src/run/sim/team.ts";
+import { weatherDamagePlayer } from "../src/run/sim/hurt.ts";
+import { loadRunAssets } from "../src/run/view/assets.ts";
+import { createRunView } from "../src/run/view/createRunView.ts";
+import { playerRings } from "../src/run/view/player-rings.ts";
 
 test("敌人步态在 30 Hz 模拟 / 20 Hz 快照速度变化时连续，暂停不改变姿态", () => {
   const buffer = new SnapshotBuffer();
@@ -256,10 +266,13 @@ const stage = stageDefs.forest;
 const swarm = stage.zones[0].beats.find(({ beat }) => beat.kind === "swarm").beat;
 
 for (const [label, players, place] of [
-  ["solo", [{ starter: "squirtle" }], () => {}],
+  ["solo", [{ trainer: "chengxi", starter: "squirtle" }], () => {}],
   [
     "co-op, players apart and turned",
-    [{ starter: "squirtle" }, { starter: "charmander" }],
+    [
+      { trainer: "chengxi", starter: "squirtle" },
+      { trainer: "chengxi", starter: "charmander" },
+    ],
     (world) => {
       world.players[0].viewYaw = 2.2;
       world.players[1].x = 14;
@@ -270,7 +283,14 @@ for (const [label, players, place] of [
 ]) {
   test(`${/** @type {string} */ (label)}: ring spawns, a surround beat and the guardian appear off every player's screen`, () => {
     for (const seed of [3, 11, 29]) {
-      const world = createWorld({ stage: "forest", seed, difficulty: 1, players });
+      const world = createWorld({
+        mode: "expedition",
+        rules: [],
+        stage: "forest",
+        seed,
+        difficulty: 1,
+        players,
+      });
       place(world);
       const spawned = (run) => {
         const before = world.enemies.length;
@@ -306,10 +326,12 @@ for (const [label, players, place] of [
 
 test("a spawn aimed past the arena wall behind a player at the wall still lands off screen when the arena has room", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 3,
     difficulty: 0,
-    players: [{ starter: "squirtle" }],
+    players: [{ trainer: "chengxi", starter: "squirtle" }],
   });
   const player = world.players[0];
   player.x = 0;
@@ -327,10 +349,12 @@ test("a player standing on ground walkers call wall still draws spawns and the g
   // Forest seed 21 put a player on such a cell by the north wall: every ground spawn was skipped
   // and the guardian's spawn threw.
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 21,
     difficulty: 2,
-    players: [{ starter: "squirtle" }],
+    players: [{ trainer: "chengxi", starter: "squirtle" }],
   });
   const { grid } = world.nav;
   const ground = enemies.scyther.mobility;
@@ -369,10 +393,12 @@ test("a player standing on ground walkers call wall still draws spawns and the g
 
 test("a bolt starter does not auto-aim at an enemy below the screen's bottom edge, and does once the camera turns to it", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 5,
     difficulty: 0,
-    players: [{ starter: "charmander" }],
+    players: [{ trainer: "chengxi", starter: "charmander" }],
   });
   world.spawn.credit = -Infinity;
   const player = world.players[0];
@@ -381,4 +407,168 @@ test("a bolt starter does not auto-aim at an enemy below the screen's bottom edg
   assert.deepEqual(acquire(world, player, 1), []);
   player.viewYaw = Math.PI;
   assert.deepEqual(acquire(world, player, 1), [below]);
+});
+
+for (const nuzlocke of [false, true]) {
+  test(
+    nuzlocke
+      ? "永久倒地后只读观战，队友离队时切到另一名存活队友"
+      : "可救援时镜头留在自己的倒地位置",
+    async (t) => {
+      const world = createWorld({
+        mode: "expedition",
+        seed: 7,
+        stage: "forest",
+        difficulty: 0,
+        rules: nuzlocke ? ["nuzlocke"] : [],
+        players: [
+          { trainer: "chengxi", starter: "charmander" },
+          { trainer: "chengxi", starter: "squirtle" },
+          { trainer: "chengxi", starter: "bulbasaur" },
+        ],
+      });
+      const [local, mate, other] = world.players;
+      Object.assign(mate, { px: 16, x: 24, viewYaw: Math.PI });
+      other.px = other.x = -20;
+      installResources(nativeResources(new URL("../public/", import.meta.url)));
+      const assets = await loadRunAssets(world, new AbortController().signal);
+      const view = runAll(createRunView(world, assets, local.id, true));
+      t.after(() => {
+        view.dispose();
+        assets.dispose();
+      });
+      view.camera.aspect = PHONE;
+      view.camera.updateProjectionMatrix();
+      function assertCentred(x, z) {
+        const px = view.project(x, 0.6, z, 844, 390);
+        assert.ok(
+          px && Math.hypot(px[0] - 422, px[1] - 195) < 8,
+          `应跟随 (${x}, ${z})，投影为 ${String(px)}`,
+        );
+      }
+      view.frame(1, 1 / 60, [], 0);
+      assertCentred(local.x, local.z);
+      weatherDamagePlayer(world, local, local.hp);
+      assert.equal(local.alive, false);
+
+      const before = snapshotWorld(world);
+      view.frame(0.5, 1 / 60, [], 0);
+      assert.deepEqual(snapshotWorld(world), before, "切换视角不能改动席位、输入、奖励或世界 RNG");
+      if (!nuzlocke) {
+        assertCentred(local.x, local.z);
+        return;
+      }
+      assertCentred((mate.px + mate.x) / 2, mate.z);
+      assert.ok(view.project(mate.x + 1, 0.6, mate.z, 844, 390)[0] < 422, "观战沿用队友的视野朝向");
+      for (let i = 0; i < 30; i++) view.frame(1, 1 / 30, [], 0);
+      assertCentred(mate.x, mate.z);
+
+      departPlayer(world, mate.id);
+      view.frame(1, 1 / 120, [], 0);
+      assertCentred(other.x, other.z);
+      weatherDamagePlayer(world, other, other.hp);
+      view.frame(1, 1 / 60, [], 0);
+      assertCentred(other.x, other.z);
+    },
+  );
+}
+
+test("只有可救援的倒地席位升起世界光柱", (t) => {
+  for (const rules of [[], ["nuzlocke"]]) {
+    const world = createWorld({
+      mode: "expedition",
+      seed: 7,
+      stage: "forest",
+      difficulty: 0,
+      rules,
+      players: [
+        { trainer: "chengxi", starter: "charmander" },
+        { trainer: "chengxi", starter: "squirtle" },
+      ],
+    });
+    const [local, mate] = world.players;
+    const marks = playerRings(world, local.id);
+    t.after(() => marks.dispose());
+    const chest = new Vector3(mate.x, heightAt(world.map.terrain, mate.x, mate.z) + 2, mate.z);
+    function hasBeacon() {
+      marks.update(1, 1 / 60);
+      marks.root.updateMatrixWorld();
+      let visible = false;
+      marks.root.traverseVisible((mesh) => {
+        if (mesh.isMesh && new Box3().setFromObject(mesh).containsPoint(chest)) visible = true;
+      });
+      return visible;
+    }
+    assert.equal(hasBeacon(), false);
+    weatherDamagePlayer(world, mate, mate.hp);
+    assert.equal(hasBeacon(), rules.length === 0);
+  }
+});
+
+test("小火龙的两种超级形态在开场已载入，头部都朝模拟的 +Z", async (t) => {
+  installResources(nativeResources(new URL("../public/", import.meta.url)));
+  const run = await loadRunAssets(
+    {
+      stage: "forest",
+      players: [{ trainer: "chengxi", starter: "charmander" }],
+      enemies: [],
+      partners: [],
+    },
+    new AbortController().signal,
+  );
+  t.after(() => run.dispose());
+  for (const id of ["charizard-x", "charizard-y"]) {
+    const { holder, model } = run.players[0].get(id);
+    holder.updateMatrixWorld(true);
+    const head = model.root.getObjectByName("Head").getWorldPosition(new Vector3());
+    const hips = model.root.getObjectByName("Pelvis").getWorldPosition(new Vector3());
+    assert.ok(head.z - hips.z > Math.abs(head.x - hips.x), id);
+  }
+});
+
+test("超级进化的模型随演出事件切换，壳碎那一帧报告音效关键帧；漏掉事件也会跟上", async (t) => {
+  const world = createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed: 3,
+    difficulty: 0,
+    players: [{ trainer: "chengxi", starter: "charmander" }],
+  });
+  const player = world.players[0];
+  player.stage = 2;
+  installResources(nativeResources(new URL("../public/", import.meta.url)));
+  const assets = await loadRunAssets(world, new AbortController().signal);
+  const view = runAll(createRunView(world, assets, player.id, false));
+  t.after(() => {
+    view.dispose();
+    assets.dispose();
+  });
+  const shown = (form) => assets.players[0].get(form).holder.visible;
+  view.frame(1, 1 / 60, [], 0);
+  assert.ok(shown("charizard"));
+
+  // A guest's state arrives before the event plays on its delayed clock.
+  player.mega = "charizard-x";
+  view.frame(1, 1 / 60, [], 0);
+  assert.ok(shown("charizard") && !shown("charizard-x"), "the new form waits for its ceremony");
+  view.frame(1, 1 / 60, [{ t: "mega", player: player.id, form: "charizard-x" }], 0);
+  assert.ok(!shown("charizard") && shown("charizard-x"));
+  assert.deepEqual(view.megaShatters, [], "the shell has not broken yet");
+
+  // A pause holds the shell, and its sound, until play resumes.
+  for (let i = 0; i < 30; i++) view.frame(1, 0, [], 0);
+  let breaks = 0;
+  for (let i = 0; i < 40; i++) {
+    view.frame(1, 1 / 60, [], 0);
+    breaks += view.megaShatters.filter((id) => id === player.id).length;
+  }
+  assert.equal(breaks, 1);
+
+  player.mega = null;
+  view.frame(1, 1 / 60, [], 0);
+  assert.ok(shown("charizard"), "leaving the mega form needs no ceremony");
+  player.mega = "charizard-y";
+  for (let i = 0; i < 70; i++) view.frame(1, 1 / 60, [], 0);
+  assert.ok(shown("charizard-y"), "a missed event cannot leave the old model up");
 });

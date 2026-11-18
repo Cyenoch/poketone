@@ -1,6 +1,8 @@
+import { WAVE } from "../../sim/content/params/archetypes";
 import { Decal } from "./decals";
 import { perFrame, rand, reach, seedOf, spray, type AreaLook, type Fx, type ShotLook } from "./fx";
 import { fire } from "./palette";
+import { Ribbon } from "./ribbons";
 import { Shape, sprite } from "./sprites";
 import { place } from "./volumes";
 
@@ -428,3 +430,125 @@ export function spreadBurn(fx: Fx, x: number, y: number, z: number): void {
   spray(fx, flame, x, y, z, 6, 5, 1.5, 0.3);
   spray(fx, emberSpark, x, y, z, 6, 5, 4, 0.07);
 }
+
+const CHEVRON = 12;
+
+/**
+ * Flare Blitz: the caster's charge as a burning chevron across the wave band (2 × radius wide,
+ * 2 × WAVE.depth deep). A sun-strip glow fills the band, the crest's tip leads at the front centre
+ * and its wings trail to the back corners, under 1.3 m so the crowd stays readable.
+ */
+export const flareBlitz: ShotLook = {
+  launch(fx, x, y, z) {
+    fx.sprites.emit(flash, x, y, z, 0, 0, 0, 0.35);
+    fx.sprites.emit(bloom, x, y, z, 0, 0, 0, 0.5);
+    spray(fx, flame, x, y, z, 6, 1.6, 1, 0.16);
+    fx.decals.stamp(Decal.ring, x, z, 1.2, 0.35, fire.yellow, 0.8, fire.orange, 1, 0.25, 0.2);
+  },
+  fly(fx, shot, x, _y, z) {
+    const r = shot.radius;
+    const speed = Math.hypot(shot.vx, shot.vz) || 1;
+    const dirX = shot.vx / speed;
+    const dirZ = shot.vz / speed;
+    const d = WAVE.depth;
+    const grow = Math.min(1, (shot.dur - shot.life) / 0.08, shot.life / 0.15);
+    fx.decals
+      .put(Decal.strip, x - dirX * d, z - dirZ * d, 2 * d, Math.atan2(dirX, dirZ), seedOf(shot.id))
+      .rect(-r * 1.05, 0, r * 1.05, 2 * d)
+      .tint(fire.orange, 0.7 * grow, fire.yellow, 1)
+      .args(0, r, 0);
+    for (let layer = 0; layer < 2; layer++) {
+      for (let i = 0; i <= CHEVRON; i++) {
+        const u = (i / CHEVRON) * 2 - 1;
+        const back = Math.abs(u);
+        const cx = x + dirX * d * (1 - 2 * back) - dirZ * u * r;
+        const cz = z + dirZ * d * (1 - 2 * back) + dirX * u * r;
+        const lift = (0.25 + 0.55 * (1 - back) ** 1.5) * grow;
+        fx.ribbons.point(
+          cx,
+          fx.ground.heightAt(cx, cz) + lift,
+          cz,
+          (layer ? 0.1 : 0.32) * (1 - 0.5 * back) * grow,
+          layer ? fire.core : fire.orange,
+          (layer ? 1 : 0.85) * grow,
+        );
+      }
+      fx.ribbons.flush(Ribbon.glow, 1);
+    }
+    for (let i = 0; i < 7; i++) {
+      const u = (i / 6) * 2 - 1;
+      const back = Math.abs(u);
+      const cx = x + dirX * d * (1 - 2 * back) - dirZ * u * r;
+      const cz = z + dirZ * d * (1 - 2 * back) + dirX * u * r;
+      const lift = (0.3 + 0.5 * (1 - back) ** 1.5) * grow;
+      fx.sprites.draw(
+        trail,
+        cx,
+        fx.ground.heightAt(cx, cz) + lift,
+        cz,
+        0.3 * grow,
+        grow,
+        0,
+        0,
+        0,
+        i,
+        0.3,
+      );
+    }
+    const tipX = x + dirX * d;
+    const tipZ = z + dirZ * d;
+    const tipY = fx.ground.heightAt(tipX, tipZ) + 0.7 * grow;
+    fx.volumes.orbs.add(
+      place(tipX, tipY, tipZ, fx.time * 3, 0.38 * grow, 0.38 * grow, 0.38 * grow),
+      fire.yellow,
+      grow,
+      fire.red,
+      0,
+      seedOf(shot.id),
+    );
+    for (let i = perFrame(fx, 50 * grow); i > 0; i--) {
+      const side = rand(-1, 1);
+      const cx = x - dirX * d - dirZ * side * r;
+      const cz = z - dirZ * d + dirX * side * r;
+      const floor = fx.ground.heightAt(cx, cz);
+      fx.sprites.emit(
+        flame,
+        cx,
+        floor + rand(0.15, 0.5),
+        cz,
+        -dirX,
+        rand(0.4, 1.2),
+        -dirZ,
+        0.18,
+        floor,
+      );
+    }
+    for (let i = perFrame(fx, 16 * grow); i > 0; i--) {
+      const side = rand(-1, 1);
+      const cx = x - dirZ * side * r;
+      const cz = z + dirX * side * r;
+      const floor = fx.ground.heightAt(cx, cz);
+      fx.sprites.emit(
+        emberSpark,
+        cx,
+        floor + 0.3,
+        cz,
+        rand(-1, 1),
+        rand(1, 2.5),
+        rand(-1, 1),
+        0.05,
+        floor,
+      );
+    }
+  },
+  hit(fx, x, y, z) {
+    fx.sprites.emit(flash, x, y, z, 0, 0, 0, 0.25);
+    spray(fx, emberSpark, x, y, z, 5, 2, 1.8, 0.045);
+  },
+  fade(fx, x, _y, z) {
+    const floor = fx.ground.heightAt(x, z);
+    spray(fx, smoke, x, floor + 0.3, z, 4, 1, 0.6, 0.25);
+    spray(fx, emberSpark, x, floor + 0.3, z, 6, 2.5, 2.5, 0.05);
+    fx.decals.stamp(Decal.scorch, x, z, 0.8, 1.2, fire.soot, 0.55, fire.orange, 0);
+  },
+};

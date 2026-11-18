@@ -1,3 +1,5 @@
+import { ruleIds, totalDanger } from "../../run/sim/content/rules";
+import type { BadgeId } from "../../run/sim/content/badges";
 import { createPlayer } from "../../run/sim/world";
 import { statBreakdown } from "../../run/sim/stats";
 import { fusionStatus } from "../../run/sim/fusion";
@@ -32,6 +34,8 @@ export function runWindowSamples(starter: StarterId): NonNullable<RunOverlayStat
   const deals: Choice[][] = [
     [upgrade(0), upgrade(1), upgrade(2), upgrade(3)],
     [{ kind: "move", move }, { kind: "item", item: "leftovers" }, { kind: "tm-case" }],
+    // 禁止携带道具: a held item's draw pays out 星星沙子 instead.
+    [{ kind: "stardust" }],
     [{ kind: "train", stat: "dmg" }],
     // An item card's look follows its rarity: one of each tier.
     ([0, 1, 2, 3] as const).map((rarity) => ({
@@ -43,10 +47,15 @@ export function runWindowSamples(starter: StarterId): NonNullable<RunOverlayStat
     kind: "result" as const,
     theme,
     result: {
+      // The victory sample carries every rule and a badge, so their text and art warm too.
+      danger: outcome === "victory" ? totalDanger(ruleIds) : 0,
+      // The defeat sample is a tower run's, so its floor line warms too.
+      ...(outcome === "defeat" ? { floor: 1 } : {}),
       outcome,
       starter,
       difficulty: 0 as const,
       time: 60,
+      zones: 1,
       level: 2,
       kills: 1,
       dex: {},
@@ -55,6 +64,12 @@ export function runWindowSamples(starter: StarterId): NonNullable<RunOverlayStat
       items: ["leftovers" as const],
     },
     note: null,
+    badges: outcome === "victory" ? (["boulder"] as BadgeId[]) : [],
+    // The victory sample crosses a bond level, so its title and grant warm too.
+    bond:
+      outcome === "victory"
+        ? { before: 25, after: 35, look: false }
+        : { before: 0, after: 4, look: false },
     backpackSize: 1,
   });
   return [
@@ -68,10 +83,12 @@ export function runWindowSamples(starter: StarterId): NonNullable<RunOverlayStat
     })),
     {
       kind: "stats",
+      abilitySlot: player.abilitySlot,
       theme,
       starter,
       form: form.id,
       shiny: false,
+      rules: ruleIds,
       level: 1,
       build: {
         sheet: statBreakdown(player),
@@ -100,6 +117,7 @@ export function runWindowSamples(starter: StarterId): NonNullable<RunOverlayStat
       pending: { id, source: id === 1 ? ("chest" as const) : ("level" as const), options },
       dealKey: `sample:${id}`,
       level: 2,
+      evolution: 1,
       rerolls: 1,
       skips: 1,
       banishes: 1,
@@ -117,6 +135,7 @@ export function runWindowSamples(starter: StarterId): NonNullable<RunOverlayStat
       },
       dealKey: `sample:${kind}`,
       level: 2,
+      evolution: 1,
       rerolls: 1,
       skips: 1,
       banishes: 1,

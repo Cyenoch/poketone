@@ -15,6 +15,8 @@ import {
   type ShaderMaterial,
 } from "three";
 import { buffCue, healCue, itemBurst } from "./vfx/items";
+import { trainerAssist } from "./vfx/assist";
+import { TRAINER } from "../sim/content/params/trainers";
 import { archetypes } from "../sim/archetypes/index";
 import { moves, type MoveId } from "../sim/content/moves";
 import type { ReactionId } from "../sim/content/reactions";
@@ -30,8 +32,9 @@ import {
 } from "../sim/content/params/guardian";
 import { zoneDef } from "../sim/currentZone";
 import type { StageId } from "../sim/content/stages/index";
-import { type World } from "../sim/state/world";
+import { TICK, type World } from "../sim/state/world";
 import type { Hazard, Player, PlayerId } from "../sim/state/entities";
+import type { AssistItem } from "../sim/content/trainers";
 import type { RunEvent } from "../sim/state/events";
 import * as common from "./vfx/common";
 import * as skills from "./vfx/enemySkills";
@@ -43,6 +46,8 @@ import { PSYBEAM, VINE, ROCKFALL } from "../sim/content/params/enemy-skills";
 
 import { Decals } from "./vfx/decals";
 import { lineShotLooks, lineAreaLooks, lineBurstLooks } from "./vfx/lines";
+import { pledgeFields, rainbowAura, rainbowBurst } from "./vfx/pledge";
+import { moveWeather, weatherCasts } from "./vfx/weatherMoves";
 import { dreamReturn, shadowPhase } from "./vfx/ghost";
 import { psyshock } from "./vfx/psychic";
 import { aftershocks } from "./vfx/rock";
@@ -63,10 +68,12 @@ import {
   fireSpin,
   fireSpinBurst,
   flamethrower,
+  flareBlitz,
   spreadBurn,
 } from "./vfx/fire";
-import { uploadRange } from "./vfx/gl";
-import { Echoes, type AreaLook, type Fx, type Ground, type ShotLook } from "./vfx/fx";
+import { flame, uploadRange } from "./vfx/gl";
+import { megaEvolve } from "./vfx/mega";
+import { Echoes, seedOf, type AreaLook, type Fx, type Ground, type ShotLook } from "./vfx/fx";
 import { razorLeaf, sleepPowder, solarBeam, vineWhip } from "./vfx/grass";
 import { Ribbons } from "./vfx/ribbons";
 import { Sprites } from "./vfx/sprites";
@@ -110,6 +117,7 @@ const shotLooks: Partial<Record<MoveId, ShotLook>> = {
   surf,
   ember,
   "fire-blast": fireBlast,
+  "flare-blitz": flareBlitz,
   "razor-leaf": razorLeaf,
   "water-gun": waterGun,
   bubble: bubbleShot,
@@ -160,6 +168,8 @@ interface ShotTrack {
   oy: number;
   oz: number;
   age: number;
+  /** Its caster burns blue (Mega Charizard X): its feedback beats are drawn in the same flames. */
+  blue: boolean;
 }
 
 /**
@@ -194,6 +204,8 @@ interface WarnTrack {
   struck: boolean;
 }
 
+type ShotLanding = Extract<RunEvent, { t: "projectile-feedback" }>;
+
 /** Events drawn at the player, who is only known once `update` sees the world. */
 type PlayerEvent = Extract<
   RunEvent,
@@ -205,13 +217,19 @@ type PlayerEvent = Extract<
       | "player-hit"
       | "drain"
       | "evolve"
+      | "mega"
       | "ult"
       | "heal"
       | "buff"
+      | "assist"
       | "evade"
-      | "ult-pulse";
+      | "ult-pulse"
+      | "cast";
   }
 >;
+
+/** Half-width of the arc where two pledges make 彩虹; its top stays within the 2 m height budget. */
+const RAINBOW_SPAN = 1.8;
 
 const dummy = new Object3D();
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -232,6 +250,11 @@ function sweep<T extends { id: number; seen: number }>(
 function owner(world: World, id: number): Player | undefined {
   for (const player of world.players) if (player.id === id) return player;
   return undefined;
+}
+
+/** Mega Charizard X's fire burns blue (its ultimate included); everyone else's stays orange. */
+function burnsBlue(player: Player | undefined): boolean {
+  return player?.mega === "charizard-x";
 }
 
 function commit(mesh: InstancedMesh, count: number): void {
@@ -266,6 +289,18 @@ function stardustGeometry(): BufferGeometry {
 export class Vfx {
   readonly root = new Group();
   private readonly fx: Fx;
+  /** Players whose mega shell broke this frame: the ceremony's key frame, where its sound starts. */
+  readonly megaShatters: PlayerId[] = [];
+  /** Trainer items that popped this frame (`late`: seconds past the pop), where their sound hits. */
+  readonly assistPops: {
+    player: PlayerId;
+    to: readonly PlayerId[];
+    item: AssistItem;
+    late: number;
+  }[] = [];
+  /** This frame's world and blend, for effects that find their bodies after the event frame. */
+  private world: World | null = null;
+  private alpha = 0;
   private readonly volumes: Volume[];
   private readonly decalMaterial: ShaderMaterial;
   private readonly dangerMaterial: ShaderMaterial;
@@ -284,6 +319,7 @@ export class Vfx {
   readonly tells: Tells;
   /** Events that need the player's position, replayed in `update`. */
   private readonly playerEvents: PlayerEvent[] = [];
+  private readonly untrackedLandings: ShotLanding[] = [];
   /** Heal pulses still growing (skills/healPulse.ts). */
   private readonly mends: zone.Mend[] = [];
   /** Ultimates being cast, drawn at their caster until their timeline has played. */
@@ -380,17 +416,10 @@ export class Vfx {
       case "projectile-feedback": {
         if ((this.projectileBeats.get(event.id) ?? -1) >= event.tick) break;
         this.projectileBeats.set(event.id, event.tick);
-        const look = shotLooks[event.move] ?? defaultShotLook(event.archetype, event.type);
         const track = this.shots.get(event.id);
-        if (event.ended) {
-          if (track) {
-            this.shots.delete(event.id);
-            this.releaseShot(track);
-          } else look.launch?.(fx, event.fromX, event.fromY, event.fromZ);
-        }
-        for (let hit = 0; hit < event.hits; hit++) look.hit?.(fx, event.x, event.y, event.z);
-        if (event.reason === "terrain") look.hit?.(fx, event.x, event.y, event.z);
-        else if (event.reason === "expired") look.fade?.(fx, event.x, event.y, event.z);
+        // A shot born and landed between frames has no track: `update` reads its caster's flame.
+        if (track) this.landShot(event, track.blue, track);
+        else this.untrackedLandings.push(event);
         break;
       }
       case "dash":
@@ -399,13 +428,22 @@ export class Vfx {
       case "player-hit":
       case "drain":
       case "evolve":
+      case "mega":
       case "ult":
       case "heal":
       case "buff":
+      case "assist":
       case "evade":
       // The new lines' ultimates share looks with older ones; the caster's line picks the drawing.
       case "ult-pulse":
         this.playerEvents.push(event);
+        break;
+      case "cast":
+        if (moveWeather[event.move]) this.playerEvents.push(event);
+        break;
+      // 火海 and 湿地 form with their area; 彩虹 has none.
+      case "pledge":
+        if (event.result === "rainbow") rainbowBurst(fx, event.x, event.z, RAINBOW_SPAN);
         break;
       case "item-burst":
         itemBurst(fx, event);
@@ -447,8 +485,13 @@ export class Vfx {
     viewYaw: number,
     self: Player,
     muzzles: ReadonlyMap<PlayerId, Muzzle>,
+    subject: Player = self,
   ): void {
     const fx = this.fx;
+    this.megaShatters.length = 0;
+    this.assistPops.length = 0;
+    this.world = world;
+    this.alpha = alpha;
     fx.dt = dt;
     fx.viewYaw = viewYaw;
     fx.time += dt;
@@ -459,9 +502,13 @@ export class Vfx {
     fx.ribbons.begin();
     for (const volume of this.volumes) volume.begin();
     this.replayPlayerEvents(world, alpha);
+    for (const event of this.untrackedLandings)
+      this.landShot(event, event.type === "fire" && burnsBlue(owner(world, event.owner)));
+    this.untrackedLandings.length = 0;
     this.updateAuras(world, alpha, dt, self.id);
     // Projectile heads and hazards paint over the status marks.
-    statusMarks(fx, world, alpha, self);
+    this.rainbow(world, alpha);
+    statusMarks(fx, world, alpha, subject);
     skills.skillBodies(fx, world, alpha);
     zone.zoneBodies(fx, world, alpha);
     coast.coastBodies(fx, world, alpha);
@@ -492,30 +539,79 @@ export class Vfx {
     this.projectileBeats.clear();
   }
 
+  /** 彩虹 under every player still fighting, drawn from the world so a restored run shows it too. */
+  private rainbow(world: World, alpha: number): void {
+    const remaining = world.rainbowUntil - (world.time - (1 - alpha) * TICK);
+    if (remaining <= 0) return;
+    for (const player of world.players) {
+      if (!player.alive || player.departed) continue;
+      rainbowAura(
+        this.fx,
+        lerp(player.px, player.x, alpha),
+        lerp(player.pz, player.z, alpha),
+        remaining,
+        seedOf(player.id),
+      );
+    }
+  }
+
   private replayPlayerEvents(world: World, alpha: number): void {
     for (const event of this.playerEvents) {
       const player = owner(world, event.player);
       if (!player) continue;
       const x = lerp(player.px, player.x, alpha);
       const z = lerp(player.pz, player.z, alpha);
+      flame.blue = (event.t === "ult-pulse" || event.t === "ult") && burnsBlue(player);
       if (event.t === "ult-pulse") ultPulse(this.fx, event, starters[player.starter].ultimate);
-      else if (event.t === "dash") common.dash(this.fx, x, z, player.dashX, player.dashZ);
+      else if (event.t === "cast") {
+        const weather = moveWeather[event.move];
+        const form = formOf(player);
+        if (weather) weatherCasts[weather](this.fx, x, z, form.radius, form.height);
+      } else if (event.t === "dash") common.dash(this.fx, x, z, player.dashX, player.dashZ);
       else if (event.t === "level" || event.t === "revive") common.levelUp(this.fx, x, z);
       else if (event.t === "drain")
         (player.starter === "gastly" ? dreamReturn : drainBack)(this.fx, event.x, event.z, x, z);
       else if (event.t === "evade") {
         if (player.starter === "gastly") shadowPhase(this.fx, x, z);
       } else if (event.t === "evolve") evolveColumn(this.fx, x, z);
-      else if (event.t === "ult") {
+      else if (event.t === "mega") {
+        const form = formOf(player);
+        const id = event.player;
+        megaEvolve(this.fx, x, z, form.radius, form.height, burnsBlue(player), () =>
+          this.megaShatters.push(id),
+        );
+      } else if (event.t === "ult") {
         const ultimate = starters[event.line].ultimate;
         ultCast(this.fx, ultimate, x, z);
         this.auras.push(castAura(event.player, ultimate, event.stage));
       } else if (event.t === "heal") healCue(this.fx, x, z, formOf(player).radius, event.share);
-      else if (event.t === "buff") {
+      else if (event.t === "assist") {
+        const { player: thrower, to, item } = event;
+        // The sim's recipients, wherever they are drawn when the item pops.
+        const targets = () => {
+          const points: number[] = [];
+          for (const id of to) {
+            const mate = this.world && owner(this.world, id);
+            if (!mate) continue;
+            const form = formOf(mate);
+            points.push(
+              lerp(mate.px, mate.x, this.alpha),
+              lerp(mate.pz, mate.z, this.alpha),
+              form.radius,
+              form.height,
+            );
+          }
+          return points;
+        };
+        trainerAssist(this.fx, item, x, z, TRAINER.radius, targets, (late) =>
+          this.assistPops.push({ player: thrower, to, item, late }),
+        );
+      } else if (event.t === "buff") {
         const form = formOf(player);
         buffCue(this.fx, x, z, form.radius, form.height);
       } else common.playerHurt(this.fx, x, z);
     }
+    flame.blue = false;
     this.playerEvents.length = 0;
   }
 
@@ -536,10 +632,13 @@ export class Vfx {
           oy: 0,
           oz: 0,
           age: 0,
+          blue: false,
         };
         track.id = shot.id;
         track.seen = 0;
         track.ox = track.oy = track.oz = track.age = 0;
+        track.blue = shot.type === "fire" && burnsBlue(owner(world, shot.owner));
+        flame.blue = track.blue;
         this.shots.set(shot.id, track);
         // Only shots heading the way the model faces start at its mouth; one fired backwards leaves
         // the body edge as simulated, rather than passing through the model.
@@ -563,6 +662,7 @@ export class Vfx {
           }
         }
       } else track.age += fx.dt;
+      flame.blue = track.blue;
       const blend = Math.max(0, 1 - track.age / LAUNCH_BLEND) ** 2;
       x += track.ox * blend;
       y += track.oy * blend;
@@ -570,10 +670,28 @@ export class Vfx {
       track.seen = this.frame;
       look.fly(fx, shot, x, y, z);
     }
+    flame.blue = false;
     sweep(this.shots, this.frame, this.releaseShot);
   }
 
   // Retain only a small simultaneous volley, never every historical projectile id.
+  /** A shot's contact or end beat, in its caster's flame; an untracked one launches here too. */
+  private landShot(event: ShotLanding, blue: boolean, track?: ShotTrack): void {
+    const fx = this.fx;
+    const look = shotLooks[event.move] ?? defaultShotLook(event.archetype, event.type);
+    flame.blue = blue;
+    if (event.ended) {
+      if (track) {
+        this.shots.delete(event.id);
+        this.releaseShot(track);
+      } else look.launch?.(fx, event.fromX, event.fromY, event.fromZ);
+    }
+    for (let hit = 0; hit < event.hits; hit++) look.hit?.(fx, event.x, event.y, event.z);
+    if (event.reason === "terrain") look.hit?.(fx, event.x, event.y, event.z);
+    else if (event.reason === "expired") look.fade?.(fx, event.x, event.y, event.z);
+    flame.blue = false;
+  }
+
   private readonly releaseShot = (track: ShotTrack): void => {
     if (this.freeShots.length < 128) this.freeShots.push(track);
   };
@@ -584,10 +702,13 @@ export class Vfx {
 
   private updateAreas(world: World, alpha: number): void {
     for (const area of world.areas) {
-      if (!area.move) continue;
-      const look =
-        (area.kind === "burst" ? burstLooks : areaLooks)[area.move] ??
-        defaultAreaLook(area.kind, area.type);
+      // A combination field has its own look, whichever pledge its damage is credited to.
+      const look = area.pledgeField
+        ? pledgeFields[area.pledgeField]
+        : area.move &&
+          ((area.kind === "burst" ? burstLooks : areaLooks)[area.move] ??
+            defaultAreaLook(area.kind, area.type));
+      if (!look) continue;
       let track = this.areas.get(area.id);
       if (!track) {
         track = this.freeAreas.pop() ?? { id: 0, seen: 0, delay: 0, struck: false };
@@ -598,12 +719,14 @@ export class Vfx {
         this.areas.set(area.id, track);
       }
       track.seen = this.frame;
+      // A combination field belongs to both pledges, so it keeps its own colours.
+      flame.blue = !area.pledgeField && area.type === "fire" && burnsBlue(owner(world, area.owner));
       // Following areas ride the interpolated owner, like the avatar does.
       const player = area.follow ? owner(world, area.owner) : undefined;
       let x = player ? lerp(player.px, player.x, alpha) : area.x;
       let z = player ? lerp(player.pz, player.z, alpha) : area.z;
       // A held beam leaves the body edge, like shots do, not the caster's centre.
-      if (player && archetypes[moves[area.move].archetype].launch === "edge") {
+      if (player && area.move && archetypes[moves[area.move].archetype].launch === "edge") {
         const reach = formOf(player).radius;
         x += area.dirX * reach;
         z += area.dirZ * reach;
@@ -618,6 +741,7 @@ export class Vfx {
       const charge = active ? 1 : Math.min(0.999, 1 - area.delay / track.delay);
       look.live?.(this.fx, area, x, z, charge);
     }
+    flame.blue = false;
     sweep(this.areas, this.frame, this.releaseArea);
   }
 
@@ -845,6 +969,7 @@ export class Vfx {
     for (const aura of this.auras) {
       const player = owner(world, aura.player);
       if (!player?.alive) continue;
+      flame.blue = burnsBlue(player);
       drawCastAura(
         this.fx,
         aura,
@@ -855,6 +980,7 @@ export class Vfx {
       aura.age += dt;
       if (aura.age < aura.life) this.auras[kept++] = aura;
     }
+    flame.blue = false;
     this.auras.length = kept;
   }
 

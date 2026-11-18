@@ -224,7 +224,13 @@ test("a run whose drawn seed cannot fit the map starts on the next seed instead 
   assert.throws(() => generateMap(unfit, forestMap), /「building」平台/);
   let next = unfit;
   const world = createWorldFromSeeds(
-    { stage: "forest", difficulty: 0, players: [{ starter: "pikachu" }] },
+    {
+      mode: "expedition",
+      rules: [],
+      stage: "forest",
+      difficulty: 0,
+      players: [{ trainer: "chengxi", starter: "pikachu" }],
+    },
     () => next++,
   );
   assert.equal(world.seed, unfit + 1);
@@ -232,10 +238,12 @@ test("a run whose drawn seed cannot fit the map starts on the next seed instead 
 
 test("a ground enemy standing in a puddle loses its burn and gets wet; a flyer stays dry", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: SEEDS[0],
     difficulty: 0,
-    players: [{ starter: "bulbasaur" }],
+    players: [{ trainer: "chengxi", starter: "bulbasaur" }],
   });
   world.spawn.credit = -Infinity;
   const [puddle] = world.map.water.puddles;
@@ -268,11 +276,13 @@ test("the desert's stamps run through the same pipeline: each ramp climbs its la
   // createWorld runs the final acceptance (stations, spawns, every passage and ramp) and throws on failure.
   for (const seed of SEEDS.slice(0, 4)) {
     const config = {
+      mode: "expedition",
+      rules: [],
       stage: "desert",
       route: routeTo("desert"),
       seed,
       difficulty: 0,
-      players: [{ starter: "pikachu" }],
+      players: [{ trainer: "chengxi", starter: "pikachu" }],
     };
     assert.doesNotThrow(() => createWorld(config), `desert seed ${seed}`);
   }
@@ -486,11 +496,13 @@ test("a finite crevasse cannot cut a required passage: its crossing stays a wide
 
 test("lava hurts through the hazard hit path, stays walkable, and never douses an existing burn", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "volcano",
     route: routeTo("volcano"),
     seed: 7919,
     difficulty: 0,
-    players: [{ starter: "pikachu" }],
+    players: [{ trainer: "chengxi", starter: "pikachu" }],
   });
   const { terrain } = world.map;
   assert.equal(world.map.water.puddles.length, 0, "the dry volcanic stage requests no water pools");

@@ -3,7 +3,7 @@
 // guardian brains, stations): those are typed records below, so a new id fails typecheck until it
 // has its line. Pure data: no Three.js, no DOM. The GPU screen is `ui/gpu/codex.ts`.
 
-import { abilities } from "./sim/content/abilities";
+import { abilities, abilityText } from "./sim/content/abilities";
 import { typeNames, type ElementType } from "./sim/content/elements";
 import { atLevel, modifierText } from "./sim/content/effects";
 import { resolveTrigger, triggerText } from "./sim/content/triggers";
@@ -12,14 +12,19 @@ import { fusionRecipes, signatureFusions } from "./sim/content/fusions";
 import { itemIds, items, type ItemId, ruleText, type ItemRule } from "./sim/content/items";
 import {
   lineForms,
+  stageForm,
   starterOrder,
   starters,
   type FormId,
   type StarterId,
 } from "./sim/content/lines/index";
-import { moves, type MoveDef, type MoveId } from "./sim/content/moves";
+import { FLARE_BLITZ_RECOIL, moves, type MoveDef, type MoveId } from "./sim/content/moves";
 import { reactionIds, reactions, type ReactionId } from "./sim/content/reactions";
 import { stageDefs } from "./sim/content/stages/index";
+import { sites } from "./sim/content/sites";
+import { SITE } from "./sim/content/params/sites";
+import type { SiteKind } from "./sim/state/field";
+import type { Rarity } from "./sim/state/entities";
 import { poiseOf } from "./sim/poise";
 import { stationNames } from "./sim/content/stations";
 import { statuses, statusIds, type StatusId, type StatusDef } from "./sim/content/statuses";
@@ -51,13 +56,15 @@ import {
 
 import type { SkillId } from "./sim/skills/index";
 
-import { FORGET } from "./sim/content/params/economy";
+import { BERRY, FORGET, STARDUST } from "./sim/content/params/economy";
+import { researchClass } from "./sim/content/dex-research";
 import type { StationKind } from "./sim/state/entities";
 import { ultimates } from "./sim/content/ultimates";
 import { describeRoll, rarityNames, statValue } from "./sim/upgrades";
 import {
   MAX_FUSION_STARS,
   MAX_MOVE_LEVEL,
+  MIN_UPGRADE_RARITY,
   rarityPower,
   TM_CASE,
   UPGRADE_BASE_DMG,
@@ -68,6 +75,11 @@ import { type LabId } from "./sim/content/lab";
 import { archetypeNames, reactionNames } from "./labels";
 import { labTerms } from "./glossary";
 import type { Progress } from "./progress";
+import { researchOf } from "./research";
+import type { StageId } from "./sim/content/stages/index";
+
+type Research = ReturnType<typeof researchOf>;
+type TaskKind = Research["tasks"][number]["kind"];
 
 export type CodexSectionId = "pokemon" | "moves" | "items" | "stations" | "enemies" | "statuses";
 
@@ -109,7 +121,10 @@ export type CodexBlock =
       ends: readonly [number, number];
       rows: readonly { label: string; low: string; high: string }[];
     }
-  | { kind: "refs"; title: string; refs: readonly CodexRef[] };
+  | { kind: "refs"; title: string; refs: readonly CodexRef[] }
+  /** A species' research tasks and points (`run/research.ts`), beside the player's own counts
+   *  (`progress.dex`), which stand even where a kind has no task. */
+  | ({ kind: "research"; title: string; record: Record<TaskKind, number> } & Research);
 
 export interface CodexEntry {
   /** `<section kind>:<content id>`, e.g. `move:ember`. */
@@ -150,7 +165,48 @@ export const statusKey = (id: StatusId) => `status:${id}`;
 export const reactionKey = (id: ReactionId) => `reaction:${id}`;
 
 const moveIds = Object.keys(moves) as MoveId[];
-const enemyIds = Object.keys(enemies) as EnemyId[];
+
+/** Where a species is met: a map's own spawns (roster, beats, guardian), or one of its sites. */
+type EncounterSource = "map" | SiteKind;
+
+const stageOrder = Object.keys(stageDefs) as StageId[];
+
+/** Every species a run can still meet, by source and the maps of each, in route order. Retired
+ *  species (a guardian the current maps replaced) have none; their saved counts stay untouched. */
+const encounters = (() => {
+  const met = new Map<EnemyId, Map<EncounterSource, StageId[]>>();
+  const add = (id: EnemyId, source: EncounterSource, stage: StageId) => {
+    const sources = met.get(id) ?? new Map<EncounterSource, StageId[]>();
+    const list = sources.get(source) ?? [];
+    if (!list.includes(stage)) list.push(stage);
+    sources.set(source, list);
+    met.set(id, sources);
+  };
+  for (const stage of Object.values(stageDefs))
+    for (const zone of stage.zones) {
+      for (const [, id] of zone.roster) add(id, "map", stage.id);
+      add(zone.guardian.species, "map", stage.id);
+      for (const { beat } of zone.beats)
+        if ("species" in beat)
+          for (const id of typeof beat.species === "string" ? [beat.species] : beat.species)
+            add(id, "map", stage.id);
+    }
+  for (const site of Object.values(sites))
+    for (const stage of site.stages) for (const id of site.species) add(id, site.id, stage);
+  for (const stage of sites["raid-den"].stages)
+    for (const [, id] of stageDefs[stage].zones.flatMap((zone) => zone.roster))
+      if (enemies[id].mobility.water !== "swim" && enemies[id].radius <= SITE.raid.maxRadius)
+        add(id, "raid-den", stage);
+  return met;
+})();
+
+/** The maps a species can be met on, in route order. */
+function speciesStages(id: EnemyId): StageId[] {
+  const stages = new Set([...(encounters.get(id)?.values() ?? [])].flat());
+  return stageOrder.filter((stage) => stages.has(stage));
+}
+
+const enemyIds = (Object.keys(enemies) as EnemyId[]).filter((id) => encounters.has(id));
 const stationKinds = Object.keys(stationNames) as StationKind[];
 const lines = starterOrder.map((id) => starters[id]);
 
@@ -164,18 +220,24 @@ function stageNote(line: StarterId, stage: number): string {
     : `Lv.${step.at} ${step.kind === "mature" ? "成熟" : "进化"}`;
 }
 
-function abilityRows(line: StarterId): { label: string; value: string }[] {
-  const def = starters[line];
-  const ability = abilities[def.ability];
-  return def.stages.map((_, stage) => ({
-    label: stageNote(line, stage),
-    value: [
-      ...ability.effect.modifiers.map((modifier) =>
-        modifierText({ ...modifier, value: modifier.value[stage]! }),
-      ),
-      ...ability.effect.triggers.map((trigger) => triggerText(resolveTrigger(trigger, stage))),
-    ].join("；"),
-  }));
+function abilityRows(line: StarterId, form: FormId): { label: string; value: string }[] {
+  const mega = starters[line].megas?.find((m) => m.form.id === form);
+  if (mega) {
+    const ability = abilities[mega.form.abilities.normal[0]];
+    return [{ label: ability.name, value: abilityText(ability, starters[line].stages.length - 1) }];
+  }
+  return starters[line].stages.flatMap((_, stage) => {
+    const current = stageForm(line, stage);
+    if (current.id !== form) return [];
+    const { normal, hidden } = current.abilities;
+    return (hidden ? [...normal, hidden] : normal).map((id) => {
+      const ability = abilities[id];
+      return {
+        label: `${stageNote(line, stage)} ${id === hidden ? "隐藏特性" : ""}${ability.name}`,
+        value: abilityText(ability, stage),
+      };
+    });
+  });
 }
 
 function formEntry(line: StarterId, form: FormId): CodexEntry {
@@ -205,13 +267,16 @@ function formEntry(line: StarterId, form: FormId): CodexEntry {
       {
         kind: "refs",
         title: "进化",
-        refs: def.stages.map((step, stage) =>
-          step.kind === "evolve"
-            ? { key: formKey(step.form.id), note: stageNote(line, stage) }
-            : { label: "成熟", note: `Lv.${step.at}` },
-        ),
+        refs: [
+          ...def.stages.map((step, stage) =>
+            step.kind === "evolve"
+              ? { key: formKey(step.form.id), note: stageNote(line, stage) }
+              : { label: "成熟", note: `Lv.${step.at}` },
+          ),
+          ...(def.megas ?? []).map((m) => ({ key: formKey(m.form.id), note: items[m.stone].name })),
+        ],
       },
-      { kind: "stats", title: `特性 · ${abilities[def.ability].name}`, rows: abilityRows(line) },
+      { kind: "stats", title: "特性", rows: abilityRows(line, form) },
       {
         kind: "stats",
         title: `终极技 · ${typeNames[ultimate.type]}`,
@@ -228,10 +293,16 @@ function formEntry(line: StarterId, form: FormId): CodexEntry {
       {
         kind: "refs",
         title: "进化招式",
-        refs: def.evolutionMoves.map((move, i) => ({
-          key: moveKey(move),
-          note: `Lv.${def.stages[i + 1]!.at} 起`,
-        })),
+        refs: [
+          ...def.evolutionMoves.map((move, i) => ({
+            key: moveKey(move),
+            note: `Lv.${def.stages[i + 1]!.at} 起`,
+          })),
+          ...(def.megas?.find((m) => m.form.id === form)?.moves ?? []).map((move) => ({
+            key: moveKey(move),
+            note: "超级进化后",
+          })),
+        ],
       },
       {
         kind: "refs",
@@ -263,6 +334,8 @@ function moveStats(move: MoveDef): { label: string; value: string }[] {
   if (move.status)
     rows.push({ label: statuses[move.status].name, value: percent(move.statusChance) });
   if (move.drain) rows.push({ label: "吸取", value: percent(move.drain) });
+  if (move.id === "flare-blitz")
+    rows.push({ label: "反作用", value: `${percent(FLARE_BLITZ_RECOIL)} 最大生命` });
   return rows;
 }
 
@@ -288,6 +361,8 @@ function moveLearners(id: MoveId): CodexRef[] {
     const kit = line.kit.indexOf(id);
     if (kit >= 0)
       refs.push({ key: first, note: kit === 0 ? "初始" : `Lv.${SIGNATURE_GATES[kit]} 起` });
+    for (const mega of line.megas ?? [])
+      if (mega.moves.includes(id)) refs.push({ key: formKey(mega.form.id), note: "超级进化后" });
     const evolution = line.evolutionMoves.indexOf(id);
     if (evolution >= 0) refs.push({ key: first, note: `Lv.${line.stages[evolution + 1]!.at} 起` });
   }
@@ -352,7 +427,7 @@ function moveEntry(id: MoveId): CodexEntry {
 
 /** An item's effect at one level: its modifiers at that level, then its triggers. */
 export function itemEffect(id: ItemId, level: number): string {
-  const { effect, rules, onPick } = items[id];
+  const { effect, rules, onPick, note } = items[id];
   return [
     ...(onPick?.levels ? [`共升 ${onPick.levels * level} 级`] : []),
     ...(onPick?.roll ? [`随机强化 ${level} 项属性`] : []),
@@ -363,6 +438,7 @@ export function itemEffect(id: ItemId, level: number): string {
     ...Object.entries(rules ?? {}).map(([rule, value]) =>
       ruleText(rule as ItemRule, value * level),
     ),
+    ...(note ? [note] : []),
   ].join("，");
 }
 
@@ -768,27 +844,136 @@ function enemyEntry(id: EnemyId): CodexEntry {
       },
       ...(behaviour.length ? [{ kind: "lines" as const, title: "行动", lines: behaviour }] : []),
       ...(inflicts.length ? [{ kind: "refs" as const, title: "造成状态", refs: inflicts }] : []),
+      ...dropBlocks(id),
     ],
   };
 }
 
-/** The player's own record of a species (`progress.dex`); one never met reads 0. */
-export function dexBlock(dex: Progress["dex"], id: EnemyId): CodexBlock {
-  const record = dex[id];
+const sourceNames = { ordinary: "野生", elite: "精英", guardian: "守卫" } as const;
+
+/** A chest at least `rarity` (`minRarity`); the top rarity is the chest's own. */
+function chestRow(rarity: Rarity | null): { label: string; value: string } {
+  const name = rarity ? rarityNames[rarity] : undefined;
   return {
-    kind: "stats",
-    title: "记录",
-    rows: [
-      { label: "见过", value: String(record?.seen ?? 0) },
-      { label: "击败", value: String(record?.defeated ?? 0) },
-      { label: "异色", value: String(record?.shiny ?? 0) },
-    ],
+    label: "宝箱",
+    value: name ? `1（${rarity === rarityNames.length - 1 ? name : `${name}起`}）` : "1",
   };
+}
+
+/**
+ * What a kill drops by where it was met, read from the kill path's rules (`sim/combat.ts`
+ * dropLoot, `sim/sites/index.ts` settleSiteKill): on a map by how the species appears
+ * (`researchClass`), at a site with the site's own reward. Route markers are left out.
+ */
+function dropRows(id: EnemyId, source: EncounterSource): { label: string; value: string }[] {
+  const { ordinary } = STARDUST;
+  const roll = `${ordinary.value}（${percent(ordinary.chance)}）`;
+  const berry = { label: "树果", value: percent(BERRY.chance) };
+  const elite = { label: "星星沙子", value: String(STARDUST.elite) };
+  if (source === "map") {
+    const kind = researchClass(id);
+    if (kind === "ordinary") return [{ label: "星星沙子", value: roll }, berry];
+    return [
+      chestRow(null),
+      {
+        label: "星星沙子",
+        value: String(kind === "guardian" ? STARDUST.guardian : STARDUST.elite),
+      },
+      berry,
+    ];
+  }
+  // A fished Magikarp is no elite: the catch's 星星沙子 joins its ordinary roll.
+  if (source === "fishing" && id === "magikarp")
+    return [{ label: "星星沙子", value: `${SITE.rewards.fishStardust} + ${roll}` }, berry];
+  if (source === "snorlax") return [{ label: items.leftovers.name, value: "1" }, elite, berry];
+  return [
+    chestRow(source === "raid-den" || source === "ghost" ? 3 : MIN_UPGRADE_RARITY.chest),
+    elite,
+    berry,
+  ];
+}
+
+/** One 掉落 block per distinct drop; when sources differ each names where it was met. */
+function dropBlocks(id: EnemyId): CodexBlock[] {
+  const groups: { names: string[]; rows: { label: string; value: string }[] }[] = [];
+  for (const source of encounters.get(id)!.keys()) {
+    const rows = dropRows(id, source);
+    const name = source === "map" ? sourceNames[researchClass(id)] : sites[source].name;
+    const same = groups.find((group) => JSON.stringify(group.rows) === JSON.stringify(rows));
+    if (same) same.names.push(name);
+    else groups.push({ names: [name], rows });
+  }
+  return groups.map(({ names, rows }) => ({
+    kind: "stats",
+    title: groups.length > 1 ? `掉落 · ${names.join(" / ")}` : "掉落",
+    rows,
+  }));
 }
 
 /** An enemy page shows its shiny model only once the player has defeated a shiny of it. */
 export function hasShinyRecord(dex: Progress["dex"], id: EnemyId): boolean {
   return (dex[id]?.shiny ?? 0) > 0;
+}
+
+// ── 图鉴研究 ─────────────────────────────────────────────────────────────────
+
+/** How much of a species the 图鉴 shows: a silhouette, the basics, or everything. */
+export type ResearchView = "unseen" | "seen" | "done";
+
+export function researchView(dex: Progress["dex"], id: EnemyId): ResearchView {
+  const research = researchOf(dex, id);
+  return research.done ? "done" : research.seen ? "seen" : "unseen";
+}
+
+/** The research shelf's groups: each species a run can meet under the first map it is met on,
+ *  in route order. Together they are the research total. */
+export function researchGroups(): readonly { title: string; species: readonly EnemyId[] }[] {
+  return Object.values(stageDefs)
+    .map((stage) => ({
+      title: stage.name,
+      species: enemyIds.filter((id) => speciesStages(id)[0] === stage.id),
+    }))
+    .filter((group) => group.species.length > 0);
+}
+
+/**
+ * An enemy page as the player's research allows: unseen keeps only its tasks (no name, types,
+ * numbers or skills); seen adds the name, model, types and maps; done shows everything.
+ */
+export function researchedEntry(dex: Progress["dex"], entry: CodexEntry, id: EnemyId): CodexEntry {
+  const research = researchOf(dex, id);
+  const view = researchView(dex, id);
+  const record = dex[id];
+  const tasks: CodexBlock = {
+    kind: "research",
+    title: "研究",
+    ...research,
+    record: {
+      seen: record?.seen ?? 0,
+      defeated: record?.defeated ?? 0,
+      shiny: record?.shiny ?? 0,
+    },
+  };
+  if (view === "unseen")
+    return { ...entry, name: "？？？", types: [], tags: [], summary: "？？？", blocks: [tasks] };
+  const maps: CodexBlock = {
+    kind: "lines",
+    title: "出现地图",
+    lines: [
+      speciesStages(id)
+        .map((stage) => stageDefs[stage].name)
+        .join(" · "),
+    ],
+  };
+  if (view === "seen")
+    return {
+      ...entry,
+      tags: entry.tags.filter((tag) => tag === "守卫"),
+      summary: entry.types.map((type) => typeNames[type]).join(" / "),
+      blocks: [maps, tasks],
+    };
+  const [numbers, ...rest] = entry.blocks;
+  return { ...entry, blocks: [numbers!, maps, tasks, ...rest] };
 }
 
 // ── 状态 / 反应 ──────────────────────────────────────────────────────────────
@@ -852,11 +1037,16 @@ function statusEntry(id: StatusId): CodexEntry {
       })
       .map((enemy) => ({ key: enemyKey(enemy), note: skillText[enemies[enemy].skill!.kind].name })),
     ...lines.flatMap((line) =>
-      abilities[line.ability].effect.triggers.some(
-        (trigger) => "status" in trigger && trigger.status === id,
-      )
-        ? [{ key: formKey(line.stages[0].form.id), note: abilities[line.ability].name }]
-        : [],
+      lineForms(line.id).flatMap((form) => {
+        const { normal, hidden } = form.abilities;
+        return (hidden ? [...normal, hidden] : normal).flatMap((key) =>
+          abilities[key].effect.triggers.some(
+            (trigger) => "status" in trigger && trigger.status === id,
+          )
+            ? [{ key: formKey(form.id), note: abilities[key].name }]
+            : [],
+        );
+      }),
     ),
     ...statusIds.flatMap((other) => {
       const { builds }: StatusDef = statuses[other];

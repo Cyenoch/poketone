@@ -29,11 +29,13 @@ import { addCircleBlocker, createNav } from "../src/run/sim/nav/index.ts";
 
 const world = (starters = ["charmander"], stage = "forest") =>
   createWorld({
+    mode: "expedition",
+    rules: [],
     stage,
     route: routeTo(stage),
     seed: 3,
     difficulty: 0,
-    players: starters.map((starter) => ({ starter })),
+    players: starters.map((starter) => ({ trainer: "chengxi", starter })),
   });
 const context = (w) => {
   const grid = new EnemyGrid();

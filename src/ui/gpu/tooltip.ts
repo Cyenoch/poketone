@@ -111,7 +111,11 @@ export class GpuTooltip {
     edge: Container | null = null,
     avoid: Container[] = [],
   ): void {
-    if (anchor === this.want) return;
+    if (anchor === this.want) {
+      // The same control explaining something new (another partner's bond): new words, no entrance.
+      if (anchor && text !== this.raw) this.raw = text;
+      return;
+    }
     this.want = anchor;
     if (anchor) {
       this.anchor = anchor;

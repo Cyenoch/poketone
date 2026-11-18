@@ -1,3 +1,4 @@
+import { unlockIds } from "../../src/run/sim/content/unlocks.ts";
 // Cross-engine determinism harness. Pure: no node:*, no DOM, no rAF, so `run.mjs` bundles it once and
 // runs the very same file in bun (JSC), headless Chrome (V8) and Playwright WebKit (JSC).
 //   - runCase(name): golden v2's digests for one case (scripts/golden.mjs semantics).
@@ -115,7 +116,15 @@ export function mapDigest(seeds) {
   for (const seed of seeds) {
     try {
       const world = [4242, 7].includes(seed)
-        ? createWorld({ stage: "forest", seed, difficulty: 0, players: [{ starter: "pikachu" }] })
+        ? createWorld({
+            mode: "expedition",
+            rules: [],
+            unlocks: unlockIds,
+            stage: "forest",
+            seed,
+            difficulty: 0,
+            players: [{ trainer: "chengxi", starter: "pikachu", unlocks: unlockIds }],
+          })
         : null;
       const map = world ? world.map : generateMap(seed, forestMap).map;
       out[seed] = stageDigests(map, world?.nav);

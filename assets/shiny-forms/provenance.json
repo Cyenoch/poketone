@@ -69,6 +69,24 @@
       "texture",
       "炭灰色身体，暗红翼膜，奶油色腹部，橙黄尾焰"
     ],
+    "charizard-x": [
+      6,
+      "超级喷火龙Ｘ",
+      "original",
+      "mega-charizard",
+      "texture",
+      "texture",
+      "黑色身体偏青绿，青绿火焰、翼膜与腹部（自定调色，非 HOME 取样）；只保留脚爪白色"
+    ],
+    "charizard-y": [
+      6,
+      "超级喷火龙Ｙ",
+      "original",
+      "mega-charizard",
+      "texture",
+      "texture",
+      "紫色身体，绯红翼膜，奶油色腹部，尾焰保留橙黄（自定调色，非 HOME 取样）"
+    ],
     "bulbasaur": [
       1,
       "妙蛙种子",
@@ -260,5 +278,17 @@
       "texture",
       "沙金色岩壳，浅暖黄头部与四肢"
     ]
+  },
+  "megaCharizardBake": {
+    "command": "python3 assets/shiny-forms/bake-base-color.py <output-root>; copy candidates/charizard-{x,y}-baseColor.png to public/textures/shiny/charizard-{x,y}.png (scripts/shiny-portraits.mjs skips forms the sim has not registered yet)",
+    "modelSha256": {
+      "charizard-x": "9a2c851aa5724c1afc153ff399f71dfe1c8ae36383a8c6b955639059b8e4f2e6",
+      "charizard-y": "09d627c6c933eae0174782efdcd2cb9defd9042f5650c8a82692737b83092cc8"
+    },
+    "candidateSha256": {
+      "charizard-x": "ff73a1e2bd7dacbda7e9924e4558c4b6b49bc0b1348b9f60acf1b536f31844c4",
+      "charizard-y": "a09dae8d4a8986e2143a612bbd13d4d408bde2871e79b6c478af264f1a5bff56"
+    },
+    "verification": "bake reproduces public/textures/shiny/charizard.png byte-identically; Blender workbench side/front renders inspected"
   }
 }

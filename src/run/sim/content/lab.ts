@@ -1,5 +1,8 @@
 // Research definitions. Prices live in params/economy.ts; pricing, formatting and bonus folds stay in run/lab.ts.
-import type { ModifierOp, StatId } from "./effects";
+import type { ModifierDef } from "./effects";
+import { bondLabId, bondResearch, type BondLabId } from "./bonds";
+import { starterOrder, starters, type StarterId } from "./lines/index";
+import { BOND_LAB_MAX } from "./params/bonds";
 import type { RunRule } from "../state/entities";
 import { BASE_CHOICES, BASE_ITEM_SLOTS, MAX_ITEM_SLOTS, BASE_MOVE_SLOTS } from "./params/cards";
 import { BASE_PARTNER_SLOTS } from "./params/partners";
@@ -31,7 +34,8 @@ export type LabId =
   | "research"
   | "party"
   | "archive"
-  | "bag";
+  | "bag"
+  | BondLabId;
 
 export type LabLevels = Partial<Record<LabId, number>>;
 
@@ -48,10 +52,12 @@ export interface MetaBonuses {
 /** Pure research data: `per` is added per bought level; stat operations follow content/effects.ts. */
 export interface LabDefinition {
   id: LabId;
+  /** Present only for a node in this partner's bond file. */
+  starter?: StarterId;
   name: string;
   stat: string;
   max: number;
-  grants: { stat: StatId; op: ModifierOp } | { rule: RunRule } | { meta: keyof MetaBonuses };
+  grants: Omit<ModifierDef<number>, "value"> | { rule: RunRule } | { meta: keyof MetaBonuses };
   per: number;
   /** Percentage, fixed-decimal bonus, or total including the unresearched base. */
   format: "percent" | { digits: number } | { base: number };
@@ -274,4 +280,22 @@ export const labDefinitions: readonly LabDefinition[] = [
     per: 1,
     format: { base: BACKPACK_BASE },
   },
+  ...starterOrder.map((starter): LabDefinition => {
+    const { label, value, ...grants } = bondResearch[starter];
+    return {
+      id: bondLabId(starter),
+      starter,
+      name: starters[starter].stages[0].form.name,
+      stat: label,
+      max: BOND_LAB_MAX,
+      grants,
+      per: value,
+      format:
+        grants.stat === "armor" || grants.stat === "maxHp"
+          ? { digits: 0 }
+          : grants.stat === "regen"
+            ? { digits: 1 }
+            : "percent",
+    };
+  }),
 ];

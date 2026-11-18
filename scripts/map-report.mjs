@@ -10,6 +10,7 @@ import { routeTo } from "./fixtures/route.mjs";
 const count = Number(process.argv[2] ?? 200);
 const stages = (process.argv[3] ?? Object.keys(stageDefs).join(",")).split(",");
 const players = Array.from({ length: Number(process.argv[4] ?? 2) }, () => ({
+  trainer: "chengxi",
   starter: "pikachu",
 }));
 
@@ -25,7 +26,15 @@ for (const stage of stages) {
     const seed = k * 7919;
     const start = performance.now();
     try {
-      const world = createWorld({ stage, route: routeTo(stage), seed, difficulty: 0, players });
+      const world = createWorld({
+        mode: "expedition",
+        rules: [],
+        stage,
+        route: routeTo(stage),
+        seed,
+        difficulty: 0,
+        players,
+      });
       digest.update(Buffer.from(world.map.terrain.heights.buffer));
       digest.update(Buffer.from(world.map.water.depth.values.buffer));
       digest.update(JSON.stringify([world.map.pads, world.map.water.puddles, world.map.obstacles]));

@@ -7,7 +7,7 @@ import { type NavigationAction } from "../../platform/input";
 import { InputGlyph } from "./input-glyph";
 import { GpuDamageNumbers } from "./run-damage-numbers";
 import { softOf } from "./run-choice-surface";
-import { crestPose, themeColors, themeGrain } from "./run-theme";
+import { crestPose, themeColors, themeGrain, typeColors } from "./run-theme";
 import { SlantPlate } from "./slant-plate";
 import { LIFT, SNAP } from "./motion";
 import { RADIUS_INNER, slantOf, ui } from "./tokens";
@@ -37,6 +37,7 @@ import type { UiInsets } from "./viewport";
 import { RunHudArt, RunHudSurface } from "./run-hud-surface";
 import { RunHudInteract } from "./run-hud-interact";
 import { OutlinedText } from "./outlined-text";
+import { ellipsize } from "./text-fit";
 import { uiEaseOut, cubicBezier } from "./focus-mark";
 
 const cssEase = (t: number) => cubicBezier(t, 0.25, 0.1, 0.25, 1);
@@ -50,6 +51,10 @@ import { slantTag } from "./tag";
 import { formDefs } from "../../run/sim/content/lines/index";
 import { GpuTrainerCutin, type CueGlyphs } from "./trainer-cutin";
 import { WeatherChip } from "../../run/view/weatherChip";
+import { assistLooks, trainers, type TrainerId } from "../../trainers";
+import { trainerKits } from "../../run/sim/content/trainers";
+import { TRAINER } from "../../run/sim/content/params/trainers";
+import { assistLeft } from "../../run/sim/trainers";
 
 export interface RunHudNotice {
   id: number;
@@ -68,6 +73,7 @@ export interface RunHudCallbacks {
   stats(): void;
   dash(): void;
   ultimate(): void;
+  assist(): void;
   interact(): void;
   turn(direction: -1 | 0 | 1): void;
 }
@@ -102,7 +108,16 @@ interface Mate {
 const SNAPSHOT_MS = 100;
 interface Control {
   panel: Container;
-  action: "fullscreen" | "pause" | "stats" | "dash" | "ultimate" | "left" | "right" | "interact";
+  action:
+    | "fullscreen"
+    | "pause"
+    | "stats"
+    | "dash"
+    | "ultimate"
+    | "assist"
+    | "left"
+    | "right"
+    | "interact";
   enabled: boolean;
   /** The slanted ink face of a square key; the round thumbs and the prompt have none. */
   plate?: SlantPlate;
@@ -119,6 +134,19 @@ const KEY_HOVER = "#2e2e3a";
 const IDLE_STEP_MS = 1000 / 15;
 /** `--stick-zone`: the bottom-left span the floating stick's thumb owns on touch. */
 const STICK_ZONE = 150;
+/** The name row: the form's name, then its type chips (slant tags, 11px: 21 tall). */
+const NAME_ROW_GAP = 6;
+/** The gap once the chips show crests only: the name keeps the room it needs. */
+const CREST_ROW_GAP = 4;
+const TYPE_TAG_GAP = 2;
+const TYPE_TAG_SIZE = 11;
+/** A type chip that shows its crest only: the icon and `pad` past the lean on each side. */
+const CREST_TAG_ICON = 14;
+const CREST_TAG_PAD = 0;
+/** The smallest the form's name steps down to before it is cut. */
+const NAME_MIN_SIZE = 12;
+const CREST_TAG_WIDTH =
+  CREST_TAG_ICON + 2 * CREST_TAG_PAD + slantOf(Math.round(TYPE_TAG_SIZE * 1.9));
 
 const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
 /**
@@ -248,15 +276,31 @@ export class GpuRunHud {
   private readonly nameRow = new Container({
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: NAME_ROW_GAP,
     minWidth: 0,
   });
   private readonly formName = new OutlinedText(
     { text: "", fontSize: 16, fontWeight: 800, color: ui.white },
     { width: 3, color: ui.ink },
   );
-  private readonly formTypes = new Container({ flexDirection: "row", gap: 2, flexShrink: 0 });
+  private readonly formTypes = new Container({
+    flexDirection: "row",
+    gap: TYPE_TAG_GAP,
+    flexShrink: 0,
+  });
   private typeTags: { tag: Container; dispose(): void }[] = [];
+  private formTypeList: readonly ElementType[] = [];
+  /** How the name row fits its plate, decided by measure (`fitNameRow`): the type chips show
+   *  their crests only, then the name steps down a pixel at a time to `NAME_MIN_SIZE`, and only
+   *  past that it is cut with "…" (`nameRoom`, the width it is cut to). */
+  private nameCrests = false;
+  private nameFontSize = 16;
+  private nameRoom: number | null = null;
+  private nameText = "";
+  /** The type chips' width with their names, measured while they show them. */
+  private namedTypesWidth: number | null = null;
+  /** The name's full width per pixel of font size, measured while it is not cut. */
+  private nameUnit: number | null = null;
   /** Compact lines for the other players, under the vitals. */
   private readonly team = new Container({
     flexDirection: "column",
@@ -584,7 +628,6 @@ export class GpuRunHud {
     this.hpText.add(this.hpNow.root, this.hpMax.root);
     hpBox.add(this.hp.content, this.hpChip.content, this.hpText);
     this.hpPlate.add(hpBox);
-    this.formName.root.setProperties({ flexShrink: 1, minWidth: 0 });
     this.nameRow.add(stack(this.formName.root, 1), stack(this.formTypes, 1));
     this.plate.add(stack(this.nameRow, 1), stack(this.hpPlate, 1), stack(this.xpBar, 1));
     // The medal overlaps the plate's left end and draws over it.
@@ -683,7 +726,13 @@ export class GpuRunHud {
     // The dash gauge stays ice: distinct from every type colour.
     this.dash.uniforms.hudColor.value.set("#d8effb");
     dash.panel.add(this.keycap("Space", "dash"), this.dashPips);
-    this.thumbs.add(ultimate.panel, dash.panel);
+    // The trainer's item: one size under the ultimate, beside it; its art arrives with the trainer.
+    const assist = this.addThumb("assist", 0);
+    this.assist = assist.surface;
+    this.assistTime.root.setProperties({ positionType: "absolute", display: "none" });
+    assist.panel.add(stack(this.assistTime.root, 2), this.keycap("G", "assist"));
+    this.assistPanel = assist.panel;
+    this.thumbs.add(assist.panel, ultimate.panel, dash.panel);
     this.placeBar();
     this.bottom.add(this.slots, this.actions);
     this.controls.push({
@@ -725,7 +774,7 @@ export class GpuRunHud {
   }
   /** A round thumb key (dash, ultimate): its outer ring is the gauge. */
   private addThumb(
-    action: "dash" | "ultimate",
+    action: "dash" | "ultimate" | "assist",
     glyph: number,
   ): { panel: Container; surface: RunHudSurface } {
     const panel = new Container({
@@ -936,7 +985,8 @@ export class GpuRunHud {
       paddingY: this.compact ? 5 : 7,
       gap: this.compact ? 3 : 4,
     });
-    this.formName.set({ fontSize: this.compact ? 14 : 16 });
+    // The row refits from the full size on the next layout.
+    this.setNameFit(this.nameCrests, this.compact ? 14 : 16, null);
     const hpHeight = this.compact ? 18 : 22;
     this.hpPlate.setProperties({ height: hpHeight });
     this.xpBar.setProperties({ height: this.compact ? 5 : 6 });
@@ -994,10 +1044,11 @@ export class GpuRunHud {
     sizeSlots(this.moves, this.compact ? 48 : 60);
     sizeSlots(this.items, this.compact ? 34 : 40);
     for (const control of this.controls) {
-      const thumb = control.action === "dash" || control.action === "ultimate";
-      // The thumbs are 64 (76 under a coarse pointer) and the keys 48 tall in short landscape too;
-      // only slots and type shrink there.
-      const target = thumb ? (this.coarse ? 76 : 64) : 48;
+      const assist = control.action === "assist";
+      const thumb = control.action === "dash" || control.action === "ultimate" || assist;
+      // The thumbs are 64 (76 under a coarse pointer), the trainer's item one size under them, and
+      // the keys 48 tall in short landscape too; only slots and type shrink there.
+      const target = assist ? (this.coarse ? 60 : 52) : thumb ? (this.coarse ? 76 : 64) : 48;
       control.panel.setProperties({
         minWidth: v.minTarget,
         minHeight: v.minTarget,
@@ -1083,6 +1134,17 @@ export class GpuRunHud {
       this.stage.invalidate();
     });
   }
+  /**
+   * Touch: how far the right-corner actions (the turn pair over dash, the ultimate and the
+   * trainer's item) reach in from the screen's right edge, in stage units, as last laid out; 0 when
+   * they are not in that corner.
+   */
+  get actionReach(): number {
+    const m = this.actions.globalMatrix.value?.elements,
+      size = this.actions.size.value;
+    if (!this.coarse || !m || !size) return 0;
+    return this.stage.viewport.width - (m[12]! - this.stage.camera.left - size[0] / 2);
+  }
   setChoiceOpen(open: boolean): void {
     if (this.choiceOpen === open) return;
     this.choiceOpen = open;
@@ -1145,7 +1207,7 @@ export class GpuRunHud {
     this.skillRow.setProperties({ gap: this.compact ? 10 : 14 });
   }
   /** `.run-thumb kbd`: an ice Tag badge on the lower-right rim (keyboard only). */
-  private keycap(key: string, action: "ult" | "dash" | "stats"): Container {
+  private keycap(key: string, action: "ult" | "assist" | "dash" | "stats"): Container {
     const cap = stack(
       new Container({
         positionType: "absolute",
@@ -1218,14 +1280,14 @@ export class GpuRunHud {
     if (snap.form !== this.portraitForm) {
       this.portraitForm = snap.form;
       const def = formDefs[snap.form];
+      this.formTypeList = def.types;
+      this.namedTypesWidth = null;
+      this.nameUnit = null;
+      this.nameText = def.name;
       this.formName.set({ text: def.name });
-      for (const tag of this.typeTags) {
-        tag.tag.removeFromParent();
-        tag.dispose();
-        tag.tag.dispose();
-      }
-      this.typeTags = def.types.map((type) => slantTag(typeNames[type], { size: 11 }));
-      this.formTypes.add(...this.typeTags.map((tag) => tag.tag));
+      this.nameCrests = false;
+      this.setTypeTags(false);
+      this.setNameFit(false, this.compact ? 14 : 16, null);
     }
     this.updateTeam(snap.team);
     this.mateShiny.length = 0;
@@ -1255,7 +1317,7 @@ export class GpuRunHud {
     this.clockPlate.set({ fill: plateInk });
     this.metaPlate.set({ fill: plateInk });
     this.metaText.setProperties({
-      text: `${snap.routeStep + 1}/${ROUTE_TIERS.length} ${stageDefs[snap.stage].name} ${zoneState(snap)} · ${snap.kills}`,
+      text: `${routePlace(snap)} ${stageDefs[snap.stage].name} ${zoneState(snap)} · ${snap.kills}`,
     });
     if (previous && previous.stardust !== snap.stardust) this.popStardust();
     // This run's earnings, written as a gain (the banked total shows only in the lobby).
@@ -1346,6 +1408,7 @@ export class GpuRunHud {
     }
     const ult = this.controls.find((c) => c.action === "ultimate")!;
     fade(ult.panel, snap.casting && protection === 0 ? 0.6 : 1);
+    this.updateAssist(snap, previous);
     this.weatherChip.set(snap.weather, this.compact);
     this.interact.set(
       snap.prompt,
@@ -1554,7 +1617,37 @@ export class GpuRunHud {
       uiEaseOut,
     );
   }
-  private readyPulse(action: "dash" | "ultimate", pose: { scale: number }, duration: number): void {
+  /** The trainer's item: its art (greyed while it recovers), the ring refilling over the cooldown
+   *  and the whole seconds left on it; a pulse when it is back. */
+  private updateAssist(snap: RunSnapshot, previous: RunSnapshot | null | undefined): void {
+    if (snap.trainer !== this.assistTrainer) {
+      this.assistTrainer = snap.trainer;
+      this.assistArt?.content.removeFromParent();
+      this.assistArt?.dispose();
+      this.assistArt = new RunHudArt(assistLooks[trainerKits[snap.trainer].assist].icon, () =>
+        this.stage.invalidate(),
+      );
+      this.assistArt.content.setProperties({ width: "64%", height: "64%" });
+      this.assistPanel.add(stack(this.assistArt.content, 1));
+      this.assist.uniforms.hudColor.value.set(trainers[snap.trainer].light);
+      this.assist.uniforms.hudLight.value.set(trainers[snap.trainer].light);
+    }
+    const left = assistLeft(snap.time, snap.assistReady);
+    const ready = left === 0;
+    this.assist.uniforms.hudFill.value = ready ? 1 : Math.max(0, 1 - left / TRAINER.cooldown);
+    this.assist.uniforms.hudReady.value = ready ? 1 : 0;
+    this.assistArt!.uniforms.artGray.value = ready ? 0 : 0.85;
+    this.assistArt!.uniforms.artBright.value = ready ? 1 : 0.6;
+    this.assistTime.root.setProperties({ display: ready ? "none" : "flex" });
+    if (!ready) this.assistTime.set({ text: String(Math.ceil(left)) });
+    if (ready && previous && assistLeft(previous.time, previous.assistReady) > 0)
+      this.readyPulse("assist", this.assistPose, 260);
+  }
+  private readyPulse(
+    action: "dash" | "ultimate" | "assist",
+    pose: { scale: number },
+    duration: number,
+  ): void {
     this.stage.motion.cancel(pose);
     pose.scale = 1.14;
     const panel = this.controls.find((c) => c.action === action)!.panel;
@@ -1584,6 +1677,15 @@ export class GpuRunHud {
   /** `.run-ult img` filter: saturate(.25) brightness(.75) until ready, 160ms transition. */
   private readonly ultLook = { gray: 0.75, bright: 0.75 };
   private ultReady: boolean | null = null;
+  private assist!: RunHudSurface;
+  private assistPanel!: Container;
+  private assistArt: RunHudArt | null = null;
+  private assistTrainer: TrainerId | null = null;
+  private readonly assistPose = { scale: 1 };
+  private readonly assistTime = new OutlinedText(
+    { text: "", fontSize: 15, fontWeight: 800, color: ui.white },
+    { width: 3, color: ui.ink },
+  );
   get inputBlocked(): boolean {
     return !this.state?.visible || this.state.blocked;
   }
@@ -1605,6 +1707,75 @@ export class GpuRunHud {
       visible,
       (slot) => this.mateShiny[slot] ?? false,
     );
+  }
+  private setTypeTags(crests: boolean): void {
+    for (const tag of this.typeTags) {
+      tag.tag.removeFromParent();
+      tag.dispose();
+      tag.tag.dispose();
+    }
+    this.typeTags = this.formTypeList.map((type) =>
+      crests
+        ? slantTag(
+            "",
+            { size: TYPE_TAG_SIZE, face: typeColors[type].soft, pad: CREST_TAG_PAD },
+            new Image({
+              src: `/art/icons/crests/${type}.webp`,
+              width: CREST_TAG_ICON,
+              height: CREST_TAG_ICON,
+            }),
+          )
+        : slantTag(typeNames[type], { size: TYPE_TAG_SIZE }),
+    );
+    this.formTypes.add(...this.typeTags.map((tag) => tag.tag));
+  }
+  /** The full name shows wherever it can: when it and the type chips overrun the row, the chips
+   *  drop their names for crests, then the name steps down to `NAME_MIN_SIZE`, then it is cut.
+   *  The chips are never covered. */
+  private fitNameRow(): void {
+    const row = this.nameRow.size.value?.[0],
+      name = this.formName.root.size.value?.[0],
+      types = this.formTypes.size.value?.[0];
+    if (row === undefined || name === undefined || types === undefined) return;
+    if (!this.nameCrests) this.namedTypesWidth = types;
+    // Text width scales with its size, so one measure gives the name's width at any size.
+    if (this.nameRoom === null) this.nameUnit = name / this.nameFontSize;
+    if (this.namedTypesWidth === null || this.nameUnit === null) return;
+    const base = this.compact ? 14 : 16;
+    const count = this.formTypeList.length;
+    const crests = count * CREST_TAG_WIDTH + (count - 1) * TYPE_TAG_GAP;
+    const room = row - CREST_ROW_GAP - crests;
+    if (this.nameUnit * base + NAME_ROW_GAP + this.namedTypesWidth <= row + 0.5)
+      this.setNameFit(false, base, null);
+    else {
+      const size = Math.min(base, Math.floor((room + 0.5) / this.nameUnit));
+      if (size >= NAME_MIN_SIZE) this.setNameFit(true, size, null);
+      else this.setNameFit(true, NAME_MIN_SIZE, room);
+    }
+    if (this.nameRoom !== null) {
+      const cut = ellipsize(this.formName.fill, this.nameText);
+      if (cut !== undefined && cut !== this.formName.fill.properties.peek().text)
+        this.formName.set({ text: cut });
+    }
+  }
+  private setNameFit(crests: boolean, size: number, room: number | null): void {
+    if (crests !== this.nameCrests) {
+      this.nameCrests = crests;
+      this.setTypeTags(crests);
+      this.nameRow.setProperties({ gap: crests ? CREST_ROW_GAP : NAME_ROW_GAP });
+    }
+    if (size !== this.nameFontSize) {
+      this.nameFontSize = size;
+      this.formName.set({ fontSize: size });
+    }
+    if (room !== this.nameRoom) {
+      const cut = room !== null;
+      this.nameRoom = room;
+      // Cut: the name's box takes the room and the text shrinks into it (see `ellipsize`).
+      this.formName.root.setProperties({ width: cut ? room : undefined });
+      this.formName.fill.setProperties({ flexShrink: cut ? 1 : 0, minWidth: 0 });
+      if (!cut) this.formName.set({ text: this.nameText });
+    }
   }
   afterLayout(deltaMs: number): void {
     // Under the left column (vitals, teammates, the notice): its foot from the stage top.
@@ -1714,6 +1885,7 @@ export class GpuRunHud {
     if (this.state?.visible && !this.state.blocked) this.stepXp(deltaMs);
     for (const slot of this.moves) this.sweepSlot(slot, deltaMs);
     this.fitPlateEnds();
+    this.fitNameRow();
     if (!this.state?.visible) return;
     if (!idleStep) return;
     if (this.hp.uniforms.hudReady.value > 0) {
@@ -1888,6 +2060,7 @@ export class GpuRunHud {
     else if (action === "stats") this.callbacks.stats();
     else if (action === "dash") this.callbacks.dash();
     else if (action === "ultimate") this.callbacks.ultimate();
+    else if (action === "assist") this.callbacks.assist();
     else if (action === "interact") this.callbacks.interact();
   }
   down(id: number, x: number, y: number): boolean {
@@ -1898,7 +2071,8 @@ export class GpuRunHud {
     if (this.controls[index]!.action === "interact") this.interact.setPressed(true);
     const action = this.controls[index]!.action;
     if (action === "left" || action === "right") this.updateTurn();
-    else if (action === "dash" || action === "ultimate") this.activate(index);
+    else if (action === "dash" || action === "ultimate" || action === "assist")
+      this.activate(index);
     return true;
   }
   move(id: number, x: number, y: number): void {
@@ -1914,7 +2088,13 @@ export class GpuRunHud {
     if (c.action === "interact") this.interact.setPressed(false);
     else this.paintFocus();
     if (c.action === "left" || c.action === "right") this.updateTurn();
-    else if (!cancel && this.hit(x, y) === index && c.action !== "dash" && c.action !== "ultimate")
+    else if (
+      !cancel &&
+      this.hit(x, y) === index &&
+      c.action !== "dash" &&
+      c.action !== "ultimate" &&
+      c.action !== "assist"
+    )
       this.activate(index);
   }
   private updateTurn(): void {
@@ -2039,9 +2219,17 @@ export class GpuRunHud {
     this.metaPlate.dispose();
     this.purseFace.dispose();
     this.ultArt.dispose();
+    this.assistArt?.dispose();
     for (const surface of this.surfaces) surface.dispose();
     this.stage.dispose();
   }
+}
+
+/** Where the run stands on its way: the tower's floor, or the expedition's map of the route. */
+function routePlace(snap: RunSnapshot): string {
+  return snap.floor !== undefined
+    ? `第 ${snap.floor} 层`
+    : `${snap.routeStep + 1}/${ROUTE_TIERS.length}`;
 }
 
 /** Where the zone stands, for the clock's meta line: the final swarm's countdown until the guardian is up. */
@@ -2050,5 +2238,7 @@ function zoneState(snap: RunSnapshot): string {
   if (zone.phase !== "active") return "出口";
   if (snap.rampage) return "暴走";
   if (snap.boss) return "守卫战";
+  if (zone.finalSwarm === null) return "守卫战";
+  if (snap.floor !== undefined) return formatTime(Math.max(0, zone.finalSwarm - zone.time));
   return `暴走 ${formatTime(Math.max(0, zone.finalSwarm - zone.time))}`;
 }

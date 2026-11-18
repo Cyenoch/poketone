@@ -2,16 +2,19 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createWorld } from "../src/run/sim/world.ts";
 import { ultimates } from "../src/run/sim/content/ultimates.ts";
+import { moves } from "../src/run/sim/content/moves.ts";
 import { createTerrainUniforms } from "../src/run/view/terrain.ts";
 import { Vfx } from "../src/run/view/vfx.ts";
 import { Decal } from "../src/run/view/vfx/decals.ts";
 
 test("Blast Burn disc hits show their entire event radius on the first rendered frame", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 154,
     difficulty: 0,
-    players: [{ starter: "charmander" }],
+    players: [{ trainer: "chengxi", starter: "charmander" }],
   });
   const uniforms = createTerrainUniforms(world.map.terrain);
   try {
@@ -64,10 +67,12 @@ test("Blast Burn disc hits show their entire event radius on the first rendered 
 
 test("burning-spot ticks release their geometry before the next damage tick", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 154,
     difficulty: 0,
-    players: [{ starter: "charmander" }],
+    players: [{ trainer: "chengxi", starter: "charmander" }],
   });
   const pulses = ultimates["blast-burn"].tiers[0].filter((pulse) => pulse.look === "embers");
   const uniforms = createTerrainUniforms(world.map.terrain);
@@ -100,10 +105,12 @@ test("burning-spot ticks release their geometry before the next damage tick", ()
 
 test("instant player bursts expose the full damage disc before their residue", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 154,
     difficulty: 0,
-    players: [{ starter: "charmander" }],
+    players: [{ trainer: "chengxi", starter: "charmander" }],
   });
   const uniforms = createTerrainUniforms(world.map.terrain);
   try {
@@ -183,5 +190,111 @@ test("instant player bursts expose the full damage disc before their residue", (
     }
   } finally {
     uniforms.uTerrainHeight.value.dispose();
+  }
+});
+
+test("Mega Charizard X burns Blast Burn blue and Y keeps it orange", () => {
+  const pulse = ultimates["blast-burn"].tiers.flat().find((pulse) => pulse.look === "blast");
+  for (const [mega, blue] of [
+    ["charizard-x", 1],
+    ["charizard-y", 0],
+  ]) {
+    const world = createWorld({
+      mode: "expedition",
+      rules: [],
+      stage: "forest",
+      seed: 154,
+      difficulty: 0,
+      players: [{ trainer: "chengxi", starter: "charmander" }],
+    });
+    world.players[0].mega = mega;
+    const uniforms = createTerrainUniforms(world.map.terrain);
+    const vfx = new Vfx({ uniforms, heightAt: () => 0 }, "forest");
+    try {
+      vfx.handle({
+        t: "ult-pulse",
+        player: 0,
+        look: pulse.look,
+        x: 2,
+        z: -3,
+        radius: pulse.radius,
+        dirX: 0,
+        dirZ: 0,
+        length: 0,
+      });
+      vfx.update(world, 1, 1 / 60, 0, world.players[0], new Map());
+      const flags = [];
+      vfx.root.traverse((mesh) => {
+        const params = mesh.geometry?.getAttribute("iP");
+        const extra = mesh.geometry?.getAttribute("iX");
+        if (!params || !extra) return;
+        for (let i = 0; i < mesh.geometry.instanceCount; i++)
+          if (params.getX(i) === Decal.ring) flags.push(extra.getZ(i));
+      });
+      assert.ok(flags.length > 0, "the blast draws its ring");
+      assert.ok(
+        flags.every((flag) => flag === blue),
+        `${mega} ring flags ${flags.join(",")}`,
+      );
+    } finally {
+      vfx.dispose();
+      uniforms.uTerrainHeight.value.dispose();
+    }
+  }
+});
+
+test("a Mega Charizard X shot that lands before it is tracked still burns blue", () => {
+  for (const [mega, blue] of [
+    ["charizard-x", 1],
+    ["charizard-y", 0],
+  ]) {
+    const world = createWorld({
+      mode: "expedition",
+      rules: [],
+      stage: "forest",
+      seed: 154,
+      difficulty: 0,
+      players: [{ trainer: "chengxi", starter: "charmander" }],
+    });
+    world.players[0].mega = mega;
+    const uniforms = createTerrainUniforms(world.map.terrain);
+    const vfx = new Vfx({ uniforms, heightAt: () => 0 }, "forest");
+    try {
+      vfx.handle({
+        t: "projectile-feedback",
+        id: 9,
+        tick: world.tick,
+        owner: 0,
+        move: "ember",
+        archetype: moves.ember.archetype,
+        type: "fire",
+        x: 1,
+        y: 0.5,
+        z: 1,
+        fromX: 0,
+        fromY: 0.5,
+        fromZ: 0,
+        ended: true,
+        reason: "hit",
+        hits: 1,
+      });
+      vfx.update(world, 1, 1 / 60, 0, world.players[0], new Map());
+      const flags = [];
+      vfx.root.traverse((mesh) => {
+        const params = mesh.geometry?.getAttribute("iP");
+        const extra = mesh.geometry?.getAttribute("iX");
+        if (!params || !extra) return;
+        for (let i = 0; i < mesh.geometry.instanceCount; i++)
+          if (params.getX(i) === Decal.scorch) flags.push(extra.getZ(i));
+      });
+      assert.ok(flags.length > 0, "the landing scorches the ground");
+      assert.ok(
+        flags.every((flag) => flag === blue),
+        `${mega} scorch flags ${flags.join(",")}`,
+      );
+    } finally {
+      vfx.dispose();
+      uniforms.uTerrainHeight.value.dispose();
+    }
   }
 });

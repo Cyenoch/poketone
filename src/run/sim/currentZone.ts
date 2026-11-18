@@ -4,9 +4,11 @@
 import { stageDefs, type StageId, type StageZone } from "./content/stages/index";
 import { routeStep, ROUTE_TIERS } from "./content/campaign";
 import { rollExitMarkers } from "./content/route";
+import { towerMap } from "./content/tower-map";
 import { chance, pick } from "./rng";
 import type { ZoneExit } from "./state/route";
-import { zoneFactorsFor, type ZoneDef } from "./content/params/zones";
+import { isTowerGuardianFloor, TOWER, towerClock, towerFactorsFor } from "./content/params/tower";
+import { zoneClock, zoneFactorsFor, type ZoneDef } from "./content/params/zones";
 import type { Pad } from "./mapgen/index";
 import { ARENA_HALF, TICK, type World } from "./state/world";
 import type { Player } from "./state/entities";
@@ -25,12 +27,27 @@ export function zoneDef(world: World): StageZone {
 }
 
 export function zoneFactors(world: World): ZoneDef {
+  if (world.mode === "tower") return towerFactorsFor(world.route.length, stageDefs[world.stage]);
   return zoneFactorsFor(routeStep(world), stageDefs[world.stage], world.zone.index);
 }
 
 /** Seconds fought in the current zone. */
 export function zoneTime(world: World): number {
   return world.zone.tick * TICK;
+}
+
+/** Swarms and partners grow on this clock. Rosters and scheduled beats use local seconds. */
+export function zoneGrowthClock(world: World, time = zoneTime(world)): number {
+  return world.mode === "tower"
+    ? towerClock(world.route.length, time)
+    : zoneClock(routeStep(world), time);
+}
+
+/** Normal tower floors open an exit; expeditions enter rampage. Guardian floors have no deadline. */
+export function zoneTimeLimit(world: World): number | null {
+  if (world.mode === "tower")
+    return isTowerGuardianFloor(world.route.length) ? null : TOWER.floorSeconds;
+  return stageDefs[world.stage].duration;
 }
 
 export function isLastZone(world: World): boolean {
@@ -71,25 +88,32 @@ export function nearestExit(world: World, player: Pick<Player, "x" | "z">): Zone
   return nearest;
 }
 
-/**
- * The guardian fell at (x, z) (combat.ts): the zone is cleared and the exit opens where it fell, so
- * the way on is wherever the fight ended; the field is swept at the end of the tick.
- */
+/** Timed tower floors clear at their guaranteed walkable landmark; guardians clear at their fall spot. */
 export function clearZone(world: World, x: number, z: number): void {
+  if (world.mode === "tower") {
+    const spot = isTowerGuardianFloor(world.route.length)
+      ? exitSpots(world, x, z, 1)[0]!
+      : { x, z };
+    const to = towerMap(world.seed, world.route.length + 1, world.stage);
+    world.zone.exits = [{ ...spot, to, marker: null }];
+  } else world.zone.exits = expeditionExits(world, x, z);
+  world.zone.phase = "cleared";
+  world.bossId = null;
+}
+
+function expeditionExits(world: World, x: number, z: number): ZoneExit[] {
   const targetStep = routeStep(world) + 1;
   const tier = ROUTE_TIERS[targetStep];
   const targets: StageId[] = tier ? [...tier] : [];
   if (targets.length === 1 || (targets.length === 2 && chance(world.rng, EXIT_SEARCH.extraChance)))
     targets.push(pick(world.rng, targets));
   const exits = exitSpots(world, x, z, Math.max(1, targets.length));
-  const markers = rollExitMarkers(world.rng, targets.slice(0, exits.length));
-  world.zone.exits = exits.map((spot, i) => ({
+  const markers = rollExitMarkers(world.rng, targets.slice(0, exits.length), world.unlocks);
+  return exits.map((spot, i) => ({
     ...spot,
     to: targets[i] ?? null,
     marker: markers[i] ?? null,
   }));
-  world.zone.phase = "cleared";
-  world.bossId = null;
 }
 
 /**

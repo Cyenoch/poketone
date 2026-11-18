@@ -183,6 +183,14 @@ test("save envelope rejects mismatched versions, unknown fields, checksums and m
   assert.throws(() => decodeSave("not a save"), /不是存档文本/);
 });
 
+test("导入校验和正确的存档仍拒绝背包中的超级进化石", () => {
+  const save = decodeSave(releasedText);
+  for (const stone of ["charizardite-x", "charizardite-y"]) {
+    const payload = { ...save, progress: { ...save.progress, backpack: [stone] } };
+    assert.throws(() => decodeSave(corruptPayload(payload, 4)), /背包记录无效/);
+  }
+});
+
 function populatedProgress() {
   return {
     ...decodeSave(releasedText).progress,

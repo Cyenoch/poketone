@@ -1,3 +1,4 @@
+import { decayAssistBuffs } from "../run/sim/trainers";
 import { EnemyGrid } from "../run/sim/grid";
 import { applyCommand, isFrozen, stepOwnedPlayer } from "../run/sim/world";
 import { movePlayer, rechargeDash } from "../run/sim/player-movement";
@@ -162,6 +163,8 @@ export class OwnerSimulation {
     };
     local.paused ||= frozen;
     for (const command of commands) {
+      // The host settles assists for every seat and syncs the result; a local copy would cue twice.
+      if (command.t === "assist") continue;
       const rescuing = player.rescue !== null;
       applyCommand(local, command);
       if (rescuing && !player.rescue) this.cancelRescue = true;
@@ -176,7 +179,7 @@ export class OwnerSimulation {
         player.px = player.x;
         player.pz = player.z;
         if (player.alive) {
-          const stats = playerStats(player);
+          const stats = playerStats(player, activeWeather(local));
           decay(player, TICK);
           player.invulnerable = Math.max(0, player.invulnerable - TICK);
           rechargeDash(player, stats.dashCharges, TICK);
@@ -206,6 +209,7 @@ export class OwnerSimulation {
           },
           player,
         );
+        decayAssistBuffs(player, TICK);
         player.ult.protection = Math.max(
           0,
           Math.round((player.ult.protection - TICK) / TICK) * TICK,
@@ -255,7 +259,10 @@ export class OwnerSimulation {
         ...this.player,
         statuses: this.player.statuses.map((status) => ({ ...status })),
       };
-      const stats = playerStats(next);
+      const stats = playerStats(
+        next,
+        activeWeather({ weather: world.weather, time: this.time + TICK }),
+      );
       decay(next, TICK);
       rechargeDash(next, stats.dashCharges, TICK);
       movePlayer(
@@ -283,3 +290,4 @@ export class OwnerSimulation {
     ];
   }
 }
+import { activeWeather } from "../run/sim/content/weather";

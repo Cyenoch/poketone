@@ -58,7 +58,11 @@ export function expectedMods(id: MoveId, upgrades: number, luck = 0): MoveMods {
   };
 }
 
-function referencePlayer(starter: StarterId, kit: readonly MoveId[], upgrades: number): Player {
+export function referencePlayer(
+  starter: StarterId,
+  kit: readonly MoveId[],
+  upgrades: number,
+): Player {
   const player = createPlayer(0, starter, 0);
   player.level = REFERENCE_LEVEL;
   player.xpNext = xpForLevel(player.level);
@@ -66,7 +70,7 @@ function referencePlayer(starter: StarterId, kit: readonly MoveId[], upgrades: n
   return player;
 }
 
-function referenceTarget(
+export function referenceTarget(
   step: RouteStep,
   stage: StageId,
   difficulty: Difficulty,

@@ -148,9 +148,12 @@ if (!fixture) {
         releaseUploads: noop,
         frame: (_alpha, _dt, events) => {
           viewEvents = events;
+          return 0;
         },
         project: (...args) => project(...args),
         debugHeight: () => 0,
+        megaShatters: [],
+        assistPops: [],
       };
     },
   }));
@@ -284,6 +287,8 @@ if (!fixture) {
         finish: noop,
       }));
       const config = {
+        mode: "expedition",
+        rules: [],
         stage: "forest",
         seed: 7,
         difficulty: 0,
@@ -309,6 +314,8 @@ if (!fixture) {
       app,
       hud,
       {
+        mode: "expedition",
+        rules: [],
         stage,
         route: routeTo(stage),
         starter: scenario === "reaction-feedback" ? "squirtle" : "charmander",

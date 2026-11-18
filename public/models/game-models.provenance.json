@@ -1060,6 +1060,46 @@
       "note": "Source and image references preserved alongside the asset."
     },
     {
+      "asset": "characters/charizard-x",
+      "step": "generation",
+      "taskId": "d0f5e4b4-ac2d-4161-8ac1-c63ecc660950",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-17",
+      "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
+      "note": "Source and image references preserved alongside the asset."
+    },
+    {
+      "asset": "characters/charizard-x",
+      "step": "generation-rejected",
+      "taskId": "bc2306fb-3420-4922-9bcb-fb5b95094f45",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-17",
+      "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
+      "note": "Preserved rejected source; see rejected/reason.json"
+    },
+    {
+      "asset": "characters/charizard-y",
+      "step": "generation",
+      "taskId": "867330f1-3ac1-47e9-a490-618f89e460e6",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-17",
+      "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
+      "note": "Source and image references preserved alongside the asset."
+    },
+    {
+      "asset": "characters/charizard-y",
+      "step": "generation-rejected",
+      "taskId": "442ad8d8-6d30-48f5-befb-e3c70be52f35",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-17",
+      "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
+      "note": "Preserved rejected source; see rejected/reason.json"
+    },
+    {
       "asset": "field-sites/gengar-altar",
       "step": "generation",
       "taskId": "02fda21a-b58c-4b6c-9deb-79510e879914",
@@ -1068,9 +1108,63 @@
       "date": "2026-11-17",
       "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
       "note": "Source and image references preserved alongside the asset."
+    },
+    {
+      "asset": "characters/charizard-x",
+      "step": "rig-check",
+      "taskId": "d222ff3c-b918-4633-89c8-b37aa0b8902d",
+      "type": "animate_prerigcheck",
+      "credits": 0,
+      "date": "2026-11-17",
+      "workflow": "Free prerig check confirmed biped riggable"
+    },
+    {
+      "asset": "characters/charizard-x",
+      "step": "rig",
+      "taskId": "7f582257-95c3-401d-a632-fa2b26c29c2e",
+      "type": "animate_rig",
+      "credits": 25,
+      "date": "2026-11-17",
+      "workflow": "rig-v3.0 biped; idle and run in place"
+    },
+    {
+      "asset": "characters/charizard-x",
+      "step": "animations",
+      "taskId": "c1c0435c-d763-4ad4-9ada-d37156846a68",
+      "type": "animate_retarget",
+      "credits": 20,
+      "date": "2026-11-17",
+      "workflow": "rig-v3.0 biped; idle and run in place"
+    },
+    {
+      "asset": "characters/charizard-y",
+      "step": "rig-check",
+      "taskId": "59a3a59d-57df-43fd-a950-baa46135d3a2",
+      "type": "animate_prerigcheck",
+      "credits": 0,
+      "date": "2026-11-17",
+      "workflow": "Free prerig check confirmed biped riggable"
+    },
+    {
+      "asset": "characters/charizard-y",
+      "step": "rig",
+      "taskId": "5cca2fbb-ada1-4a93-b8e5-13c6da1e0c50",
+      "type": "animate_rig",
+      "credits": 25,
+      "date": "2026-11-17",
+      "workflow": "rig-v3.0 biped; idle and run in place"
+    },
+    {
+      "asset": "characters/charizard-y",
+      "step": "animations",
+      "taskId": "88daf9bb-f9a6-4aad-b65e-17a6131310cf",
+      "type": "animate_retarget",
+      "credits": 20,
+      "date": "2026-11-17",
+      "workflow": "rig-v3.0 biped; idle and run in place"
     }
   ],
-  "creditsTotal": 3680,
+  "creditsTotal": 3930,
   "shipping": [
     {
       "file": "public/models/enemies/caterpie.glb",

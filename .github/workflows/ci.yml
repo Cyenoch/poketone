@@ -137,7 +137,7 @@ jobs:
         run: bun run test:sim
       - name: View tests
         if: steps.scope.outputs.view == 'true'
-        run: bun test --timeout=0 ./scripts/view.test.mjs ./scripts/ultimate-fire-vfx.test.mjs
+        run: bun test --timeout=0 ./scripts/view.test.mjs ./scripts/ultimate-fire-vfx.test.mjs ./scripts/deep-build-vfx.test.mjs
       - name: UI tests
         run: bun run test:ui
       - name: Production build

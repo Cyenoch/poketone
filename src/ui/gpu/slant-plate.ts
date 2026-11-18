@@ -71,7 +71,8 @@ const glslVec = (x: Vector3) => `vec3(${x.x.toFixed(4)},${x.y.toFixed(4)},${x.z.
  * The slanted plate every redesign surface is cut from, drawn in one quad behind its box's content:
  * skewX(−14°) with upright content, radius 6, a hard black 22% shadow offset right and down, and per
  * style a border, a left stripe, a push fill from the left, slant hatching, the type card face
- * (soft-light), a light sweep, a reveal from the left and an ink focus ring following the slant.
+ * (soft-light), a light sweep, a reveal from the left and an ink focus ring with a white keyline,
+ * following the slant.
  * The box keeps its layout size; the slant fits inside it (bottom-left and top-right corners).
  */
 export class SlantPlate {
@@ -268,7 +269,10 @@ export class SlantPlate {
             over(acc, col, face * (1. - smoothstep(-aa, aa, d)));
           }
           acc *= shown;
-          // Focus: a 3px ink ring 4px out, following the slant.
+          // Focus: a 3px ink ring 4px out, following the slant, over a 2px white keyline just inside
+          // it, so the ring reads on light grounds and the keyline on dark ones (an ink tray).
+          float keyline = abs(d - 3.) - 1.;
+          over(acc, vec3(1.), focus * (1. - smoothstep(-aa, aa, keyline)));
           float ring = abs(d - 5.5) - 1.5;
           over(acc, ${glslVec(srgb(ui.ink))}, focus * (1. - smoothstep(-aa, aa, ring)));
           if (acc.a <= 0.) discard;

@@ -1,3 +1,4 @@
+import { unlockIds } from "../src/run/sim/content/unlocks.ts";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { routeTo, selectTestExit } from "./fixtures/route.mjs";
@@ -35,11 +36,14 @@ import { itemCap, itemSlots, newMoveState, rollChoices } from "../src/run/sim/up
 
 function arena(players = 2, stage = "forest") {
   const w = createWorld({
+    unlocks: unlockIds,
+    mode: "expedition",
+    rules: [],
     stage,
     route: routeTo(stage),
     seed: 5,
     difficulty: 0,
-    players: Array.from({ length: players }, () => ({ starter: "charmander" })),
+    players: Array.from({ length: players }, () => ({ trainer: "chengxi", starter: "charmander" })),
   });
   const terrain = {
     ...w.map.terrain,
@@ -107,7 +111,14 @@ test("real maps allocate four site pads, approved kinds, separate buildings and 
     for (const seed of [5, 11, 4242]) {
       let attempt = seed;
       const w = createWorldFromSeeds(
-        { stage, route: routeTo(stage), difficulty: 0, players: [{ starter: "charmander" }] },
+        {
+          mode: "expedition",
+          rules: [],
+          stage,
+          route: routeTo(stage),
+          difficulty: 0,
+          players: [{ trainer: "chengxi", starter: "charmander" }],
+        },
         () => attempt++,
       );
       const pads = w.map.pads.filter((pad) => pad.tag === "site");
@@ -141,11 +152,13 @@ test("real maps allocate four site pads, approved kinds, separate buildings and 
         );
       }
       const again = createWorld({
+        mode: "expedition",
+        rules: [],
         stage,
         route: routeTo(stage),
         seed: w.seed,
         difficulty: 0,
-        players: [{ starter: "charmander" }],
+        players: [{ trainer: "chengxi", starter: "charmander" }],
       });
       assert.deepEqual(w.sites, again.sites);
       assert.deepEqual(w.rng, again.rng);

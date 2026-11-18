@@ -1,10 +1,14 @@
-import { present } from "./team";
+import { present, teamSize } from "./team";
 import { activeWeather, weatherDefs, weatherMultiplier } from "./content/weather";
+import { PLEDGE, PLEDGE_FIELD, pledgeCombos, type PledgeMoveId } from "./content/pledges";
+import { area } from "./archetypes/kit";
+import { castWeather } from "./weather";
 import { escaping, recordDefeat } from "./encounters";
 import { settleSiteKill } from "./sites/index";
 import { enemies as enemyDefs } from "./content/enemies";
 import { typeMultiplier, type ElementType } from "./content/elements";
-import { moves, type MoveId } from "./content/moves";
+import { DRAIN_FLOOR } from "./content/params/combat";
+import { FLARE_BLITZ_RECOIL, moves, type MoveId, type WeatherMoveId } from "./content/moves";
 import { PER_STATUS_CAP } from "./content/effects";
 import { reactionIds, reactions, type ReactionDef } from "./content/reactions";
 import type { EnemyStatusId } from "./content/statuses";
@@ -15,6 +19,9 @@ import { chance, range } from "./rng";
 import { currentStats, earnStardust, itemRule, type PlayerStats } from "./stats";
 import { BERRY, LOOT, STARDUST } from "./content/params/economy";
 import { ROUTE_REWARD } from "./content/params/route";
+import { TOWER } from "./content/params/tower";
+import { COOP } from "./content/params/coop";
+import { revivePlayer } from "./rescue";
 import { apply, consume, find, held, inflict, targetable, vulnerability, wake } from "./status";
 import type { Enemy, Pickup, Player, Rarity } from "./state/entities";
 import type { World } from "./state/world";
@@ -36,6 +43,8 @@ export interface Ctx {
 
 export type CombatEffect =
   | { t: "hit"; enemy: number; x: number; z: number; hit: Omit<Hit, "owner"> }
+  | { t: "pledge-hit"; move: PledgeMoveId; x: number; z: number; at: number; enemies: number[] }
+  | { t: "weather-cast"; move: WeatherMoveId; at: number }
   | { t: "status"; enemy: number; status: EnemyStatusId; time: number; power: number }
   | { t: "pull"; enemy: number; x: number; z: number; step: number; stop: number }
   | { t: "heal"; amount: number };
@@ -103,6 +112,15 @@ export function commitCombat(ctx: Ctx, owner: Player, effect: CombatEffect): voi
     heal(owner, effect.amount);
     return;
   }
+  if (effect.t === "weather-cast") {
+    castWeather(ctx.world, owner, effect.move, effect.at);
+    return;
+  }
+  if (effect.t === "pledge-hit") {
+    if (ctx.world.enemies.some((e) => effect.enemies.includes(e.id) && canSettleHit(ctx.world, e)))
+      settlePledgeHit(ctx.world, owner, effect.move, effect.x, effect.z, effect.at);
+    return;
+  }
   const enemy = ctx.world.enemies.find((entry) => entry.id === effect.enemy);
   if (!enemy || enemy.hp <= 0 || !targetable(enemy)) return;
   switch (effect.t) {
@@ -118,6 +136,71 @@ export function commitCombat(ctx: Ctx, owner: Player, effect: CombatEffect): voi
   }
 }
 
+/** Both ends are inclusive; fixed steps accumulate a little roundoff in world seconds. */
+const withinWindow = (later: number, earlier: number) => later - earlier <= PLEDGE.window + 1e-9;
+
+export function expirePledgeHits(world: World): void {
+  const hits = world.pledgeHits;
+  for (let i = hits.length - 1; i >= 0; i--)
+    if (!withinWindow(world.time, hits[i]!.at)) hits.splice(i, 1);
+}
+
+/** One actual column landing, regardless of how many bodies it struck. Host only. */
+export function settlePledgeHit(
+  world: World,
+  player: Player,
+  move: PledgeMoveId,
+  x: number,
+  z: number,
+  hitAt: number,
+): void {
+  if (teamSize(world) < 2 || player.departed || world.zone.phase !== "active") return;
+  const at = Math.min(hitAt, world.time);
+  if (!withinWindow(world.time, at)) return;
+  expirePledgeHits(world);
+  const hits = world.pledgeHits;
+  const index = hits.findIndex(
+    (h) =>
+      h.player !== player.id &&
+      h.move !== move &&
+      !findPlayer(world, h.player).departed &&
+      (h.x - x) ** 2 + (h.z - z) ** 2 <= PLEDGE.distance ** 2,
+  );
+  if (index < 0) {
+    hits.push({ player: player.id, move, x, z, at });
+    return;
+  }
+  const other = hits.splice(index, 1)[0]!;
+  const { result } = pledgeCombos.find(
+    ({ pair: [a, b] }) => (a === other.move && b === move) || (a === move && b === other.move),
+  )!;
+  const formedAt = Math.max(at, other.at);
+  x = (x + other.x) / 2;
+  z = (z + other.z) / 2;
+  if (result === "rainbow") {
+    world.rainbowUntil = Math.max(world.rainbowUntil, formedAt + PLEDGE_FIELD.rainbowSeconds);
+  } else {
+    const source = result === "sea-of-fire" ? "fire-pledge" : "water-pledge";
+    const owner = move === source ? player : findPlayer(world, other.player);
+    const field = area(
+      world,
+      owner,
+      moves[source],
+      {
+        dmg: result === "sea-of-fire" ? PLEDGE_FIELD.fireDps : 0,
+        area: PLEDGE_FIELD.radius,
+        dur: PLEDGE_FIELD.groundSeconds,
+        statusChance: 0,
+        crit: 0,
+      },
+      "burst",
+      { x, z, pledgeField: result },
+    );
+    field.life -= world.time - formedAt;
+  }
+  world.events.push({ t: "pledge", result, x, z });
+}
+
 export interface Hit {
   owner: Player;
   move: MoveId | null;
@@ -131,6 +214,7 @@ export interface Hit {
   fromZ: number;
   /** Reaction follow-ups never chain into further reactions. */
   secondary?: boolean;
+  recoil?: true;
   /** Share of the HP removed that heals the owner (drain moves). */
   drain?: number;
 }
@@ -151,6 +235,23 @@ export function damageEnemy(ctx: Ctx, enemy: Enemy, hit: Hit): void {
   settleDamage(ctx, enemy, hit, enemy);
 }
 
+/** An owner's collision still has a damageable target in the shared world. */
+export function canSettleHit(world: World, enemy: Enemy): boolean {
+  return (
+    enemy.hp > 0 &&
+    targetable(enemy) &&
+    !isUnidentifiedGhost(world, enemy) &&
+    !escaping(world, enemy)
+  );
+}
+
+export function statusRoll(world: World, probability: number): boolean {
+  return chance(
+    world.rng,
+    probability * (world.time < world.rainbowUntil ? PLEDGE_FIELD.rainbowChance : 1),
+  );
+}
+
 function settleDamage(
   ctx: Ctx,
   enemy: Enemy,
@@ -160,7 +261,7 @@ function settleDamage(
 ): void {
   const { world } = ctx;
   if (isUnidentifiedGhost(world, enemy) || escaping(world, enemy)) return;
-  const stats = currentStats(hit.owner);
+  const stats = currentStats(hit.owner, activeWeather(world));
   const def = enemyDefs[enemy.species];
   const effectiveness = typeMultiplier(hit.type, def.types, enemy.id === world.bossId);
   let amount = hit.dmg * stats.damage * effectiveness * hitFactor(stats, hit, enemy, effectiveness);
@@ -175,6 +276,15 @@ function settleDamage(
   if (enemy.hardened > 0) amount *= enemy.hardenDamage ?? HARDEN.damage;
   const removed = Math.min(amount, Math.max(0, enemy.hp));
   enemy.hp -= amount;
+  if (
+    hit.move === "flare-blitz" &&
+    hit.recoil &&
+    !hit.secondary &&
+    removed > 0 &&
+    hit.owner.alive &&
+    hit.owner.hp > DRAIN_FLOOR
+  )
+    hit.owner.hp = Math.max(DRAIN_FLOOR, hit.owner.hp - stats.maxHp * FLARE_BLITZ_RECOIL);
   // Hypnosis communicates control through its waves and sleep marks. Its five ticks per second
   // must not keep whitening a crowd; an existing flash from another move still finishes normally.
   if (hit.move !== "hypnosis") enemy.flash = 0.12;
@@ -187,7 +297,7 @@ function settleDamage(
     enemy.knockZ += (dz / length) * knock;
     staggerFrom(enemy, knock);
   }
-  if (hit.status && chance(world.rng, hit.statusChance))
+  if (hit.status && statusRoll(world, hit.statusChance))
     inflictBy(world, enemy, hit.status, amount, hit.owner);
 
   const move = hit.move && hit.owner.moves.find((state) => state.id === hit.move);
@@ -219,7 +329,7 @@ function settleDamage(
 function hitFactor(stats: PlayerStats, hit: Hit, enemy: Enemy, effectiveness: number): number {
   const { hit: factors } = stats;
   let factor = factors[hit.type] ?? 1;
-  if (hit.move) factor *= factors[moves[hit.move].category] ?? 1;
+  if (hit.move) factor *= (factors[moves[hit.move].category] ?? 1) * (factors.move ?? 1);
   if (enemy.elite || enemy.boss) factor *= factors.elite ?? 1;
   if (effectiveness > 1) factor *= factors.superEffective ?? 1;
   if (factors.held !== undefined && held(enemy)) factor *= factors.held;
@@ -239,7 +349,7 @@ export function inflictBy(
   amount: number,
   owner: Player,
 ): void {
-  const stats = currentStats(owner);
+  const stats = currentStats(owner, activeWeather(world));
   if (isUnidentifiedGhost(world, enemy)) return;
   const landed = inflict(
     enemy,
@@ -280,7 +390,7 @@ function react(ctx: Ctx, enemy: Enemy, hit: Hit, amount: number): number {
       // Both the shared hit and stored DoT already contain their weather multiplier.
       dmg:
         (effect.kind === "detonate" ? share + stored : share) /
-        currentStats(hit.owner).damage /
+        currentStats(hit.owner, activeWeather(ctx.world)).damage /
         weatherMultiplier(ctx.world, hit.type),
       secondary: true,
     });
@@ -342,17 +452,33 @@ export function killEnemy(ctx: Ctx, enemy: Enemy, killer: Player | null): void {
     // The guardian bonus is immediate; existing field drops fly to the team after the clear.
     for (const player of present(world)) {
       earnStardust(player, STARDUST.guardian);
-      if (player.alive)
-        world.pickups.push({
-          id: world.nextId++,
-          kind: "trophy",
-          owner: player.id,
-          x: enemy.x,
-          z: enemy.z,
-          value: 1,
-          magnet: true,
-        });
+      if (!player.alive) continue;
+      if (world.mode === "tower") {
+        const maxHp = currentStats(player).maxHp;
+        player.hp = Math.min(maxHp, player.hp + maxHp * TOWER.guardianHeal);
+        world.events.push({ t: "heal", player: player.id, share: TOWER.guardianHeal });
+      }
+      world.pickups.push({
+        id: world.nextId++,
+        kind: "trophy",
+        owner: player.id,
+        x: enemy.x,
+        z: enemy.z,
+        value: 1,
+        magnet: true,
+      });
     }
+    // A tower guardian brings downed teammates back with the rescue share plus the floor's heal.
+    if (world.mode === "tower" && !world.rules.includes("nuzlocke"))
+      for (const player of present(world))
+        if (!player.alive)
+          revivePlayer(
+            world,
+            player,
+            COOP.reviveHp + TOWER.guardianHeal,
+            COOP.invulnerable,
+            "team",
+          );
     clearZone(world, enemy.x, enemy.z);
     world.events.push({ t: "banner", text: "守卫倒下了！", tone: "boss", kind: "clear" });
   }

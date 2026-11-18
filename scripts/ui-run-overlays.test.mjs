@@ -116,3 +116,63 @@ test("a failed result save can retry but cannot dismiss into a lost result", () 
     overlays.dispose();
   }
 });
+
+// The result's bond row: the scale fills from before to after; a crossed level shows its new
+// title and what it grants. Without a saved gain (or with none) there is no row.
+test("the result shows the bond points earned and the level they reach", async () => {
+  const { Text } = await import("@pmndrs/uikit");
+  const victory = runWindowSamples("charmander").find(
+    (state) => state.kind === "result" && state.result.outcome === "victory",
+  );
+  const shown = (overlays) => {
+    const out = [];
+    // The fonts never arrive here: a text counts as shown unless it or a parent is display none.
+    const hidden = (node) => {
+      for (let at = node; at; at = at.parentContainer?.value)
+        if (at.properties.value.display === "none") return true;
+      return false;
+    };
+    overlays.content.root.traverse((node) => {
+      if (node instanceof Text && !hidden(node)) out.push(node.properties.value.text);
+    });
+    return out;
+  };
+  const overlays = new GpuRunOverlays(fonts, callbacks);
+  try {
+    overlays.resize(1280, 800, 1, { left: 0, right: 0, top: 0, bottom: 0 });
+    // 25 → 40 crosses Lv.2 (熟悉, which grants 挺住).
+    overlays.update({ ...victory, bond: { before: 25, after: 40, look: false } });
+    overlays.afterLayout(0);
+    overlays.stage.update(16);
+    assert.ok(shown(overlays).includes("+15"), "the points earned");
+    assert.ok(shown(overlays).includes("初识"), "the scale starts at the old level");
+    assert.ok(!shown(overlays).includes("挺住"), "the grant waits for the scale");
+    for (let t = 0; t < 2000; t += 50) {
+      overlays.stage.update(50);
+      overlays.afterLayout(50);
+    }
+    assert.ok(shown(overlays).includes("熟悉"), "the new title");
+    assert.ok(shown(overlays).includes("挺住"), "what the level grants");
+    overlays.update({ ...victory, bond: null });
+    overlays.afterLayout(0);
+    assert.ok(!shown(overlays).includes("+15"), "no row before the result is saved");
+
+    // Reaching Lv.5 celebrates the title either way; the look counts only when the save added it.
+    for (const look of [false, true]) {
+      overlays.update({ ...victory, bond: null });
+      overlays.update({
+        ...victory,
+        result: { ...victory.result },
+        bond: { before: 150, after: 165, look },
+      });
+      for (let t = 0; t < 2000; t += 50) {
+        overlays.stage.update(50);
+        overlays.afterLayout(50);
+      }
+      assert.ok(shown(overlays).includes("最好的伙伴"), `the top title: look ${look}`);
+      assert.equal(shown(overlays).includes("异色外观"), look, `the look chip: look ${look}`);
+    }
+  } finally {
+    overlays.dispose();
+  }
+});

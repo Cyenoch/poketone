@@ -17,7 +17,6 @@ import { burstOnKill } from "./burstOnKill";
 import { contactSpread } from "./contactSpread";
 import { contactStatus } from "./contactStatus";
 import { healBelow, healEvery, healOnKill } from "./heals";
-import { healOnHit } from "./healOnHit";
 import { burst } from "./kit";
 import { bonk, critStrike, execute, inflictOnHit } from "./onHit";
 import { markStrongest, spreadStatus, strike } from "./periodic";
@@ -64,7 +63,6 @@ let table: { [K in TriggerKind]: TriggerRule<K> } | null = null;
 
 function rules(): { [K in TriggerKind]: TriggerRule<K> } {
   table ??= {
-    healOnHit,
     contactStatus,
     zap,
     healBelow,

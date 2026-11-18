@@ -55,11 +55,13 @@ test("route altars are ready and mountable on glacier and volcano", async () => 
       stage,
     );
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage,
       route: routeTo(stage),
       seed: 5,
       difficulty: 0,
-      players: [{ starter: "charmander" }],
+      players: [{ trainer: "chengxi", starter: "charmander" }],
     });
     const assets = await loadRunAssets(world, new AbortController().signal);
     try {
@@ -72,11 +74,13 @@ test("route altars are ready and mountable on glacier and volcano", async () => 
 
 test("tower loader reuses alias geometry and releases actual model resources", async () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "tower",
     route: routeTo("tower"),
     seed: 154,
     difficulty: 0,
-    players: [{ starter: "charmander" }],
+    players: [{ trainer: "chengxi", starter: "charmander" }],
   });
   world.partners.push({
     id: -10,
@@ -115,11 +119,13 @@ test("tower loader reuses alias geometry and releases actual model resources", a
 
 function withFx(t, stage = "tower") {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage,
     route: routeTo(stage),
     seed: 154,
     difficulty: 0,
-    players: [{ starter: "charmander" }],
+    players: [{ trainer: "chengxi", starter: "charmander" }],
   });
   const uniforms = createTerrainUniforms(world.map.terrain);
   const vfx = new Vfx({ uniforms, heightAt: () => 0 }, stage);

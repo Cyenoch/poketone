@@ -1,6 +1,7 @@
 import type { SiteKind } from "../state/field";
 import type { StageId } from "./stages/index";
 import { SITE } from "./params/sites";
+import type { EnemyId } from "./enemies";
 
 export const SITE_POOLS: Record<StageId, readonly SiteKind[]> = {
   forest: ["honey-tree", "item-ball", "snorlax", "raid-den", "spring", "egg", "glint"],
@@ -17,14 +18,22 @@ export interface SiteDef {
   interact: "instant" | "pickup" | { channel: number };
   stages: readonly StageId[];
   rule: SiteKind;
+  /** Species the site itself brings out (raid dens and eggs draw from their map's roster). */
+  species: readonly EnemyId[];
 }
 
-function site(id: SiteKind, name: string, interact: SiteDef["interact"]): SiteDef {
+function site(
+  id: SiteKind,
+  name: string,
+  interact: SiteDef["interact"],
+  species: readonly EnemyId[] = [],
+): SiteDef {
   return {
     id,
     name,
     interact,
     rule: id,
+    species,
     stages: (Object.keys(SITE_POOLS) as StageId[]).filter((stage) =>
       SITE_POOLS[stage].includes(id),
     ),
@@ -32,16 +41,16 @@ function site(id: SiteKind, name: string, interact: SiteDef["interact"]): SiteDe
 }
 
 export const sites: Record<SiteKind, SiteDef> = {
-  "honey-tree": site("honey-tree", "甜甜蜜树", "instant"),
-  "item-ball": site("item-ball", "道具球", "pickup"),
-  snorlax: site("snorlax", "睡着的卡比兽", "instant"),
-  fishing: site("fishing", "钓鱼点", { channel: SITE.fishing.channel }),
-  fossil: site("fossil", "化石挖掘点", { channel: SITE.fossilChannel }),
+  "honey-tree": site("honey-tree", "甜甜蜜树", "instant", ["heracross", "pinsir", "munchlax"]),
+  "item-ball": site("item-ball", "道具球", "pickup", ["voltorb"]),
+  snorlax: site("snorlax", "睡着的卡比兽", "instant", ["snorlax"]),
+  fishing: site("fishing", "钓鱼点", { channel: SITE.fishing.channel }, ["magikarp", "gyarados"]),
+  fossil: site("fossil", "化石挖掘点", { channel: SITE.fossilChannel }, ["aerodactyl"]),
   "raid-den": site("raid-den", "团体战巢穴", "instant"),
   spring: site("spring", "治愈之泉", "instant"),
   egg: site("egg", "宝可梦蛋", "instant"),
   glint: site("glint", "闪光点", "pickup"),
-  ghost: site("ghost", "未识破的幽灵", "instant"),
+  ghost: site("ghost", "未识破的幽灵", "instant", ["marowak"]),
   "silph-scope": site("silph-scope", "西尔佛检视镜", "pickup"),
   "gengar-deal": {
     ...site("gengar-deal", "耿鬼的交易", "instant"),

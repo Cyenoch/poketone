@@ -42,6 +42,7 @@ const MARKED = 512;
 const ORDER = [FREEZE, SLEEP, PARALYSIS, ROOT, BURN, CHILL, CURSE, MARKED, WET, POISON] as const;
 /** The mark each status draws; the stun-spore slow shows as paralysis' sparks. */
 const MARK: Record<StatusId, number> = {
+  disable: CURSE,
   burn: BURN,
   paralysis: PARALYSIS,
   sleep: SLEEP,

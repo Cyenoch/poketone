@@ -3,6 +3,7 @@
 
 import type { ElementType } from "./elements";
 import type { EnemyStatusId } from "./statuses";
+import { PLEDGE, pledgeMoves, type PledgeMoveId } from "./pledges";
 
 export type Archetype =
   | "bolt"
@@ -25,7 +26,8 @@ export type Archetype =
   | "sprinkler"
   | "rod"
   | "tempest"
-  | "combo";
+  | "combo"
+  | "weather";
 export type UpgradeStat =
   | "dmg"
   | "cd"
@@ -37,14 +39,14 @@ export type UpgradeStat =
   | "crit"
   | "status";
 
-export type MoveCategory = "physical" | "special";
+export type MoveCategory = "physical" | "special" | "status";
 
 export interface MoveDef<Id extends string = MoveId> {
   id: Id;
   name: string;
   type: ElementType;
   archetype: Archetype;
-  /** The series' damage class: physical or special items boost only their own (muscle band, wise glasses). */
+  /** Damage class; status moves deal no direct damage. */
   category: MoveCategory;
   dmg: number;
   cd: number;
@@ -65,6 +67,59 @@ export interface MoveDef<Id extends string = MoveId> {
 }
 
 const projectileStats: readonly UpgradeStat[] = ["dmg", "cd", "count", "pierce", "speed", "crit"];
+
+export const FLARE_BLITZ_RECOIL = 0.002;
+export const WEATHER_MOVE = { seconds: 30, cooldown: 40, rockDuration: 1.6 } as const;
+export const weatherMoves = {
+  "sunny-day": { name: "大晴天", type: "fire", weather: "sun", rock: "heat-rock" },
+  "rain-dance": { name: "求雨", type: "water", weather: "rain", rock: "damp-rock" },
+  sandstorm: { name: "沙暴", type: "rock", weather: "sandstorm", rock: "smooth-rock" },
+} as const;
+export type WeatherMoveId = keyof typeof weatherMoves;
+
+export function isWeatherMove(move: unknown): move is WeatherMoveId {
+  return typeof move === "string" && Object.hasOwn(weatherMoves, move);
+}
+
+function weatherMove(id: WeatherMoveId): MoveDef<WeatherMoveId> {
+  const { name, type } = weatherMoves[id];
+  return {
+    id,
+    name,
+    type,
+    archetype: "weather",
+    category: "status",
+    dmg: 0,
+    cd: WEATHER_MOVE.cooldown,
+    count: 0,
+    area: 0,
+    speed: 0,
+    dur: WEATHER_MOVE.seconds,
+    pierce: 0,
+    statusChance: 0,
+    stats: ["cd"],
+    ref: id,
+  };
+}
+
+function pledgeMove(id: PledgeMoveId): MoveDef<PledgeMoveId> {
+  return {
+    id,
+    ...pledgeMoves[id],
+    archetype: "smite",
+    category: "special",
+    dmg: PLEDGE.damage,
+    cd: PLEDGE.cooldown,
+    count: 1,
+    area: PLEDGE.radius,
+    speed: 0,
+    dur: 0.55,
+    pierce: 99,
+    statusChance: PLEDGE.chance,
+    stats: ["dmg", "cd", "area", "count", "status"],
+    ref: id,
+  };
+}
 
 const movesTable = {
   ember: {
@@ -145,7 +200,7 @@ const movesTable = {
     type: "grass",
     archetype: "strike",
     category: "physical",
-    dmg: 28,
+    dmg: 30,
     cd: 1.1,
     count: 1,
     area: 2.6,
@@ -577,8 +632,8 @@ const movesTable = {
     type: "ghost",
     archetype: "homing",
     category: "special",
-    dmg: 16,
-    cd: 1.1,
+    dmg: 22,
+    cd: 1,
     count: 1,
     area: 0.24,
     speed: 14,
@@ -595,10 +650,10 @@ const movesTable = {
     type: "poison",
     archetype: "vortex",
     category: "special",
-    dmg: 4,
+    dmg: 6,
     cd: 4.5,
     count: 1,
-    area: 1.5,
+    area: 1.8,
     speed: 0,
     dur: 2,
     pierce: 99,
@@ -613,8 +668,8 @@ const movesTable = {
     type: "ghost",
     archetype: "smite",
     category: "special",
-    dmg: 34,
-    cd: 3,
+    dmg: 45,
+    cd: 2.7,
     count: 2,
     area: 1.5,
     speed: 0,
@@ -730,6 +785,24 @@ const movesTable = {
     statusChance: 0,
     stats: ["dmg", "cd", "area", "dur", "count", "crit"],
     ref: "dragon-pulse",
+  },
+  "flare-blitz": {
+    id: "flare-blitz",
+    name: "闪焰冲锋",
+    type: "fire",
+    archetype: "wave",
+    category: "physical",
+    dmg: 50,
+    cd: 3.2,
+    count: 1,
+    area: 1.3,
+    speed: 10,
+    dur: 1,
+    pierce: 99,
+    status: "burn",
+    statusChance: 0.1,
+    stats: ["dmg", "cd", "area", "speed", "count", "crit", "status"],
+    ref: "flare-blitz",
   },
   "dragon-rush": {
     id: "dragon-rush",
@@ -948,7 +1021,7 @@ const movesTable = {
     type: "psychic",
     archetype: "barrage",
     category: "special",
-    dmg: 9,
+    dmg: 12,
     cd: 1.2,
     count: 2,
     area: 0.22,
@@ -1000,8 +1073,8 @@ const movesTable = {
     type: "psychic",
     archetype: "smite",
     category: "special",
-    dmg: 44,
-    cd: 3.4,
+    dmg: 56,
+    cd: 3,
     count: 2,
     area: 1.6,
     speed: 0,
@@ -1184,6 +1257,12 @@ const movesTable = {
     ref: "tectonic-rage",
     fusion: true,
   },
+  "sunny-day": weatherMove("sunny-day"),
+  "rain-dance": weatherMove("rain-dance"),
+  sandstorm: weatherMove("sandstorm"),
+  "grass-pledge": pledgeMove("grass-pledge"),
+  "fire-pledge": pledgeMove("fire-pledge"),
+  "water-pledge": pledgeMove("water-pledge"),
 } as const satisfies Record<string, MoveDef<string>>;
 
 export type MoveId = keyof typeof movesTable;

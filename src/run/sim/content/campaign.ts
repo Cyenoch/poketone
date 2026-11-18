@@ -1,5 +1,6 @@
 import { stageDefs, type StageId } from "./stages/index";
 import { TICK, type World } from "../state/world";
+import { TOWER, towerPosition, towerRouteStep } from "./params/tower";
 
 export const ROUTE_TIERS = [
   ["forest"],
@@ -37,7 +38,9 @@ export function initialRoute(stage: StageId, route?: readonly StageId[]): StageI
   return [...route];
 }
 
-export function routeStep(world: Pick<World, "route">): RouteStep {
+/** Discrete tier for authored rules such as level caps and guardian attack patterns. */
+export function routeStep(world: Pick<World, "mode" | "route">): RouteStep {
+  if (world.mode === "tower") return towerRouteStep(world.route.length);
   return (world.route.length - 1) as RouteStep;
 }
 
@@ -51,7 +54,17 @@ export function nextField(world: Pick<World, "zone">): { stage: StageId; zone: n
   return stage ? { stage, zone: 0 } : null;
 }
 
-export function routeProgress(world: Pick<World, "stage" | "zone" | "route">): number {
-  const local = Math.min(1, (world.zone.tick * TICK) / stageDefs[world.stage].duration);
+/** Accepting the exit passes this floor even while the next map is still loading. */
+export function passedTowerFloors(world: Pick<World, "route" | "zone">): number {
+  return world.zone.phase === "transitioning" ? world.route.length : world.route.length - 1;
+}
+
+export function routeProgress(world: Pick<World, "mode" | "stage" | "zone" | "route">): number {
+  const time = world.zone.tick * TICK;
+  if (world.mode === "tower") {
+    const floor = world.route.length + Math.min(1, time / TOWER.floorSeconds);
+    return Math.min(1, towerPosition(floor) / ROUTE_TIERS.length);
+  }
+  const local = Math.min(1, time / stageDefs[world.stage].duration);
   return (routeStep(world) + local) / ROUTE_TIERS.length;
 }

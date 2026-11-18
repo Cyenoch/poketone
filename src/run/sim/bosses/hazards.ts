@@ -7,7 +7,7 @@ import { zoneHazards } from "./zone-hazards";
 // loop, so sim/hazards.ts can load these rules first.
 
 import { formOf } from "../evolution";
-import { damagePlayer } from "../hurt";
+import { damageFromHazard } from "../skills/kit";
 import { mobilityClasses } from "../content/mobility";
 import { moveWithSlope } from "../nav/index";
 import { sustain } from "../status";
@@ -35,8 +35,7 @@ export const guardianHazards = {
         return;
       }
       for (const player of world.players)
-        if (player.alive && beamHits(world, line, player))
-          damagePlayer(world, player, line.dmg, line.element);
+        if (player.alive && beamHits(world, line, player)) damageFromHazard(world, player, line);
     },
   },
   stomp: radialRule(STOMP.active),
@@ -50,8 +49,7 @@ export const guardianHazards = {
         return;
       }
       for (const player of world.players)
-        if (player.alive && beamHits(world, beam, player))
-          damagePlayer(world, player, beam.dmg, beam.element);
+        if (player.alive && beamHits(world, beam, player)) damageFromHazard(world, player, beam);
     },
   },
   twister: {
@@ -71,7 +69,7 @@ export const guardianHazards = {
       for (const player of world.players)
         if (
           inPatch(world, twister, player, twister.y) &&
-          damagePlayer(world, player, twister.dmg, twister.element)
+          damageFromHazard(world, player, twister)
         ) {
           twister.dmg = 0;
           twister.vx = twister.vz = 0;

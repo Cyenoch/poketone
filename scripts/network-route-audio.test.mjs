@@ -14,6 +14,8 @@ import { enterZone, prepareZone } from "../src/run/sim/zones.ts";
 
 globalThis.__GAME_BUILD__ = "network-test";
 const config = {
+  mode: "expedition",
+  rules: [],
   stage: "forest",
   seed: 7,
   difficulty: 0,

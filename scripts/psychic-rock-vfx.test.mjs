@@ -13,7 +13,14 @@ import { Vfx } from "../src/run/view/vfx.ts";
 import { Shape } from "../src/run/view/vfx/sprites.ts";
 
 function arena(t, starter = "abra") {
-  const world = createWorld({ stage: "forest", seed: 154, difficulty: 0, players: [{ starter }] });
+  const world = createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed: 154,
+    difficulty: 0,
+    players: [{ trainer: "chengxi", starter }],
+  });
   world.map.terrain.heights.fill(0);
   world.map.obstacles = [];
   world.enemies = [];

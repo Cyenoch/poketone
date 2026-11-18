@@ -8,10 +8,12 @@ import { debugLayers } from "../src/run/dev/layers.ts";
 
 test("debug overlays only read sim/nav and detach every scene object on disposal", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 5,
     difficulty: 0,
-    players: [{ starter: "squirtle" }],
+    players: [{ trainer: "chengxi", starter: "squirtle" }],
   });
   spawnEnemy(world, "caterpie", 8, 0);
   stepWorld(world, []);

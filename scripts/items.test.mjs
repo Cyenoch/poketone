@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { damageEnemy } from "../src/run/sim/combat.ts";
 import { items } from "../src/run/sim/content/items.ts";
+import { itemEffect } from "../src/run/codex.ts";
 import { spawnEnemy } from "../src/run/sim/director.ts";
 import { EnemyGrid } from "../src/run/sim/grid.ts";
 import { damagePlayer, updateShield } from "../src/run/sim/hurt.ts";
@@ -14,8 +15,15 @@ import { rollChoices } from "../src/run/sim/upgrades.ts";
 import { ITEM_GATES } from "../src/run/sim/content/params/cards.ts";
 import { createWorld, stepWorld } from "../src/run/sim/world.ts";
 
-const world = (starter = "squirtle") =>
-  createWorld({ stage: "forest", seed: 3, difficulty: 0, players: [{ starter }] });
+const world = (starter = "squirtle", backpack = []) =>
+  createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed: 3,
+    difficulty: 0,
+    players: [{ trainer: "chengxi", starter, backpack }],
+  });
 
 /** Item ids offered to `player` over `n` level-up rolls. */
 function offered(player, n = 400) {
@@ -27,8 +35,8 @@ function offered(player, n = 400) {
   return seen;
 }
 
-test("Torrent Shell's shield takes a hit before HP and refills after a quiet spell", () => {
-  const w = world("squirtle");
+test("Zinc's shield takes a hit before HP and refills after a quiet spell", () => {
+  const w = world("squirtle", ["zinc"]);
   const player = w.players[0];
   player.invulnerable = 0;
   const max = currentStats(player).shield;
@@ -43,7 +51,7 @@ test("Torrent Shell's shield takes a hit before HP and refills after a quiet spe
   assert.equal(player.shield, 0);
   assert.equal(player.alive, false, "what the shield cannot hold reaches HP");
   // Refill: nothing inside the delay, then full after the refill time.
-  const v = world("squirtle");
+  const v = world("squirtle", ["zinc"]);
   const p = v.players[0];
   p.shield = 1;
   p.lastHurt = 0;
@@ -141,10 +149,15 @@ test("Sitrus Berry heals once below its line, then waits its cooldown", () => {
 
 test("Berry Juice heals the player credited with the kill, not a teammate", () => {
   const w = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 3,
     difficulty: 0,
-    players: [{ starter: "charmander" }, { starter: "squirtle" }],
+    players: [
+      { trainer: "chengxi", starter: "charmander" },
+      { trainer: "chengxi", starter: "squirtle" },
+    ],
   });
   const [owner, other] = w.players;
   owner.items = [{ id: "berry-juice", level: 5 }];
@@ -170,4 +183,11 @@ test("Berry Juice heals the player credited with the kill, not a teammate", () =
   }
   assert.ok(healed > 0, "a kill eventually procs");
   assert.equal(other.hp, 10, "the teammate is not healed");
+});
+
+test("every item describes its effect at every level", () => {
+  for (const id of Object.keys(items))
+    for (let level = 1; level <= items[id].max; level++)
+      assert.ok(itemEffect(id, level).length > 0, `${id} Lv.${level}`);
+  assert.ok(itemEffect("smooth-rock", 3).includes("延长自己施放的沙暴"));
 });

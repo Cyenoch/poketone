@@ -4,13 +4,19 @@ import { playerStats } from "./stats";
 import type { Player } from "./state/entities";
 import type { World } from "./state/world";
 
+export function canBeRescued(world: Pick<World, "rules">, player: Player): boolean {
+  return (
+    !player.alive && !player.departed && player.revives === 0 && !world.rules.includes("nuzlocke")
+  );
+}
+
 /** Stable nearest downed teammate; personal revives take priority. */
 export function rescueTarget(world: World, rescuer: Player): Player | undefined {
   if (!rescuer.alive || rescuer.dialog || rescuer.choosing) return;
   let target: Player | undefined;
   let distance: number = COOP.rescueReach;
   for (const player of world.players) {
-    if (player.alive || player.departed || player.revives > 0 || player.id === rescuer.id) continue;
+    if (!canBeRescued(world, player) || player.id === rescuer.id) continue;
     const d = hypot(player.x - rescuer.x, player.z - rescuer.z);
     if (d <= distance) {
       target = player;

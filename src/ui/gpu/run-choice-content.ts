@@ -1,3 +1,5 @@
+import { CURRENCY_ICON, CURRENCY_NAME } from "./currency";
+import { HELD_ITEM_STARDUST } from "../../run/sim/content/params/rules";
 import type { UiKey } from "../../platform/ui-surface";
 import { currentInputMode, InputGlyph } from "./input-glyph";
 import { Component, Container, Content, Image, Text } from "@pmndrs/uikit";
@@ -8,6 +10,7 @@ import type { LocalCommand } from "../../run/createRun";
 import { typeNames, type ElementType } from "../../run/sim/content/elements";
 import { moves } from "../../run/sim/content/moves";
 import { items } from "../../run/sim/content/items";
+import { abilities, abilityText } from "../../run/sim/content/abilities";
 import {
   TRAIN,
   MAX_FUSION_STARS,
@@ -47,6 +50,8 @@ export interface ChoiceState {
   pending: PendingChoice;
   dealKey: string;
   level: number;
+  /** The player's evolution stage: an ability card shows that stage's numbers. */
+  evolution: number;
   rerolls: number;
   /** Remaining skips / banishes; null when the lab has not unlocked them. */
   skips: number | null;
@@ -88,7 +93,17 @@ export function dismissCommand(
   state: Pick<ChoiceState, "pending" | "dismissible">,
 ): LocalCommand | null {
   if (state.pending.offer?.kind === "deal") return { t: "leave", dialog: state.pending.id };
-  return state.dismissible ? { t: "choices", open: false } : null;
+  if (state.dismissible) return { t: "choices", open: false };
+  return state.pending.source === "mega-move" ? declineCommand(state.pending) : null;
+}
+
+/** 不学习: the mega move card's own decline option. */
+function declineCommand(pending: PendingChoice): LocalCommand {
+  return {
+    t: "pick",
+    card: pending.id,
+    index: pending.options.findIndex((option) => option.kind === "decline"),
+  };
 }
 
 const kindNames: Record<CardKind, string> = { move: "招式", item: "道具", train: "训练" };
@@ -110,10 +125,38 @@ interface Copy extends ChoiceCardStyle {
   tag?: string;
   /** A type booster's element, chipped beside its rarity. */
   boosts?: ElementType;
+  /** No kind chip: the banner already names what every card is (特性). */
+  chipless?: true;
 }
-function choiceCopy(choice: Choice): Copy {
+function choiceCopy(choice: Choice, theme: ElementType, evolution: number): Copy {
   switch (choice.kind) {
+    case "ability": {
+      // The Pokémon's own crest on its type plate: the slot belongs to the line, not a move.
+      const ability = abilities[choice.ability];
+      return {
+        kind: "move",
+        tone: "new",
+        type: theme,
+        chipless: true,
+        title: ability.name,
+        lines: abilityText(ability, evolution).split("；"),
+        icon: `/art/icons/crests/${theme}.webp`,
+      };
+    }
     case "move": {
+      if (choice.replace) {
+        // The move to forget is the card; the banner names the one learnt.
+        const old = moves[choice.replace];
+        return {
+          kind: "move",
+          tone: "common",
+          type: old.type,
+          tag: "替换",
+          title: old.name,
+          lines: [archetypeNames[old.archetype]],
+          icon: moveIcon(old.id),
+        };
+      }
       const move = moves[choice.move];
       return {
         kind: "move",
@@ -148,7 +191,7 @@ function choiceCopy(choice: Choice): Copy {
         tag: rarityNames[item.rarity],
         ...(boosts ? { boosts } : {}),
         title: item.name,
-        lines: [item.desc],
+        lines: choice.drop ? [item.desc, `替换 ${items[choice.drop].name}`] : [item.desc],
         icon: itemIcon(choice.item),
       };
     }
@@ -176,6 +219,18 @@ function choiceCopy(choice: Choice): Copy {
             : `${choice.stat === "cd" ? "-" : "+"}${Math.round(TRAIN[choice.stat] * 100)}%`,
         ],
         icon: itemIcon(trainIcons[choice.stat]),
+      };
+    case "decline":
+      throw new Error("不学习没有卡。");
+    case "stardust":
+      // 禁止携带道具: a held item's draw becomes its worth in 星星沙子, in the bag it would fill.
+      return {
+        kind: "item",
+        tone: "common",
+        type: null,
+        title: CURRENCY_NAME,
+        lines: [`+${HELD_ITEM_STARDUST}`],
+        icon: CURRENCY_ICON,
       };
   }
 }
@@ -340,6 +395,8 @@ export class GpuChoiceContent {
   private flight: Flight | null = null;
   private focusVisible = true;
   private coarse = false;
+  /** Touch: how far the HUD's corner actions reach in from the right edge (stage units). */
+  private actionReach = 0;
   private readonly keycaps = new Set<Container>();
   private layoutKey = "";
   private metrics: Metrics;
@@ -368,6 +425,9 @@ export class GpuChoiceContent {
   }
   get docked(): boolean {
     return this.state.dismissible === true;
+  }
+  private get megaDocked(): boolean {
+    return this.docked && this.state.pending.source === "mega-move";
   }
   get scrollBody(): Container {
     return this.docked ? this.dockScroll : this.root;
@@ -401,6 +461,7 @@ export class GpuChoiceContent {
     if (
       (before.skips === null) !== (state.skips === null) ||
       (before.banishes === null) !== (state.banishes === null) ||
+      before.pending.source !== state.pending.source ||
       before.pending.offer?.kind !== state.pending.offer?.kind
     ) {
       this.clearActions();
@@ -421,6 +482,10 @@ export class GpuChoiceContent {
   setCoarsePointer(coarse: boolean): void {
     this.coarse = coarse;
     for (const badge of this.keycaps) badge.setProperties({ display: coarse ? "none" : "flex" });
+  }
+  /** The dock stays clear of the HUD's touch actions as they are laid out (see `GpuRunHud.actionReach`). */
+  setActionReach(reach: number): void {
+    this.actionReach = reach;
   }
   private text(text: string, size: number, color: string = ui.ink, weight = 800): Text {
     return new Text({
@@ -536,7 +601,14 @@ export class GpuChoiceContent {
     let cost: Banner["cost"] = null;
     if (chest)
       word(offer === "trophy" ? "奖杯" : offer === "deal" ? "耿鬼的交易" : "宝箱", "chest");
-    else {
+    else if (this.state.pending.source === "ability") word("特性", "chest");
+    else if (this.state.pending.source === "mega-move") {
+      kicker = slantTag("新招式", { face: ui.white, ink: ui.ink, size: 13 });
+      stack(kicker.tag, 1);
+      plate.add(kicker.tag);
+      const learn = this.state.pending.options.find((option) => option.kind === "move");
+      word(learn?.kind === "move" ? moves[learn.move].name : "", "chest");
+    } else {
       kicker = slantTag("升级", { face: ui.white, ink: ui.ink, size: 13 });
       stack(kicker.tag, 1);
       plate.add(kicker.tag);
@@ -601,7 +673,9 @@ export class GpuChoiceContent {
 
   private buildCards(): void {
     for (const [index, choice] of this.state.pending.options.entries()) {
-      const copy = choiceCopy(choice);
+      // 不学习 is an action, after every card: the cards keep their option index.
+      if (choice.kind === "decline") continue;
+      const copy = choiceCopy(choice, this.state.theme, this.state.evolution);
       const surface = new ChoiceCardSurface(copy, this.art);
       const panel = new Container({ flexDirection: "column", flexShrink: 1, minWidth: 0 });
       panel.add(surface.content);
@@ -659,7 +733,8 @@ export class GpuChoiceContent {
         });
         return text;
       });
-      panel.add(kind, key, head);
+      if (!copy.chipless) panel.add(kind);
+      panel.add(key, head);
       if (tagRow) panel.add(tagRow);
       for (const line of lines) panel.add(line);
       this.cardsBox.add(panel);
@@ -791,7 +866,21 @@ export class GpuChoiceContent {
   }
   private buildActions(): void {
     // A deal is answered or turned down for free: no reroll, banish or later, nothing spent.
-    const kinds: Action[] = this.state.pending.offer?.kind === "deal" ? ["decline"] : ["reroll"];
+    // An ability slot is only put off: its two cards are fixed and one must be kept.
+    const kinds: Action[] =
+      this.state.pending.offer?.kind === "deal"
+        ? ["decline"]
+        : this.state.pending.source === "mega-move"
+          ? this.state.dismissible
+            ? ["decline", "defer"]
+            : ["decline"]
+          : this.state.pending.source === "ability"
+            ? this.state.dismissible
+              ? ["defer"]
+              : []
+            : ["reroll"];
+    // A solo ability pick has no action: no empty row keeps a gap under the cards.
+    this.actionsBox.setProperties({ display: kinds.length ? "flex" : "none" });
     if (kinds[0] === "reroll") {
       if (this.state.skips !== null) kinds.push("skip");
       if (this.state.dismissible) kinds.push("defer");
@@ -815,16 +904,18 @@ export class GpuChoiceContent {
           : createMenuIcon(kind === "skip" ? "chevron" : "close");
       glyph.setProperties({ width: 20, height: 20 });
       const label = stack(this.text("", 15, ui.ink), 1);
+      // A docked mega move keeps Esc for 稍后, so 不学习 takes X (it has no skip).
+      const declineKey = kind === "decline" && this.megaDocked;
       const badge = stack(
         new InputGlyph(
-          kind === "defer" || kind === "decline"
+          (kind === "defer" || kind === "decline") && !declineKey
             ? "back"
             : this.docked
               ? "choiceConfirm"
               : "confirm",
           kind === "reroll"
             ? "R"
-            : kind === "skip"
+            : kind === "skip" || declineKey
               ? "X"
               : kind === "defer" || kind === "decline"
                 ? "Esc"
@@ -911,7 +1002,9 @@ export class GpuChoiceContent {
             ? action.kind === "defer"
               ? "保留选择机会"
               : action.kind === "decline"
-                ? "最大生命不变"
+                ? this.state.pending.source === "mega-move"
+                  ? "保留现有招式"
+                  : "最大生命不变"
                 : actionTerms[action.kind]
             : "本局已用完",
         action: () => this.actionPressed(action.kind),
@@ -983,7 +1076,9 @@ export class GpuChoiceContent {
           action.kind === "defer"
             ? "稍后"
             : action.kind === "decline"
-              ? "放弃"
+              ? this.state.pending.source === "mega-move"
+                ? "不学习"
+                : "放弃"
               : `${action.kind === "reroll" ? "重抽" : action.kind === "skip" ? "跳过" : "放逐"} ${count}`,
       });
       this.refreshAction(action);
@@ -1004,11 +1099,13 @@ export class GpuChoiceContent {
     }
     const choice = card.choice;
     const target =
-      choice.kind === "move" || choice.kind === "upgrade"
-        ? this.callbacks.slotCenter("move", choice.move)
-        : choice.kind === "item"
-          ? this.callbacks.slotCenter("item", choice.item)
-          : null;
+      choice.kind === "move"
+        ? this.callbacks.slotCenter("move", choice.replace ?? choice.move)
+        : choice.kind === "upgrade"
+          ? this.callbacks.slotCenter("move", choice.move)
+          : choice.kind === "item"
+            ? this.callbacks.slotCenter("item", choice.item)
+            : null;
     // --fly-x/y: from the card's laid-out centre (its transform aside) to the slot.
     const matrix = card.panel.globalMatrix.value;
     let dx = 0,
@@ -1034,7 +1131,9 @@ export class GpuChoiceContent {
     // Only the actions this card shows: a deal has no reroll behind the dock's interact key.
     if (this.flight || this.count(kind) <= 0 || !this.actions.some((a) => a.kind === kind)) return;
     getAudio().sfx("ui-confirm");
-    if (kind === "defer" || kind === "decline") {
+    if (kind === "decline" && this.state.pending.source === "mega-move")
+      this.callbacks.send(declineCommand(this.state.pending));
+    else if (kind === "defer" || kind === "decline") {
       const command = dismissCommand(this.state);
       if (command) this.callbacks.send(command);
     } else if (kind === "banish") this.callbacks.toggleBanish();
@@ -1053,7 +1152,15 @@ export class GpuChoiceContent {
     }
     const letter = code.startsWith("Key") ? code.slice(3) : key.toUpperCase();
     const action =
-      letter === "R" ? "reroll" : letter === "X" ? "skip" : letter === "Z" ? "banish" : null;
+      letter === "R"
+        ? "reroll"
+        : letter === "X"
+          ? this.megaDocked
+            ? "decline"
+            : "skip"
+          : letter === "Z"
+            ? "banish"
+            : null;
     if (!action) return false;
     if (this.actions.some((a) => a.kind === action)) this.actionPressed(action);
     return true;
@@ -1068,7 +1175,10 @@ export class GpuChoiceContent {
     const v = this.stage.viewport;
     const edge = v.height <= 480 ? 12 : 16;
     const left = Math.max(edge, v.safeArea.left) + (this.coarse ? 150 : 152);
-    const right = Math.max(edge, v.safeArea.right) + (this.coarse ? 176 : 152);
+    // Touch: clear of the measured turn pair and thumbs (dash, ultimate, the trainer's item) by 8.
+    const right = this.coarse
+      ? Math.max(edge, v.safeArea.right, this.actionReach + 8)
+      : Math.max(edge, v.safeArea.right) + 152;
     const width = Math.min(920, v.width - left - right);
     const bottom = Math.max(edge, v.safeArea.bottom);
     const gap = 6;
@@ -1220,6 +1330,7 @@ export class GpuChoiceContent {
       ...Object.values(v.safeArea),
       this.cards.length,
       this.coarse,
+      Math.round(this.actionReach),
     ].join(",");
     if (key === this.layoutKey) return;
     this.layoutKey = key;
@@ -1313,7 +1424,7 @@ export class GpuChoiceContent {
       this.actionsBox.setProperties({
         flexGrow: 1,
         flexBasis: 0,
-        minHeight: n * 44 + (n - 1) * 8,
+        minHeight: Math.max(0, n * 44 + (n - 1) * 8),
         justifyContent: "flex-start",
       });
       if (arrange) {

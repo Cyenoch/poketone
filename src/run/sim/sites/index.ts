@@ -1,3 +1,4 @@
+import { contentAvailable } from "../content/unlocks";
 import { enemies } from "../content/enemies";
 import { SITE } from "../content/params/sites";
 import { MIN_UPGRADE_RARITY } from "../content/params/cards";
@@ -48,7 +49,7 @@ export function placeSites(world: World): Site[] {
     throw new MapGenError(
       `交互点需要 ${SITE.count} 块 site 平台，实际为 ${pads.length}（${world.stage}，种子 ${world.seed}）。`,
     );
-  const pool = zoneDef(world).sites;
+  const pool = zoneDef(world).sites.filter((site) => contentAvailable(world.unlocks, { site }));
   if (pool.length === 0) throw new Error(`${world.stage}：交互点种类池为空。`);
   const result: Site[] = [];
   const available = [...pool];
@@ -100,13 +101,12 @@ export function placeSites(world: World): Site[] {
           pad.z + sin(angle) * SITE.balls.ring,
         );
         site.data.trap = hidden.has(i);
-        if (site.data.trap) site.data.species = "voltorb";
+        if (site.data.trap) site.data.species = sites["item-ball"].species[0];
         result.push(site);
       }
     } else {
       const site = make(pad.x, pad.z);
-      if (kind === "honey-tree")
-        site.data.species = pick(world.rng, ["heracross", "pinsir", "munchlax"] as const);
+      if (kind === "honey-tree") site.data.species = pick(world.rng, sites["honey-tree"].species);
       if (kind === "egg" || kind === "raid-den") {
         const roster = zoneDef(world)
           .roster.map(([, id]) => id)
@@ -119,9 +119,8 @@ export function placeSites(world: World): Site[] {
           throw new Error(`${world.stage}：交互点 ${kind} 没有可用的本图物种。`);
         site.data.species = pick(world.rng, roster);
       }
-      if (kind === "ghost") site.data.species = "marowak";
-      if (kind === "snorlax") site.data.species = "snorlax";
-      if (kind === "fossil") site.data.species = "aerodactyl";
+      if (kind === "ghost" || kind === "snorlax" || kind === "fossil")
+        site.data.species = sites[kind].species[0];
       if (kind === "honey-tree" || kind === "snorlax")
         addCircleBlocker(world.nav, site.x, site.z, site.radius);
       result.push(site);
@@ -140,7 +139,9 @@ export function placeSites(world: World): Site[] {
   for (const site of result) {
     const species =
       site.kind === "fishing"
-        ? "gyarados"
+        ? contentAvailable(world.unlocks, { site: "fishing", species: "gyarados" })
+          ? "gyarados"
+          : "magikarp"
         : ["honey-tree", "snorlax", "fossil", "raid-den", "ghost"].includes(site.kind)
           ? site.data.species
           : undefined;
@@ -150,7 +151,7 @@ export function placeSites(world: World): Site[] {
         world,
         site,
         species,
-        true,
+        species !== "magikarp",
         site.kind === "raid-den" ? SITE.raid.scale : 1,
         false,
       )

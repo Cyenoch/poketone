@@ -1,6 +1,7 @@
 // World snapshot contract (docs/state-machines/simulation.md): snapshot a mid-run world, restore it in a
 // fresh worker (no module caches from the original), feed both the same commands to the end, and get the
 // same golden digests and the same full state. The original keeps its cache history up to the snapshot.
+import { unlockIds } from "../src/run/sim/content/unlocks.ts";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
@@ -28,9 +29,15 @@ import { answerCard, eventFacts, project, SAMPLE_EVERY, STAGE_TICKS } from "./go
 
 /** Golden's "coop/charmander+squirtle/d1/s7" case (determinism/run.mjs exports golden's CASES itself). */
 const CASE = {
+  mode: "expedition",
+  unlocks: unlockIds,
+  rules: [],
   seed: 7,
   difficulty: 1,
-  players: [{ starter: "charmander" }, { starter: "squirtle" }],
+  players: [
+    { trainer: "chengxi", starter: "charmander" },
+    { trainer: "chengxi", starter: "squirtle" },
+  ],
 };
 /** The snapshot is taken at the first call from here on that leaves the risky state below. */
 const FROM_TICK = 3000;
@@ -170,7 +177,14 @@ if (isMainThread) {
     test(`${stage}: a real co-op map and snapshot survive the network codec and continue identically`, () => {
       let seed = CASE.seed;
       const world = createWorldFromSeeds(
-        { stage, route: routeTo(stage), difficulty: CASE.difficulty, players: CASE.players },
+        {
+          mode: CASE.mode,
+          rules: CASE.rules,
+          stage,
+          route: routeTo(stage),
+          difficulty: CASE.difficulty,
+          players: CASE.players,
+        },
         () => seed++,
       );
       const snapshot = snapshotWorld(world);
@@ -308,6 +322,7 @@ if (isMainThread) {
       [(value) => (value.navigation.layers[1].mobility = "toString"), /机动类别无效/],
       [(value) => (value.navigation.layers[1].mobility = "ground"), /顺序与快照不符/],
       [(value) => (value.navigation.clock = Infinity), /不是有限数/],
+      [(value) => (value.players[0].mega = "not-a-form"), /players.0.mega/],
       [(value) => (value.version += 1), /快照格式/],
       [(value) => (value.version -= 1), /快照格式/],
       [(value) => delete value.spawn.pressure, /快照增援压力无效/],
@@ -409,7 +424,9 @@ if (isMainThread) {
 
   test("a restored snapshot steps like the original under the same commands", async () => {
     const world = createWorld({
+      mode: CASE.mode,
       stage: "forest",
+      rules: CASE.rules,
       seed: CASE.seed,
       difficulty: CASE.difficulty,
       players: CASE.players,

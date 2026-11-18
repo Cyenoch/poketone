@@ -1,3 +1,4 @@
+import { unlockIds } from "../src/run/sim/content/unlocks.ts";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { itemValues, moveBudgets } from "../src/run/balance/budget.ts";
@@ -18,6 +19,7 @@ import { MELEE_STEP, moveOutput, TERRAIN_SIGHT } from "../src/run/balance/output
 import { average, expert, novice } from "../src/run/balance/skill.ts";
 import { updateAreas, updateMoves, updateProjectiles } from "../src/run/sim/attacks.ts";
 import { difficulties } from "../src/run/sim/content/difficulties.ts";
+import { contactDamageFactor } from "../src/run/sim/content/abilities.ts";
 import { enemies } from "../src/run/sim/content/enemies.ts";
 import { items } from "../src/run/sim/content/items.ts";
 import { moves } from "../src/run/sim/content/moves.ts";
@@ -77,10 +79,13 @@ const prefixes = [
 
 test("model schedules use the real seeded scheduler and retain used events across fields", () => {
   const world = createWorld({
+    unlocks: unlockIds,
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 3,
     difficulty: 0,
-    players: [{ starter: "charmander" }],
+    players: [{ trainer: "chengxi", starter: "charmander" }],
   });
   const rng = createRng(483);
   const used = [];
@@ -130,6 +135,25 @@ test("weather affects move derivation and enemy streams once, without changing n
     assert.ok(Math.abs(rain[i].dmg / calm[i].dmg - multiplier) < 1e-12);
     assert.equal(rain[i].rate, calm[i].rate);
   }
+});
+
+test("坚硬脑袋在守卫模型里减轻追击和冲撞，不减轻空气斩", () => {
+  const scyther = ["scyther", 0, 1, 1, 0, true, 0.4];
+  const factor = contactDamageFactor("rock-head", 1);
+  const [dash, chase, slash] = bossHits(...scyther);
+  const [reducedDash, reducedChase, sameSlash] = bossHits(
+    ...scyther,
+    undefined,
+    null,
+    Infinity,
+    null,
+    false,
+    factor,
+  );
+  assert.ok(dash.rate > 0 && chase.rate > 0 && slash.rate > 0);
+  assert.equal(reducedDash.dmg, dash.dmg * factor);
+  assert.equal(reducedChase.dmg, chase.dmg * factor);
+  assert.deepEqual(sameSlash, slash);
 });
 
 test("event encounters use ordinary encounter stats, pay one floor-bearing box, and timeouts pay nothing", () => {
@@ -481,10 +505,12 @@ test("ultimate preparation delays the original pulses instead of paying their da
 
 test("item previews preserve the seeded immediate effect of a newly granted Loaded Dice", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 3,
     difficulty: 0,
-    players: [{ starter: "charmander" }],
+    players: [{ trainer: "chengxi", starter: "charmander" }],
   });
   world.rng = createRng(391);
   const player = world.players[0];
@@ -579,11 +605,13 @@ test("extra guardian exposure waits for the first cast and slows with phase and 
 
 test("guardian tuning changes both actual hazards and their modelled exposure", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "tower",
     route: desertRoute,
     seed: 11,
     difficulty: 0,
-    players: [{ starter: "squirtle" }],
+    players: [{ trainer: "chengxi", starter: "squirtle" }],
   });
   const player = world.players[0];
   for (const [species, params, kind, turn, stream] of [
@@ -656,10 +684,12 @@ function flatTerrain() {
 /** Damage the real sim deals with one level-1 move to an unkillable rattata `distance` ahead. */
 function simDamage(move, distance) {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 3,
     difficulty: 0,
-    players: [{ starter: "bulbasaur" }],
+    players: [{ trainer: "chengxi", starter: "bulbasaur" }],
   });
   world.map.terrain = flatTerrain();
   const player = world.players[0];
@@ -681,10 +711,12 @@ function simDamage(move, distance) {
 /** The model's damage on the same lone target, with the terrain availability factors removed. */
 function modelDamage(move) {
   const player = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 3,
     difficulty: 0,
-    players: [{ starter: "bulbasaur" }],
+    players: [{ trainer: "chengxi", starter: "bulbasaur" }],
   }).players[0];
   const neutral = Object.fromEntries(
     Object.keys(typeNames).map((t) => [t, typeMultiplier(t, enemies.rattata.types)]),
@@ -732,10 +764,12 @@ test("modelled move damage on a lone target matches the sim's cast timing, ticks
 
 test("guardian conditional damage follows applied control and statuses in both model and combat", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 3,
     difficulty: 0,
-    players: [{ starter: "squirtle" }],
+    players: [{ trainer: "chengxi", starter: "squirtle" }],
   });
   world.map.terrain = flatTerrain();
   const player = world.players[0];
@@ -843,11 +877,13 @@ test("the model and the sim give each zone of every stage the same guardian HP",
     const stage = route.at(-1),
       step = route.length - 1;
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage,
       route,
       seed: 3,
       difficulty: 0,
-      players: [{ starter: "bulbasaur" }],
+      players: [{ trainer: "chengxi", starter: "bulbasaur" }],
     });
     stageDefs[stage].zones.forEach((zone, index) => {
       world.zone.index = index;
@@ -872,11 +908,13 @@ test("modelled swarm stats match spawned enemies through entry ramp, growth and 
     const stage = stageDefs[route.at(-1)],
       step = route.length - 1;
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: stage.id,
       route,
       seed: 3,
       difficulty: 0,
-      players: [{ starter: "squirtle" }],
+      players: [{ trainer: "chengxi", starter: "squirtle" }],
     });
     world.spawn.shinySpawned = true; // This fixture compares ordinary spawn stats, not shiny encounters.
     for (const [index, zone] of stage.zones.entries()) {
@@ -1091,10 +1129,12 @@ test("mixed batches pay XP and ultimate charge for their count, not their extra 
     );
     assert.equal(rounded.levelAt.length, 3, "24 XP buys level two, not phantom alpha kills");
     const actual = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       seed: 3,
       difficulty: 0,
-      players: [{ starter: "squirtle" }],
+      players: [{ trainer: "chengxi", starter: "squirtle" }],
     });
     for (let i = 0; i < count; i++) {
       const elite = spawnEnemy(actual, "rattata", 0, 5, true);
@@ -1292,10 +1332,12 @@ test("guardian chests and rounded XP carry real build strength into later zones"
     }
     const chestsOnly = runModel(options);
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       seed: 3,
       difficulty: 0,
-      players: [{ starter: "bulbasaur" }],
+      players: [{ trainer: "chengxi", starter: "bulbasaur" }],
     });
     const player = world.players[0];
     for (let zone = 0; zone < zones.length; zone++) {
@@ -1332,10 +1374,12 @@ test("guardian chests and rounded XP carry real build strength into later zones"
     for (const zone of zones) enemies[zone.guardian.species].xp = 19;
     const rewarded = runModel(options);
     const xpWorld = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       seed: 3,
       difficulty: 0,
-      players: [{ starter: "bulbasaur" }],
+      players: [{ trainer: "chengxi", starter: "bulbasaur" }],
     });
     for (let zone = 0; zone < zones.length; zone++) {
       xpWorld.stage = fields[zone].id;
@@ -1378,10 +1422,12 @@ test("candy previews match real picks, including partial XP, evolution and all a
     [27, 1],
   ]) {
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       seed: 3,
       difficulty: 0,
-      players: [{ starter: "charmander" }],
+      players: [{ trainer: "chengxi", starter: "charmander" }],
     });
     const player = world.players[0];
     player.level = level;
@@ -1472,11 +1518,13 @@ test("guardian damage charges the ultimate from the same route- and difficulty-s
       const stage = route.at(-1),
         step = route.length - 1;
       const world = createWorld({
+        mode: "expedition",
+        rules: [],
         stage,
         route,
         difficulty,
         seed: 3,
-        players: [{ starter: "squirtle" }],
+        players: [{ trainer: "chengxi", starter: "squirtle" }],
       });
       const player = world.players[0];
       const boss = spawnEnemy(world, stageDefs[stage].zones[0].guardian.species, 0, 5);

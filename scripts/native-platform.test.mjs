@@ -72,7 +72,13 @@ test("native saves use the Web format and preserve an unreadable file", async ()
     assert.deepEqual(readSave(path), save);
     assert.deepEqual(decodeSave(await readFile(path, "utf8")), save);
     const storage = nativeAppStorage(path);
-    const pick = { starter: "squirtle", difficulty: 0, stage: "forest" };
+    const pick = {
+      mode: "expedition",
+      trainer: "chengxi",
+      starter: "squirtle",
+      difficulty: 0,
+      stage: "forest",
+    };
     storage.savePick(pick);
     assert.deepEqual(nativeAppStorage(path).load().pick, pick);
     await writeFile(`${path}.pick.json`, "{");

@@ -1,11 +1,12 @@
 import type { LineDef } from "./index";
 
+const traits = { normal: ["overgrow"], hidden: "chlorophyll" } as const;
+
 export const bulbasaur = {
   id: "bulbasaur",
   role: "持久治疗",
-  ability: "photosynthesis",
   ultimate: "frenzy-plant",
-  kit: ["vine-whip", "razor-leaf", "solar-beam", "sleep-powder"],
+  kit: ["vine-whip", "razor-leaf", "solar-beam", "sleep-powder", "sunny-day", "grass-pledge"],
   evolutionMoves: ["giga-drain", "seed-bomb"],
   stages: [
     {
@@ -13,6 +14,7 @@ export const bulbasaur = {
       at: 1,
       form: {
         id: "bulbasaur",
+        abilities: traits,
         name: "妙蛙种子",
         types: ["grass"],
         hp: 109,
@@ -27,6 +29,7 @@ export const bulbasaur = {
       at: 28,
       form: {
         id: "ivysaur",
+        abilities: traits,
         name: "妙蛙草",
         types: ["grass"],
         hp: 126,
@@ -41,6 +44,7 @@ export const bulbasaur = {
       at: 53,
       form: {
         id: "venusaur",
+        abilities: traits,
         name: "妙蛙花",
         types: ["grass"],
         hp: 145,

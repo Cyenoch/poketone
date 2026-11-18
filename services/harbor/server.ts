@@ -1,19 +1,23 @@
+import { knownUnlocks } from "../../src/run/sim/content/unlocks";
 import type { ServerWebSocket } from "bun";
 import {
   PROTOCOL_VERSION,
+  knownBond,
   knownMission,
   knownStarter,
   record,
+  sameRules,
   type PlayerSetup,
   type Room,
   type RoomErrorCode,
   type ServerMessage,
 } from "../../src/network/protocol";
-import { isTrainerId } from "../../src/trainers";
+import { isTrainerId } from "../../src/run/sim/content/trainers";
 
 interface Connection {
   room?: HostedRoom;
   player: number;
+  confirmedMission?: number;
 }
 class RoomError extends Error {
   readonly code: RoomErrorCode;
@@ -29,6 +33,8 @@ interface HostedRoom {
   tokens: string[];
   readyLinks: Set<string>;
   departed: Set<number>;
+  /** A quitting seat waits for its host snapshot, then for receipt on its original ticket. */
+  departures: Map<number, string | null>;
   terminal?: string;
   terminalAcks: Set<number>;
   config?: Extract<ServerMessage, { t: "start" }>["config"];
@@ -48,7 +54,11 @@ export function startHarbor(
   }
   function publish(room: HostedRoom, removed?: number) {
     room.state.ready = room.sockets.flatMap((socket, id) =>
-      socket && (id === 0 || (room.readyLinks.has(`0:${id}`) && room.readyLinks.has(`${id}:0`)))
+      socket &&
+      (id === 0 ||
+        (socket.data.confirmedMission === room.state.missionRevision &&
+          room.readyLinks.has(`0:${id}`) &&
+          room.readyLinks.has(`${id}:0`)))
         ? [id]
         : [],
     );
@@ -94,6 +104,7 @@ export function startHarbor(
   }
   /** A started run keeps going without a guest who left; the host owns the world. */
   function depart(room: HostedRoom, seat: number) {
+    room.departures.delete(seat);
     room.departed.add(seat);
     const socket = room.sockets[seat];
     room.sockets[seat] = undefined;
@@ -104,16 +115,21 @@ export function startHarbor(
     }
     if (!completeTerminal(room)) publish(room);
   }
+  function sendTerminal(room: HostedRoom, seat: number) {
+    const personal = room.departures.get(seat);
+    const data = personal ?? room.terminal;
+    if (data && !room.terminalAcks.has(seat))
+      send(room.sockets[seat], { t: "terminal", data, personal: Boolean(personal) });
+  }
   function deliverTerminal(room: HostedRoom) {
-    for (let id = 1; id < room.sockets.length; id++)
-      if (!room.terminalAcks.has(id))
-        send(room.sockets[id], { t: "terminal", data: room.terminal! });
+    for (let id = 1; id < room.sockets.length; id++) sendTerminal(room, id);
     completeTerminal(room);
   }
   function completeTerminal(room: HostedRoom): boolean {
     if (!room.terminal) return false;
     for (let id = 0; id < room.sockets.length; id++)
-      if (!room.terminalAcks.has(id) && !room.departed.has(id)) return false;
+      if (!room.terminalAcks.has(id) && (!room.departed.has(id) || room.departures.has(id)))
+        return false;
     destroy(room);
     return true;
   }
@@ -157,20 +173,24 @@ export function startHarbor(
             if (room.build !== msg.build)
               throw new RoomError("游戏版本不同，无法恢复对局。", "version");
             const player = room.tokens.indexOf(msg.token);
-            if (player < 0 || room.departed.has(player)) throw new Error("无法恢复原玩家席位。");
+            if (player < 0 || (room.departed.has(player) && !room.departures.has(player)))
+              throw new Error("无法恢复原玩家席位。");
             const old = room.sockets[player];
             if (old) {
               old.data.room = undefined;
               send(old, { t: "error", message: "对局已在另一连接恢复。" });
               old.close(1000, "连接已替换");
             }
-            socket.data = { room, player };
+            socket.data = { room, player, confirmedMission: room.state.missionRevision };
             room.sockets[player] = socket;
             if (player !== 0) room.terminalAcks.delete(player);
             if (player === 0 && !room.terminal) clearTimeout(room.expiry);
             publish(room);
             if (player !== 0) send(socket, { t: "start", config: room.config! });
-            if (room.terminal) deliverTerminal(room);
+            sendTerminal(room, player);
+            if (player === 0 && !room.terminal)
+              for (const [from, result] of room.departures)
+                if (result === null) send(socket, { t: "quit", from });
             return;
           }
           if (msg.t === "enter") {
@@ -179,9 +199,14 @@ export function startHarbor(
               throw new RoomError("联机版本不同，请刷新游戏。", "version");
             if (!record(msg.player) || !knownStarter(msg.player.starter))
               throw new Error("伙伴选择无效。");
+            if (msg.player.unlocks !== undefined && !knownUnlocks(msg.player.unlocks))
+              throw new Error("队员研究解锁无效。");
             if (!isTrainerId(msg.player.trainer)) throw new Error("训练师选择无效。");
             if (typeof msg.player.shiny !== "boolean") throw new Error("异色外观选择无效。");
+            if (!knownBond(msg.player.bond, msg.player.bondLab)) throw new Error("伙伴羁绊无效。");
             if (typeof msg.code !== "string") throw new Error("房间码无效。");
+            if (msg.mission !== undefined && !knownMission(msg.mission))
+              throw new Error("冒险设置无效。");
             if (msg.code) {
               room = rooms.get(msg.code);
               if (!room) throw new RoomError("房间不存在。", "no-room");
@@ -190,8 +215,6 @@ export function startHarbor(
               if (room.build !== msg.build)
                 throw new RoomError("游戏版本不同，请所有玩家刷新后重建房间。", "version");
             } else {
-              if (msg.mission !== undefined && !knownMission(msg.mission))
-                throw new Error("冒险设置无效。");
               let code;
               do
                 code = String(crypto.getRandomValues(new Uint32Array(1))[0]! % 1000000).padStart(
@@ -204,8 +227,15 @@ export function startHarbor(
                   code,
                   players: [],
                   mission: msg.mission
-                    ? { stage: msg.mission.stage, difficulty: msg.mission.difficulty }
-                    : { stage: "forest", difficulty: 0 },
+                    ? {
+                        stage: msg.mission.stage,
+                        mode: msg.mission.mode,
+                        difficulty: msg.mission.difficulty,
+                        rules: msg.mission.rules,
+                        unlocks: msg.mission.unlocks,
+                      }
+                    : { mode: "expedition", stage: "forest", difficulty: 0, rules: [] },
+                  missionRevision: 0,
                   started: false,
                   ready: [],
                   online: [],
@@ -216,11 +246,16 @@ export function startHarbor(
                 tokens: [],
                 readyLinks: new Set(),
                 departed: new Set(),
+                departures: new Map(),
                 terminalAcks: new Set(),
               };
               rooms.set(code, room);
             }
-            socket.data = { room, player: room.sockets.length };
+            socket.data = {
+              room,
+              player: room.sockets.length,
+              confirmedMission: room.state.missionRevision,
+            };
             room.state.players.push(msg.player as unknown as PlayerSetup);
             room.sockets.push(socket);
             room.tokens.push(crypto.randomUUID());
@@ -258,12 +293,26 @@ export function startHarbor(
           }
           if (msg.t === "quit") {
             if (!room.state.started || from === 0) throw new Error("只有队友可以中途离开对局。");
-            if (!room.terminal) depart(room, from);
+            if (room.terminal || room.departures.get(from)) sendTerminal(room, from);
+            else if (!room.departures.has(from)) {
+              room.departures.set(from, null);
+              send(room.sockets[0], { t: "quit", from });
+            }
             return;
           }
           if (msg.t === "terminal") {
             if (from !== 0 || !room.state.started || typeof msg.data !== "string")
               throw new Error("终局交付无效。");
+            if (msg.to !== undefined) {
+              const seat = target(msg.to);
+              if (room.departed.has(seat) || room.terminal) return;
+              if (!room.departures.has(seat)) throw new Error("该席位未请求放弃对局。");
+              room.departures.set(seat, msg.data);
+              room.departed.add(seat);
+              publish(room);
+              sendTerminal(room, seat);
+              return;
+            }
             // One host result survives transport loss until every original seat has received it.
             if (!room.terminal) {
               room.terminal = msg.data;
@@ -275,6 +324,10 @@ export function startHarbor(
             return;
           }
           if (msg.t === "terminal-ack") {
+            if (room.departures.get(from)) {
+              depart(room, from);
+              return;
+            }
             if (!room.terminal) throw new Error("终局尚未提交。");
             room.terminalAcks.add(from);
             completeTerminal(room);
@@ -297,6 +350,7 @@ export function startHarbor(
             if (!knownStarter(msg.starter)) throw new Error("伙伴选择无效。");
             if (!isTrainerId(msg.trainer)) throw new Error("训练师选择无效。");
             if (typeof msg.shiny !== "boolean") throw new Error("异色外观选择无效。");
+            if (!knownBond(msg.bond, msg.bondLab)) throw new Error("伙伴羁绊无效。");
             // A change that loses the race to the start is dropped: the run keeps the start's pick.
             if (room.state.started) return;
             room.state.players[from] = {
@@ -304,13 +358,28 @@ export function startHarbor(
               starter: msg.starter,
               trainer: msg.trainer,
               shiny: msg.shiny,
+              bond: msg.bond as PlayerSetup["bond"],
+              bondLab: msg.bondLab as PlayerSetup["bondLab"],
             };
             publish(room);
           } else if (msg.t === "mission") {
             if (from !== 0) throw new Error("只有房主可以修改冒险设置。");
             if (!knownMission(msg)) throw new Error("冒险设置无效。");
             if (room.state.started) return;
-            room.state.mission = { stage: msg.stage, difficulty: msg.difficulty };
+            const rulesChanged = !sameRules(room.state.mission.rules, msg.rules);
+            if (rulesChanged) room.state.missionRevision++;
+            room.state.mission = {
+              mode: msg.mode,
+              stage: msg.stage,
+              difficulty: msg.difficulty,
+              unlocks: room.state.mission.unlocks,
+              rules: rulesChanged ? msg.rules : room.state.mission.rules,
+            };
+            publish(room);
+          } else if (msg.t === "mission-ready") {
+            if (from === 0 || room.state.started || msg.revision !== room.state.missionRevision)
+              return;
+            socket.data.confirmedMission = msg.revision;
             publish(room);
           } else if (msg.t === "transport-ready") {
             const to = target(msg.peer);

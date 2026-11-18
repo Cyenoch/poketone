@@ -74,8 +74,10 @@ test("凭据读取、开局写入和关闭删除的真实 I/O 失败会通知，
       },
       url,
       emptyProgress(),
-      { starter: "squirtle", stage: "forest", difficulty: 0, trainer: "yewei" },
+      { mode: "expedition", starter: "squirtle", stage: "forest", difficulty: 0, trainer: "yewei" },
+      [],
       {
+        rules() {},
         close() {},
         settings() {},
         copy() {},

@@ -5,6 +5,8 @@ import type { PlayerId } from "./entities";
 export type WeatherId = "sun" | "rain" | "sandstorm" | "hail";
 export interface WeatherState {
   id: WeatherId;
+  /** Only a field forecast still waiting to announce its start. */
+  forecast?: true;
   /** Absolute world seconds; the interval before `from` is a harmless forecast. */
   from: number;
   until: number;

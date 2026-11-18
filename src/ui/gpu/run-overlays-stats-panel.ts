@@ -9,8 +9,8 @@ import {
   Vector3,
   type Texture,
 } from "three";
-import { formDefs, starters, type FormId, type StarterId } from "../../run/sim/content/lines/index";
-import { abilities } from "../../run/sim/content/abilities";
+import { formDefs, type FormId, type StarterId } from "../../run/sim/content/lines/index";
+import { abilities, abilityForSlot } from "../../run/sim/content/abilities";
 import { conditionTags } from "../../run/sim/content/effects";
 import { armorFactor, type StatKey, type StatLine } from "../../run/sim/stats";
 import type { PlayerSheet } from "../../run/createRun";
@@ -19,6 +19,8 @@ import type { RunOverlayControl } from "./run-overlays-control";
 import { type ChoiceArt } from "./run-choice-surface";
 import { typeColors } from "./run-theme";
 import { portraitSrc } from "./ball";
+import type { RuleId } from "../../run/sim/content/rules";
+import { RuleChips, ruleTip } from "./challenge-rules";
 import { createRunStatIcon } from "./run-overlays-icons";
 import { BoxShadow, OutlineRing } from "./box-shadow";
 import { cubicBezier } from "./focus-mark";
@@ -52,10 +54,13 @@ import {
 } from "./run-overlays-stats";
 
 export interface StatsPanelState {
+  abilitySlot: 0 | 1 | "hidden";
   starter: StarterId;
   form: FormId;
   /** The player's own look: the title portrait in its shiny colours. */
   shiny: boolean;
+  /** The run's challenge rules (icons in the header; none without rules). */
+  rules: readonly RuleId[];
   level: number;
   build: PlayerSheet;
 }
@@ -151,6 +156,9 @@ export class GpuStatsContent {
   private focusVisible = false;
   private compact = false;
   private border = 3;
+  /** The run's rules, a row of icon keys before the page tabs; each tip is its name and effect. */
+  private readonly ruleChips = new RuleChips();
+  private readonly ruleFocus: boolean[] = [];
 
   constructor(state: StatsPanelState, stage: UiStage, art: ChoiceArt, onPage: () => void) {
     this.stage = stage;
@@ -188,15 +196,31 @@ export class GpuStatsContent {
     for (const type of def.types) chips.add(typeTag(type));
     chips.add(
       gameTag(`Lv ${state.level}`, lightTone),
-      gameTag(abilities[starters[state.starter].ability].name, lightTone),
+      gameTag(abilities[abilityForSlot(def.abilities, state.abilitySlot)].name, lightTone),
     );
     this.header.add(stack(this.title, 1), chips);
+    this.ruleChips.set(state.rules);
+    this.header.add(stack(this.ruleChips.panel, 1));
     const strip = segmentTray();
     this.tray = strip;
     for (const [index, name] of PAGES.entries()) strip.tray.add(this.tab(index, name));
     this.header.add(stack(strip.tray, 1));
     this.battle = new GpuBattlePage(state.build, stage, () => this.page === 0);
     this.controls.push(...this.battle.controls);
+    for (const [i, chip] of this.ruleChips.chips.entries()) {
+      if (!state.rules.includes(chip.id)) continue;
+      this.controls.push({
+        panel: chip.panel,
+        enabled: () => true,
+        action: () => {},
+        selfDrawn: true,
+        tip: ruleTip(chip.id),
+        setFocused: (focused) => {
+          this.ruleFocus[i] = focused;
+          this.paintRuleChips();
+        },
+      });
+    }
 
     for (const [col, group] of statGroups.entries()) {
       const box = new Container({
@@ -254,6 +278,12 @@ export class GpuStatsContent {
     return tab.face.panel;
   }
 
+  private paintRuleChips(): void {
+    const at = this.ruleFocus.findIndex((focused) => focused);
+    this.ruleChips.focusRing(this.focusVisible ? at : -1);
+    this.stage.invalidate();
+  }
+
   private paintTabs(): void {
     for (const [index, tab] of this.tabs.entries())
       tab.face.paint({
@@ -286,9 +316,12 @@ export class GpuStatsContent {
     this.select((this.page + step + PAGES.length) % PAGES.length);
   }
 
-  /** The page tabs sit in the header, outside the scroll body, yet take taps. */
+  /** The page tabs and the rule chips sit in the header, outside the scroll body, yet take taps. */
   isTab(control: RunOverlayControl): boolean {
-    return this.tabs.some((tab) => tab.face.panel === control.panel);
+    return (
+      this.tabs.some((tab) => tab.face.panel === control.panel) ||
+      this.ruleChips.chips.some((chip) => chip.panel === control.panel)
+    );
   }
   /** The tab control of the page shown, for the host to move focus to after a turn. */
   get pageTab(): RunOverlayControl {
@@ -490,8 +523,9 @@ export class GpuStatsContent {
     for (const source of bySource(line.sources)) {
       const off = !source.active;
       const parts: (Container | Text)[] = [];
-      if (source.when) {
-        const condition = gameTag(conditionTags[source.when], {
+      for (const key of [source.when, source.requires]) {
+        if (!key) continue;
+        const condition = gameTag(conditionTags[key], {
           size: "badge",
           face: off ? ui.mist : INK,
           ink: off ? INK : ui.white,
@@ -565,6 +599,7 @@ export class GpuStatsContent {
     this.focusVisible = visible;
     this.battle.setFocusVisible(visible);
     this.paintTabs();
+    this.paintRuleChips();
     this.paint();
   }
 
@@ -581,6 +616,7 @@ export class GpuStatsContent {
     for (const row of this.rows)
       row.panel.setProperties({ minHeight: this.stage.viewport.minTarget });
     this.portrait?.setProperties({ width: compact ? 40 : 48, height: compact ? 40 : 48 });
+    this.ruleChips.resize(compact ? 28 : 32, this.stage.viewport.minTarget);
     this.statsPage.setProperties({ gap: compact ? 12 : 16 });
     for (const { box, heading, label, name } of this.groups) {
       box.setProperties({ flexDirection: compact ? "row" : "column" });
@@ -663,6 +699,7 @@ export class GpuStatsContent {
       row.ring.dispose();
     }
     for (const tab of this.tabs) tab.face.dispose();
+    this.ruleChips.dispose();
     this.tray.dispose();
     for (const shadow of this.shadows) shadow.dispose();
     this.surface.dispose();

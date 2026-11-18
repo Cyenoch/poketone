@@ -493,10 +493,12 @@ test("same seed gives identical fields, whether integrated at once or time-slice
 
 test("a close enemy with a clear line chases the target's current position, not the field's lag", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 5,
     difficulty: 0,
-    players: [{ starter: "squirtle" }],
+    players: [{ trainer: "chengxi", starter: "squirtle" }],
   });
   world.spawn.credit = -Infinity;
   const player = world.players[0];
@@ -539,10 +541,12 @@ test("every species walks down a one-way step its flow field routes it over, whe
   for (const species of ["caterpie", "nidoran-m"]) {
     for (const { seed, from, to } of edges) {
       const world = createWorld({
+        mode: "expedition",
+        rules: [],
         stage: "forest",
         seed,
         difficulty: 0,
-        players: [{ starter: "squirtle" }],
+        players: [{ trainer: "chengxi", starter: "squirtle" }],
       });
       world.spawn.credit = -Infinity;
       const player = world.players[0];
@@ -568,10 +572,12 @@ test("a body that walks off a face into a wall corner can always leave it", () =
   // Forest seed 2: walking diagonally off a sheer face ends where the smooth wall line cuts deep
   // into a walkable corner cell. Every way out must stay open, or the body freezes there for good.
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 2,
     difficulty: 0,
-    players: [{ starter: "squirtle" }],
+    players: [{ trainer: "chengxi", starter: "squirtle" }],
   });
   const { nav } = world;
   nav.blockers.length = 0;
@@ -595,10 +601,12 @@ test("a body that walks off a face into a wall corner can always leave it", () =
 test("same seed and commands produce the same run", () => {
   const run = () => {
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       seed: 11,
       difficulty: 0,
-      players: [{ starter: "bulbasaur" }],
+      players: [{ trainer: "chengxi", starter: "bulbasaur" }],
     });
     for (let tick = 0; tick < 2400; tick++) {
       const angle = tick / 90;

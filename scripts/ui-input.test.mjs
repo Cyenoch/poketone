@@ -22,7 +22,7 @@ function setup() {
   const frame = (now = 0, context = "gameplay") => input.sample(now, context);
   function claim() {
     pad.buttons.add("south");
-    assert.deepEqual(frame().actions, []);
+    assert.deepEqual(frame().actions, ["dash"]);
     pad.buttons.clear();
     frame();
   }
@@ -58,7 +58,57 @@ test("radial movement keeps slow walking and caps diagonals; sources never add t
   pad.axes = [1, 1, 0, 0];
   assert.ok(Math.abs(Math.hypot(...frame().move) - 1) < 1e-10);
 });
-test("claim consumes its button; window changes require release and centered sticks", () => {
+test("the press that connects a pad acts, even when it ends touch mode", () => {
+  const { input, pad, frame } = setup();
+  // The host cancels input from inside the claim when it leaves touch mode.
+  let mode = "touch";
+  input.onActivity = (next) => {
+    if (mode === "touch" && next.kind !== "touch") input.cancel();
+    mode = next.kind;
+  };
+  pad.buttons.add("south");
+  assert.deepEqual(frame(0, "navigation").actions, ["confirm"]);
+  assert.equal(input.activeToken, "pad:1");
+  assert.deepEqual(frame(16, "navigation").actions, [], "a held button acts once");
+});
+test("the first press back from touch acts: RB throws the item once, a tilted stick still waits", () => {
+  const { input, pad, frame, claim } = setup();
+  claim();
+  // The host (app-host `setInputMode`) cancels input whenever touch mode starts or ends.
+  let mode = "gamepad";
+  input.onActivity = (next) => {
+    if ((mode === "touch") !== (next.kind === "touch")) input.cancel();
+    mode = next.kind;
+  };
+  input.onActivity({ kind: "touch" });
+  assert.deepEqual(frame(0).actions, [], "the pad rests at neutral after the tap");
+  pad.buttons.add("rb");
+  pad.axes = [1, 0, 0, 0];
+  const first = frame(16);
+  assert.deepEqual(first.actions, ["assist"]);
+  assert.deepEqual(first.move, [0, 0], "a stick tilted through the press waits for recentring");
+  assert.equal(mode, "gamepad");
+  assert.deepEqual(frame(32).actions, [], "a held RB throws once");
+  pad.buttons.clear();
+  pad.axes = [0, 0, 0, 0];
+  frame(48);
+  pad.buttons.add("rb");
+  assert.deepEqual(frame(64).actions, ["assist"]);
+});
+test("the claiming press acts once alone; a stick tilted through it waits for recentring", () => {
+  const { pad, frame } = setup();
+  pad.axes = [0.9, 0, 0, 0];
+  pad.buttons.add("rb");
+  assert.deepEqual(frame(0, "navigation").actions, ["nextPage"], "RB pages once, no → with it");
+  assert.deepEqual(frame(16, "navigation").actions, [], "held RB and stick stay quiet");
+  pad.buttons.clear();
+  assert.deepEqual(frame(32, "navigation").actions, [], "the tilted stick alone stays quiet");
+  pad.axes = [0, 0, 0, 0];
+  assert.deepEqual(frame(48, "navigation").actions, []);
+  pad.axes = [0.9, 0, 0, 0];
+  assert.deepEqual(frame(64, "navigation").actions, ["right"], "after recentring it navigates");
+});
+test("window changes require release and centered sticks", () => {
   const { input, pad, frame, claim } = setup();
   claim();
   pad.buttons.add("south");
@@ -174,4 +224,18 @@ test("co-op choice keeps held movement and skills while only the D-pad and RB se
   result = frame(80, "gameplay");
   assert.ok(result.move[0] > 0 && result.turn > 0, "closing cards preserves held sticks");
   assert.deepEqual(result.actions, [], "confirm cannot turn into a gameplay action after close");
+});
+
+test("G and RB each submit one assist while movement continues", () => {
+  const { input, pad, frame, claim } = setup();
+  claim();
+  input.keyDown("KeyW", false);
+  input.keyDown("KeyG", false);
+  input.keyDown("KeyG", true);
+  assert.deepEqual(frame().actions, ["assist"]);
+  pad.buttons.add("rb");
+  const held = frame();
+  assert.deepEqual(held.actions, ["assist"]);
+  assert.deepEqual(held.move, [0, -1]);
+  assert.deepEqual(frame().actions, []);
 });

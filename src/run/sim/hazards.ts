@@ -1,4 +1,5 @@
-import { damagePlayer } from "./hurt";
+import { absorbLightningRod, ignoresGroundHazard, steerLightningRod } from "./hurt";
+import { damageFromHazard } from "./skills/kit";
 import { formOf, hazardRadius } from "./evolution";
 import { stopAtCover } from "./sight";
 import { guardianHazards } from "./bosses/hazards";
@@ -37,6 +38,7 @@ export function updateHazards(world: World, dt: number): void {
     hazard.pz = hazard.z;
     // Semi-implicit: this tick's segment uses the updated vy, which stopAtCover reads as its slope.
     if (rule.gravity) hazard.vy -= rule.gravity * dt;
+    steerLightningRod(world, hazard);
     hazard.x += hazard.vx * dt;
     hazard.y += hazard.vy * dt;
     hazard.z += hazard.vz * dt;
@@ -47,7 +49,7 @@ export function updateHazards(world: World, dt: number): void {
     }
     if (hazard.dmg <= 0 || stopAtCover(world, hazard)) continue;
     for (const player of world.players) {
-      if (!player.alive) continue;
+      if (!player.alive || ignoresGroundHazard(player, hazard.kind)) continue;
       if (hypot(player.x - hazard.x, player.z - hazard.z) > hazard.radius + hazardRadius(player))
         continue;
       const feet = heightAt(world.map.terrain, player.x, player.z);
@@ -56,7 +58,11 @@ export function updateHazards(world: World, dt: number): void {
         hazard.y > feet + formOf(player).height + hazard.radius
       )
         continue;
-      if (damagePlayer(world, player, hazard.dmg, hazard.element)) {
+      if (absorbLightningRod(player, hazard)) {
+        hazard.life = 0;
+        break;
+      }
+      if (damageFromHazard(world, player, hazard)) {
         if (rule.poison) apply(player, "poison", rule.poison, 0, -1);
         if (rule.slow) apply(player, "slow", rule.slow, 0, -1);
         hazard.life = 0;

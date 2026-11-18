@@ -9,7 +9,7 @@ import { bindImages } from "../src/prepare/images.ts";
 import { emptyProgress, setShinyLook } from "../src/run/progress.ts";
 import { navigationAction } from "../src/platform/input.ts";
 import { formOf } from "../src/run/sim/evolution.ts";
-import { DEFAULT_TRAINER } from "../src/trainers.ts";
+import { DEFAULT_TRAINER } from "../src/run/sim/content/trainers.ts";
 import { GpuLobby } from "../src/ui/gpu/lobby.ts";
 import { GpuEdgeIndicators } from "../src/ui/gpu/run-edge-indicators.ts";
 import { MultiplayerSeat } from "../src/ui/gpu/multiplayer-seat.ts";
@@ -89,7 +89,13 @@ async function settle(lobby, delay = 50) {
     lobby.afterLayout(16);
   }
 }
-const pick = (starter) => ({ starter, difficulty: 0, stage: "forest", trainer: DEFAULT_TRAINER });
+const pick = (starter) => ({
+  mode: "expedition",
+  starter,
+  difficulty: 0,
+  stage: "forest",
+  trainer: DEFAULT_TRAINER,
+});
 /** The app's answer to a request with nothing loading: a missing `worn` toggles the saved look, a
  *  repeat of the saved look changes nothing. */
 const settleLook = (progress, line, worn) => {
@@ -117,6 +123,7 @@ test("the lobby's shiny key: only for an owned look, every input wears it, the s
       // The app's side: save the choice, then hand the lobby its new progress.
       const callbacks = {
         pick() {},
+        rules() {},
         start() {},
         lab() {},
         codex() {},
@@ -128,10 +135,15 @@ test("the lobby's shiny key: only for an owned look, every input wears it, the s
           const next = settleLook(progress, line, on);
           if (next === progress) return;
           progress = next;
-          lobby.update({ progress, pick: pick(lobby.selected) });
+          lobby.update({ progress, rules: [], pick: pick(lobby.selected) });
         },
       };
-      lobby = new GpuLobby(fonts, new Texture(), { progress, pick: pick("charmander") }, callbacks);
+      lobby = new GpuLobby(
+        fonts,
+        new Texture(),
+        { progress, rules: [], pick: pick("charmander") },
+        callbacks,
+      );
       try {
         lobby.attachScene({
           show: (...args) => shows.push(args),
@@ -174,10 +186,13 @@ test("the lobby's shiny key: only for an owned look, every input wears it, the s
         assert.deepEqual(shows.at(-1), ["charmander", "fire", false], where);
         assert.equal(lobby.focused, index, `focus stays on the key after the rebuild: ${where}`);
 
-        // Gamepad / arrows: up from the medal reaches the key; → and ← always say which look.
+        // Gamepad / arrows: up from the medal, past the bond, reaches the key; → and ← always say
+        // which look.
         lobby.focus(lobby.controls.indexOf(lobby.tiles[0]));
         lobby.navigate("up");
-        assert.equal(lobby.focused, index, `up from the roster: ${where}`);
+        assert.equal(lobby.controls[lobby.focused]?.kind, "bond", `up from the roster: ${where}`);
+        lobby.navigate("up");
+        assert.equal(lobby.focused, index, `up from the bond: ${where}`);
         const count = worn.length;
         lobby.navigate("right");
         lobby.navigate("right");
@@ -196,7 +211,7 @@ test("the lobby's shiny key: only for an owned look, every input wears it, the s
 
         // A partner whose look is not owned: no key, no stop, focus leaves it.
         lobby.focus(index);
-        lobby.update({ progress, pick: pick("squirtle") });
+        lobby.update({ progress, rules: [], pick: pick("squirtle") });
         await settle(lobby, 0);
         assert.equal(key.panel.isVisible.value, false, `no key without the look: ${where}`);
         assert.notEqual(lobby.focused, index, `focus leaves the hidden key: ${where}`);
@@ -234,9 +249,10 @@ test("a second-row partner wears its look by direction and confirm, keeping pick
         lobby = new GpuLobby(
           fonts,
           new Texture(),
-          { progress, pick: at },
+          { progress, rules: [], pick: at },
           {
             pick: (p) => picks.push(p),
+            rules() {},
             start() {},
             lab() {},
             codex() {},
@@ -247,7 +263,7 @@ test("a second-row partner wears its look by direction and confirm, keeping pick
               const next = settleLook(progress, line, on);
               if (next === progress) return;
               progress = next;
-              lobby.update({ progress, pick: { ...at, starter: lobby.selected } });
+              lobby.update({ progress, rules: [], pick: { ...at, starter: lobby.selected } });
             },
           },
         );
@@ -265,13 +281,16 @@ test("a second-row partner wears its look by direction and confirm, keeping pick
               assert.equal(kind(), "info", `↓ reaches the backpack: ${where}`);
               lobby.navigate("down");
             }
-            assert.equal(kind(), "difficulty", `↓ reaches the tray: ${where}`);
+            // With the rules open, 规则 stands between the column and the tray.
+            assert.equal(kind(), "rules", `↓ reaches 规则 above the tray: ${where}`);
             lobby.navigate("up");
-            assert.equal(kind(), "shiny", `↑ from the tray reaches the shiny key: ${where}`);
+            assert.equal(kind(), "shiny", `↑ from 规则 reaches the shiny key: ${where}`);
           };
           route();
           lobby.navigate("confirm");
           assert.deepEqual(progress.looks.worn, ["geodude"], where);
+          lobby.navigate("down");
+          assert.equal(kind(), "bond", `↓ passes the bond: ${where}`);
           lobby.navigate("down");
           assert.equal(
             lobby.focused,
@@ -309,9 +328,10 @@ test("a look still loading: ← → name the look, a second press cancels, the k
   const lobby = new GpuLobby(
     fonts,
     new Texture(),
-    { progress, pick: pick("charmander") },
+    { progress, rules: [], pick: pick("charmander") },
     {
       pick() {},
+      rules() {},
       start() {},
       lab() {},
       codex() {},
@@ -357,7 +377,7 @@ test("a look still loading: ← → name the look, a second press cancels, the k
     // The app lands the look once its pictures are in: the stage recolours, and the key pops when
     // the app reports the save as this lobby's request.
     progress = setShinyLook(progress, "charmander", true);
-    lobby.update({ progress, pick: pick("charmander") });
+    lobby.update({ progress, rules: [], pick: pick("charmander") });
     assert.deepEqual(saved(), [true, true, "/art/portraits/charmander-shiny.webp"]);
     assert.equal(key.pop.scale, 1, "a progress update alone never pops");
     lobby.lookSaved("charmander", true);
@@ -368,9 +388,9 @@ test("a look still loading: ← → name the look, a second press cancels, the k
 
     // A change nobody asked for here (an imported save) shows without the pop.
     progress = setShinyLook(progress, "charmander", false);
-    lobby.update({ progress, pick: pick("charmander") });
+    lobby.update({ progress, rules: [], pick: pick("charmander") });
     progress = setShinyLook(progress, "charmander", true);
-    lobby.update({ progress, pick: pick("charmander") });
+    lobby.update({ progress, rules: [], pick: pick("charmander") });
     assert.equal(key.on, true);
     assert.equal(key.pop.scale, 1, "no pop for a look the player did not ask for");
   } finally {
@@ -457,9 +477,10 @@ test("a held Enter / Space toggles the shiny key once; a fresh press toggles aga
   const lobby = new GpuLobby(
     fonts,
     new Texture(),
-    { progress, pick: pick("charmander") },
+    { progress, rules: [], pick: pick("charmander") },
     {
       pick() {},
+      rules() {},
       start() {},
       lab() {},
       codex() {},
@@ -517,9 +538,10 @@ test("a failed or cancelled look leaves nothing behind: a later import shows wit
   const lobby = new GpuLobby(
     fonts,
     new Texture(),
-    { progress, pick: pick("charmander") },
+    { progress, rules: [], pick: pick("charmander") },
     {
       pick() {},
+      rules() {},
       start() {},
       lab() {},
       codex() {},
@@ -541,7 +563,7 @@ test("a failed or cancelled look leaves nothing behind: a later import shows wit
     assert.equal(asked.length, 2);
     // Later an imported save wears the look: shown, no pop.
     progress = setShinyLook(progress, "charmander", true);
-    lobby.update({ progress, pick: pick("charmander") });
+    lobby.update({ progress, rules: [], pick: pick("charmander") });
     assert.equal(key.on, true);
     assert.equal(key.pop.scale, 1, "an import after a failed request does not pop");
     // A save the app reports for another partner, or for taking the look off, pops nothing.
@@ -574,9 +596,12 @@ test("the room's create card follows a partner picked in the room", async () => 
       settings() {},
       copy() {},
       pick() {},
+      rules() {},
+      confirm() {},
     },
     progress,
     pick("charmander"),
+    [],
   );
   try {
     const card = () => [room.partner.portraitImage.src, room.partner.state.type];

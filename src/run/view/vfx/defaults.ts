@@ -130,6 +130,7 @@ const shotDefaults: Record<Archetype, Factory<ShotLook> | null> = {
   vortex: null,
   strike: null,
   combo: null,
+  weather: null,
   beam: null,
   spin: null,
   // Drawn from its `chain` event.

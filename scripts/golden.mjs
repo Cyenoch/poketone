@@ -1,3 +1,4 @@
+import { unlockIds } from "../src/run/sim/content/unlocks.ts";
 // Golden replay v2: fixed seeds × starters × difficulties plus scripted cases (co-op, death and revive,
 // stations, card rerolls / skips / banishes), each digested as a behavioural projection sampled every
 // 10 s of sim time and at the end. A refactor meant to keep behaviour must leave every digest unchanged.
@@ -177,6 +178,8 @@ export function eventFacts(e) {
       return [e.t, e.kind, e.player, q(e.x), q(e.z)];
     case "cast":
       return [e.t, e.player, e.move];
+    case "assist":
+      return [e.t, e.player, e.item];
     case "dash":
     case "revive":
     case "evade":
@@ -226,6 +229,8 @@ export function eventFacts(e) {
       return [e.t, e.enemy, q(e.x), q(e.z), q(e.radius)];
     case "status-built":
       return [e.t, e.status, q(e.x), q(e.z)];
+    case "mega":
+      return [e.t, e.player, e.form];
     case "tell":
       // Presentation cue at a wind-up start whose effects (phase, hazards) are already digested.
       return null;
@@ -366,6 +371,31 @@ function* campaign(world, player, seen, route = SOLO_ROUTE) {
   }
 }
 
+/** Battle Tower: each floor's exit (timer or felled guardian), the next floor readied like the host does. */
+function* towerClimb(world, player, seen) {
+  const id = player.id;
+  for (;;) {
+    if (world.bossId !== null) {
+      seen.add("tower-guardian");
+      const until = world.zone.tick + GUARDIAN_FIGHT * 30;
+      while (world.zone.phase === "active" && world.zone.tick < until) yield [];
+      const guardian = world.enemies.find((enemy) => enemy.id === world.bossId);
+      if (guardian) killEnemy({ world, grid: new EnemyGrid() }, guardian, player);
+    }
+    while (world.zone.phase === "active") yield [];
+    while (world.zone.phase === "cleared") {
+      while (player.pending.length > 0) yield [];
+      const [exit] = world.zone.exits;
+      player.x = player.px = exit.x;
+      player.z = player.pz = exit.z;
+      yield [{ t: "interact", player: id }];
+    }
+    if (world.zone.phase !== "transitioning") return;
+    enterZone(world, prepareZone(world));
+    seen.add(`floor:${world.route.length}`);
+  }
+}
+
 /** The first poisoning finds the player at 1.5 HP, so the drain runs into its 1 HP floor. */
 function* poisonFloor(world, player) {
   while (status(player, "poison")[0] <= 0) yield [];
@@ -381,10 +411,11 @@ const STARTERS = Object.keys(starters);
 const SEEDS = [61, 11];
 const BUILD_SEEDS = {
   "abra/1": 5,
-  "abra/2": 11,
+  "abra/2": 5,
   "gastly/1": 11,
   "gastly/2": 5,
   "pikachu/1": 5,
+  "dratini/0": 5,
   "squirtle/0": 61,
   "squirtle/2": 7,
 };
@@ -409,7 +440,18 @@ const CASES = [
         name,
         seed,
         difficulty,
-        players: [{ starter }],
+        players: [
+          {
+            starter,
+            archive: ["everstone"],
+            backpack:
+              starter === "pikachu"
+                ? ["thunder-stone"]
+                : ["abra", "geodude", "machop", "gastly"].includes(starter)
+                  ? ["linking-cord"]
+                  : [],
+          },
+        ],
         refill: true,
         ticks: STAGE_TICKS * 3,
         script: campaign,
@@ -419,7 +461,7 @@ const CASES = [
           "solo/squirtle/d0/s61",
           "solo/pikachu/d0/s61",
           "solo/abra/d1/s5",
-          "solo/abra/d2/s11",
+          "solo/abra/d2/s5",
         ].includes(name)
           ? { ticks: SOLO_ROUTE.length * 2 * STAGE_TICKS }
           : {}),
@@ -475,11 +517,23 @@ const CASES = [
     name: "stations/bulbasaur+charmander/d1/s7",
     seed: 7,
     difficulty: 1,
-    players: [{ starter: "bulbasaur" }, { starter: "charmander" }],
+    players: [{ starter: "bulbasaur", trainer: "shuoye" }, { starter: "charmander" }],
     refill: true,
     ticks: 9000,
     script: stationVisit,
     covers: ["fuse", "forget-item", "forget-move", "reaction:wildfire"],
+  },
+  {
+    // Seven timed floors and the floor-7 guardian, into floor 8.
+    name: "tower/charmander/d0/s5",
+    mode: "tower",
+    seed: 5,
+    difficulty: 0,
+    players: [{ starter: "charmander" }],
+    refill: true,
+    ticks: 8 * 150 * 30 + GUARDIAN_FIGHT * 30,
+    script: towerClimb,
+    covers: ["tower-guardian", "floor:8", "ult", "dash"],
   },
 ];
 
@@ -490,10 +544,18 @@ const sha = (text) => createHash("sha256").update(text).digest("hex");
 
 function replay(spec) {
   const world = createWorld({
+    mode: spec.mode ?? "expedition",
+    unlocks: unlockIds,
+    rules: [],
     stage: "forest",
     seed: spec.seed,
     difficulty: spec.difficulty,
-    players: spec.players,
+    players: spec.players.map((player) => ({
+      trainer: "chengxi",
+      shiny: false,
+      ...player,
+      unlocks: unlockIds,
+    })),
   });
   const ticks = spec.ticks ?? STAGE_TICKS;
   const seen = new Set();

@@ -43,16 +43,16 @@ interface WeatherLook {
 /** The four weathers' sky and particles: tinted, never dark enough to hide a danger telegraph. */
 export const weatherLooks: Record<WeatherId, WeatherLook> = {
   sun: {
-    haze: "#ffe3b3",
-    mix: 0.35,
-    sun: 1.25,
-    hemi: 1.08,
-    sunColor: "#ffd79a",
+    haze: "#ffdc9c",
+    mix: 0.45,
+    sun: 1.4,
+    hemi: 1.1,
+    sunColor: "#ffc978",
     fog: 1,
-    count: 160,
-    color: "#fff1c4",
-    alpha: 0.55,
-    size: [0.09, 0.09],
+    count: 300,
+    color: "#ffe9a8",
+    alpha: 0.85,
+    size: [0.16, 0.16],
     speed: 0.7,
     drift: [0.3, 0.1],
   },
@@ -126,9 +126,10 @@ const BOX = new Vector3(40, 14, 40);
 const vertex = (kind: WeatherId) => /* glsl */ `
   uniform float uTime, uStrength; uniform vec3 uCenter; uniform vec2 uDrift, uSize; uniform float uSpeed;
   attribute vec4 aSeed;
-  varying vec2 vP; varying float vA;
+  varying vec2 vP; varying float vA, vShaft;
   void main() {
     vec3 box = vec3(${BOX.x.toFixed(1)}, ${BOX.y.toFixed(1)}, ${BOX.z.toFixed(1)});
+    vShaft = 0.;
     float t = uTime * (.8 + .4 * aSeed.w);
     vec2 flat_ = aSeed.xy * box.xz + uDrift * t;
     vec2 rel = (fract((flat_ - uCenter.xz) / box.xz + .5) - .5) * box.xz;
@@ -137,28 +138,37 @@ const vertex = (kind: WeatherId) => /* glsl */ `
       kind === "sandstorm"
         ? "p.y = uCenter.y + .2 + aSeed.z * 3.5 + sin(t * 3. + aSeed.w * 20.) * .25;"
         : kind === "sun"
-          ? "p.y = uCenter.y + fract(aSeed.z + uSpeed * t / box.y) * box.y * .6;"
+          ? // One in ten is a shaft of sunlight standing on the ground; the rest are rising motes.
+            "vShaft = step(aSeed.w, .1); p.y = uCenter.y + mix(fract(aSeed.z + uSpeed * t / box.y) * box.y * .6, 2.4, vShaft);"
           : "p.y = uCenter.y + box.y - fract(aSeed.z + uSpeed * t / box.y) * box.y;"
     }
     vec4 mv = viewMatrix * vec4(p, 1.);
-    mv.xy += position.xy * uSize;
+    ${
+      kind === "sun"
+        ? // A shaft is 0.8 m × 5.2 m and leans the way the light falls.
+          "vec2 q = position.xy * mix(uSize, vec2(.8, 5.2), vShaft); mv.xy += vec2(q.x + q.y * .32 * vShaft, q.y);"
+        : "mv.xy += position.xy * uSize;"
+    }
     vP = position.xy * 2.;
     vec2 edge = abs(rel) / (box.xz * .5);
     vA = uStrength * (1. - smoothstep(.7, 1., max(edge.x, edge.y)));
+    ${kind === "sun" ? "vA *= mix(.65 + .35 * sin(t * 2.5 + aSeed.z * 40.), .5 + .08 * sin(t * .9 + aSeed.z * 40.), vShaft);" : ""}
     ${kind === "rain" || kind === "hail" ? "vA *= smoothstep(uCenter.y - .2, uCenter.y + .8, p.y);" : ""}
     gl_Position = projectionMatrix * mv;
   }`;
 
 const fragment = (kind: WeatherId) => /* glsl */ `
   uniform vec3 uColor; uniform float uAlpha;
-  varying vec2 vP; varying float vA;
+  varying vec2 vP; varying float vA, vShaft;
   void main() {
     ${
       kind === "rain"
         ? "float a = (1. - abs(vP.x)) * (1. - smoothstep(.2, 1., abs(vP.y)));"
         : kind === "sandstorm"
           ? "float a = (1. - smoothstep(.3, 1., abs(vP.x))) * (1. - abs(vP.y));"
-          : "float a = 1. - smoothstep(.4, 1., length(vP));"
+          : kind === "sun"
+            ? "float a = mix(1. - smoothstep(.4, 1., length(vP)), (1. - abs(vP.x)) * (1. - smoothstep(.3, 1., abs(vP.y))), vShaft);"
+            : "float a = 1. - smoothstep(.4, 1., length(vP));"
     }
     a *= vA * uAlpha;
     if (a <= .003) discard;
@@ -172,36 +182,22 @@ export interface WeatherView {
   dispose(): void;
 }
 
-/**
- * The stage's one possible weather, on the run's own fog, sky clear and lights. A stage without
- * weather makes nothing. Particles draw before other transparent effects, so telegraphs stay on top.
- */
-export function createWeather(
-  stage: StageId,
-  base: {
-    fog: Fog;
-    background: Color;
-    hemi: HemisphereLight;
-    sun: DirectionalLight;
-    add(mesh: InstancedMesh): void;
-  },
-  coarse: boolean,
-): WeatherView | null {
-  const id = (Object.keys(weatherDefs) as WeatherId[]).find((key) =>
-    weatherDefs[key].stages.includes(stage),
-  );
-  if (!id) return null;
-  const look = weatherLooks[id];
-  const fogColor = base.fog.color.clone();
-  const fogNear = base.fog.near,
-    fogFar = base.fog.far;
-  const hemiIntensity = base.hemi.intensity,
-    sunIntensity = base.sun.intensity;
-  const sunColor = base.sun.color.clone();
-  const haze = new Color(look.haze),
-    warm = new Color(look.sunColor);
-  const display = { r: 0, g: 0, b: 0 };
+/** World seconds for one weather to give way to the next when a move replaces it. */
+const HANDOVER = 1;
 
+interface Layer {
+  id: WeatherId;
+  look: WeatherLook;
+  haze: Color;
+  warm: Color;
+  mesh: InstancedMesh;
+  uniforms: { uTime: { value: number }; uStrength: { value: number }; uCenter: { value: Vector3 } };
+  sky: number;
+  fall: number;
+}
+
+function createLayer(id: WeatherId, coarse: boolean): Layer {
+  const look = weatherLooks[id];
   const count = Math.round(look.count * (coarse ? 0.6 : 1));
   const geometry = new PlaneGeometry(1, 1);
   const seeds = new Float32Array(count * 4);
@@ -237,43 +233,102 @@ export function createWeather(
   mesh.frustumCulled = false;
   mesh.renderOrder = -1;
   mesh.visible = false;
-  base.add(mesh);
+  return {
+    id,
+    look,
+    haze: new Color(look.haze),
+    warm: new Color(look.sunColor),
+    mesh,
+    uniforms,
+    sky: 0,
+    fall: 0,
+  };
+}
+
+/**
+ * The weathers this run can show, on its own fog, sky clear and lights: the stage's own and the
+ * ones `castable` by a player's moves, which work on every map. A run with neither makes nothing.
+ * A move replacing a weather hands the sky over in `HANDOVER`; the first frame shows the world as
+ * it is, so a restored run does not replay a change. Particles draw before other transparent
+ * effects, so telegraphs stay on top.
+ */
+export function createWeather(
+  stage: StageId,
+  base: {
+    fog: Fog;
+    background: Color;
+    hemi: HemisphereLight;
+    sun: DirectionalLight;
+    add(mesh: InstancedMesh): void;
+  },
+  coarse: boolean,
+  castable: readonly WeatherId[] = [],
+): WeatherView | null {
+  const ids = (Object.keys(weatherDefs) as WeatherId[]).filter(
+    (id) => weatherDefs[id].stages.includes(stage) || castable.includes(id),
+  );
+  if (!ids.length) return null;
+  const layers = ids.map((id) => createLayer(id, coarse));
+  for (const layer of layers) base.add(layer.mesh);
+  const fogColor = base.fog.color.clone();
+  const fogNear = base.fog.near,
+    fogFar = base.fog.far;
+  const hemiIntensity = base.hemi.intensity,
+    sunIntensity = base.sun.intensity;
+  const sunColor = base.sun.color.clone();
+  const display = { r: 0, g: 0, b: 0 };
   let clock = 0;
-  let last = -1;
+  let shownAt: number | null = null;
   let warming = false;
-  let falling = false;
 
   return {
     frame(weather, time, centre, dt) {
-      const { sky, fall } = weatherStrength(weather?.id === id ? weather : null, time);
       clock += dt;
-      if (sky !== last) {
-        last = sky;
-        const k = sky * look.mix;
-        base.fog.color.copy(fogColor).lerp(haze, k);
-        base.fog.near = fogNear * (1 + (look.fog - 1) * sky);
-        base.fog.far = fogFar * (1 + (look.fog - 1) * sky);
-        base.fog.color.getRGB(display, SRGBColorSpace);
-        base.background.setRGB(display.r, display.g, display.b, LinearSRGBColorSpace);
-        base.hemi.intensity = hemiIntensity * (1 + (look.hemi - 1) * sky);
-        base.sun.intensity = sunIntensity * (1 + (look.sun - 1) * sky);
-        base.sun.color.copy(sunColor).lerp(warm, sky * 0.6);
+      const step = shownAt === null ? 1 : Math.abs(time - shownAt) / HANDOVER;
+      shownAt = time;
+      let moved = false;
+      for (const layer of layers) {
+        const goal = weatherStrength(weather?.id === layer.id ? weather : null, time);
+        const sky = layer.sky + Math.max(-step, Math.min(step, goal.sky - layer.sky));
+        layer.fall += Math.max(-step, Math.min(step, goal.fall - layer.fall));
+        moved ||= sky !== layer.sky;
+        layer.sky = sky;
+        layer.mesh.visible = layer.fall > 0 || warming;
+        layer.uniforms.uStrength.value = layer.fall;
+        layer.uniforms.uTime.value = clock;
+        layer.uniforms.uCenter.value.copy(centre);
       }
-      falling = fall > 0;
-      mesh.visible = falling || warming;
-      uniforms.uStrength.value = fall;
-      uniforms.uTime.value = clock;
-      uniforms.uCenter.value.copy(centre);
+      if (!moved) return;
+      base.fog.color.copy(fogColor);
+      base.sun.color.copy(sunColor);
+      let fog = 1,
+        hemi = 1,
+        sun = 1;
+      for (const { look, haze, warm, sky } of layers) {
+        base.fog.color.lerp(haze, sky * look.mix);
+        base.sun.color.lerp(warm, sky * 0.6);
+        fog *= 1 + (look.fog - 1) * sky;
+        hemi *= 1 + (look.hemi - 1) * sky;
+        sun *= 1 + (look.sun - 1) * sky;
+      }
+      base.fog.near = fogNear * fog;
+      base.fog.far = fogFar * fog;
+      base.fog.color.getRGB(display, SRGBColorSpace);
+      base.background.setRGB(display.r, display.g, display.b, LinearSRGBColorSpace);
+      base.hemi.intensity = hemiIntensity * hemi;
+      base.sun.intensity = sunIntensity * sun;
     },
     warm(on) {
       warming = on;
-      mesh.visible = falling || warming;
+      for (const layer of layers) layer.mesh.visible = layer.fall > 0 || warming;
     },
     dispose() {
-      mesh.removeFromParent();
-      mesh.dispose();
-      geometry.dispose();
-      material.dispose();
+      for (const { mesh } of layers) {
+        mesh.removeFromParent();
+        mesh.dispose();
+        mesh.geometry.dispose();
+        (mesh.material as ShaderMaterial).dispose();
+      }
     },
   };
 }

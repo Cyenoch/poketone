@@ -136,6 +136,7 @@ test("unreadable native pick falls back with a diagnostic while the progress fil
     });
     assert.deepEqual(loaded.settings, save.settings);
     assert.deepEqual(validPick(save.progress, loaded.pick), {
+      mode: "expedition",
       starter: "charmander",
       trainer: "chengxi",
       difficulty: 0,
@@ -176,7 +177,7 @@ test(
       const save = readSave(path);
       writeSave(path, save);
       const original = readFileSync(path, "utf8");
-      const pick = '{"starter":"squirtle","difficulty":0,"stage":"forest"}';
+      const pick = '{"mode":"expedition","starter":"squirtle","difficulty":0,"stage":"forest"}';
       writeFileSync(pickPath, pick, { mode: 0o600 });
       chmodSync(pickPath, 0);
       const loaded = nativeAppStorage(path).load();

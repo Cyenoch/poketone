@@ -12,7 +12,8 @@ const REST_INK = ui.line,
 /**
  * One option of a segmented choice, on the ink tray (`segmentTray`): the picked option is a white
  * slanted block (same −14°, radius 4) that fades in over 200ms (SNAP) as the last one fades out; a
- * mouse lights the others faintly; an unavailable one is dimmed; keyboard focus rings it in ink.
+ * mouse lights the others faintly; an unavailable one is dimmed; keyboard focus rings it (the plate's
+ * ink ring and white keyline, which shows on the ink tray).
  * At least 44px tall at every size.
  */
 export class SegmentFace {

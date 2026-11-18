@@ -3,6 +3,7 @@ import { Vector3, type PerspectiveCamera } from "three";
 import type { World } from "../../run/sim/state/world";
 import type { PlayerId } from "../../run/sim/state/entities";
 import { formOf } from "../../run/sim/evolution";
+import { canBeRescued } from "../../run/sim/rescue";
 import { heightAt } from "../../run/sim/terrain";
 import { playerColors } from "../player-colors";
 import { portraitSrc } from "./ball";
@@ -200,7 +201,11 @@ export class GpuEdgeIndicators {
       const projection = this.project(world, camera, x, z, form.height * 0.5);
       const onScreen =
         projection.front && Math.abs(projection.x) <= 1 && Math.abs(projection.y) <= 1;
-      const shown = world.players.length > 1 && !player.departed;
+      // A permanent knockout (Nuzlocke) leaves no body to name and no rescue to point to.
+      const shown =
+        world.players.length > 1 &&
+        !player.departed &&
+        (player.alive || canBeRescued(world, player));
       name.setProperties({ display: shown && onScreen ? "flex" : "none" });
       if (onScreen) {
         const head = this.project(world, camera, x, z, form.height + 0.35);

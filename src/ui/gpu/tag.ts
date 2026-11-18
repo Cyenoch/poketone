@@ -138,11 +138,12 @@ export function leadTag(
 
 /**
  * A slanted chip (the type label: crest + name; a balance; a section label): −14° plate, radius 4,
- * upright content, a 3px hard shadow. `lead` is an icon or image before the text.
+ * upright content, a 3px hard shadow. `lead` is an icon or image before the text; with no text the
+ * chip is the icon alone, `pad` (default 11) past the lean on each side.
  */
 export function slantTag(
   text: string,
-  tone: { face?: string; ink?: string; size?: number; upright?: boolean } = {},
+  tone: { face?: string; ink?: string; size?: number; upright?: boolean; pad?: number } = {},
   lead?: Component,
 ): { tag: Container; dispose(): void } {
   const size = tone.size ?? 14;
@@ -151,8 +152,8 @@ export function slantTag(
   const tag = new Container({
     height,
     // Even padding: the text sits on the parallelogram's centre.
-    paddingLeft: 11 + lean,
-    paddingRight: 11 + lean,
+    paddingLeft: (tone.pad ?? 11) + lean,
+    paddingRight: (tone.pad ?? 11) + lean,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
@@ -166,18 +167,19 @@ export function slantTag(
   plate.set({ depth: 3 });
   tag.add(plate.content);
   if (lead) tag.add(stack(lead, 1));
-  tag.add(
-    stack(
-      new Text({
-        text,
-        fontSize: size,
-        fontWeight: 800,
-        color: tone.ink ?? ui.white,
-        whiteSpace: "pre",
-        wordBreak: "keep-all",
-      }),
-      1,
-    ),
-  );
+  if (text)
+    tag.add(
+      stack(
+        new Text({
+          text,
+          fontSize: size,
+          fontWeight: 800,
+          color: tone.ink ?? ui.white,
+          whiteSpace: "pre",
+          wordBreak: "keep-all",
+        }),
+        1,
+      ),
+    );
   return { tag, dispose: () => plate.dispose() };
 }

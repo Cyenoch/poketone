@@ -6,7 +6,8 @@ import { FIRE_PUNCHES, FIRE_PUNCH_GAP } from "../content/params/late-zones";
 // coast adds Kabuto's short dash and Seaking's charge at the shore.
 
 import { hazardRadius } from "../evolution";
-import { damagePlayer } from "../hurt";
+import { damageFromHazard } from "./kit";
+import { ignoresGroundHazard } from "../hurt";
 import { HURT_TICKS } from "../content/params/environment";
 import { heightAt } from "../terrain";
 import { TICK, type World } from "../state/world";
@@ -157,7 +158,8 @@ export const hazards = {
     update(world, trail) {
       if (world.tick % HURT_TICKS !== 0) return;
       for (const player of world.players)
-        if (onTrail(world, trail, player)) damagePlayer(world, player, trail.dmg, trail.element);
+        if (!ignoresGroundHazard(player, trail.kind) && onTrail(world, trail, player))
+          damageFromHazard(world, player, trail);
     },
   },
 } satisfies Record<string, HazardRule>;

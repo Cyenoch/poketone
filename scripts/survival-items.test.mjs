@@ -13,7 +13,14 @@ import { itemCap } from "../src/run/sim/upgrades.ts";
 import { createWorld, stepWorld } from "../src/run/sim/world.ts";
 
 function setup(items = [], starter = "charmander") {
-  const world = createWorld({ stage: "forest", seed: 3, difficulty: 0, players: [{ starter }] });
+  const world = createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed: 3,
+    difficulty: 0,
+    players: [{ trainer: "chengxi", starter }],
+  });
   const player = world.players[0];
   player.x = player.z = 0;
   player.moves = [];

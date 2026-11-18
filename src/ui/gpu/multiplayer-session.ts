@@ -7,7 +7,8 @@ import {
 } from "../../network/session";
 import { MultiplayerRun } from "../../network/run";
 import { labBonuses } from "../../run/lab";
-import type { Progress } from "../../run/progress";
+import { partnerBondSetup, type Progress } from "../../run/progress";
+import type { RuleId } from "../../run/sim/content/rules";
 import type { GpuAppHost } from "./app-host";
 import { GpuMultiplayer } from "./multiplayer";
 
@@ -18,6 +19,8 @@ export interface MultiplayerPage {
   copy: (code: string) => void;
   /** The player's own trainer, partner or (as the host, or before a room) difficulty changed. */
   pick: (next: LobbyPick) => void;
+  /** The host (or the player before a room) changed the rules: the lobby's draft follows them. */
+  rules: (next: readonly RuleId[]) => void;
   start: (run: MultiplayerRun) => void;
 }
 
@@ -27,6 +30,7 @@ export function mountMultiplayer(
   url: string,
   progress: Progress,
   initial: LobbyPick,
+  initialRules: readonly RuleId[],
   page: MultiplayerPage,
   storage: AppStorage,
   connection: Omit<MultiplayerSessionOptions, "rejoin" | "mission">,
@@ -35,6 +39,7 @@ export function mountMultiplayer(
   let session: MultiplayerSession | undefined;
   let handedOff = false;
   let pick = initial;
+  let rules = initialRules;
   const warning = (error: Error) => {
     console.error(error);
     notify(error.message);
@@ -63,12 +68,20 @@ export function mountMultiplayer(
           trainer: pick.trainer,
           shiny: progress.looks.worn.includes(pick.starter),
           lab: labBonuses(progress.lab),
+          ...partnerBondSetup(progress, pick.starter),
           archive: progress.archive,
           backpack: progress.backpack,
+          unlocks: progress.unlocks,
         },
         {
           ...connection,
-          mission: { stage: pick.stage, difficulty: pick.difficulty },
+          mission: {
+            mode: pick.mode,
+            stage: pick.stage,
+            difficulty: pick.difficulty,
+            rules: [...rules],
+            unlocks: progress.unlocks,
+          },
           rejoin: rejoin && ticket ? ticket : undefined,
         },
       );
@@ -108,10 +121,33 @@ export function mountMultiplayer(
         pick = next;
         page.pick(next);
         if (next.starter !== previous.starter || next.trainer !== previous.trainer)
-          session?.setup(next.starter, next.trainer, progress.looks.worn.includes(next.starter));
-        if (next.difficulty !== previous.difficulty)
-          session?.mission({ stage: next.stage, difficulty: next.difficulty });
+          session?.setup({
+            starter: next.starter,
+            trainer: next.trainer,
+            shiny: progress.looks.worn.includes(next.starter),
+            ...partnerBondSetup(progress, next.starter),
+          });
+        if (next.difficulty !== previous.difficulty || next.mode !== previous.mode)
+          session?.mission({
+            mode: next.mode,
+            stage: next.stage,
+            difficulty: next.difficulty,
+            rules: [...rules],
+            unlocks: progress.unlocks,
+          });
       },
+      rules(next) {
+        rules = next;
+        page.rules(next);
+        session?.mission({
+          mode: pick.mode,
+          stage: pick.stage,
+          difficulty: pick.difficulty,
+          rules: [...next],
+          unlocks: progress.unlocks,
+        });
+      },
+      confirm: () => session?.confirmMission(),
       rejoin:
         ticket?.url === url
           ? { code: ticket.code, action: () => connect(ticket.code, true) }
@@ -119,6 +155,7 @@ export function mountMultiplayer(
     },
     progress,
     initial,
+    initialRules,
   );
   const unregister = host.registerScreen(screen);
   return () => {

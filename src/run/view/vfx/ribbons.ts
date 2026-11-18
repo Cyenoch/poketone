@@ -8,7 +8,7 @@ import {
   Mesh,
   type ShaderMaterial,
 } from "three";
-import { FX_GLSL, fxMaterial, uploadRange, type FxUniforms, type Rgb } from "./gl";
+import { flame, FX_GLSL, fxMaterial, uploadRange, type FxUniforms, type Rgb } from "./gl";
 import { ink } from "./palette";
 
 /** Cross-section looks for camera-facing strips. */
@@ -26,6 +26,8 @@ export const Ribbon = {
 } as const;
 
 const STRIDE = 18;
+/** Added to the style slot of a strip in Mega Charizard X's blue flames; styles stay below it. */
+const BLUE_STYLE = 8;
 const MAX_POINTS = 96;
 
 const vertexShader = /* glsl */ `
@@ -61,7 +63,7 @@ varying float vAdd;
 void main() {
   float v = abs(vMeta.x);
   float u = vMeta.y;
-  float style = vMeta.z;
+  float style = mod(vMeta.z, ${BLUE_STYLE}.0);
   vec4 c;
   if (style < 0.5) {
     float core = exp(-v * v * 16.0);
@@ -78,6 +80,7 @@ void main() {
     c = layer(vColor.rgb, (1.0 - v) * (1.0 - v), vAdd);
   }
   c *= vColor.a;
+  if (vMeta.z > ${BLUE_STYLE - 0.5}) c.rgb = blueFlame(c.rgb);
   if (c.a + c.r + c.g + c.b < 0.004) discard;
   gl_FragColor = c;
 }
@@ -162,6 +165,7 @@ export class Ribbons {
     const data = this.buffer.array as Float32Array;
     const index = this.indices.array as Uint16Array;
     const base = this.vertices;
+    const marked = style + (flame.blue ? BLUE_STYLE : 0);
     for (let i = 0; i < n; i++) {
       const p = i * 8;
       const prev = Math.max(0, i - 1) * 8;
@@ -184,7 +188,7 @@ export class Ribbons {
         data[o + 13] = side;
         data[o + 14] = s[p + 3]!;
         data[o + 15] = i / (n - 1);
-        data[o + 16] = style;
+        data[o + 16] = marked;
         data[o + 17] = add;
       }
       if (i > 0) {

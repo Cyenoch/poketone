@@ -22,8 +22,7 @@ const TAN_HALF_FOV = 0.383864035035416;
 const WIDEST = 844 / 390;
 const NARROWEST = 1280 / 800;
 
-/** A spawn's feet and its top (u above them) both stay off screen, by this fraction of the half-screen
- *  more (camera lag behind a running player, shake). */
+/** Legacy spawn silhouette height and clearance margin (camera lag and shake). */
 const BODY_TOP = 2;
 const SPAWN_OUTSET = 0.12;
 
@@ -38,9 +37,18 @@ const U_B = (CAMERA_HEIGHT - LOOK_UP) / LOOK_LENGTH;
 /**
  * How far from the screen centre the point (x, z) at `rise` above the player's ground lands on that
  * player's screen of `aspect`, as the larger of |x| and |y| in normalised device units: ≤ 1 is on
- * screen. Behind the camera is Infinity.
+ * screen. With a radius and half-height, return a lower bound for the whole cylinder instead.
+ * Behind the camera is Infinity.
  */
-function screenReach(player: Player, x: number, z: number, rise: number, aspect: number): number {
+function screenReach(
+  player: Player,
+  x: number,
+  z: number,
+  rise: number,
+  aspect: number,
+  radius = 0,
+  halfHeight = 0,
+): number {
   const dx = x - player.x;
   const dz = z - player.z;
   const c = cos(player.viewYaw);
@@ -50,6 +58,16 @@ function screenReach(player: Player, x: number, z: number, rise: number, aspect:
   const b = -dx * s - dz * c;
   const y = rise - CAMERA_HEIGHT;
   const depth = y * F_Y + (b + CAMERA_BACK) * F_B;
+  if (radius > 0) {
+    // Bound the entire cylinder in camera space. Leaving any one screen edge suffices.
+    const far = depth + radius * F_B - halfHeight * F_Y;
+    if (far <= 0) return Infinity;
+    const up = y * U_Y + (b + CAMERA_BACK) * U_B;
+    return Math.max(
+      (Math.abs(a) - radius) / (far * TAN_HALF_FOV * aspect),
+      (Math.abs(up) - radius * U_B - halfHeight * U_Y) / (far * TAN_HALF_FOV),
+    );
+  }
   if (depth <= 0) return Infinity;
   const up = y * U_Y + (b + CAMERA_BACK) * U_B;
   return Math.max(
@@ -74,17 +92,31 @@ export function onScreen(
 }
 
 /**
- * How far off every player's screen (widest aspect) a body standing at (x, z) is: above 1 is off all
- * of them with the spawn margin, and higher is less visible. Downed players count: their camera
- * still shows the field.
+ * How far off every player's screen (widest aspect) a body at (x, z) is: above 1 is off all of them
+ * with the spawn margin. A nonzero radius checks the entire cylinder, from `lift` above the ground
+ * to `lift + height`. Downed players count: their camera still shows the field.
  */
-export function viewClearance(world: World, x: number, z: number): number {
-  const ground = heightAt(world.map.terrain, x, z);
+export function viewClearance(
+  world: World,
+  x: number,
+  z: number,
+  radius = 0,
+  height = BODY_TOP,
+  lift = 0,
+): number {
+  const base = heightAt(world.map.terrain, x, z) + lift;
   let least = Infinity;
   for (const player of world.players) {
-    const rise = ground - heightAt(world.map.terrain, player.x, player.z);
+    const rise = base - heightAt(world.map.terrain, player.x, player.z);
+    if (radius > 0) {
+      least = Math.min(
+        least,
+        screenReach(player, x, z, rise + height / 2, WIDEST, radius, height / 2),
+      );
+      continue;
+    }
     const feet = screenReach(player, x, z, rise, WIDEST);
-    const top = screenReach(player, x, z, rise + BODY_TOP, WIDEST);
+    const top = screenReach(player, x, z, rise + height, WIDEST);
     least = Math.min(least, feet, top);
   }
   return least / (1 + SPAWN_OUTSET);

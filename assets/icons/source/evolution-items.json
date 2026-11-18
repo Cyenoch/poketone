@@ -1,0 +1,14 @@
+{
+  "source": "PokeAPI/sprites",
+  "conversion": "cwebp -lossless",
+  "items": {
+    "everstone": {
+      "url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/everstone.png",
+      "webpSha256": "de75edfcd15fb9cde1d30163c20b6fc4d87d88c12448f5c799745fbc9f7b6414"
+    },
+    "linking-cord": {
+      "url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/linking-cord.png",
+      "webpSha256": "da425585fbac63986be5c21954edce205992c50b857cb38814d268af70ae8d13"
+    }
+  }
+}

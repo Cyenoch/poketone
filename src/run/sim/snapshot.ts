@@ -1,3 +1,7 @@
+import { isTrainerId } from "./content/trainers";
+import { TRAINER } from "./content/params/trainers";
+import { starters } from "./content/lines/index";
+import { knownUnlocks } from "./content/unlocks";
 // World snapshot boundary for co-op (docs/state-machines/simulation.md): the host sends the generated map
 // once, then snapshots of the dynamic state. A peer restores a world from both and, fed the same
 // commands, steps exactly like the host's.
@@ -5,16 +9,20 @@ import type { GeneratedMap } from "./mapgen/index";
 import { navContinuation, restoreNav, type NavContinuation } from "./nav/index";
 import { ARENA_HALF, type World } from "./state/world";
 import { enemies } from "./content/enemies";
+import { knownRules } from "./content/rules";
 import { fieldEventDefs } from "./content/events";
 import { weatherDefs } from "./content/weather";
 import { sites } from "./content/sites";
 import { initialRoute, ROUTE_TIERS, routeStep } from "./content/campaign";
+import { towerMap } from "./content/tower-map";
 import { markerAllowed, routeMarkers, routeModifiers } from "./content/route";
 import { ROUTE_REWARD } from "./content/params/route";
 import { ULT_INVULNERABLE } from "./content/params/ultimates";
+import { MAX_BOND_LEVEL } from "./content/bonds";
+import { BOND_CURE_LEVEL, BOND_ENDURE_LEVEL } from "./content/params/bonds";
 
 /** Snapshot format; bumped when the snapshot's dynamic state shape changes. */
-export const SNAPSHOT_VERSION = 8;
+export const SNAPSHOT_VERSION = 16;
 
 /** Static map and runtime navigation; snapshots carry only the nav's continuation facts. */
 type MapFields = "map" | "nav";
@@ -60,7 +68,15 @@ export function restoreWorld(map: GeneratedMap, snapshot: WorldSnapshot): World 
   const pressure = dynamic.spawn?.pressure;
   if (typeof pressure !== "number" || pressure < 0 || pressure > 1)
     throw new Error(`快照增援压力无效：${pressure}`);
+  if (
+    !knownUnlocks(dynamic.unlocks) ||
+    !Array.isArray(dynamic.playerUnlocks) ||
+    dynamic.playerUnlocks.length !== dynamic.players.length ||
+    !dynamic.playerUnlocks.every(knownUnlocks)
+  )
+    throw new Error("快照研究解锁无效。");
   validateFieldState(dynamic);
+  if (!knownRules(dynamic.rules)) throw new Error("快照挑战规则无效。");
   return { map, nav: restoreNav(map.terrain, navigation), ...dynamic };
 }
 
@@ -81,7 +97,17 @@ function validateFieldState(world: Omit<World, MapFields>): void {
   const egg = (v: unknown) =>
     record(v) && species(v.species) && nonnegative(v.distance) && point(v);
   check(Array.isArray(world.route), "route");
-  initialRoute(world.stage, world.route);
+  check(world.mode === "tower" || world.mode === "expedition", "mode");
+  const tower = world.mode === "tower";
+  if (tower) {
+    check(
+      world.route.length > 0 &&
+        world.route.at(-1) === world.stage &&
+        world.route.every((stage, i, route) => stage === towerMap(world.seed, i + 1, route[i - 1])),
+      "tower.route",
+    );
+    check(world.marker === null && world.modifier === null && world.outcome !== "victory", "tower");
+  } else initialRoute(world.stage, world.route);
   check(
     world.marker === null ||
       (Object.hasOwn(routeMarkers, world.marker) && markerAllowed(world.marker, world.stage)),
@@ -94,7 +120,9 @@ function validateFieldState(world: Omit<World, MapFields>): void {
     "modifier",
   );
   const zone = world.zone;
-  const targets: readonly string[] = ROUTE_TIERS[world.route.length] ?? [];
+  const targets: readonly string[] = tower
+    ? [towerMap(world.seed, world.route.length + 1, world.stage)]
+    : (ROUTE_TIERS[world.route.length] ?? []);
   if (
     !zone ||
     !Array.isArray(zone.exits) ||
@@ -112,9 +140,11 @@ function validateFieldState(world: Omit<World, MapFields>): void {
         (targets.length
           ? exit.to === null ||
             !targets.includes(exit.to) ||
-            exit.marker === null ||
-            !Object.hasOwn(routeMarkers, exit.marker) ||
-            !markerAllowed(exit.marker, exit.to)
+            (tower
+              ? exit.marker !== null
+              : exit.marker === null ||
+                !Object.hasOwn(routeMarkers, exit.marker) ||
+                !markerAllowed(exit.marker, exit.to))
           : exit.to !== null || exit.marker !== null),
     ) ||
     (zone.phase !== "active" &&
@@ -130,11 +160,27 @@ function validateFieldState(world: Omit<World, MapFields>): void {
     "eventsUsed",
   );
   check(typeof world.silphScope === "boolean", "silphScope");
+  check(nonnegative(world.rainbowUntil), "rainbowUntil");
+  check(nonnegative(world.weatherSetAt), "weatherSetAt");
+  check(
+    Array.isArray(world.pledgeHits) &&
+      world.pledgeHits.every(
+        (hit) =>
+          record(hit) &&
+          point(hit) &&
+          nonnegative(hit.at) &&
+          hit.at <= world.time &&
+          ["grass-pledge", "fire-pledge", "water-pledge"].includes(hit.move) &&
+          world.players.some((player) => player.id === hit.player),
+      ),
+    "pledgeHits",
+  );
   const weather = world.weather;
   check(
     weather === null ||
       (record(weather) &&
         Object.hasOwn(weatherDefs, weather.id) &&
+        (weather.forecast === undefined || weather.forecast === true) &&
         nonnegative(weather.from) &&
         nonnegative(weather.until) &&
         weather.until > weather.from),
@@ -228,6 +274,45 @@ function validateFieldState(world: Omit<World, MapFields>): void {
     );
   }
   for (const player of world.players) {
+    check(isTrainerId(player.trainer), `players.${player.id}.trainer`);
+    check(nonnegative(player.assistReady), `players.${player.id}.assistReady`);
+    check(
+      record(player.assistBuffs) &&
+        Object.entries(player.assistBuffs).every(
+          ([id, left]) =>
+            (id === "xSpeed" || id === "direHit" || id === "fullHeal") &&
+            nonnegative(left) &&
+            left <= TRAINER[id].seconds,
+        ),
+      `players.${player.id}.assistBuffs`,
+    );
+    check(count(player.bond) && player.bond <= MAX_BOND_LEVEL, `players.${player.id}.bond`);
+    check(
+      player.bondEndure === false ||
+        (player.bondEndure === true && player.bond >= BOND_ENDURE_LEVEL),
+      `players.${player.id}.bondEndure`,
+    );
+    check(
+      player.bondCure === false || (player.bondCure === true && player.bond >= BOND_CURE_LEVEL),
+      `players.${player.id}.bondCure`,
+    );
+    check(
+      player.mega === null ||
+        (starters[player.starter]?.megas?.some((mega) => mega.form.id === player.mega) &&
+          player.stage === starters[player.starter].stages.length - 1),
+      `players.${player.id}.mega`,
+    );
+    check([0, 1, "hidden"].includes(player.abilitySlot), `players.${player.id}.abilitySlot`);
+    check(nonnegative(player.lightningRodTime), `players.${player.id}.lightningRodTime`);
+    const trade = player.tradeRequest;
+    check(
+      trade === null ||
+        (record(trade) &&
+          count(trade.expiresAtTick) &&
+          trade.target !== player.id &&
+          world.players.some((peer) => peer.id === trade.target)),
+      `players.${player.id}.tradeRequest`,
+    );
     check(
       typeof player.tradeHp === "number" && player.tradeHp > 0 && player.tradeHp <= 1,
       `players.${player.id}.tradeHp`,
@@ -258,7 +343,8 @@ function validateFieldState(world: Omit<World, MapFields>): void {
         offer === undefined ||
           (pending.source === "chest" &&
             record(offer) &&
-            (offer.kind === "trophy" ||
+            ((offer.kind === "trophy" &&
+              (offer.megaStones === undefined || offer.megaStones === true)) ||
               (offer.kind === "deal" &&
                 world.sites.some((s) => s.id === offer.site && s.kind === "gengar-deal")))),
         `players.${player.id}.pending.offer`,

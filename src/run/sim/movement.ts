@@ -1,4 +1,5 @@
 import { WEAVE, STRAFE } from "./content/params/enemy-motion";
+import { foldPhase } from "./content/params/tower";
 // Chase-heading styles an `EnemyDef.move` names; each turns the unit heading the enemy steers along.
 
 import type { Direction } from "./nav/index";
@@ -8,7 +9,8 @@ import { cos, sin } from "./math";
 
 /** Rotates a chase heading side to side on a per-enemy phase (no randomness needed). */
 function weave(world: World, enemy: Enemy, heading: Direction): void {
-  rotate(heading, WEAVE.amplitude * sin(world.time * WEAVE.rate + enemy.id * WEAVE.phasePerId));
+  const phase = world.time * WEAVE.rate + enemy.id * WEAVE.phasePerId;
+  rotate(heading, WEAVE.amplitude * sin(foldPhase(phase)));
 }
 
 /** Circles in at a slant, clockwise or not by id parity, so a pack closes from both flanks. */

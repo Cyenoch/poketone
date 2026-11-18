@@ -119,6 +119,7 @@ if (!process.argv.includes("--run-session-fixture")) {
     update(state) {
       this.state = state;
     }
+    setActionReach() {}
     dispose() {}
   }
   await mock.module(at("src/ui/gpu/lobby.ts"), () => ({ GpuLobby: Lobby }));
@@ -149,7 +150,7 @@ if (!process.argv.includes("--run-session-fixture")) {
   }));
   await mock.module(at("src/ui/gpu/multiplayer-session.ts"), () => ({
     mountMultiplayer: (...args) => {
-      room = args[4];
+      room = args[5];
       return noop;
     },
   }));
@@ -179,6 +180,8 @@ if (!process.argv.includes("--run-session-fixture")) {
     },
   }));
   const endedResult = (dust) => ({
+    zones: 2,
+    danger: 0,
     outcome: "defeat",
     starter: "charmander",
     difficulty: 0,
@@ -198,11 +201,13 @@ if (!process.argv.includes("--run-session-fixture")) {
       let disposed = false;
       const stage = config.multiplayer?.session.restored ? "coast" : config.stage;
       const world = createWorld({
+        mode: config.mode,
+        rules: [],
         stage,
         route: routeTo(stage),
         seed: 7,
         difficulty: config.difficulty,
-        players: [{ starter: config.starter }],
+        players: [{ trainer: config.trainer, starter: config.starter }],
       });
       if (failRunOnCreate) callbacks.onError(new Error("injected load failure"));
       controller = {
@@ -366,7 +371,7 @@ if (!process.argv.includes("--run-session-fixture")) {
     }
   } else if (which === "result") {
     for (const intent of ["retry", "lobby", "natural"]) {
-      const t = await setup(emptyProgress());
+      const t = await setup({ ...emptyProgress(), bonds: { charmander: 158 } });
       try {
         await t.start();
         const first = controller;
@@ -379,6 +384,8 @@ if (!process.argv.includes("--run-session-fixture")) {
         assert.equal(overlays.state.kind, "save-error");
         assert.equal(t.disk().runs, 0);
         assert.deepEqual(t.disk().dex, {}, "a failed save does not bank encounters");
+        assert.deepEqual(t.disk().bonds, { charmander: 158 });
+        assert.deepEqual(t.disk().looks.owned, []);
         t.fail();
         overlays.callbacks.retry();
         assert.equal(overlays.state.kind, "save-error");
@@ -388,9 +395,12 @@ if (!process.argv.includes("--run-session-fixture")) {
         else if (intent === "retry") await t.next(first);
         assert.equal(t.disk().runs, 1);
         assert.equal(t.disk().stardust, 123);
+        assert.deepEqual(t.disk().bonds, { charmander: 160 });
+        assert.deepEqual(t.disk().looks.owned, ["charmander"]);
         assert.deepEqual(t.disk().dex.rattata, { seen: 2, defeated: 1, shiny: 1 });
         if (intent === "natural") {
           assert.equal(overlays.state.kind, "result");
+          assert.deepEqual(overlays.state.bond, { before: 158, after: 160, look: true });
           overlays.callbacks.retry();
           await t.next(first);
         } else if (intent === "lobby") await t.start();
@@ -401,6 +411,8 @@ if (!process.argv.includes("--run-session-fixture")) {
         await t.idle();
         assert.equal(t.disk().runs, 2);
         assert.equal(t.disk().stardust, 130);
+        assert.deepEqual(t.disk().bonds, { charmander: 162 });
+        assert.deepEqual(t.disk().looks.owned, ["charmander"]);
         assert.deepEqual(
           t.disk().dex.rattata,
           { seen: 4, defeated: 2, shiny: 2 },
@@ -473,6 +485,8 @@ if (!process.argv.includes("--run-session-fixture")) {
       const before = controller;
       room.start({
         config: {
+          mode: pick.mode,
+          rules: [],
           stage: pick.stage,
           difficulty: pick.difficulty,
           players: [{ starter: pick.starter, trainer: pick.trainer }],
@@ -569,6 +583,8 @@ if (!process.argv.includes("--run-session-fixture")) {
     const mount = () => {
       const multiplayer = { session: { restored: false } };
       const session = createRunSession({
+        mode: "expedition",
+        rules: [],
         multiplayer,
         stage: "forest",
         starter: "charmander",
@@ -582,7 +598,12 @@ if (!process.argv.includes("--run-session-fixture")) {
         sound: false,
         devMode: false,
         onStarted: () => true,
-        onFinish: () => ({ ok: true, note: null }),
+        onFinish: () => ({
+          ok: true,
+          note: null,
+          badges: [],
+          bond: { before: 0, after: 0, look: false },
+        }),
         onRetry: noop,
         onLobby: noop,
         onSettings: noop,

@@ -6,20 +6,30 @@ import { enemies as enemyDefs, type EnemyId } from "./content/enemies";
 import { fireBeat } from "./beats";
 import { fireFieldEvent } from "./field-events";
 import { encounterSpecies, outbreakActive, recordEncounter } from "./encounters";
+import { FLYER_HOVER } from "./content/params/combat";
 import { FIELD_EVENTS } from "./content/params/field-events";
+import { CHALLENGE_ALPHA } from "./content/params/rules";
 import { updateSpawnPressure } from "./director-pressure";
-import { canReach, refreshFlowFields, requestFlowField } from "./nav/index";
+import { bodyFits, canReach, refreshFlowFields, requestFlowField } from "./nav/index";
 import { chance, range } from "./rng";
 import { stageDefs } from "./content/stages/index";
-import { zoneClock } from "./content/params/zones";
-import { routeStep } from "./content/campaign";
 import { routeSpawnFactors } from "./route-rewards";
-import { landmarkOf, zoneDef, zoneFactors, zoneTime } from "./currentZone";
+import {
+  clearZone,
+  landmarkOf,
+  zoneDef,
+  zoneFactors,
+  zoneGrowthClock,
+  zoneTime,
+  zoneTimeLimit,
+} from "./currentZone";
 import { ARENA_HALF, type World } from "./state/world";
 import type { Enemy, Player } from "./state/entities";
 import { cos, exp, hypot, sin } from "./math";
+import { sampleSurface } from "./surface";
 import { viewClearance } from "./viewFootprint";
 import {
+  ALPHA_HP,
   ELITE,
   ELITE_BODY,
   ENEMY_HEALTH,
@@ -98,11 +108,11 @@ export function enemyHealthScaling(
 
 /** The swarm's multipliers now: the curves at the zone's clock, times the zone's own factors. */
 export function zoneScaling(world: World): EnemyScaling {
-  const step = routeStep(world);
-  const stage = stageDefs[world.stage];
   const factors = zoneFactors(world);
-  const clock = zoneClock(step, zoneTime(world));
-  const rampageSince = world.rampage ? zoneClock(step, stage.duration) : null;
+  const clock = zoneGrowthClock(world);
+  const rampageSince = world.rampage
+    ? zoneGrowthClock(world, stageDefs[world.stage].duration)
+    : null;
   const base = enemyScaling(clock, world.difficulty, rampageSince);
   return {
     hp:
@@ -179,23 +189,40 @@ function clampArena(value: number): number {
   return Math.max(-ARENA_HALF, Math.min(ARENA_HALF, value));
 }
 
+export function enemyBodyScale(elite: boolean, boosted: boolean): number {
+  return elite ? ELITE_BODY * (boosted ? CHALLENGE_ALPHA.body : 1) : 1;
+}
+
+function boostedElite(world: World, species: EnemyId, elite: boolean, site: number | null = null) {
+  return (
+    elite &&
+    world.rules.includes("alpha-elites") &&
+    (site !== null || species !== zoneDef(world).guardian.species)
+  );
+}
+
 export function spawnEnemy(
   world: World,
   species: EnemyId,
   x: number,
   z: number,
-  elite = false,
+  rank: boolean | "alpha" = false,
   site: number | null = null,
 ): Enemy {
+  const elite = rank !== false;
+  const alpha = rank === "alpha";
   const def = enemyDefs[species];
   const base = site !== null && def.encounter ? def.encounter : def;
   const s = zoneScaling(world);
   const factors = zoneFactors(world);
   const boss = site === null && species === zoneDef(world).guardian.species;
   const guardian = boss ? enemyScaling(GUARDIAN_REFERENCE_SECONDS, world.difficulty, null) : null;
+  const boosted = boostedElite(world, species, elite, site);
+  const alphaHp = boosted ? CHALLENGE_ALPHA.hp : alpha ? ALPHA_HP : 1;
+  const body = enemyBodyScale(elite, boosted);
   const hp = boss
     ? bossHp(species, world.difficulty) * factors.guardianHp * coopScaling(teamSize(world)).bossHp
-    : base.hp * s.hp * (elite ? ELITE.hp * routeSpawnFactors(world).eliteHp : 1);
+    : base.hp * s.hp * (elite ? ELITE.hp * routeSpawnFactors(world).eliteHp : 1) * alphaHp;
   const enemy: Enemy = {
     id: world.nextId++,
     species,
@@ -216,9 +243,10 @@ export function spawnEnemy(
       base.dmg *
       (guardian ? guardian.dmg * factors.dmg : s.dmg) *
       (elite ? ELITE.dmg : 1) *
-      (boss ? difficulties[world.difficulty].guardianDmg * factors.guardianDmg : 1),
-    radius: def.radius * (elite ? ELITE_BODY : 1),
-    scale: elite ? ELITE_BODY : 1,
+      (boss ? difficulties[world.difficulty].guardianDmg * factors.guardianDmg : 1) *
+      (boosted ? CHALLENGE_ALPHA.damage : 1),
+    radius: def.radius * body,
+    scale: body,
     xp:
       base.xp *
       (elite ? ELITE.xp : 1) *
@@ -230,7 +258,7 @@ export function spawnEnemy(
     shinyUntil: null,
     escape: null,
     site,
-    alpha: false,
+    alpha,
     boss,
     knockX: 0,
     knockZ: 0,
@@ -281,36 +309,51 @@ interface Spot {
 
 const hidden = (spot: Spot | null): spot is Spot => spot !== null && spot.clearance > 1;
 
+type SpotAt = (x: number, z: number) => Spot | null;
+
+/** Check every candidate at the final boosted size without changing unboosted arrivals. */
+function arrivalCheck(world: World, species: EnemyId, elite = false): SpotAt {
+  const def = enemyDefs[species];
+  const { mobility } = def;
+  const boosted = boostedElite(world, species, elite);
+  const scale = enemyBodyScale(elite, boosted);
+  const radius = def.radius * scale;
+  const height = def.height * scale;
+  const limit = ARENA_HALF - radius;
+  // Match the airborne range in createRunView.ts. Flyers only collide with the arena bounds.
+  const hover = mobility.flying ? FLYER_HOVER * scale : 0;
+  const bob = mobility.flying ? 0.15 * scale : 0;
+  return (x, z) => {
+    if (boosted && (Math.abs(x) > limit || Math.abs(z) > limit)) return null;
+    if (!canReach(world.nav, mobility, x, z)) return null;
+    if (!boosted) return { x, z, clearance: viewClearance(world, x, z) };
+    const water = mobility.water ? sampleSurface(world.map.terrain.surface, x, z).waterDepth : 0;
+    const lift = (water > 0 ? water - height * 0.25 : 0) + hover - bob;
+    const clearance = viewClearance(world, x, z, radius, height + 2 * bob, lift);
+    if (clearance <= 1 || (!mobility.flying && !bodyFits(world.nav, mobility, x, z, radius)))
+      return null;
+    return { x, z, clearance };
+  };
+}
+
 /**
  * On the ray from `player` through (x, z), the first spot the species can walk to a player from that
  * is off every player's screen (viewFootprint.ts): sliding up to `SPAWN_SLIDE` toward the player
  * first (reachability), then outward to the arena wall. Null when the ray has none.
  */
-function raySpot(
-  world: World,
-  species: EnemyId,
-  player: Player,
-  x: number,
-  z: number,
-): Spot | null {
-  const { mobility } = enemyDefs[species];
+function raySpot(at: SpotAt, player: Player, x: number, z: number): Spot | null {
   const distance = hypot(x - player.x, z - player.z);
   const dirX = (x - player.x) / distance;
   const dirZ = (z - player.z) / distance;
-  const at = (along: number): Spot | null => {
-    const sx = player.x + dirX * along;
-    const sz = player.z + dirZ * along;
-    if (!canReach(world.nav, mobility, sx, sz)) return null;
-    return { x: sx, z: sz, clearance: viewClearance(world, sx, sz) };
-  };
   for (let back = 0; back <= Math.min(SPAWN_SLIDE, distance / 2); back += SPAWN_SEARCH_STEP) {
-    const spot = at(distance - back);
+    const spot = at(player.x + dirX * (distance - back), player.z + dirZ * (distance - back));
     if (hidden(spot)) return spot;
   }
   for (let along = distance + SPAWN_SEARCH_STEP; ; along += SPAWN_SEARCH_STEP) {
-    if (Math.abs(player.x + dirX * along) > ARENA_HALF) break;
-    if (Math.abs(player.z + dirZ * along) > ARENA_HALF) break;
-    const spot = at(along);
+    const sx = player.x + dirX * along;
+    const sz = player.z + dirZ * along;
+    if (Math.abs(sx) > ARENA_HALF || Math.abs(sz) > ARENA_HALF) break;
+    const spot = at(sx, sz);
     if (hidden(spot)) return spot;
   }
   return null;
@@ -318,18 +361,16 @@ function raySpot(
 
 /**
  * The whole arena on a fixed `ARENA_SCAN_STEP` grid, in a stable order: the reachable off-screen
- * point nearest (x, z), or, only when every reachable point is on someone's screen, the least
- * visible one. Null when the species can reach a player from nowhere.
+ * point nearest (x, z), or the least visible candidate as a last resort for the guardian.
  */
-function arenaSpot(world: World, species: EnemyId, x: number, z: number): Spot | null {
-  const { mobility } = enemyDefs[species];
+function arenaSpot(at: SpotAt, x: number, z: number): Spot | null {
   let near: Spot | null = null;
   let nearD = Infinity;
   let leastVisible: Spot | null = null;
   for (let sz = -ARENA_HALF; sz <= ARENA_HALF; sz += ARENA_SCAN_STEP) {
     for (let sx = -ARENA_HALF; sx <= ARENA_HALF; sx += ARENA_SCAN_STEP) {
-      if (!canReach(world.nav, mobility, sx, sz)) continue;
-      const spot = { x: sx, z: sz, clearance: viewClearance(world, sx, sz) };
+      const spot = at(sx, sz);
+      if (!spot) continue;
       if (spot.clearance > 1) {
         const d = (sx - x) ** 2 + (sz - z) ** 2;
         if (d < nearD) [near, nearD] = [spot, d];
@@ -339,34 +380,17 @@ function arenaSpot(world: World, species: EnemyId, x: number, z: number): Spot |
   return near ?? leastVisible;
 }
 
-/** A spawn aimed at (x, z): `raySpot`, else the arena's off-screen spot nearest the aim. */
-function aimedSpot(
-  world: World,
-  species: EnemyId,
-  player: Player,
-  x: number,
-  z: number,
-): Spot | null {
-  return raySpot(world, species, player, x, z) ?? arenaSpot(world, species, x, z);
-}
-
 /**
  * A spawn spot on the `min`–`max` ring around the player: the first of `RING_TRIES` random ring rays
  * with an off-screen spot, else the arena's off-screen spot nearest the player.
  */
-function ringSpot(
-  world: World,
-  species: EnemyId,
-  player: Player,
-  min: number,
-  max: number,
-): Spot | null {
+function ringSpot(world: World, at: SpotAt, player: Player, min: number, max: number): Spot | null {
   for (let attempt = 0; attempt < RING_TRIES; attempt++) {
     const [x, z] = ringPoint(world, player, min, max);
-    const spot = raySpot(world, species, player, x, z);
+    const spot = raySpot(at, player, x, z);
     if (spot) return spot;
   }
-  return arenaSpot(world, species, player.x, player.z);
+  return arenaSpot(at, player.x, player.z);
 }
 
 /** Ordinary arrivals require a reachable spot outside every player's screen. */
@@ -378,7 +402,8 @@ export function spawnReachable(
   z: number,
   elite = false,
 ): Enemy | null {
-  const spot = aimedSpot(world, species, player, x, z);
+  const at = arrivalCheck(world, species, elite);
+  const spot = raySpot(at, player, x, z) ?? arenaSpot(at, x, z);
   return hidden(spot) ? spawnEnemy(world, species, spot.x, spot.z, elite) : null;
 }
 
@@ -389,15 +414,21 @@ export function spawnOnRing(
   player: Player,
   min: number,
   max: number,
-  elite = false,
+  rank: boolean | "alpha" = false,
 ): Enemy | null {
-  const spot = ringSpot(world, species, player, min, max);
-  return hidden(spot) ? spawnEnemy(world, species, spot.x, spot.z, elite) : null;
+  const spot = ringSpot(world, arrivalCheck(world, species, rank !== false), player, min, max);
+  return hidden(spot) ? spawnEnemy(world, species, spot.x, spot.z, rank) : null;
 }
 
 /** The guardian must appear: a map where it can reach no player from anywhere is a broken map. */
 function guardianSpot(world: World, species: EnemyId, player: Player): Spot {
-  const spot = ringSpot(world, species, player, GUARDIAN_RING.min, GUARDIAN_RING.max);
+  const spot = ringSpot(
+    world,
+    arrivalCheck(world, species),
+    player,
+    GUARDIAN_RING.min,
+    GUARDIAN_RING.max,
+  );
   if (!spot)
     throw new Error(`guardian ${species} can reach no player from anywhere on ${world.stage}`);
   return spot;
@@ -463,10 +494,7 @@ export function updateDirector(world: World, dt: number): void {
   if (world.zone.phase !== "active") return;
   world.zone.tick += 1;
   const t = zoneTime(world);
-  const stage = stageDefs[world.stage];
   const zone = zoneDef(world);
-  const factors = zoneFactors(world);
-  const clock = zoneClock(routeStep(world), t);
   const early = difficulties[world.difficulty].earlyBy;
   for (const [at, species] of zone.roster) {
     if (t >= at && !world.spawn.pool.includes(species)) world.spawn.pool.push(species);
@@ -480,14 +508,26 @@ export function updateDirector(world: World, dt: number): void {
     if (beat.kind === "event") fireFieldEvent(world, beat.id, player);
     else fireBeat(world, beat, player);
   }
-  // The final swarm: no zone runs past it without its guardian.
-  if (t >= stage.duration && !world.rampage) {
+  const limit = zoneTimeLimit(world);
+  if (limit !== null && t >= limit && !world.rampage) {
+    if (world.mode === "tower") {
+      const pad = landmarkOf(world);
+      clearZone(world, pad.x, pad.z);
+      return;
+    }
     world.rampage = true;
-    world.events.push({ t: "banner", text: stage.rampage.banner, tone: "danger", kind: "rampage" });
+    world.events.push({
+      t: "banner",
+      text: stageDefs[world.stage].rampage.banner,
+      tone: "danger",
+      kind: "rampage",
+    });
     if (world.bossId === null) summonGuardian(world, null);
   }
 
   releaseStrandedSwimmers(world);
+  const factors = zoneFactors(world);
+  const clock = zoneGrowthClock(world, t);
   const diff = difficulties[world.difficulty];
   const team = coopScaling(teamSize(world));
   const cap = liveCap(clock, world.difficulty) * factors.cap * team.cap;
@@ -497,15 +537,17 @@ export function updateDirector(world: World, dt: number): void {
     dt * spawnRate(clock, world.difficulty, world.rampage) * factors.spawns * team.spawns * supply;
   while (world.spawn.credit >= 1 && living < cap) {
     const target = nextAnchor(world)!;
-    // White Flute / Repel: a spawn around this player costs less (more) credit, so more (fewer) come.
     const stats = currentStats(target);
-    world.spawn.credit -= 1 / stats.spawns;
     const species = encounterSpecies(world);
     const elite = chance(
       world.rng,
       diff.eliteChance * stats.elites * routeSpawnFactors(world).eliteRate,
     );
-    spawnOnRing(world, species, target, SPAWN_RING.min, SPAWN_RING.max, elite);
+    const enemy = spawnOnRing(world, species, target, SPAWN_RING.min, SPAWN_RING.max, elite);
+    // Keep the credit for a later tick if the larger body could not arrive.
+    if (!enemy && boostedElite(world, species, elite)) break;
+    // White Flute / Repel: a spawn around this player costs less (more) credit, so more (fewer) come.
+    world.spawn.credit -= 1 / stats.spawns;
     if (world.enemies.length >= cap) break;
   }
   world.spawn.credit = Math.min(world.spawn.credit, SPAWN_CREDIT_MAX);

@@ -92,6 +92,8 @@ export interface GpuScreen extends MenuInputTarget {
   setFullscreenAction?(action: (() => void) | undefined, active: boolean): void;
   pointerDown(x: number, y: number, touch: boolean): void;
   pointerMove(x: number, y: number): void;
+  /** The mouse left the canvas or input was cancelled: drop what it alone was showing. */
+  pointerLeave?(): void;
   /** The next Tab (Shift+Tab) would wrap; a shown toast's close key is the stop past it. */
   tabEdge?(shift: boolean): boolean;
   /** True when the press only opened a tip and must not also activate. */
@@ -356,7 +358,10 @@ export async function createGpuAppHost(
     toast.setHovered(null);
     input.cancel();
     codex?.pointerUp(undefined, false);
-    for (const shown of screens) shown.pointerUp(false);
+    for (const shown of screens) {
+      shown.pointerUp(false);
+      shown.pointerLeave?.();
+    }
     runLayer?.overlays.pointerUp(false);
     hovered?.hover(null);
     hovered = undefined;
@@ -661,6 +666,7 @@ export async function createGpuAppHost(
     platform.setCursor(true);
     toastInput.leave();
     input.leave();
+    for (const shown of screens) shown.pointerLeave?.();
   };
   // The toast's close key follows the last control of the surface under it in Tab order, as the
   // original's DOM order put it; it never takes focus by itself. Windows and runs keep their own.
@@ -980,11 +986,19 @@ export async function createGpuAppHost(
         texture,
         {
           progress,
-          pick: { starter, difficulty: 0, stage: playableStages[0]!, trainer: "chengxi" },
+          pick: {
+            mode: "expedition",
+            starter,
+            difficulty: 0,
+            stage: playableStages[0]!,
+            trainer: "chengxi",
+          },
+          rules: [],
         },
         {
           start() {},
           pick() {},
+          rules() {},
           shiny() {},
           lab() {},
           codex() {},
@@ -1010,18 +1024,18 @@ export async function createGpuAppHost(
         () => warm.dispose(),
       );
     }
-    // 研究所 on 系统 with an archive: every tile state (ready, short, maxed) and the archive toggles.
+    // 研究所: each place once (shelf binder, bench instruments in every state, the badge case).
     const lab = new GpuLab(
       fonts.families,
       texture,
       { ...emptyProgress(), stardust: 100, lab: { dmg: 8, archive: 1 }, archive: [] },
-      { buy() {}, archive() {}, back() {}, settings() {} },
+      { buy() {}, archive() {}, codex() {}, back() {}, settings() {} },
     );
     const width = platform.display.width,
       height = platform.display.height;
     lab.resize(width, height, screenScale(lab, width, height, insets), insets);
-    for (const tab of ["combat", "system"] as const) {
-      lab.showSection(tab);
+    for (const place of ["shelf", "bench", "badges"] as const) {
+      lab.showPlace(place);
       lab.stage.update(0);
       lab.afterLayout(0);
     }

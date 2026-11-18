@@ -4,7 +4,7 @@ import { SITE_POOLS } from "../sim/content/sites";
 import type { SiteKind } from "../sim/state/field";
 import type { World } from "../sim/state/world";
 import type { MapTransform } from "./minimapLayers";
-import { loadMapIcon } from "./minimapLayers";
+import { loadMapIcon, scoutPin } from "./minimapLayers";
 import { MapInk } from "./mapInk";
 import { routeSight } from "./routeLook";
 
@@ -121,6 +121,7 @@ export class FieldMapMarks {
     unit: number,
     radius: number,
     full: boolean,
+    markerRange = 1,
   ): void {
     for (const ink of this.inks) {
       ink.begin();
@@ -137,8 +138,9 @@ export class FieldMapMarks {
     const sight = routeSight(world, alpha);
     for (const mark of fieldMarks(world)) {
       if (!sight(mark.x, mark.z)) continue;
-      const [x, y] = at(mark.x, mark.z);
-      if (!inside(x, y)) continue;
+      const point = scoutPin(...at(mark.x, mark.z), centre, radius, markerRange);
+      if (!point) continue;
+      const [x, y] = point;
       const opacity = mark.ready ? 1 : 0.55;
       if (mark.kind === "item-ball") {
         this.back.add(x, y, unit * 8, unit * 8, 0, BALL, INK, unit * 1.25);

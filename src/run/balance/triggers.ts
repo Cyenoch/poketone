@@ -10,7 +10,6 @@ import { moves } from "../sim/content/moves";
 import { statusSources } from "../sim/upgrades";
 import { procDamage } from "../sim/triggers/kit";
 import { STREAK_GAP } from "../sim/content/params/combat";
-import type { ElementType } from "../sim/content/elements";
 import type { PlayerStats } from "../sim/stats";
 import type { Player } from "../sim/state/entities";
 import type { BuildOutput } from "./model";
@@ -47,8 +46,6 @@ export interface Ledger {
   removed: number;
   /** Kills per second (swarm and elites). */
   kills: number;
-  /** Landed hits per second by the type of the move that landed them (swarm and guardian). */
-  typeHits: Partial<Record<ElementType, number>>;
   /** Share of the living HP mass below a share of max HP, and at full HP. */
   below: (share: number) => number;
   full: number;
@@ -146,10 +143,6 @@ const bossOnly = (out: MoveOutput, status: EnemyStatusId | undefined, rate: numb
 };
 
 export const triggerModels: { [K in TriggerKind]: TriggerModel<K> } = {
-  healOnHit: {
-    sustain: (t, l) =>
-      Math.min(t.perSecond, l.typeHits[t.type] ?? 0) * t.heal * l.stats.maxHp * l.stats.healing,
-  },
   // The contact status rides the thorns hit, which the model counts through `stats.thorns`.
   contactStatus: {},
   zap: {

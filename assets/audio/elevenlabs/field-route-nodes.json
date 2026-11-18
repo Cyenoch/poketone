@@ -6,7 +6,7 @@
     "nodeCreation": [37, 72],
     "estimateOnly": 75
   },
-  "note": "Field and route nodes only. The source activity identifies the shared batch; per-generation costs are in field-route-production.json.",
+  "note": "Original 35 nodes preserved. 200 completed generations including authorized rework; IDs, prompts, prices and failed-take provenance are in field-route-production.json. All 35 categories now have 78 measured candidate masters. Do not rerun paid requests. No ship/publication before runtime/VFX integration; no human audition or device acceptance claimed.",
   "tasks": {
     "add-field-events:1.4": {
       "weather-sun": "skDu2B3XBWEtgDMJenhU",
@@ -29,6 +29,31 @@
       "exit-pick": "yye6nANx47X428O7RDyA",
       "gengar-deal": "VjTLlr3gwVsQcReQBcnc",
       "trophy": "zaYK2xgCdn5QKGyZUzLO"
+    },
+    "deepen-builds:3.2": {
+      "cast-sunny-day": "ilVa0R8gRKHQ3pyaOH4a",
+      "cast-rain-dance": "LlRARF2TYZi1QLCU2AB0",
+      "cast-sandstorm": "XYxAkVHqTgJMJWotfFEg",
+      "cast-grass-pledge": "9Jz6BkJ112ZI8POExHWW",
+      "cast-fire-pledge": "fuPKvdZt7nQzd9tfkYyM",
+      "cast-water-pledge": "Qt09inWET0qqw9kthtQd",
+      "field-sea-of-fire": "1cnQVetRqRcNhPHkrXoH",
+      "field-rainbow": "n6cxx059dq5WcRa9PeVr",
+      "field-swamp": "gdAYEkLd6WEhvrno8kIk",
+      "trade-evolve": "BEhpl8Oey3CRgTTXXomE"
+    },
+    "add-challenge-rules:4.2": {
+      "badge": "6mPeSbJHGIoBrViZWGku"
+    },
+    "add-mega-evolution:3.3": {
+      "mega-evolve": "Lzj1h0hCLDCIU001dDlG",
+      "flare-blitz": "GRpAvt8suvlN6BzjLljy"
+    },
+    "add-trainer-support:3.4": {
+      "assist-x-speed": "kLLbP5z4I3LAPeBeeJsL",
+      "assist-super-potion": "00We58sdyeX3C8GSXGKb",
+      "assist-dire-hit": "mJyiL6k28KouOXnOVmil",
+      "assist-full-heal": "AZvwz6LaCQfaaMwYy2Oj"
     }
   }
 }

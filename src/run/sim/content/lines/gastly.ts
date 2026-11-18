@@ -1,9 +1,10 @@
 import type { LineDef } from "./index";
 
+const traits = { normal: ["levitate"] } as const;
+
 export const gastly = {
   id: "gastly",
   role: "诅咒游击",
-  ability: "shadow-shroud",
   ultimate: "phantom-night",
   kit: ["shadow-ball", "smog", "hex", "sludge-bomb"],
   evolutionMoves: ["night-shade", "dream-eater"],
@@ -13,6 +14,7 @@ export const gastly = {
       at: 1,
       form: {
         id: "gastly",
+        abilities: traits,
         name: "鬼斯",
         types: ["ghost", "poison"],
         hp: 90,
@@ -27,6 +29,7 @@ export const gastly = {
       at: 28,
       form: {
         id: "haunter",
+        abilities: traits,
         name: "鬼斯通",
         types: ["ghost", "poison"],
         hp: 110,
@@ -39,8 +42,10 @@ export const gastly = {
     {
       kind: "evolve",
       at: 54,
+      needs: "trade",
       form: {
         id: "gengar",
+        abilities: { normal: ["cursed-body"] },
         name: "耿鬼",
         types: ["ghost", "poison"],
         hp: 127,

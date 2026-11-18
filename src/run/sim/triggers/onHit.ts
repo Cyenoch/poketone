@@ -1,7 +1,7 @@
 // Hit triggers: a status at a chance (grip claw, flame / toxic orb, snowball, awakening, King's Rock's
 // flinch), a Bonk! multiplier (stick), an execute (razor fang) and a crit bolt (thunder stone).
 
-import { damageEnemy, inflictBy } from "../combat";
+import { damageEnemy, inflictBy, statusRoll } from "../combat";
 import { stagger } from "../poise";
 import { targetable } from "../status";
 import { chance } from "../rng";
@@ -16,7 +16,7 @@ export const inflictOnHit: TriggerRule<"inflictOnHit"> = {
   run(ctx, player, trigger, _key, { hit, enemy, removed }) {
     if (hit.secondary || enemy.hp <= 0) return;
     const stats = currentStats(player);
-    if (!chance(ctx.world.rng, trigger.chance * stats.statusChance)) return;
+    if (!statusRoll(ctx.world, trigger.chance * stats.statusChance)) return;
     if (trigger.status === "flinch") stagger(enemy);
     else inflictBy(ctx.world, enemy, trigger.status, removed, player);
   },

@@ -281,7 +281,7 @@ test("a shield soaks fights spaced past its recharge, not a steady stream", () =
 });
 
 test("heals read the HP removed after the split: the guardian heals, overkill does not", () => {
-  // A guardian-only dummy: Shell Bell, Giga Drain and Photosynthesis all heal off the guardian.
+  // A guardian-only dummy: Shell Bell and Giga Drain both heal off the guardian.
   const player = createPlayer(0, "bulbasaur", 0);
   player.moves = [newMoveState("giga-drain")];
   player.items.push({ id: "shell-bell", level: 1 });
@@ -292,22 +292,15 @@ test("heals read the HP removed after the split: the guardian heals, overkill do
   const idle = healPerSecond(out, none, 0, hp);
   assert.ok(Math.abs(idle - stats.regen * stats.healing) < 1e-9, "no target: regen only");
   const onBoss = healPerSecond(out, { ...none, boss: 1 }, 0, hp);
-  const photo = stats.triggers.find((t) => t.def.kind === "healOnHit").def;
   const expected =
-    (stats.regen + (stats.lifesteal + moves["giga-drain"].drain) * out.single) * stats.healing +
-    Math.min(photo.perSecond, out.bossHits) * photo.heal * stats.maxHp * stats.healing;
+    (stats.regen + (stats.lifesteal + moves["giga-drain"].drain) * out.single) * stats.healing;
   assert.ok(out.single > 0 && Math.abs(onBoss - expected) < 1e-9, `${onBoss} vs ${expected}`);
 
   // One 1-HP enemy per cast: lifesteal heals off 1 HP per kill, however big the hit.
   const swarm = buildOutput(player, target({ hp: 1 }));
   const kills = swarm.direct;
   const healed = healPerSecond(swarm, none, kills, hp) - idle;
-  assert.ok(
-    healed <=
-      (stats.lifesteal + moves["giga-drain"].drain) * kills * stats.healing +
-        5 * photo.heal * stats.maxHp * stats.healing +
-        1e-9,
-  );
+  assert.ok(healed <= (stats.lifesteal + moves["giga-drain"].drain) * kills * stats.healing + 1e-9);
   assert.ok(swarm.direct <= swarm.hits + 1e-9, "at most the target's HP per kill");
 });
 
@@ -315,10 +308,12 @@ test("the guardian's rhythm and its paralysis match Scyther's brain", () => {
   /** Dash wind-ups the real brain starts on a still target 4 m away over `seconds`. */
   function simDashes(seconds, paralyse) {
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       seed: 5,
       difficulty: 0,
-      players: [{ starter: "squirtle" }],
+      players: [{ trainer: "chengxi", starter: "squirtle" }],
     });
     const player = world.players[0];
     player.hp = 1e9;
@@ -398,10 +393,12 @@ test("paralysis on the guardian delays its attacks, as the brain's running chase
   /** Dash wind-ups the real brain starts on a still target with random 1.05 s paralyses at `rate`. */
   function simDashes(seconds, rate) {
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       seed: 5,
       difficulty: 0,
-      players: [{ starter: "squirtle" }],
+      players: [{ trainer: "chengxi", starter: "squirtle" }],
     });
     const player = world.players[0];
     player.hp = 1e9;

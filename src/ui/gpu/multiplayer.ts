@@ -7,7 +7,10 @@ import { getAudio } from "../../audio/engine";
 import type { SessionState } from "../../network/session";
 import type { LobbyPick } from "../../lobbyPick";
 import { difficultyLock, starterLock, trainerLock } from "../../run/locks";
-import { starterUnlocked, type Progress } from "../../run/progress";
+import { ruleAvailable, starterUnlocked, type Progress } from "../../run/progress";
+import { ruleIds, totalDanger, type RuleId } from "../../run/sim/content/rules";
+import { ChallengeWindow, RuleChips, RulesKey, ruleTip } from "./challenge-rules";
+import { modeKeys, modeOrder, towerLock, TowerRecord, type RunMode } from "./tower-mode";
 import { difficulties, type Difficulty } from "../../run/sim/content/difficulties";
 import { starterOrder, starters, type StarterId } from "../../run/sim/content/lines/index";
 import { trainerArt, trainerOrder, trainers, trainerUnlocked } from "../../trainers";
@@ -48,10 +51,14 @@ export interface MultiplayerCallbacks {
   copy: (code: string) => void;
   /** The player's own choice changed (the difficulty only as the host, or before a room). */
   pick: (next: LobbyPick) => void;
+  /** The host changed the rules (sent as the room's mission, kept as the lobby's draft). */
+  rules: (next: readonly RuleId[]) => void;
+  /** A guest accepts the rules the host changed (Harbor clears readiness on a change). */
+  confirm: () => void;
 }
 type Page = "menu" | "room" | "error";
 /** Which part of the page a control belongs to; only the shown parts take input. */
-type Group = Page | "frame" | "pick" | "mission" | "launch";
+type Group = Page | "frame" | "pick" | "mission" | "rules" | "launch";
 interface PaintState {
   hovered: boolean;
   focused: boolean;
@@ -131,6 +138,9 @@ export class GpuMultiplayer {
   });
   private readonly routeName: Text;
   private readonly routeMap = new RouteMap();
+  /** In 对战塔 the player's own partner's best floor stands where the route map does. */
+  private readonly towerRecord = new TowerRecord();
+  private readonly modeRow: Container;
   private readonly go = new Container({ flexDirection: "row", alignItems: "center", gap: 12 });
   private readonly tray = segmentTray();
   private readonly hostMission: ReturnType<typeof slantTag>;
@@ -207,6 +217,13 @@ export class GpuMultiplayer {
   private readonly trainerTiles: Container[] = [];
   private readonly badges: BallBadge[] = [];
   private state: SessionState | null = null;
+  /** The host's draft (the room's mission once it answers); a guest reads the room's. */
+  private rules: readonly RuleId[];
+  private readonly rulesKey: RulesKey;
+  private readonly ruleChips = new RuleChips();
+  private readonly challenge: ChallengeWindow;
+  /** The rules revision this guest has accepted (joining accepts the current one). */
+  private confirmed: number | null = null;
   private entering = false;
   private code = "";
   private page: Page = "menu";
@@ -217,6 +234,9 @@ export class GpuMultiplayer {
   private touchTip = -1;
   private pressed = -1;
   private ready = false;
+  private confirming = false;
+  private coarse = false;
+  private compact = false;
   private clock = 0;
   private idle = 0;
   private lastError = "";
@@ -226,10 +246,24 @@ export class GpuMultiplayer {
     callbacks: MultiplayerCallbacks,
     progress: Progress,
     pick: LobbyPick,
+    rules: readonly RuleId[],
   ) {
     this.callbacks = callbacks;
     this.progress = progress;
     this.pick = pick;
+    this.rules = rules;
+    this.rulesKey = new RulesKey(this.stage);
+    this.challenge = new ChallengeWindow(
+      this.stage,
+      (next) => {
+        this.rules = next;
+        this.callbacks.rules(next);
+        this.paintRules();
+      },
+      () => {
+        this.focus(this.controls.findIndex((c) => c.panel === this.rulesKey.panel));
+      },
+    );
     this.stage.root.setProperties({ fontFamilies: fonts, flexDirection: "column", color: ui.ink });
     this.frame = new InnerScreenFrame(this.stage, "联机");
     this.tooltip = new GpuTooltip(this.stage);
@@ -388,8 +422,65 @@ export class GpuMultiplayer {
     for (const id of starterOrder) this.tile(id);
     this.routeName = this.header(ROUTE);
     this.headers.pop();
-    this.route.add(this.routeName);
-    this.route.add(this.routeMap.panel);
+    // The host's 规则 and every seat's view of the room's rules, before the route.
+    const rulesKey = this.rulesKey;
+    this.add({
+      group: "mission",
+      panel: rulesKey.panel,
+      action: () => this.openRules(),
+      enabled: () => this.canPick() && this.rulesOpen(),
+      tip: () => null,
+      paint: ({ hovered, focused, focusVisible, pressed }) => {
+        rulesKey.setHovered(hovered);
+        rulesKey.setFocused(focused);
+        rulesKey.setFocusVisible(focusVisible);
+        rulesKey.setPressed(pressed);
+      },
+      update: () => {},
+      fitTouch: () => rulesKey.fitTouch(),
+      dispose: () => rulesKey.dispose(),
+    });
+    for (const chip of this.ruleChips.chips)
+      this.add({
+        group: "rules",
+        panel: chip.panel,
+        action: () => {},
+        enabled: () => this.ruleChips.shown.includes(chip.id),
+        tip: () => ruleTip(chip.id),
+        paint: ({ focusVisible }) => chip.plate.set({ focus: focusVisible ? 1 : 0 }),
+        update: () => {},
+        fitTouch: () => {},
+        dispose: () => {},
+      });
+    // The host picks the mode on two keys; a guest reads it as the route's name.
+    const modes = modeKeys(this.stage);
+    this.modeRow = modes.row;
+    for (const [index, key] of modes.keys.entries()) {
+      const mode = modeOrder[index]!;
+      const reason = () => (mode === "tower" ? towerLock(this.progress) : null);
+      this.add({
+        group: "mission",
+        panel: key.panel,
+        action: () => {
+          if (!reason()) this.choose({ mode });
+        },
+        enabled: () => this.canPick(),
+        tip: reason,
+        locked: () => reason() !== null,
+        paint: ({ hovered, focused, focusVisible, pressed }) => {
+          key.set(this.pick.mode === mode, reason() !== null || !this.canPick());
+          key.setHovered(hovered);
+          key.setFocused(focused);
+          key.setFocusVisible(focusVisible);
+          key.setPressed(pressed);
+        },
+        update: () => {},
+        fitTouch: () => key.fitTouch(),
+        dispose: () => key.dispose(),
+      });
+    }
+    this.route.add(this.rulesKey.panel, this.ruleChips.panel, this.routeName, this.modeRow);
+    this.route.add(this.routeMap.panel, this.towerRecord.panel);
     for (const [value, def] of Object.entries(difficulties))
       this.segment(Number(value) as Difficulty, def.name);
     this.hostMission = slantTag(difficulties[pick.difficulty].name, {
@@ -397,7 +488,14 @@ export class GpuMultiplayer {
       ink: ui.white,
       size: 15,
     });
-    this.launch = this.button("launch", this.launchWrap, "出发", callbacks.start, true, "normal");
+    this.launch = this.button(
+      "launch",
+      this.launchWrap,
+      "出发",
+      () => (this.needsConfirm() ? this.confirm() : callbacks.start()),
+      true,
+      "normal",
+    );
     this.launchSpinner.setProperties({ width: 18, height: 18, display: "none" });
     this.launch.panel.add(stack(this.launchSpinner, 2));
     this.go.add(this.tray.tray, stack(this.hostMission.tag, 1), this.launchWrap);
@@ -411,6 +509,7 @@ export class GpuMultiplayer {
     );
 
     this.body.add(this.stageArea, stack(this.dock, 1));
+    this.stage.root.add(stack(this.challenge.root, 10));
     this.refresh();
     this.stage.motion.animate(
       this.entrance,
@@ -657,13 +756,15 @@ export class GpuMultiplayer {
 
   private choose(change: Partial<LobbyPick>): void {
     if (!this.canPick()) return;
+    if (change.mode === "tower" && towerLock(this.progress)) return;
     if (change.trainer && !trainerUnlocked(this.progress, change.trainer)) return;
     if (change.starter && !starterUnlocked(this.progress, change.starter)) return;
     const next = { ...this.pick, ...change };
     if (
       next.trainer === this.pick.trainer &&
       next.starter === this.pick.starter &&
-      next.difficulty === this.pick.difficulty
+      next.difficulty === this.pick.difficulty &&
+      next.mode === this.pick.mode
     )
       return;
     if (change.trainer) getAudio().sfx("ui-confirm");
@@ -686,6 +787,84 @@ export class GpuMultiplayer {
     this.partner.setPortrait(this.partnerPortrait());
     this.partner.set({ selected: true, type: themeColors(form.types[0]!).theme });
     this.stage.invalidate();
+  }
+
+  /** The host's mode keys, or a guest's route name; the route map or the partner's best floor. */
+  private paintMode(host: boolean, mode: RunMode): void {
+    const tower = mode === "tower";
+    this.modeRow.setProperties({ display: host ? "flex" : "none" });
+    this.routeName.setProperties({
+      display: host ? "none" : "flex",
+      text: tower ? "对战塔" : ROUTE,
+    });
+    this.routeMap.panel.setProperties({ display: tower ? "none" : "flex" });
+    this.towerRecord.set(this.progress, this.pick.starter, tower);
+  }
+
+  /** The host may set rules once its own first clear opens them (a guest only reads them). */
+  private rulesOpen(): boolean {
+    return ruleIds.some((id) => ruleAvailable(this.progress, id));
+  }
+
+  /** The rules the room runs with: the host's own draft, a guest the host's mission. */
+  private roomRules(): readonly RuleId[] {
+    const room = this.state?.room;
+    return room && this.state!.self !== 0 ? room.mission.rules : this.rules;
+  }
+
+  private paintRules(): void {
+    const host = this.page === "room" && this.state?.self === 0;
+    this.rulesKey.panel.setProperties({ display: host && this.rulesOpen() ? "flex" : "none" });
+    const shown = this.roomRules();
+    this.rulesKey.setDanger(totalDanger(shown));
+    this.ruleChips.set(this.page === "room" ? shown : []);
+    // A removed rule's chip takes its tip, hover and focus with it.
+    const gone = (index: number) => {
+      const control = this.controls[index];
+      return control?.group === "rules" && !control.enabled();
+    };
+    if (gone(this.touchTip)) this.touchTip = -1;
+    if (gone(this.hovered)) this.hovered = -1;
+    if (gone(this.focused)) {
+      this.focused = this.firstFocus(this.active());
+      this.paint();
+    }
+    this.challenge.update(this.ruleContext());
+    this.stage.invalidate();
+  }
+
+  private ruleContext() {
+    return {
+      selected: this.rules,
+      difficulty: this.pick.difficulty,
+      owned: this.progress.badges,
+      available: (id: RuleId) => ruleAvailable(this.progress, id),
+    };
+  }
+
+  private openRules(): void {
+    if (this.challenge.open || !this.rulesOpen()) return;
+    getAudio().sfx("ui-confirm");
+    this.tooltip.show(null, "");
+    this.challenge.setFocusVisible(this.focusVisible);
+    this.challenge.show(this.ruleContext());
+  }
+
+  /** A guest whose rules changed under it since it last accepted them, and not yet ready. */
+  private needsConfirm(): boolean {
+    const state = this.state;
+    const room = state?.room;
+    if (!room || state.self === 0 || room.started || this.confirmed === null) return false;
+    return room.missionRevision > this.confirmed && !room.ready.includes(state.self);
+  }
+
+  private confirm(): void {
+    const room = this.state?.room;
+    if (!room) return;
+    getAudio().sfx("ui-confirm");
+    this.confirmed = room.missionRevision;
+    this.callbacks.confirm();
+    this.refresh();
   }
 
   /** A code was sent and the room has not answered yet. */
@@ -754,6 +933,7 @@ export class GpuMultiplayer {
         return true;
       case "pick":
       case "launch":
+      case "rules":
         return page === "room";
       case "mission":
         return page === "room" && this.state?.self === 0;
@@ -786,6 +966,10 @@ export class GpuMultiplayer {
       page.setProperties({ display: key === next ? "flex" : "none" });
     this.roomInfo.setProperties({ display: next === "room" && state?.room ? "flex" : "none" });
     const host = next === "room" && state?.self === 0;
+    const room = state?.room;
+    // Joining accepts the rules the room has; leaving forgets them.
+    if (!room || state.self === 0) this.confirmed = null;
+    else this.confirmed ??= room.missionRevision;
     this.dock.setProperties({ display: next === "room" ? "flex" : "none" });
     this.tray.tray.setProperties({ display: host ? "flex" : "none" });
     const guestMission = next === "room" && !host ? state?.room?.mission : undefined;
@@ -794,6 +978,7 @@ export class GpuMultiplayer {
       (this.hostMission.tag.children.at(-1) as Text).setProperties({
         text: difficulties[guestMission.difficulty].name,
       });
+    this.paintMode(host, guestMission?.mode ?? this.pick.mode);
 
     const joining = this.joining();
     this.joinSpinner.setProperties({ display: joining ? "flex" : "none" });
@@ -823,13 +1008,18 @@ export class GpuMultiplayer {
       this.seats.forEach((seat, i) =>
         seat.update(view.seats[i]!, state!.room?.players[i]?.shiny ?? false),
       );
-      this.launch.setLabel(state!.self === 0 ? "出发" : "等待房主");
-      this.launchSpinner.setProperties({ display: view.start.pending ? "flex" : "none" });
+      const confirm = this.needsConfirm();
+      this.launch.setLabel(state!.self === 0 ? "出发" : confirm ? "确认规则" : "等待房主");
+      // 确认规则 waits on this player, not on the room: no spinner.
+      this.launchSpinner.setProperties({
+        display: view.start.pending && !confirm ? "flex" : "none",
+      });
       const ready = view.link === "ready";
       this.linkCheck.setProperties({ display: ready ? "flex" : "none" });
       this.linkSpinner.setProperties({ display: view.link === "connecting" ? "flex" : "none" });
-      if (ready !== this.ready) {
-        if (ready && view.start.enabled) {
+      if (ready !== this.ready || confirm !== this.confirming) {
+        // The launch key pulses as it becomes the thing to press: 出发, or 确认规则 after an edit.
+        if ((ready && view.start.enabled) || (confirm && !this.confirming)) {
           this.pulse.scale = 1.05;
           this.stage.motion.animate(
             this.pulse,
@@ -844,12 +1034,15 @@ export class GpuMultiplayer {
           );
         }
         this.ready = ready;
+        this.confirming = confirm;
       }
     }
     if (next === "error") {
       this.errorText.setProperties({ text: view!.error });
       this.retry.setLabel(state!.self === 0 && !this.entering ? "重新创建" : "返回");
     }
+    this.paintRules();
+    if (!host && this.challenge.open) this.challenge.close();
     const active = this.active();
     if (changed || !active.includes(this.focused)) this.focused = this.firstFocus(active);
     this.hovered = -1;
@@ -877,7 +1070,9 @@ export class GpuMultiplayer {
         pressed: on && i === this.pressed,
       });
     });
-    this.launch.setDisabled(!(this.state && seatView(this.state).start.enabled));
+    this.launch.setDisabled(
+      !(this.state && (seatView(this.state).start.enabled || this.needsConfirm())),
+    );
     this.stage.invalidate();
   }
 
@@ -931,6 +1126,10 @@ export class GpuMultiplayer {
         : { swatch: 22, column: 12, row: 4, links: true },
     );
     this.routeName.setProperties({ fontSize: compact ? 11 : 12, marginRight: compact ? 4 : 6 });
+    this.modeRow.setProperties({ marginRight: compact ? 6 : 10 });
+    this.towerRecord.size(compact);
+    // In 对战塔 the row keeps the route map's height, so the mode keys hold still under a press.
+    this.route.setProperties({ minHeight: compact ? 2 * 20 + 3 : 2 * 22 + 4 });
     // The landing: two cards of one height; the code cells set the join column's width.
     this.pages.menu.setProperties({ gap: compact ? 16 : 28 });
     for (const { content } of this.cards)
@@ -948,13 +1147,32 @@ export class GpuMultiplayer {
     const key = Math.max(compact ? 52 : 60, v.minTarget);
     for (const { panel, span } of this.keys)
       panel.setProperties({ width: key * span + 6 * (span - 1), height: key });
+    this.compact = compact;
+    // The rules' chips read as a row of the route's size; a tap on one only shows its tip.
+    this.ruleChips.resize(compact ? 28 : 32, v.minTarget);
+    this.ruleChips.panel.setProperties({ marginRight: compact ? 6 : 10 });
+    this.rulesKey.panel.setProperties({ marginRight: compact ? 6 : 10 });
+    this.sizeChallenge();
     this.controls.forEach((control) => control.fitTouch());
     this.stage.invalidate();
+  }
+
+  /** The rules window inside the safe area, with room for its focus ring. */
+  private sizeChallenge(): void {
+    const v = this.stage.viewport;
+    const s = v.safeArea;
+    this.challenge.resize(
+      this.compact,
+      this.coarse,
+      v.width - Math.max(16, s.left) - Math.max(16, s.right),
+      v.height - Math.max(16, s.top) - Math.max(16, s.bottom),
+    );
   }
 
   // ── Input ──────────────────────────────────────────────────────────────────────────────────
 
   hit(x: number, y: number) {
+    if (this.challenge.open) return this.challenge.hit(x, y);
     const v = this.stage.viewport;
     return (
       this.active().find((i) => {
@@ -971,21 +1189,25 @@ export class GpuMultiplayer {
   }
 
   focus(index: number) {
+    if (this.challenge.open) return this.challenge.focus(index);
     if (this.active().includes(index)) this.focused = index;
     this.paint();
   }
 
   hover(index: number | null) {
+    if (this.challenge.open) return this.challenge.hover(index);
     this.hovered = index ?? -1;
     this.paint();
   }
 
   setPressed(index: number | null) {
+    if (this.challenge.open) return this.challenge.setPressed(index);
     this.pressed = index ?? -1;
     this.paint();
   }
 
   activate(index: number) {
+    if (this.challenge.open) return this.challenge.activate(index);
     if (this.active().includes(index)) this.controls[index]!.action();
   }
 
@@ -1000,6 +1222,7 @@ export class GpuMultiplayer {
   }
 
   navigate(action: NavigationAction): boolean {
+    if (this.challenge.open) return this.challenge.navigate(action);
     const active = this.active();
     if (action === "cancel") {
       if (
@@ -1033,20 +1256,31 @@ export class GpuMultiplayer {
   }
 
   setFocusVisible(visible: boolean) {
+    this.challenge.setFocusVisible(visible);
     this.focusVisible = visible;
     this.paint();
   }
 
-  setCoarsePointer(_coarse: boolean) {}
+  setCoarsePointer(coarse: boolean) {
+    if (coarse === this.coarse) return;
+    this.coarse = coarse;
+    this.sizeChallenge();
+  }
   pointerDown(x: number, y: number, touch: boolean) {
+    if (this.challenge.open) return this.challenge.pointerDown(x, y, touch);
     this.touchPress = touch ? this.hit(x, y) : -1;
     if (this.touchPress !== this.touchTip) this.touchTip = -1;
   }
-  pointerMove() {}
+  pointerMove(x: number, y: number) {
+    if (this.challenge.open) this.challenge.pointerMove(x, y);
+  }
   pointerUp(touch: boolean) {
+    if (this.challenge.open) return this.challenge.pointerUp();
     const index = this.touchPress;
     this.touchPress = -1;
-    if (touch && index >= 0 && this.controls[index]!.locked?.())
+    // A locked key, or a rule chip (a tip only), shows its tip on a tap.
+    const control = this.controls[index];
+    if (touch && control && (control.locked?.() || control.group === "rules"))
       this.touchTip = this.touchTip === index ? -1 : index;
     return false;
   }
@@ -1065,10 +1299,11 @@ export class GpuMultiplayer {
           : this.focusVisible
             ? this.focused
             : -1;
-    const control = this.controls[tipped];
+    const control = this.challenge.open ? undefined : this.controls[tipped];
     const text = control?.tip() ?? "";
     this.tooltip.show(text ? control!.panel : null, text);
     this.tooltip.update();
+    this.challenge.afterLayout(deltaMs);
     this.clock += deltaMs;
     this.idle += deltaMs;
     if (this.idle >= 1000 / 15) {
@@ -1099,6 +1334,8 @@ export class GpuMultiplayer {
     for (const { plate } of this.cards) plate.dispose();
     this.partner.dispose();
     this.routeMap.dispose();
+    this.ruleChips.dispose();
+    this.challenge.dispose();
     this.hostMission.dispose();
     this.tray.dispose();
     this.tooltip.dispose();

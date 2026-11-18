@@ -161,7 +161,7 @@ Owner 简写：除 [createRun.ts](../../src/run/createRun.ts) 指 [src/run/creat
 
 - **所有者/定位**：[hurt.ts:15](../../src/run/sim/hurt.ts#L15)；[world.ts:377,420](../../src/run/sim/world.ts#L377)；[rescue.ts:35](../../src/run/sim/rescue.ts#L35)
 - **编码与逻辑状态**：hp/alive/revives/ult.elapsed/dialog/choosing；alive→lethal-check→saved 或 down→personal/team revive；全队 down→defeat
-- **守卫与转换**：伤害经过无敌/闪避/盾；hp<=0先 lethalSave；否则 alive=false；tick 尾 revives>0 先个人复活；清场/救援可团队复活
+- **守卫与转换**：伤害经过无敌/闪避/盾；hp<=0 先消耗本局「挺住」（已武装才有，保留生命代次），再尝试 lethalSave；否则 alive=false；tick 尾 revives>0 先个人复活；清场/救援可团队复活。「挺住」跨图、复活及快照恢复均不补次数。
 - **终态/取消/恢复**：死亡清 dialog、多人 choosing、大招；保留构筑、卡、fx、既存攻击；revive 清 statuses；Z/Q/F/R 见公共规则
 - **关键不变量**：down 的 hp=0；个人复活优先于救援；死亡不自动删除已发射的弹体/area
 - **测试/风险**：[survival-items.test.mjs:35,46](../../scripts/survival-items.test.mjs#L35)、[coop.test.mjs:195](../../scripts/coop.test.mjs#L195)、[lab.test.mjs:244](../../scripts/lab.test.mjs#L244)。风险：`alive` 不是所有伤害来源的统一 owner guard，已释放攻击可继续击杀/充能
@@ -213,6 +213,12 @@ Owner 简写：除 [createRun.ts](../../src/run/createRun.ts) 指 [src/run/creat
 <a id="p06"></a>
 
 ### P06 成长/进化/延迟选卡
+
+守卫奖杯按拾取地图记录是否开放超级进化石。[upgrades.ts](../../src/run/sim/upgrades.ts) 在满栏选项的 `drop` 中记录等级最低、同级最早获得的非超级进化石道具；提交时目标变化走原有的过期卡换号流程。进化石不可在引梦貘人处遗忘，持石后不再提供不变之石。
+
+`Player.mega` 只覆盖最终形态，不改变阶段或终极技。联机持石者在最终阶段保留 `cardHold`：普通进化演出结束后房主处理超级进化，超级进化的演出结束后若还不会招牌招式，排入个人 `mega-move` 卡。排到队首才按当时的招式栏生成学习、替换或不学选项；若前卡已教会则略过。跨图保留形态，日照只在超级进化和提交新图时施放。
+
+通信进化的请求保存在 `Player.tradeRequest`。由 [zones.ts](../../src/run/sim/zones.ts) 选择队友、匹配双方交互，按模拟 tick 处理时限、距离和换图取消。[evolution.ts](../../src/run/sim/evolution.ts) 在确认时读取当前等级、形态和道具；[snapshot.ts](../../src/run/sim/snapshot.ts) 恢复尚待确认的请求。
 
 - **所有者/定位**：[evolution.ts:18,33](../../src/run/sim/evolution.ts#L18)；[world.ts:571](../../src/run/sim/world.ts#L571)
 - **编码与逻辑状态**：`level/xp/xpNext/stage/cardHold/invulnerable`；积累→升级→未到门槛/成熟/进化→卡延后→可选
@@ -423,6 +429,7 @@ Owner 简写：除 [createRun.ts](../../src/run/createRun.ts) 指 [src/run/creat
 - **所有者/定位**：[status.ts:38,70,105,115](../../src/run/sim/status.ts#L38)；[content/statuses.ts:41](../../src/run/sim/content/statuses.ts#L41)
 - **编码与逻辑状态**：statuses[]成员、time/power/source；absent→applied→refreshed/sustained→expired/consumed
 - **守卫与转换**：apply重置time/source，max-power取较强power；sustain只抬time；decay删除time<=0；consume显式移除
+- **自己治好**：房主/单机在敌人与危险物结算后，从有次数的存活玩家移除最先施加的异常并推送 `bond-cure`，在该步发布之前完成。`enterZone` 仅在新地图提交时清旧状态并重置次数；R 保留次数，持续危险下一步仍可施加异常。
 - **终态/取消/恢复**：玩家复活/Z清空；敌人Q/Z清空；F暂停；R携带；owner不存在仍可能留source
 - **关键不变量**：同一id正常最多一项；dot/stop在decay前读、slow在后读；source为最近apply，不一定是最强power原owner
 - **测试/风险**：[combat.test.mjs:1032,1115](../../scripts/combat.test.mjs#L1032)、[triggered-items.test.mjs:50](../../scripts/triggered-items.test.mjs#L50)。涵盖burn/paralysis/sleep/wet/poison/slow/root/chill/freeze/curse/marked；风险：不同apply/sustain的来源覆盖语义不可互换
@@ -552,9 +559,9 @@ Owner 简写：除 [createRun.ts](../../src/run/createRun.ts) 指 [src/run/creat
 
 ### T08 触发配额窗口
 
-- **所有者/定位**：[world.ts:443](../../src/run/sim/world.ts#L443)；[triggers/healOnHit.ts:7](../../src/run/sim/triggers/healOnHit.ts#L7)、[triggers/onHit.ts:42](../../src/run/sim/triggers/onHit.ts#L42)
+- **所有者/定位**：[world.ts](../../src/run/sim/world.ts)、[triggers/onHit.ts](../../src/run/sim/triggers/onHit.ts)
 - **编码与逻辑状态**：procWindow、procs[key]；window-open→quota-used→capped→next-window-reset
-- **守卫与转换**：每秒procWindow>=1清procs；匹配草系hit或主crit且有target才记额度
+- **守卫与转换**：每秒 procWindow >= 1 清空 procs；主攻击暴击并找到触发目标后计入额度。
 - **终态/取消/恢复**：death时window不走；rescue时window仍走；Z/R保留
 - **关键不变量**：每玩家共享一秒窗口、每trigger独立计数；不是滑动窗口；secondary critStrike不再触发
 - **测试/风险**：[triggers.test.mjs:58](../../scripts/triggers.test.mjs#L58)；thunder-stone多目标额度间接。风险：已发射攻击在倒地时仍可调用hit，而window冻结
@@ -1579,7 +1586,6 @@ H10a–H10d 的 box/orbit/curse/mist 是各自并行子机器，B13/B17/B19/B20�
 
 | Trigger          | 机器 / 定义位置                                                                                                          | 使用道具 / 特性                                                                                                      |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `healOnHit`      | T08；[triggers/healOnHit.ts:7](../../src/run/sim/triggers/healOnHit.ts#L7)                                               | ability `photosynthesis`                                                                                             |
 | `contactStatus`  | S01 / D04；接触瞬时动作，无自有记忆；[triggers/contactStatus.ts:5](../../src/run/sim/triggers/contactStatus.ts#L5)       | ability `static`                                                                                                     |
 | `zap`            | T06；[triggers/zap.ts:7](../../src/run/sim/triggers/zap.ts#L7)                                                           | ability `static`                                                                                                     |
 | `healBelow`      | T06；[triggers/heals.ts:16](../../src/run/sim/triggers/heals.ts#L16)                                                     | item `sitrus-berry`                                                                                                  |
@@ -1782,7 +1788,6 @@ H10a–H10d 的 box/orbit/curse/mist 是各自并行子机器，B13/B17/B19/B20�
 | [src/run/sim/triggers/burstOnKill.ts](../../src/run/sim/triggers/burstOnKill.ts)                 |   36 | T/S/P；触发器注册和fx/proc写入            |
 | [src/run/sim/triggers/contactSpread.ts](../../src/run/sim/triggers/contactSpread.ts)             |    5 | T/S/P；触发器注册和fx/proc写入            |
 | [src/run/sim/triggers/contactStatus.ts](../../src/run/sim/triggers/contactStatus.ts)             |    5 | T/S/P；触发器注册和fx/proc写入            |
-| [src/run/sim/triggers/healOnHit.ts](../../src/run/sim/triggers/healOnHit.ts)                     |   15 | T/S/P；触发器注册和fx/proc写入            |
 | [src/run/sim/triggers/heals.ts](../../src/run/sim/triggers/heals.ts)                             |   45 | T/S/P；触发器注册和fx/proc写入            |
 | [src/run/sim/triggers/index.ts](../../src/run/sim/triggers/index.ts)                             |  186 | T/S/P；触发器注册和fx/proc写入            |
 | [src/run/sim/triggers/kit.ts](../../src/run/sim/triggers/kit.ts)                                 |   89 | T/S/P；触发器注册和fx/proc写入            |

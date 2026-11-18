@@ -1,17 +1,18 @@
-// Each map is one field. Its guardian opens the exit to the next map; only the tower exit wins.
-// Field assembly and the loading barrier reuse the existing zone lifecycle.
+// Each map is one field. Only the expedition's final exit wins; tower floors keep going.
 
 import { revivePlayer } from "./rescue";
 import { COOP } from "./content/params/coop";
+import { BOND_CURE_LEVEL } from "./content/params/bonds";
+import { isTowerGuardianFloor } from "./content/params/tower";
 import { PARTNER_BEHIND } from "./content/params/environment";
 import { stageDefs } from "./content/stages/index";
 import { atExit, atLandmark, zoneDef } from "./currentZone";
 import { primeEnemyNav, summonGuardian } from "./director";
-import { formOf } from "./evolution";
+import { evolveInWorld, formOf, stageFor } from "./evolution";
 import { generateMap, MapGenError } from "./mapgen/index";
-import { createRng } from "./rng";
+import { createRng, mixSeed } from "./rng";
 import { collectRemainingPickups, furnishMap, isFrozen, spawnX } from "./world";
-import type { World } from "./state/world";
+import { TICK, type World } from "./state/world";
 import type { Player } from "./state/entities";
 import { nextField, ROUTE_TIERS, STAGE_INDEX } from "./content/campaign";
 import { routeModifiers } from "./content/route";
@@ -25,10 +26,97 @@ const SIM_STREAM = 0x73696d00;
 /** A zone's map retries this many derived seeds before the stage's map spec counts as broken. */
 const FIELD_ATTEMPTS = 8;
 
+const TRADE_RANGE = 2.5;
+const TRADE_WINDOW = Math.round(5 / TICK);
+
+function inTradeRange(a: Player, b: Player): boolean {
+  return (
+    a !== b &&
+    a.alive &&
+    b.alive &&
+    !a.departed &&
+    !b.departed &&
+    (a.x - b.x) ** 2 + (a.z - b.z) ** 2 <= TRADE_RANGE ** 2
+  );
+}
+
+export function expireTrades(world: World): void {
+  for (const player of world.players) {
+    const request = player.tradeRequest;
+    if (!request) continue;
+    const peer = world.players.find((p) => p.id === request.target);
+    if (world.tick > request.expiresAtTick || !peer || !inTradeRange(player, peer))
+      player.tradeRequest = null;
+  }
+}
+
+/** What interacting would do about a trade now, for the prompt: accept, offer, or wait on one's own offer. */
+export function tradeAction(
+  world: World,
+  player: Player,
+  present?: (id: number) => boolean,
+): "trade-accept" | "trade-wait" | "trade" | null {
+  if (world.players.length < 2) return null;
+  const ready = (p: Player) => stageFor(p, "trade") > stageFor(p);
+  let offer = false;
+  for (const peer of world.players) {
+    if (
+      !inTradeRange(player, peer) ||
+      present?.(peer.id) === false ||
+      !(ready(player) || ready(peer))
+    )
+      continue;
+    if (peer.tradeRequest?.target === player.id && peer.tradeRequest.expiresAtTick >= world.tick)
+      return "trade-accept";
+    offer = true;
+  }
+  if (!offer) return null;
+  return player.tradeRequest ? "trade-wait" : "trade";
+}
+
+/** Accept an incoming request first; otherwise offer to the nearest eligible teammate. */
+export function interactTrade(
+  world: World,
+  player: Player,
+  present?: (id: number) => boolean,
+): boolean {
+  if (world.players.length < 2) return false;
+  const ready = (p: Player) => stageFor(p, "trade") > stageFor(p);
+  let nearest: Player | undefined;
+  let distance = Infinity;
+  for (const peer of world.players) {
+    if (
+      !inTradeRange(player, peer) ||
+      present?.(peer.id) === false ||
+      !(ready(player) || ready(peer))
+    )
+      continue;
+    if (peer.tradeRequest?.target === player.id && peer.tradeRequest.expiresAtTick >= world.tick) {
+      peer.tradeRequest = player.tradeRequest = null;
+      for (const recipient of [player, peer])
+        if (ready(recipient)) evolveInWorld(world, recipient, "trade");
+      return true;
+    }
+    const d = (player.x - peer.x) ** 2 + (player.z - peer.z) ** 2;
+    if (d < distance) {
+      nearest = peer;
+      distance = d;
+    }
+  }
+  if (!nearest) return false;
+  player.tradeRequest = { target: nearest.id, expiresAtTick: world.tick + TRADE_WINDOW };
+  return true;
+}
+
 /** What interacting here does now: summon at the landmark, leave at the exit, or null. */
 export function zoneAction(world: World, player: Player): "summon" | "leave" | null {
   if (!player.alive || world.outcome !== "playing" || world.zone.leaving !== null) return null;
-  if (world.zone.phase === "active" && world.bossId === null && atLandmark(world, player))
+  if (
+    world.mode === "expedition" &&
+    world.zone.phase === "active" &&
+    world.bossId === null &&
+    atLandmark(world, player)
+  )
     return "summon";
   if (world.zone.phase === "cleared" && atExit(world, player) !== null) return "leave";
   return null;
@@ -65,13 +153,18 @@ export function interactInZone(
   if (action !== "leave" || !canLeave(world, isSeatPresent)) return false;
   const index = atExit(world, player)!;
   const exit = world.zone.exits[index]!;
-  if (exit.to === null && world.stage !== "tower")
+  if (exit.to === null && (world.mode !== "expedition" || world.stage !== "tower"))
     throw new Error(`关卡 ${world.stage} 的出口 ${index} 缺少目标。`);
   if (exit.to === null) {
     collectRemainingPickups(world);
     let waiting = false;
     for (const seat of world.players) {
-      if (seat.departed || isSeatPresent?.(seat.id) === false) continue;
+      if (
+        seat.departed ||
+        isSeatPresent?.(seat.id) === false ||
+        (!seat.alive && world.rules.includes("nuzlocke"))
+      )
+        continue;
       if (
         world.players.length === 1
           ? seat.pending.length > 0
@@ -101,9 +194,14 @@ export function interactInZone(
  */
 export function sweepClearedField(world: World): void {
   if (world.zone.phase !== "cleared") return;
-  for (const player of world.players)
-    if (!player.alive && !player.departed)
-      revivePlayer(world, player, COOP.reviveHp, COOP.invulnerable, "team");
+  // Only a felled guardian revives: a timed tower floor opens its exit without one.
+  if (
+    !world.rules.includes("nuzlocke") &&
+    (world.mode !== "tower" || isTowerGuardianFloor(world.route.length))
+  )
+    for (const player of world.players)
+      if (!player.alive && !player.departed)
+        revivePlayer(world, player, COOP.reviveHp, COOP.invulnerable, "team");
   for (const pickup of world.pickups) pickup.magnet = true;
   world.enemies.length = 0;
   world.projectiles.length = 0;
@@ -157,7 +255,7 @@ export function assembleField(world: World, seed: number): Field {
     return next;
   });
   // A marked exit must never change which terrain seed was accepted for its destination.
-  prepareRouteField(scratch);
+  if (scratch.mode === "expedition") prepareRouteField(scratch);
   const { map, nav, stations, sites, pickups, modifier, rng, nextId } = scratch;
   return { map, nav, stations, sites, pickups, modifier, rng, nextId };
 }
@@ -211,8 +309,10 @@ export function prepareZone(world: World): PreparedZone {
     modifier: null,
     zone: { index: zone, tick: 0, phase: "active", exits: [], leaving: null, schedule: [] },
   };
+  const seed =
+    world.mode === "tower" ? mixSeed(world.seed, route.length) : zoneSeed(world.seed, stage, zone);
   return {
-    ...assembleField(next, zoneSeed(world.seed, stage, zone)),
+    ...assembleField(next, seed),
     stage,
     zone,
     route,
@@ -233,6 +333,7 @@ export function enterZone(world: World, prepared: PreparedZone): void {
     world.zone.phase !== "transitioning" ||
     world.zone.leaving !== prepared.leaving ||
     world.zone.exits[prepared.leaving]?.marker !== prepared.marker ||
+    prepared.route.length !== world.route.length + 1 ||
     prepared.zone !== destination?.zone ||
     prepared.stage !== destination.stage
   )
@@ -249,6 +350,8 @@ export function enterZone(world: World, prepared: PreparedZone): void {
   for (const player of world.players) {
     // The old field's afflictions and a cast in flight stay behind; spent charge is not refunded.
     player.statuses = [];
+    player.bondCure = player.bond >= BOND_CURE_LEVEL;
+    player.tradeRequest = null;
     player.ult.elapsed = -1;
     player.ult.protection = 0;
     player.ult.crossed = [];
@@ -264,31 +367,29 @@ export function enterZone(world: World, prepared: PreparedZone): void {
     shinySpawned: false,
   };
   world.weather = null;
+  world.weatherSetAt = 0;
+  world.pledgeHits = [];
+  world.rainbowUntil = 0;
   world.silphScope = false;
   world.bossId = null;
   world.rampage = false;
   applyRouteEntry(world);
   scheduleField(world);
   const stage = stageDefs[world.stage];
+  const progress =
+    world.mode === "tower" ? `第 ${route.length} 层` : `${route.length}/${ROUTE_TIERS.length}`;
   world.events.push({
     t: "banner",
-    text: `${route.length}/${ROUTE_TIERS.length} ${stage.name}${world.modifier ? ` · ${routeModifiers[world.modifier].name}` : ""}`,
+    text: `${progress} ${stage.name}${world.modifier ? ` · ${routeModifiers[world.modifier].name}` : ""}`,
     tone: "info",
     kind: "zone",
   });
   primeEnemyNav(world);
+  if (world.mode === "tower" && isTowerGuardianFloor(route.length)) summonGuardian(world, null);
 }
 
 /** The forest keeps the run seed; all other maps use their stable identity. */
 export function zoneSeed(seed: number, stage: StageId, zone: number = 0): number {
   const stageSeed = stage === "forest" ? seed : mixSeed(seed, STAGE_INDEX[stage]);
   return zone === 0 ? stageSeed : mixSeed(mixSeed(stageSeed, ZONE_STREAM), zone);
-}
-
-/** Murmur3's finaliser over `seed` and `salt`: a fixed integer mix, the same on every engine. */
-function mixSeed(seed: number, salt: number): number {
-  let h = (seed ^ Math.imul(salt, 0x9e3779b1)) >>> 0;
-  h = Math.imul(h ^ (h >>> 16), 0x85ebca6b);
-  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
-  return (h ^ (h >>> 16)) >>> 0;
 }

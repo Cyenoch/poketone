@@ -1,3 +1,4 @@
+import { contentAvailable } from "../content/unlocks";
 import type { World } from "../state/world";
 import type { Site } from "../state/field";
 import type { Player } from "../state/entities";
@@ -17,7 +18,10 @@ export function update(world: World, site: Site, dt: number): void {
     if (!player) return;
     site.data.uses++;
     announce(world, site, "reveal");
-    const roll = next(world.rng);
+    const weight = contentAvailable(world.unlocks, { site: "fishing", species: "gyarados" })
+      ? 1
+      : SITE.fishing.fish + SITE.fishing.item;
+    const roll = next(world.rng) * weight;
     if (roll < SITE.fishing.fish) site.data.species = "magikarp";
     else if (roll < SITE.fishing.fish + SITE.fishing.item) {
       rewardItem(world, player);

@@ -37,7 +37,7 @@ test("every sfx call plays a held sound: screens UI sounds, the run run or UI so
   const unheld = [];
   for (const { file, line, argument, text } of calls()) {
     if (file === "audio/engine.ts") continue; // the engine's own fallback replay
-    const inRun = file === "run/createRun.ts" || file === "audio/field-events.ts";
+    const inRun = ["run/createRun.ts", "run/session.ts", "audio/field-events.ts"].includes(file);
     const allowed = new Set(inRun ? [...UI, ...RUN] : UI);
     const literal = /^"([a-z-]+)"$/.exec(argument);
     let names;

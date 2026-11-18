@@ -302,6 +302,9 @@ export class GpuTrainerCutin {
   private readonly nameRow = new Container({ flexDirection: "row", gap: 6, alignItems: "center" });
   private readonly seat = new CutinTag();
   private readonly name = new CutinTag();
+  /** An item call that arrived over an ultimate (`TrainerCues.aside`): a tag beside the band. */
+  private readonly call = new CutinTag();
+  private callId = 0;
   private readonly line = new Text({ fontWeight: 800, color: PAPER, lineHeight: "125%" });
   private readonly tail = new Container({ flexShrink: 0, height: "100%" });
   private readonly crest = new Image({ positionType: "absolute" });
@@ -351,7 +354,9 @@ export class GpuTrainerCutin {
       stack(this.lead, 1),
       stack(this.copy, 2),
       stack(this.tail, 1),
+      stack(this.call.root, 4),
     );
+    this.call.root.setProperties({ positionType: "absolute", display: "none" });
     stage.root.add(stack(this.root, 12));
   }
 
@@ -560,10 +565,42 @@ export class GpuTrainerCutin {
     u.glint.value = own ? 1 - step(age, look.enter * 0.5, 360) : 0;
     u.burst.value = burst;
     u.opacity.value = 1;
+    const calling = this.drawCall(this.cues.aside(now), box?.[0] ?? width, h, look, now);
     this.drawn = cue.id;
     // Moving parts redraw every frame; a held dialogue band is still and lets the stage rest.
-    const settled = age > look.enter + 600 && leaving === 0 && !ult;
+    const settled = age > look.enter + 600 && leaving === 0 && !ult && !calling;
     if (!settled) this.stage.invalidate();
+  }
+
+  /** The side call: snaps in beside the band's right end, centred on it, and leaves on its own
+   *  time or with the band. Drawn only once its strings are resident (they are core UI text). */
+  private drawCall(
+    side: ActiveTrainerCue | null,
+    bandWidth: number,
+    h: number,
+    look: Look,
+    now: number,
+  ): boolean {
+    if (!side || !this.glyphs.registry.resident(this.keys(side))) {
+      this.call.root.setProperties({ display: "none" });
+      return false;
+    }
+    if (side.id !== this.callId) {
+      this.callId = side.id;
+      const text = side.local || side.seat === null ? side.text : `P${side.seat + 1} ${side.text}`;
+      this.call.set(text, trainers[side.trainer].color, look.name + 2);
+    }
+    const age = now - side.born;
+    const leaving = clamp(1 - (side.duration - age) / 160);
+    this.call.plate.set({ reveal: SNAP(step(age, 0, 200)) });
+    fade(this.call.label, step(age, 120, 140));
+    const tagH = this.call.root.size.value?.[1] ?? 0;
+    fade(this.call.root, 1 - leaving).setProperties({
+      display: "flex",
+      positionLeft: bandWidth + 10,
+      positionTop: (h - tagH) / 2,
+    });
+    return true;
   }
 
   dispose(): void {
@@ -573,5 +610,6 @@ export class GpuTrainerCutin {
     this.band.dispose();
     this.name.plate.dispose();
     this.seat.plate.dispose();
+    this.call.plate.dispose();
   }
 }

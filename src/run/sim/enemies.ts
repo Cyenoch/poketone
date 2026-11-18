@@ -1,4 +1,5 @@
 import { enemies as enemyDefs } from "./content/enemies";
+import { contactDamageFactor } from "./content/abilities";
 import { routeStep } from "./content/campaign";
 import type { ElementType } from "./content/elements";
 import { guardianBrains } from "./bosses/index";
@@ -6,7 +7,9 @@ import { furyStep } from "./bosses/fury";
 import { furyOf } from "./content/params/guardian";
 import { dodgeStep, dodgeThreats } from "./enemy-dodge";
 import { zoneDef } from "./currentZone";
-import { findPlayer, isUnidentifiedGhost, killEnemy, type Ctx } from "./combat";
+import { canSettleHit, findPlayer, isUnidentifiedGhost, killEnemy, type Ctx } from "./combat";
+import { inDisc } from "./archetypes/kit";
+import { PLEDGE_FIELD } from "./content/pledges";
 import { escaping } from "./encounters";
 import { damagePlayer } from "./hurt";
 import { STAMPEDE_SPEEDUP } from "./content/params/pacing";
@@ -45,6 +48,7 @@ import type { Enemy, Player } from "./state/entities";
 import { hypot } from "./math";
 import { CONTACT_SECONDS, KNOCK_DECAY } from "./content/params/combat";
 import { PURSUIT_RANGE, STAMPEDE_MIN_PROGRESS } from "./content/params/enemy-motion";
+import { currentAbility } from "./stats";
 
 /** Flow-field cells settled per tick across all walker classes (≈0.05 µs each; see docs/NAVIGATION.md). */
 const FLOW_BUDGET = 4000;
@@ -52,6 +56,7 @@ export function updateEnemies(ctx: Ctx, dt: number): void {
   const { world, grid } = ctx;
   const time = world.time;
   const threats = dodgeThreats(world, grid);
+  const fields = world.areas.filter((a) => a.pledgeField);
   refreshFlowFields(world.nav, world.players, FLOW_BUDGET);
   for (const enemy of world.enemies) {
     if (enemy.hp <= 0 || escaping(world, enemy)) continue;
@@ -66,6 +71,20 @@ export function updateEnemies(ctx: Ctx, dt: number): void {
     // Water is a swimmer's or amphibian's element: it is never wet from it.
     if (surface && !(mobility.water && surface.kind === "water"))
       settleEnemySurface(enemy, surface);
+
+    const fire =
+      fields.length && fields.find((a) => a.pledgeField === "sea-of-fire" && inDisc(a, enemy));
+    if (fire && canSettleHit(world, enemy)) {
+      const lost = fire.dmg * Math.min(dt, fire.life);
+      const owner = findPlayer(world, fire.owner);
+      const move = owner.moves.find((m) => m.id === fire.move);
+      if (move) move.damage += Math.min(enemy.hp, lost);
+      enemy.hp -= lost;
+      if (enemy.hp <= 0) {
+        killEnemy(ctx, enemy, owner);
+        continue;
+      }
+    }
 
     // DoT and stops act on the tick their status was alive at the start of; slows on what is left.
     const dot = dotRate(enemy);
@@ -135,6 +154,8 @@ export function updateEnemies(ctx: Ctx, dt: number): void {
     }
     const dodge = held ? null : dodgeStep(world, enemy, threats, speed);
     if (dodge) [moveX, moveZ, speed] = dodge;
+    if (fields.length && fields.some((a) => a.pledgeField === "swamp" && inDisc(a, enemy)))
+      speed *= 1 - PLEDGE_FIELD.swampSlow;
     if (moveX !== 0 || moveZ !== 0) {
       enemy.faceX = moveX;
       enemy.faceZ = moveZ;
@@ -174,6 +195,10 @@ export function updateEnemies(ctx: Ctx, dt: number): void {
     for (const player of world.players) touch(ctx, enemy, player);
     // After the tick's reads, so held, interrupted and contact agree on every tick of a stagger.
     enemy.stagger = Math.max(0, enemy.stagger - dt);
+  }
+  for (const field of fields) {
+    field.life -= dt;
+    if (field.life < 1e-9) field.life = 0;
   }
   world.enemies = world.enemies.filter((enemy) => enemy.hp > 0);
 }
@@ -263,7 +288,8 @@ function touch(ctx: Ctx, enemy: Enemy, player: Player): void {
       if (skill) element = skills[skill.kind].dashElement ?? "normal";
     }
   }
-  if (!damagePlayer(ctx.world, player, enemy.dmg, element)) return;
+  const damage = enemy.dmg * contactDamageFactor(currentAbility(player), player.stage);
+  if (!damagePlayer(ctx.world, player, damage, element, enemy)) return;
   if (!enemy.boss && player.alive) guard(ctx.world, player);
   const { contact } = enemyDefs[enemy.species];
   if (contact) apply(player, contact.status, CONTACT_SECONDS, 0, -1);

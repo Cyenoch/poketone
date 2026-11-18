@@ -1,3 +1,5 @@
+import { TRAINER } from "../sim/content/params/trainers";
+import { trainerKits } from "../sim/content/trainers";
 import { InputGlyph } from "../../ui/gpu/input-glyph";
 import { createMenuIcon } from "../../ui/gpu/icons";
 import { Container, Content } from "@pmndrs/uikit";
@@ -36,7 +38,7 @@ const MINI_RADIUS = 22,
   DANGER_RANGE = 9;
 export interface Minimap {
   resize(width: number, height: number, scale: number, safeArea: UiInsets): void;
-  update(world: World, alpha: number, yaw: number, dt: number): void;
+  update(world: World, alpha: number, yaw: number, dt: number, subject?: PlayerId): void;
   afterLayout(): void;
   setFullMap(open: boolean): void;
   hit(x: number, y: number): "mini" | "full-close" | null;
@@ -273,10 +275,11 @@ export function createMinimap(
   let requestedMiniSize = miniSize;
   let fittedMiniSize = miniSize;
   let lastWorld = world,
+    subject = local,
     lastAlpha = 0,
     lastYaw = 0;
   function draw(alpha: number, yaw: number, dt: number): void {
-    const player = findPlayer(lastWorld, local);
+    const player = findPlayer(lastWorld, subject);
     const px = player.px + (player.x - player.px) * alpha,
       pz = player.pz + (player.z - player.pz) * alpha;
     if (!open || dirty) {
@@ -295,6 +298,10 @@ export function createMinimap(
       danger += (threat(lastWorld, px, pz) - danger) * Math.min(1, dt * 2.5);
       miniTerrain.setMap(map, miniSize, 0.86 + 0.12 * danger);
       miniTerrain.setModifier(lastWorld, alpha);
+      const markerRange =
+        trainerKits[lastWorld.players[local]!.trainer].passive === "scout"
+          ? TRAINER.scout.markerRange
+          : 1;
       miniLayers.update(
         lastWorld,
         alpha,
@@ -305,15 +312,17 @@ export function createMinimap(
         half * ICON_RIM,
         0.75 + 0.25 * danger,
         false,
+        subject,
+        markerRange,
       );
-      miniSites.update(lastWorld, alpha, map, miniSize, 1, half * ICON_RIM, false);
+      miniSites.update(lastWorld, alpha, map, miniSize, 1, half * ICON_RIM, false, markerRange);
     }
     if (open) {
       const k = fullSize / (FULL_HALF * 2);
       Object.assign(map, { xx: k, xz: 0, zx: 0, zz: k, ox: fullSize / 2, oy: fullSize / 2 });
       fullTerrain.setMap(map, fullSize, 1);
       fullTerrain.setModifier(lastWorld, alpha);
-      fullLayers.update(lastWorld, alpha, yaw, map, fullSize, 1.5, Infinity, 1, true);
+      fullLayers.update(lastWorld, alpha, yaw, map, fullSize, 1.5, Infinity, 1, true, subject);
       fullSites.update(lastWorld, alpha, map, fullSize, 1.5, Infinity, true);
     }
     dirty = false;
@@ -359,7 +368,9 @@ export function createMinimap(
       dirty = true;
       stage.invalidate();
     },
-    update(value, alpha, yaw, dt) {
+    update(value, alpha, yaw, dt, nextSubject = local) {
+      if (subject !== nextSubject) dirty = true;
+      subject = nextSubject;
       lastWorld = value;
       lastAlpha = alpha;
       lastYaw = yaw;

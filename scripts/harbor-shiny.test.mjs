@@ -53,11 +53,22 @@ function room(t) {
 test("本机按伙伴穿戴异色，房主只能改自己的席位，开局和重返保留两人的选择", async (t) => {
   const { host, url, connection } = room(t);
   const progress = setShinyLook(
-    { ...emptyProgress(), looks: { owned: ["gastly", "squirtle"], worn: [] } },
+    {
+      ...emptyProgress(),
+      bonds: { gastly: 100, squirtle: 30 },
+      lab: { "bond-gastly": 2 },
+      looks: { owned: ["gastly", "squirtle"], worn: [] },
+    },
     "gastly",
     true,
   );
-  const initial = { starter: "gastly", trainer: "yewei", stage: "forest", difficulty: 0 };
+  const initial = {
+    mode: "expedition",
+    starter: "gastly",
+    trainer: "yewei",
+    stage: "forest",
+    difficulty: 0,
+  };
   let ticket = null;
   const storage = {
     loadRejoin: () => ticket,
@@ -76,7 +87,9 @@ test("本机按伙伴穿戴异色，房主只能改自己的席位，开局和�
       url,
       progress,
       pick,
+      [],
       {
+        rules() {},
         close() {},
         settings() {},
         copy() {},
@@ -94,6 +107,11 @@ test("本机按伙伴穿戴异色，房主只能改自己的席位，开局和�
   await until(() => host.state.room);
   screen.actions.join(host.state.room.code);
   await until(() => host.state.canStart && screen.state?.room?.players.length === 2);
+  const guestBond = () => {
+    const { bond, bondLab } = host.state.room.players[1];
+    return [bond, bondLab];
+  };
+  assert.deepEqual(guestBond(), [4, 2]);
   assert.deepEqual(
     host.state.room.players.map(({ shiny }) => shiny),
     [false, true],
@@ -106,9 +124,11 @@ test("本机按伙伴穿戴异色，房主只能改自己的席位，开局和�
   screen.actions.pick({ ...initial, starter: "squirtle" });
   await until(() => host.state.room.players[1].starter === "squirtle");
   assert.equal(host.state.room.players[1].shiny, false, "已拥有但未穿戴的伙伴仍为普通");
+  assert.deepEqual(guestBond(), [2, 0], "更换伙伴不会继承原伙伴的羁绊或研究");
   screen.actions.pick(initial);
   await until(() => host.state.room.players[1].starter === "gastly");
   assert.equal(host.state.room.players[1].shiny, true);
+  assert.deepEqual(guestBond(), [4, 2]);
 
   host.onStart = (config) => {
     hostConfig = config;

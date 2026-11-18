@@ -64,11 +64,13 @@ after(() => fixtureZone.mockRestore());
 function fieldConfig(stage) {
   const path = ALL_ROUTES.find((route) => route.includes(stage));
   return {
+    mode: "expedition",
+    rules: [],
     stage,
     route: path.slice(0, path.indexOf(stage) + 1),
     seed: 3,
     difficulty: 0,
-    players: [{ starter: "bulbasaur" }],
+    players: [{ trainer: "chengxi", starter: "bulbasaur" }],
   };
 }
 

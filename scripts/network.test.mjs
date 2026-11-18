@@ -20,6 +20,8 @@ const connection = (rejoin) => ({
   rejoin,
 });
 const config = {
+  mode: "expedition",
+  rules: [],
   stage: "forest",
   seed: 7,
   difficulty: 0,
@@ -2463,7 +2465,7 @@ test("四人选同一训练师时按原席位区分，开局配置保留各自�
 
 test("Harbor 接受夏晴身份并将其传入双方开局配置", async (t) => {
   const { host, guest } = await pair(t);
-  guest.setup("squirtle", "xiaqing", false);
+  guest.setup({ starter: "squirtle", trainer: "xiaqing", shiny: false });
   await until(() => host.state.room.players[1].trainer === "xiaqing");
   const { runs } = await startParty([host, guest]);
   for (const run of runs) assert.equal(run.config.players[1].trainer, "xiaqing");
@@ -2497,9 +2499,14 @@ test("房主仍在开局演出时，已载入的客机不会开跑", async (t) =
 
 test("房间内修改伙伴、训练师与任务广播给全员，开局与重返都用最后的选择", async (t) => {
   const { host, guest, url } = await pair(t);
-  assert.deepEqual(host.state.room.mission, { stage: "forest", difficulty: 0 });
-  guest.setup("pikachu", "shuoye", false);
-  host.mission({ stage: "forest", difficulty: 1 });
+  assert.deepEqual(host.state.room.mission, {
+    mode: "expedition",
+    stage: "forest",
+    difficulty: 0,
+    rules: [],
+  });
+  guest.setup({ starter: "pikachu", trainer: "shuoye", shiny: false });
+  host.mission({ mode: "expedition", stage: "forest", difficulty: 1, rules: [] });
   for (const session of [host, guest])
     await until(
       () =>
@@ -2547,7 +2554,14 @@ test("Harbor 拒绝未知伙伴/训练师与客机改任务，房间不变", asy
     { t: "setup", starter: "mewtwo", trainer: "chengxi", shiny: false, error: /伙伴选择无效/ },
     { t: "setup", starter: "__proto__", trainer: "chengxi", shiny: false, error: /伙伴选择无效/ },
     { t: "setup", starter: "squirtle", trainer: "nobody", shiny: false, error: /训练师选择无效/ },
-    { t: "mission", stage: "forest", difficulty: 2, error: /只有房主/ },
+    {
+      t: "mission",
+      mode: "expedition",
+      stage: "forest",
+      difficulty: 2,
+      rules: [],
+      error: /只有房主/,
+    },
   ]) {
     const { host, guest } = await pair(t);
     const seen = [];
@@ -2559,7 +2573,12 @@ test("Harbor 拒绝未知伙伴/训练师与客机改任务，房间不变", asy
     // Until the failed guest's seat is removed, every room Harbor sent kept the original choices.
     await until(() => host.state.room.players.length === 1);
     for (const room of seen) {
-      assert.deepEqual(room.mission, { stage: "forest", difficulty: 0 });
+      assert.deepEqual(room.mission, {
+        mode: "expedition",
+        stage: "forest",
+        difficulty: 0,
+        rules: [],
+      });
       assert.deepEqual(
         room.players.map(({ starter, trainer }) => [starter, trainer]),
         [
@@ -2570,8 +2589,8 @@ test("Harbor 拒绝未知伙伴/训练师与客机改任务，房间不变", asy
     }
   }
   for (const mission of [
-    { stage: "volcano", difficulty: 0 },
-    { stage: "forest", difficulty: 9 },
+    { mode: "expedition", stage: "volcano", difficulty: 0, rules: [] },
+    { mode: "expedition", stage: "forest", difficulty: 9, rules: [] },
   ]) {
     const { host } = await pair(t);
     host.signal({ t: "mission", ...mission });
@@ -2589,7 +2608,7 @@ test("出发后才到达的修改不改变开局配置，也不使发送者失�
   await until(() => configs.length === 2);
   // The client no longer sends once playing; a change already in flight reaches Harbor like this.
   guest.signal({ t: "setup", starter: "pikachu", trainer: "shuoye", shiny: false });
-  host.signal({ t: "mission", stage: "forest", difficulty: 2 });
+  host.signal({ t: "mission", mode: "expedition", stage: "forest", difficulty: 2, rules: [] });
   host.signal({ t: "ping" });
   guest.signal({ t: "ping" });
   await new Promise((resolve) => setTimeout(resolve, 50));
@@ -2601,4 +2620,39 @@ test("出发后才到达的修改不改变开局配置，也不使发送者失�
     assert.equal(settings.players[1].starter, "squirtle");
     assert.equal(settings.difficulty, 0);
   }
+});
+
+test("客机只提交自己的道具：房主结算一次，动作同步不会覆盖团队强化或冷却", async () => {
+  const { host, guest, world, remote } = await memoryRun();
+  guest.submit([{ t: "assist", player: 0 }]);
+  guest.apply(remote, tick);
+  assert.equal(remote.players[1].assistReady, 0, "the guest does not settle its request");
+  host.step(world, host.submit([]));
+  assert.deepEqual(
+    world.events.filter((e) => e.t === "assist"),
+    [
+      {
+        t: "assist",
+        player: 1,
+        item: "direHit",
+        x: world.players[1].x,
+        z: world.players[1].z,
+        to: [0, 1],
+      },
+    ],
+  );
+  const ready = world.players[1].assistReady;
+  for (let i = 0; i < 5; i++) {
+    host.publish(world, world.events.splice(0), tick);
+    guest.apply(remote, tick);
+    host.step(world, host.submit([]));
+  }
+  for (const w of [world, remote]) {
+    assert.equal(w.players[0].assistReady, 0);
+    assert.equal(w.players[1].assistReady, ready);
+    assert.ok(w.players.every((p) => p.assistBuffs.direHit > 0));
+  }
+  host.publishMap(world);
+  const rejoined = guest.takeMap();
+  assert.equal(rejoined.players[1].assistReady - rejoined.time, ready - world.time);
 });

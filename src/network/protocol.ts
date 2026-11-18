@@ -1,23 +1,27 @@
+import { knownUnlocks } from "../run/sim/content/unlocks";
+import { MAX_BOND_LEVEL } from "../run/sim/content/bonds";
+import { BOND_LAB_LEVEL, BOND_LAB_MAX } from "../run/sim/content/params/bonds";
 import type { RunConfig } from "../run/sim/world";
 import type { Command } from "../run/sim/state/commands";
 import { difficulties } from "../run/sim/content/difficulties";
 import { starters, type StarterId } from "../run/sim/content/lines/index";
+import { knownRules, type RuleId } from "../run/sim/content/rules";
 import type { StageId } from "../run/sim/content/stages/index";
 import { playableStages } from "../lobbyPick";
-import type { TrainerId } from "../trainers";
 
-export const PROTOCOL_VERSION = 13;
+export const PROTOCOL_VERSION = 20;
 export type RoomErrorCode = "no-room" | "full" | "started" | "version";
-export type PlayerSetup = RunConfig["players"][number] & { trainer: TrainerId };
-/** The host's choice of route and difficulty; changed only before the room starts. */
-export type Mission = Pick<RunConfig, "stage" | "difficulty">;
-export type MultiplayerConfig = Omit<RunConfig, "seed" | "players"> & {
-  players: readonly PlayerSetup[];
-};
+export type PlayerSetup = RunConfig["players"][number];
+export type PartnerSetup = Pick<PlayerSetup, "starter" | "trainer" | "shiny" | "bond" | "bondLab">;
+/** The host's choice of stage, difficulty and challenge rules. */
+export type Mission = Pick<RunConfig, "mode" | "stage" | "difficulty" | "rules" | "unlocks">;
+export type MultiplayerConfig = Omit<RunConfig, "seed">;
 export interface Room {
   code: string;
   players: PlayerSetup[];
   mission: Mission;
+  /** Bumped when the host changes the selected rules. */
+  missionRevision: number;
   started: boolean;
   ready: number[];
   /** Seats whose Harbor connection is currently open. */
@@ -38,14 +42,16 @@ export type ClientMessage =
   | { t: "resume"; version: number; build: string; code: string; token: string }
   | { t: "leave-room" }
   | { t: "quit" }
-  | { t: "terminal"; data: string }
+  /** A targeted terminal ends only the guest who asked to leave. */
+  | { t: "terminal"; data: string; to?: number }
   | { t: "terminal-ack" }
   | { t: "ping" }
   | { t: "start" }
-  /** Before the start: the sender's own partner, trainer and look. */
-  | ({ t: "setup" } & Pick<PlayerSetup, "starter" | "trainer" | "shiny">)
+  /** Before the start: the sender's own partner, trainer, look and bond. */
+  | ({ t: "setup" } & PartnerSetup)
   /** Before the start, host only. */
   | ({ t: "mission" } & Mission)
+  | { t: "mission-ready"; revision: number }
   | { t: "transport-ready"; peer: number }
   | { t: "signal"; to: number; signal: unknown }
   | { t: "relay"; to: number; data: string };
@@ -60,7 +66,8 @@ export type ServerMessage =
       removed?: number;
     }
   | { t: "pong" }
-  | { t: "terminal"; data: string }
+  | { t: "quit"; from: number }
+  | { t: "terminal"; data: string; personal: boolean }
   | { t: "start"; config: MultiplayerConfig }
   | { t: "signal"; from: number; signal: unknown }
   | { t: "relay"; from: number; data: string }
@@ -75,13 +82,34 @@ export function knownStarter(value: unknown): value is StarterId {
   return typeof value === "string" && Object.hasOwn(starters, value);
 }
 
+export function knownBond(bond: unknown = 0, lab: unknown = 0): boolean {
+  return (
+    typeof bond === "number" &&
+    Number.isInteger(bond) &&
+    bond >= 0 &&
+    bond <= MAX_BOND_LEVEL &&
+    typeof lab === "number" &&
+    Number.isInteger(lab) &&
+    lab >= 0 &&
+    lab <= BOND_LAB_MAX &&
+    (lab === 0 || bond >= BOND_LAB_LEVEL)
+  );
+}
+
 export function knownMission(value: unknown): value is Mission {
   return (
     record(value) &&
+    (value.mode === "expedition" || value.mode === "tower") &&
     playableStages.includes(value.stage as StageId) &&
     Number.isInteger(value.difficulty) &&
-    Object.hasOwn(difficulties, Number(value.difficulty))
+    Object.hasOwn(difficulties, Number(value.difficulty)) &&
+    (value.unlocks === undefined || knownUnlocks(value.unlocks)) &&
+    knownRules(value.rules)
   );
+}
+
+export function sameRules(a: readonly RuleId[], b: readonly RuleId[]): boolean {
+  return a.length === b.length && a.every((id) => b.includes(id));
 }
 
 /** Peers send intent; player ownership is assigned by the connection, never by its payload. */
@@ -105,6 +133,7 @@ export function peerCommand(value: unknown, player: number): Command {
       break;
     case "dash":
     case "ult":
+    case "assist":
     case "interact":
       return { t: value.t, player };
     case "choices":

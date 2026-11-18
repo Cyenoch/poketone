@@ -5,6 +5,8 @@
 // Analysis and the measured income behind these numbers: docs/BALANCE.md「星星沙子」.
 
 import type { LabId } from "../lab";
+import type { BondLabId } from "../bonds";
+import { BOND_LAB_PRICE } from "./bonds";
 
 /**
  * Drops, one pickup carrying the whole value. An ordinary wild enemy rolls `ordinary.chance` on the
@@ -82,4 +84,5 @@ export const LAB_PRICES = {
   party: [3500],
   archive: [600, 1200, 2000, 3000, 4000, 5500],
   bag: [4000],
-} as const satisfies Record<LabId, LabPrice>;
+  bond: BOND_LAB_PRICE,
+} as const satisfies Record<Exclude<LabId, BondLabId> | "bond", LabPrice>;

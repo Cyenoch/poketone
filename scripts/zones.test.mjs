@@ -47,11 +47,13 @@ test("every outdoor destination offers a non-overlapping, two-way exit for the l
   for (const stage of ROUTE_TIERS.flat().filter((s) => s !== "tower")) {
     for (const seed of [3, 7, 11]) {
       const world = createWorld({
+        mode: "expedition",
+        rules: [],
         stage,
         route: prefix(stage),
         seed,
         difficulty: 0,
-        players: [{ starter: "geodude" }],
+        players: [{ trainer: "chengxi", starter: "geodude" }],
       });
       const pad = landmark(world);
       const body = stageBodies(stageDefs[stage]).playerMax;
@@ -94,10 +96,12 @@ test("every outdoor destination offers a non-overlapping, two-way exit for the l
 test("ordinary reinforcements respond to nearby pressure without changing bodies or authored encounters", () => {
   function run(near, start, injured = false, guardian = false) {
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       seed: 11,
       difficulty: 0,
-      players: [{ starter: "squirtle" }],
+      players: [{ trainer: "chengxi", starter: "squirtle" }],
     });
     world.time = start;
     world.zone.tick = start / TICK;
@@ -139,10 +143,15 @@ test("ordinary reinforcements respond to nearby pressure without changing bodies
 test("co-op pressure protects a downed teammate and resumes deterministically after pause and restore", async () => {
   const { snapshotWorld, restoreWorld } = await import("../src/run/sim/snapshot.ts");
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 11,
     difficulty: 0,
-    players: [{ starter: "squirtle" }, { starter: "charmander" }],
+    players: [
+      { trainer: "chengxi", starter: "squirtle" },
+      { trainer: "chengxi", starter: "charmander" },
+    ],
   });
   world.time = 200;
   world.zone.tick = world.time / TICK;
@@ -170,10 +179,12 @@ test("enemy durability ramps after the unchanged opening without changing its da
     [2, 4],
   ]) {
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       seed: 11,
       difficulty,
-      players: Array.from({ length: seats }, () => ({ starter: "squirtle" })),
+      players: Array.from({ length: seats }, () => ({ trainer: "chengxi", starter: "squirtle" })),
     });
     const def = enemies.pidgey;
     const stage = stageDefs[world.stage];
@@ -199,10 +210,15 @@ test("enemy durability ramps after the unchanged opening without changing its da
 
 test("alpha durability changes without multiplying its damage or rewards", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 11,
     difficulty: 1,
-    players: [{ starter: "squirtle" }, { starter: "charmander" }],
+    players: [
+      { trainer: "chengxi", starter: "squirtle" },
+      { trainer: "chengxi", starter: "charmander" },
+    ],
   });
   world.time = 480;
   world.zone.tick = Math.round(world.time / TICK);
@@ -219,10 +235,12 @@ test("alpha durability changes without multiplying its damage or rewards", () =>
 
 test("each map's guardian keeps its challenge across summon times and player growth", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 11,
     difficulty: 0,
-    players: [{ starter: "squirtle" }],
+    players: [{ trainer: "chengxi", starter: "squirtle" }],
   });
   const player = world.players[0];
   const attributes = (enemy) => ({ hp: enemy.maxHp, dmg: enemy.dmg, speed: enemy.speed });
@@ -264,10 +282,12 @@ test("each map's guardian keeps its challenge across summon times and player gro
 
 test("later maps ramp new enemies and carried partners together while preserving the build", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 11,
     difficulty: 0,
-    players: [{ starter: "squirtle" }],
+    players: [{ trainer: "chengxi", starter: "squirtle" }],
   });
   for (const stageId of ALL_ROUTES[0].slice(1)) {
     world.time += 600;
@@ -289,7 +309,7 @@ test("later maps ramp new enemies and carried partners together while preserving
     const factors = zoneFactorsFor(routeStep(world), stage, 0);
     const opening = spawnEnemy(world, "pidgey", 0, 0);
     const openingBody = { ...opening };
-    const partner = { species: "pidgey" };
+    const partner = { species: "pidgey", owner: player.id };
     let previous = {
       hp: opening.hp,
       dmg: opening.dmg,
@@ -322,10 +342,15 @@ test("later maps ramp new enemies and carried partners together while preserving
 /** Two players on the forest with a few ticks of fighting behind them. */
 function fought(seed) {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed,
     difficulty: 1,
-    players: [{ starter: "charmander" }, { starter: "squirtle" }],
+    players: [
+      { trainer: "chengxi", starter: "charmander" },
+      { trainer: "chengxi", starter: "squirtle" },
+    ],
   });
   for (let tick = 0; tick < 300; tick++)
     stepWorld(world, [
@@ -418,16 +443,19 @@ test("the guardian is summoned once at the landmark; its fall clears the field a
 
 test("guardian rewards can evolve a player without letting the exit steal station interactions", () => {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 11,
     difficulty: 0,
-    players: [{ starter: "geodude" }],
+    players: [{ trainer: "chengxi", starter: "geodude" }],
   });
   const player = world.players[0];
   const station = world.stations.find((entry) => entry.kind === "hypno");
   const pad = landmark(world);
   Object.assign(player, {
     stage: 1,
+    items: [{ id: "linking-cord", level: 1 }],
     level: 53,
     xpNext: xpForLevel(53),
     xp: xpForLevel(53) - 1,
@@ -619,11 +647,16 @@ test("entering the tower carries growth, installs its walls and ends only at its
   });
   const play = () => {
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "volcano",
       route: ["forest", "coast", "volcano"],
       seed: 7919,
       difficulty: 1,
-      players: [{ starter: "charmander" }, { starter: "squirtle" }],
+      players: [
+        { trainer: "chengxi", starter: "charmander" },
+        { trainer: "chengxi", starter: "squirtle" },
+      ],
     });
     const [a, b] = world.players;
     a.level = 18;
@@ -776,10 +809,12 @@ test("guardian clear attracts field drops visibly and shares each reward once fo
   const { sweepClearedField } = await import("../src/run/sim/zones.ts");
   for (const count of [1, 2, 4]) {
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       seed: 7,
       difficulty: 0,
-      players: Array.from({ length: count }, () => ({ starter: "charmander" })),
+      players: Array.from({ length: count }, () => ({ trainer: "chengxi", starter: "charmander" })),
     });
     for (const p of world.players) {
       p.moves = [];
@@ -826,10 +861,12 @@ test("leaving during absorption settles remaining rewards without waiting and ca
   const { canLeave, interactInZone, sweepClearedField } = await import("../src/run/sim/zones.ts");
   for (const count of [1, 4]) {
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       seed: 7,
       difficulty: 0,
-      players: Array.from({ length: count }, () => ({ starter: "charmander" })),
+      players: Array.from({ length: count }, () => ({ trainer: "chengxi", starter: "charmander" })),
     });
     const p = world.players[0],
       pad = landmark(world);

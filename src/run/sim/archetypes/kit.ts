@@ -27,6 +27,7 @@ import { cos, hypot, sin } from "../math";
 import { onScreen } from "../viewFootprint";
 
 export interface MoveParams {
+  immediate?: true;
   dmg: number;
   cd: number;
   count: number;

@@ -5,7 +5,7 @@ import { BONEMERANG } from "../content/params/enemy-skills";
 
 import { coverHit, stopAtCover } from "../sight";
 import { formOf, hazardRadius } from "../evolution";
-import { damagePlayer } from "../hurt";
+import { damageFromHazard } from "./kit";
 import { heightAt } from "../terrain";
 import { TICK, type World } from "../state/world";
 import type { Enemy, Hazard } from "../state/entities";
@@ -130,7 +130,7 @@ function fly(world: World, bone: Hazard): void {
     const feet = heightAt(world.map.terrain, player.x, player.z);
     if (bone.y < feet - bone.radius || bone.y > feet + formOf(player).height + bone.radius)
       continue;
-    damagePlayer(world, player, bone.dmg, bone.element);
+    damageFromHazard(world, player, bone);
   }
 }
 

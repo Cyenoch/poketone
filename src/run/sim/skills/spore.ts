@@ -39,6 +39,7 @@ function volley(world: World, enemy: Enemy, target: Player, kind: "spore" | "bub
     const s = sin(angle);
     addHazard(world, {
       kind,
+      source: enemy.id,
       x: enemy.x,
       y,
       z: enemy.z,

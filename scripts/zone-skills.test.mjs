@@ -88,11 +88,13 @@ function flatTerrain() {
 /** A flat world, the player at the origin with no moves and an optional explicit guardian. */
 function arena(stage = "forest", species) {
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage,
     route: stage === "forest" ? [stage] : ["forest", stage],
     seed: 3,
     difficulty: 0,
-    players: [{ starter: "bulbasaur" }],
+    players: [{ trainer: "chengxi", starter: "bulbasaur" }],
   });
   world.map.terrain = flatTerrain();
   world.map.obstacles = [];
@@ -539,11 +541,13 @@ test("burning ground hurts a player on it every half second, nobody beside it", 
 test("desert maps stamp their patches, and no pad stands on one", () => {
   for (const seed of [1, 2, 3]) {
     const w = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "desert",
       route: ["forest", "desert"],
       seed,
       difficulty: 0,
-      players: [{ starter: "bulbasaur" }],
+      players: [{ trainer: "chengxi", starter: "bulbasaur" }],
     });
     const kinds = w.map.terrain.surface.patches.map((patch) => patch.kind).sort();
     assert.deepEqual(kinds, ["embers", "embers", "quicksand", "quicksand"]);
@@ -715,11 +719,13 @@ test("coast variants: each holds its full warning, then lands", () => {
 /** The coast's seed-8 field has open water along +z. */
 function shore(ashore) {
   const w = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "coast",
     route: ["forest", "coast"],
     seed: 8,
     difficulty: 0,
-    players: [{ starter: "bulbasaur" }],
+    players: [{ trainer: "chengxi", starter: "bulbasaur" }],
   });
   const player = w.players[0];
   player.invulnerable = 0;

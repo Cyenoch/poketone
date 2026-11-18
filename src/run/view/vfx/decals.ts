@@ -8,7 +8,7 @@ import {
   type ShaderMaterial,
 } from "three";
 import { TERRAIN_GLSL, type TerrainUniforms } from "../terrain";
-import { FX_GLSL, fxMaterial, uploadRange, type FxUniforms, type Rgb } from "./gl";
+import { flame, FX_GLSL, fxMaterial, uploadRange, type FxUniforms, type Rgb } from "./gl";
 import { compact } from "./pool";
 import { ICE_GLSL } from "../environment/ice-surface";
 
@@ -280,6 +280,7 @@ void main() {
     c = layer(ice.rgb, ice.a, 0.0);
   }
   c *= vA.a;
+  if (vX.z > 0.5) c.rgb = blueFlame(c.rgb);
   if (c.r + c.g + c.b + c.a < 0.004) discard;
   gl_FragColor = c;
 }
@@ -300,6 +301,8 @@ interface Stamp {
   add: number;
   p2: number;
   p3: number;
+  /** Left by Mega Charizard X's blue flames. */
+  blue: boolean;
 }
 
 /**
@@ -365,14 +368,22 @@ export class Decals {
   private readonly restamp = (s: Stamp): boolean => {
     s.age += this.step;
     if (s.age >= s.life) return false;
-    this.put(s.shape, s.x, s.z, s.radius, s.yaw, s.seed)
+    this.put(s.shape, s.x, s.z, s.radius, s.yaw, s.seed, s.blue)
       .tint(s.a, s.alpha, s.b, s.add)
       .args(s.age / s.life, s.p2, s.p3);
     return true;
   };
 
   /** Adds a shape centred on (x, z) covering ±radius; chain `rect`, `tint` and `args` to fill it in. */
-  put(shape: number, x: number, z: number, radius: number, yaw = 0, seed = 0): this {
+  put(
+    shape: number,
+    x: number,
+    z: number,
+    radius: number,
+    yaw = 0,
+    seed = 0,
+    blue = flame.blue,
+  ): this {
     if (this.count >= this.capacity) {
       this.o = -1;
       return this;
@@ -393,6 +404,7 @@ export class Decals {
     d[o + 19] = 0;
     d[o + 20] = radius;
     d[o + 21] = seed;
+    d[o + 22] = blue ? 1 : 0;
     return this;
   }
 
@@ -462,6 +474,7 @@ export class Decals {
       add,
       p2,
       p3,
+      blue: flame.blue,
     };
     // Reuse a faded slot when there is one; stamps are per event, so the object itself is cheap.
     if (this.stamped < this.stamps.length) this.stamps[this.stamped] = stamp;

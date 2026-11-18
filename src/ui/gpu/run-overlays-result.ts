@@ -5,21 +5,36 @@ import { starters } from "../../run/sim/content/lines/index";
 import { items, type ItemId } from "../../run/sim/content/items";
 import { moves } from "../../run/sim/content/moves";
 import { difficulties } from "../../run/sim/content/difficulties";
-import { formatTime } from "../../run/labels";
+import { bondTitle, formatTime } from "../../run/labels";
+import { bondLevel, bondMilestones, MAX_BOND_LEVEL } from "../../run/sim/content/bonds";
+import { HeartGauge } from "./heart-gauge";
 import { itemIcon, moveIcon } from "../../screens/runArt";
 import type { UiStage } from "./stage";
 import { wrapLines } from "./text-fit";
 import { fade, stack } from "./layer";
 import { GameButton } from "./game-button";
 import { createMenuIcon } from "./icons";
-import { EASE, stagger } from "./motion";
+import { EASE, POP, stagger } from "./motion";
 import { RADIUS_INNER, ui } from "./tokens";
 import { GpuCurrency } from "./currency";
 import { softOf } from "./run-choice-surface";
+import { badges as badgeTable, type BadgeId } from "../../run/sim/content/badges";
+import { badgeMedal, multiplierText } from "./challenge-rules";
+
+/** The run's partner's bond points before and after this result was saved. */
+export interface BondGain {
+  before: number;
+  after: number;
+  /** This save newly owns the partner's shiny look (false when it was already owned). */
+  look: boolean;
+}
 
 export interface ResultContentState {
   result: RunResult;
   note: string | null;
+  badges: BadgeId[];
+  /** Null until the result is saved. */
+  bond: BondGain | null;
   backpackSize: number | null;
 }
 export interface ResultContentCallbacks {
@@ -52,6 +67,14 @@ export class GpuResultContent {
   /** The result whose rows already came in: a rebuild (a kept item) does not replay it. */
   private entered: RunResult | null = null;
   private readonly entrances: { x: number; a: number }[] = [];
+  /** New badges pop in one after another, once per result. */
+  private readonly medalPops: { s: number }[] = [];
+  private poppedFor: RunResult | null = null;
+  /** The bond scale fills from before to after once per result; a crossed level pops. */
+  private bondGauge: HeartGauge | null = null;
+  private readonly bondFill = { p: 0 };
+  private readonly bondPops: { s: number }[] = [];
+  private bondFor: RunResult | null = null;
 
   constructor(state: ResultContentState, callbacks: ResultContentCallbacks, stage: UiStage) {
     this.state = state;
@@ -78,13 +101,20 @@ export class GpuResultContent {
   private build(): void {
     this.clear();
     const { result: r } = this.state;
+    // With rules, the facts end on the run's danger and the stardust multiplier it earned.
+    const danger = r.danger > 0 ? ` · 危险度 ${r.danger} ${multiplierText(r.danger)}` : "";
     this.meta = this.text(
-      `${starters[r.starter].stages[0].form.name} · ${difficulties[r.difficulty].name} · ${formatTime(r.time)} · Lv.${r.level} · 击倒 ${r.kills}`,
+      `${starters[r.starter].stages[0].form.name} · ${difficulties[r.difficulty].name} · ${formatTime(r.time)} · Lv.${r.level} · 击倒 ${r.kills}${danger}`,
       13,
       ui.muted,
       700,
     );
+    // 对战塔: the floors passed lead, the run's figure of merit.
+    if (r.floor !== undefined) this.root.add(this.floorRow(r.floor));
     this.root.add(this.meta);
+    const bond = this.state.bond;
+    if (bond && bond.after > bond.before) this.root.add(this.bondRow(bond, r));
+    if (this.state.badges.length) this.root.add(this.badgeRow(this.state.badges, r));
     const rewards = new Container({
       width: "100%",
       flexDirection: "row",
@@ -272,6 +302,140 @@ export class GpuResultContent {
       });
     }
   }
+  /** 通过 12 层: the floor count large between its words, on one baseline. */
+  private floorRow(floor: number): Container {
+    const row = new Container({ flexDirection: "row", alignItems: "baseline", gap: 6 });
+    const count = this.text(String(floor), 34);
+    count.setProperties({ lineHeight: "100%" });
+    row.add(this.text("通过", 16, ui.muted), count, this.text("层", 16));
+    return row;
+  }
+
+  /**
+   * The bond with the run's partner: the heart scale fills by the points this run earned (+N).
+   * Crossing a level pops its heart, the new title and what the level grants.
+   */
+  private bondRow({ before, after, look }: BondGain, result: RunResult): Container {
+    const row = new Container({
+      width: "100%",
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "center",
+      gap: 10,
+    });
+    const gauge = new HeartGauge(this.stage);
+    gauge.size(18, 3);
+    this.bondGauge = gauge;
+    const title = this.text("", 16);
+    const gain = this.text(`+${after - before}`, 16, ui.ball, 900);
+    row.add(gauge.panel, title, gain);
+    // What each level reached on the way grants, popping in as the scale reaches it.
+    const from = bondLevel(before),
+      to = bondLevel(after);
+    const grants = new Map<number, Container>();
+    for (let level = from + 1; level <= to; level++) {
+      const reward = bondMilestones[level - 1]!.reward;
+      // The top level's look only counts when this save actually added it.
+      if (!reward || (level === MAX_BOND_LEVEL && !look)) continue;
+      const chip = new Container({
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingLeft: 6,
+        paddingRight: 10,
+        paddingY: 3,
+        borderRadius: RADIUS_INNER,
+        backgroundColor: ui.success,
+        flexShrink: 0,
+      });
+      const check = createMenuIcon("check");
+      check.setProperties({ width: 14, height: 14, color: ui.white });
+      chip.add(check, this.text(reward, 14, ui.white));
+      grants.set(level, chip);
+      row.add(chip);
+    }
+    const replay = this.bondFor !== result;
+    this.bondFor = result;
+    this.stage.motion.cancel(this.bondFill);
+    for (const pop of this.bondPops.splice(0)) this.stage.motion.cancel(pop);
+    let shown = -1;
+    const reach = (level: number, celebrate: boolean) => {
+      shown = level;
+      const name = bondTitle(level);
+      title.setProperties({ text: name ?? "", display: name ? "flex" : "none" });
+      for (const [at, chip] of grants)
+        chip.setProperties({ display: at <= level ? "flex" : "none" });
+      if (!celebrate) return;
+      gauge.pop(level);
+      for (const part of [title, grants.get(level)]) {
+        if (!part) continue;
+        const pop = { s: 0.6 };
+        this.bondPops.push(pop);
+        this.stage.motion.animate(
+          pop,
+          { s: 1 },
+          320,
+          () => {
+            part.setProperties({ transformScaleX: pop.s, transformScaleY: pop.s });
+            this.stage.invalidate();
+          },
+          POP,
+        );
+      }
+    };
+    const apply = () => {
+      gauge.set(this.bondFill.p);
+      const level = bondLevel(Math.floor(this.bondFill.p));
+      if (level !== shown) reach(level, shown >= 0);
+    };
+    this.bondFill.p = replay ? before : after;
+    apply();
+    if (replay)
+      this.stage.motion.animate(
+        this.bondFill,
+        { p: after },
+        Math.min(1200, 500 + (after - before) * 25),
+        apply,
+        EASE,
+        420,
+      );
+    return row;
+  }
+
+  /** The badges this run earned: each its medal and name, popping in one by one. */
+  private badgeRow(earned: BadgeId[], result: RunResult): Container {
+    const row = new Container({ width: "100%", flexDirection: "row", flexWrap: "wrap", gap: 10 });
+    const replay = this.poppedFor !== result;
+    this.poppedFor = result;
+    for (const pop of this.medalPops.splice(0)) this.stage.motion.cancel(pop);
+    for (const [i, id] of earned.entries()) {
+      const chip = new Container({
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        paddingLeft: 4,
+        paddingRight: 12,
+        paddingY: 4,
+        borderRadius: 999,
+        backgroundColor: ui.mist,
+        flexShrink: 0,
+      });
+      const medal = badgeMedal(id, 36);
+      chip.add(medal, this.text(badgeTable[id].name, 15));
+      row.add(chip);
+      const pop = { s: replay ? 0 : 1 };
+      this.medalPops.push(pop);
+      const apply = () => {
+        medal.setProperties({ transformScaleX: pop.s, transformScaleY: pop.s });
+        fade(chip, Math.min(1, pop.s * 1.5));
+        this.stage.invalidate();
+      };
+      apply();
+      if (replay) this.stage.motion.animate(pop, { s: 1 }, 320, apply, POP, stagger(i, 90, 240));
+    }
+    return row;
+  }
+
   private text(text: string, fontSize = 16, color: string = ui.ink, fontWeight = 800): Text {
     return new Text({
       text,
@@ -336,6 +500,12 @@ export class GpuResultContent {
     this.controls = [];
     this.tiles.length = 0;
     this.rows = [];
+    this.stage.motion.cancel(this.bondFill);
+    for (const pop of this.bondPops.splice(0)) this.stage.motion.cancel(pop);
+    // The scale's hearts own their shader parts: released here, then left out of the sweep below.
+    this.bondGauge?.dispose();
+    this.bondGauge?.panel.removeFromParent();
+    this.bondGauge = null;
     this.meta = null;
     this.noteText = null;
     this.bagLabel = null;
@@ -351,6 +521,7 @@ export class GpuResultContent {
     this.root.removeFromParent();
     this.headerCurrency.removeFromParent();
     this.purse.dispose();
+    for (const pop of this.medalPops) this.stage.motion.cancel(pop);
     for (const e of this.entrances) this.stage.motion.cancel(e);
     this.clear();
     this.root.dispose();

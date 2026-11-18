@@ -567,6 +567,7 @@
 - **编码字段**：decorate是否返回、zone/theme选择、借用uniform/材质、返回dispose，volcano材质dispose listener
 - **逻辑状态**：本区无装饰或创建本区装饰 → 每帧更新当前uniform → 上传释放可恢复 → 换区/销毁释放
 - **触发、守卫与转换**：主题在createRunView构建时快照选择；tropic无coast weather；forest挂motes、desert按zone atmosphere选dust强度；tower按floor额外vigil；volcano绑定crust/flow并装enemy patch
+- [天气画面](../../src/run/view/weather.ts)按本图天气和队伍可施放的天气准备粒子、天空与光照。换天气时旧层按世界时间淡出；快照恢复从当前天气开始，施放瞬间的特效只响应新事件。
 - **终态/取消/不变量**：主题变化由整个view重建处理，非在旧decorate中热切；tower stonework、lava look显式释放闭包纹理，volcano altar crust通过material.dispose listener释放。纹理CPU数据仍保留，不把context release误当业务结束
 - **测试与风险**：T2 shader render部分；无逐主题context恢复/换区完整测试。shader闭包资源需纳入upload release核对，见RV01/MP07区别
 

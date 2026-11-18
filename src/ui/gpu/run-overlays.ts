@@ -13,7 +13,7 @@ import { revealInScroller } from "./scroll-reveal";
 import { SCROLL_FADE, ScrollFade } from "./scroll-fade";
 import { getAudio } from "../../audio/engine";
 import { GpuStationContent } from "./run-overlays-station";
-import { GpuResultContent } from "./run-overlays-result";
+import { GpuResultContent, type BondGain } from "./run-overlays-result";
 import { GpuRunLoading } from "./run-overlays-loading";
 import type { RunOverlayControl } from "./run-overlays-control";
 import { Component, Container, Text, type Content, type FontFamilies } from "@pmndrs/uikit";
@@ -22,6 +22,7 @@ import type { RunResult, StationView } from "../../run/createRun";
 import type { LocalCommand } from "../../run/createRun";
 import type { StarterId } from "../../run/sim/content/lines/index";
 import type { ItemId } from "../../run/sim/content/items";
+import type { BadgeId } from "../../run/sim/content/badges";
 import type { ElementType } from "../../run/sim/content/elements";
 import { stationNames } from "../../run/sim/content/stations";
 import { UiStage } from "./stage";
@@ -61,7 +62,15 @@ export type RunOverlayState =
       | ({ kind: "stats" } & StatsPanelState)
       | { kind: "station"; view: StationView }
       | Omit<ChoiceState, "theme">
-      | { kind: "result"; result: RunResult; note: string | null; backpackSize: number | null }
+      | {
+          kind: "result";
+          result: RunResult;
+          note: string | null;
+          /** Badges this result earned (newly owned once saved). */
+          badges: BadgeId[];
+          bond: BondGain | null;
+          backpackSize: number | null;
+        }
     ));
 export interface RunOverlayCallbacks {
   send: (command: LocalCommand) => void;
@@ -173,6 +182,7 @@ export class GpuRunOverlays {
   private exitLeft = 0;
   private closing = false;
   private coarse = false;
+  private actionReach = 0;
   private content:
     | GpuStationContent
     | GpuResultContent
@@ -418,6 +428,7 @@ export class GpuRunOverlays {
         );
       this.content.setFocusVisible(this.focusVisible);
       this.content.setCoarsePointer(this.coarse);
+      this.content.setActionReach(this.actionReach);
       this.frame = this.content.root;
       this.body = this.content.scrollBody;
       // Kept mounted across same-card rebuilds (clearFrame leaves it attached).
@@ -908,6 +919,11 @@ export class GpuRunOverlays {
     });
     this.needsReveal = true;
     this.stage.invalidate();
+  }
+  /** Touch: how far the HUD's corner actions reach in from the right edge; the card dock keeps clear. */
+  setActionReach(reach: number): void {
+    this.actionReach = reach;
+    if (this.content instanceof GpuChoiceContent) this.content.setActionReach(reach);
   }
   setCoarsePointer(coarse: boolean): void {
     if (this.coarse === coarse) return;

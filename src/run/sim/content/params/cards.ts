@@ -54,7 +54,7 @@ export const choiceWeights = {
  * first evolution, where it competes with the first evolution move for the third slot; the fourth
  * between the two evolutions (lines/*, docs/BALANCE.md「三个区域」).
  */
-export const SIGNATURE_GATES = [1, 2, 28, 40] as const;
+export const SIGNATURE_GATES = [1, 2, 28, 40, 40, 40] as const;
 
 /**
  * New-item candidates per level-up roll, each weighted `choiceWeights.newItem`; a chosen one rolls a

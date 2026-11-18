@@ -21,9 +21,14 @@ test("room seats keep ownership and gate departure on shared link readiness", ()
   assert.equal(view.seats[0].self, true);
   assert.equal(view.seats[1].chip, "等待加入");
   assert.equal(view.start.enabled, false);
-  state.room.players.push(player);
+  state.room.players.push({ ...player, bond: 3 });
   view = seatView(state);
   assert.equal(view.seats[1].chip, "已加入");
+  // A seat carries its partner's bond title; none before Lv.1 or on an empty seat.
+  assert.deepEqual(
+    view.seats.map((seat) => seat.title),
+    [null, "信赖", null, null],
+  );
   assert.equal(view.start.pending, true);
   assert.equal(view.start.enabled, false);
   for (const mode of ["direct", "relay"]) {
@@ -177,9 +182,18 @@ test("room keypad confirms its focused digit on gamepad but physical Enter submi
       settings() {},
       copy() {},
       pick: (next) => picked.push(next),
+      rules() {},
+      confirm() {},
     },
     progress,
-    { starter: "charmander", difficulty: 0, stage: "forest", trainer: "chengxi" },
+    {
+      mode: "expedition",
+      starter: "charmander",
+      difficulty: 0,
+      stage: "forest",
+      trainer: "chengxi",
+    },
+    [],
   );
   const pad = {
     token: "pad:1",
@@ -322,7 +336,7 @@ test("room choices, keypad and four seats remain reachable inside the scaled saf
   const labelPanel = (room, label) => {
     let panel;
     room.stage.root.traverse((node) => {
-      if (node instanceof Text && node.properties.value.text === label)
+      if (node instanceof Text && node.isVisible.value && node.properties.value.text === label)
         panel = node.parentContainer.value;
     });
     assert.ok(panel, `label ${label} is present`);
@@ -382,9 +396,18 @@ test("room choices, keypad and four seats remain reachable inside the scaled saf
             copy() {},
             pick() {},
             rejoin: { code: "123456", action() {} },
+            rules() {},
+            confirm() {},
           },
           emptyProgress(),
-          { starter: "charmander", stage: "forest", difficulty: 0, trainer: "chengxi" },
+          {
+            mode: "expedition",
+            starter: "charmander",
+            stage: "forest",
+            difficulty: 0,
+            trainer: "chengxi",
+          },
+          [],
         );
         try {
           const scale = fitScale(userScale, width, height, safe, room.minLayout);
@@ -436,11 +459,14 @@ test("room choices, keypad and four seats remain reachable inside the scaled saf
           room.update({
             room: {
               code: "123459",
-              players: ["bulbasaur", "charmander", "squirtle", "pikachu"].map((starter) => ({
+              // Each partner's bond level; the title shows on every player's seat row.
+              players: ["bulbasaur", "charmander", "squirtle", "pikachu"].map((starter, i) => ({
                 starter,
                 trainer: "shuoye",
+                bond: [0, 2, 4, 5][i],
               })),
-              mission: { stage: "forest", difficulty: 0 },
+              mission: { mode: "expedition", stage: "forest", difficulty: 0, rules: [] },
+              missionRevision: 0,
               started: false,
               ready: [0, 1, 2, 3],
             },
@@ -455,6 +481,8 @@ test("room choices, keypad and four seats remain reachable inside the scaled saf
           const seats = ["妙蛙种子", "小火龙", "杰尼龟", "皮卡丘"].map((name) =>
             inside(room, labelPanel(room, name), width, height, safe),
           );
+          for (const title of ["熟悉", "挚友", "最好的伙伴"])
+            inside(room, labelPanel(room, title), width, height, safe);
           for (let i = 1; i < seats.length; i++)
             assert.ok(
               seats[i - 1].x + seats[i - 1].w / 2 < seats[i].x - seats[i].w / 2,

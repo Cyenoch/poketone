@@ -11,6 +11,7 @@ import {
 } from "three";
 import { playerColors } from "../../ui/player-colors";
 import { COOP } from "../sim/content/params/coop";
+import { canBeRescued } from "../sim/rescue";
 import { SELF_INK } from "./outline";
 import type { PlayerId } from "../sim/state/entities";
 import type { World } from "../sim/state/world";
@@ -54,9 +55,8 @@ function overlay(color: string, opacity = 1, additive = false): MeshBasicMateria
 }
 
 /**
- * Slot rings follow the scene's interpolated feet, with dark rims on every map palette. A downed
- * player's body is hidden, so their seat is marked by a rescue-reach ring, a light column and a
- * floating gem in the seat colour; all of it is read-only presentation of `alive`.
+ * Slot rings follow the scene's interpolated feet. A rescuable seat keeps its ring and lights a
+ * beacon; a permanently fallen seat has neither feet to mark nor a place to request rescue.
  */
 export function playerRings(world: World, local: PlayerId) {
   const root = new Group();
@@ -124,7 +124,9 @@ export function playerRings(world: World, local: PlayerId) {
       const { terrain } = world.map;
       rings.forEach(({ group, layers, beacon, reach, ripple, column, gem, gemRim }, slot) => {
         const player = world.players[slot]!;
-        group.visible = !player.departed;
+        group.visible = !player.departed && (player.alive || canBeRescued(world, player));
+        beacon.visible = group.visible && !player.alive;
+        if (!group.visible) return;
         const x = player.px + (player.x - player.px) * alpha,
           z = player.pz + (player.z - player.pz) * alpha;
         group.position.set(x, 0, z);
@@ -139,9 +141,7 @@ export function playerRings(world: World, local: PlayerId) {
           mesh.geometry.computeBoundingSphere();
         });
 
-        const down = !player.alive && !player.departed;
-        beacon.visible = down;
-        if (!down) return;
+        if (!beacon.visible) return;
         const ground = heightAt(terrain, x, z);
         beacon.position.set(x, 0, z);
         drape(terrain, reach, x, z, 0.06);

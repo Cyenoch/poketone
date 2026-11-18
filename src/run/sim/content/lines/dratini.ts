@@ -1,9 +1,10 @@
 import type { LineDef } from "./index";
 
+const traits = { normal: ["shed-skin"], hidden: "marvel-scale" } as const;
+
 export const dratini = {
   id: "dratini",
   role: "蓄势贯穿",
-  ability: "dragon-scale",
   ultimate: "draco-meteor",
   kit: ["dragon-breath", "twister", "dragon-pulse", "dragon-rush"],
   evolutionMoves: ["aqua-tail", "hurricane"],
@@ -13,6 +14,7 @@ export const dratini = {
       at: 1,
       form: {
         id: "dratini",
+        abilities: traits,
         name: "迷你龙",
         types: ["dragon"],
         hp: 103,
@@ -27,6 +29,7 @@ export const dratini = {
       at: 32,
       form: {
         id: "dragonair",
+        abilities: traits,
         name: "哈克龙",
         types: ["dragon"],
         hp: 126,
@@ -41,6 +44,7 @@ export const dratini = {
       at: 60,
       form: {
         id: "dragonite",
+        abilities: { normal: ["inner-focus"], hidden: "multiscale" },
         name: "快龙",
         types: ["dragon", "flying"],
         hp: 153,

@@ -19,7 +19,7 @@ export const combo: ArchetypeDef = {
     const [dirX, dirZ] = aim(world.map.terrain, player, chestOf(world.map.terrain, player), target);
     const count = Math.ceil(p.count);
     for (let i = 0; i < count; i++) {
-      const delay = COMBO.delay + i * COMBO.stagger;
+      const delay = (p.immediate ? 0 : COMBO.delay) + i * COMBO.stagger;
       area(world, player, def, p, "combo", {
         dirX,
         dirZ,

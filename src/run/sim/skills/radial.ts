@@ -4,7 +4,7 @@ import { SING_SLOW } from "../content/params/late-zones";
 // rings): the whole circle is marked, then hits once.
 
 import { sustain } from "../status";
-import { damagePlayer } from "../hurt";
+import { damageFromHazard } from "./kit";
 import { lineOfFire } from "../sight";
 import { heightAt } from "../terrain";
 import { TICK, type World } from "../state/world";
@@ -100,8 +100,7 @@ function hitInside(world: World, ring: Hazard, slow: number): void {
         player.z,
       )
     )
-      if (damagePlayer(world, player, ring.dmg, ring.element) && slow)
-        sustain(player, "slow", slow, -1);
+      if (damageFromHazard(world, player, ring) && slow) sustain(player, "slow", slow, -1);
 }
 
 export const hazards = {

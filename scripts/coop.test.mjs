@@ -1,6 +1,11 @@
+import { collectRoutePickup } from "../src/run/sim/route-rewards.ts";
+import { castWeather } from "../src/run/sim/weather.ts";
+import { formOf } from "../src/run/sim/evolution.ts";
+import { learnable } from "../src/run/sim/upgrades.ts";
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  applyCommand,
   createWorld,
   createWorldFromSeeds,
   stepWorld,
@@ -32,11 +37,13 @@ import { routeTo, selectTestExit } from "./fixtures/route.mjs";
 
 function world(count = 2, difficulty = 0, stage = "forest") {
   return createWorld({
+    mode: "expedition",
+    rules: [],
     stage,
     route: routeTo(stage),
     seed: 5,
     difficulty,
-    players: Array.from({ length: count }, () => ({ starter: "charmander" })),
+    players: Array.from({ length: count }, () => ({ trainer: "chengxi", starter: "charmander" })),
   });
 }
 function loot(w, kind, value) {
@@ -503,9 +510,11 @@ test("four distinct spawn bodies survive the whole route; restored P4 input rema
   let seed = 5;
   const party = createWorldFromSeeds(
     {
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       difficulty: 0,
-      players: Array.from({ length: 4 }, () => ({ starter: "charmander" })),
+      players: Array.from({ length: 4 }, () => ({ trainer: "chengxi", starter: "charmander" })),
     },
     () => seed++,
   );
@@ -540,10 +549,15 @@ test("离队席位不再领取奖励，也不按倒地队友抬高刷怪压力",
   const { departPlayer } = await import("../src/run/sim/team.ts");
   const { updateSpawnPressure } = await import("../src/run/sim/director-pressure.ts");
   const world = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 3,
     difficulty: 0,
-    players: [{ starter: "charmander" }, { starter: "squirtle" }],
+    players: [
+      { trainer: "chengxi", starter: "charmander" },
+      { trainer: "chengxi", starter: "squirtle" },
+    ],
   });
   const [host, gone] = world.players;
   departPlayer(world, gone.id);
@@ -558,4 +572,57 @@ test("离队席位不再领取奖励，也不按倒地队友抬高刷怪压力",
   world.zone.tick = Math.round(600 / TICK);
   for (let i = 0; i < 300; i++) updateSpawnPressure(world, TICK);
   assert(world.spawn.pressure < 0.9, `pressure ${world.spawn.pressure}`);
+});
+
+test("奖杯分支按席位结算，跨图与快照恢复保留形态；仅入图重新触发日照", () => {
+  let seed = 5;
+  const w = createWorldFromSeeds(
+    {
+      mode: "expedition",
+      rules: ["no-items"],
+      stage: "coast",
+      route: ["forest", "coast"],
+      difficulty: 0,
+      players: [
+        { trainer: "chengxi", starter: "charmander" },
+        { trainer: "chengxi", starter: "charmander" },
+      ],
+    },
+    () => seed++,
+  );
+  for (const [i, p] of w.players.entries()) {
+    Object.assign(p, { stage: 2, level: 55 });
+    collectRoutePickup(w, { kind: "trophy", owner: i, x: p.x, z: p.z }, p);
+    const card = p.pending[0];
+    assert.equal(card.options.length, 3);
+    const stone = i === 0 ? "charizardite-x" : "charizardite-y";
+    applyCommand(w, {
+      t: "pick",
+      player: i,
+      card: card.id,
+      index: card.options.findIndex((c) => c.item === stone),
+    });
+    assert.equal(p.moves.length, 1);
+  }
+  assert.deepEqual(
+    w.players.map((p) => p.mega),
+    ["charizard-x", "charizard-y"],
+  );
+  assert.deepEqual(w.weather, { id: "sun", from: w.time, until: w.time + 30 });
+  w.time += 4;
+  castWeather(w, w.players[0], "rain-dance", w.time);
+  const restored = restoreWorld(w.map, snapshotWorld(w));
+  assert.deepEqual(restored.weather, w.weather);
+  assert.equal(restored.weather.id, "rain");
+  selectTestExit(restored, "volcano");
+  enterZone(restored, prepareZone(restored));
+  assert.deepEqual(restored.weather, { id: "sun", from: restored.time, until: restored.time + 30 });
+  for (const [i, p] of restored.players.entries()) {
+    assert.equal(formOf(p).id, i === 0 ? "charizard-x" : "charizard-y");
+    const offers = learnable(p).map((c) => c.move);
+    assert.equal(offers.includes("flare-blitz"), i === 0);
+    assert.equal(offers.includes("solar-beam"), i === 1);
+    collectRoutePickup(restored, { kind: "trophy", owner: i, x: p.x, z: p.z }, p);
+    assert.ok(!p.pending[0].options.some((c) => c.item?.startsWith("charizardite-")));
+  }
 });

@@ -3,7 +3,7 @@
 // lane shelters the enemy behind it while the rest of the wave rolls on.
 
 import { WAVE } from "../content/params/archetypes";
-import { damageEnemy } from "../combat";
+import { canSettleHit, damageEnemy } from "../combat";
 import type { EnemyGrid } from "../grid";
 import { lineOfFire } from "../sight";
 import { heightAt } from "../terrain";
@@ -50,21 +50,28 @@ export const wave: ArchetypeDef = {
     if (!target) return false;
     const [dx, dz] = aim(terrain, player, eye, target);
     const crest = heightAt(terrain, player.x, player.z) + WAVE.crest;
+    const cast = world.nextId;
     for (let i = 0; i < p.count; i++) {
       const [rx, rz] = rotate(dx, dz, (i - (p.count - 1) / 2) * WAVE.fan);
-      world.projectiles.push(projectile(world, player, def, p, [rx, rz, 0], crest, 0));
+      const shot = projectile(world, player, def, p, [rx, rz, 0], crest, 0);
+      if (def.id === "flare-blitz") shot.recoilCast = cast;
+      world.projectiles.push(shot);
     }
     return true;
   },
   shot: {
     land(ctx, shot, owner, def) {
       // Knocked along the wave's travel, not away from its centre.
-      for (const enemy of wash(ctx.world, ctx.grid, shot))
-        damageEnemy(
-          ctx,
-          enemy,
-          hitFrom(owner, def, shot, enemy.x - shot.vx, enemy.z - shot.vz, WAVE.knock),
-        );
+      for (const enemy of wash(ctx.world, ctx.grid, shot)) {
+        const hit = hitFrom(owner, def, shot, enemy.x - shot.vx, enemy.z - shot.vz, WAVE.knock);
+        if (shot.recoilCast !== undefined && canSettleHit(ctx.world, enemy)) {
+          hit.recoil = true;
+          const cast = shot.recoilCast;
+          for (const lane of ctx.world.projectiles)
+            if (lane.recoilCast === cast) delete lane.recoilCast;
+        }
+        damageEnemy(ctx, enemy, hit);
+      }
     },
   },
 };

@@ -1,10 +1,17 @@
-import { starters, type StarterId } from "./content/lines/index";
+import { DEFAULT_TRAINER, type TrainerId } from "./content/trainers";
+import { decayAssistBuffs, activateAssist } from "./trainers";
+import type { UnlockId } from "./content/unlocks";
+import { megaStones, starters, type StarterId } from "./content/lines/index";
 import { present, teamSize } from "./team";
 import { moves } from "./content/moves";
+import type { RuleId } from "./content/rules";
 import type { Difficulty } from "./content/difficulties";
 import { items, type ItemId } from "./content/items";
 import { stageDefs, type StageId } from "./content/stages/index";
 import { initialRoute } from "./content/campaign";
+import { bondLabModifier } from "./content/bonds";
+import { BOND_CURE_LEVEL, BOND_ENDURE_LEVEL, BOND_LAB_LEVEL } from "./content/params/bonds";
+import { towerMap } from "./content/tower-map";
 import { updateAreas, updateMoves, updateProjectiles } from "./attacks";
 import { heal, type Ctx } from "./combat";
 import { nearestPlayer, primeEnemyNav, updateDirector } from "./director";
@@ -16,25 +23,50 @@ import { cancelRouteDeal, collectRoutePickup, pickRouteReward } from "./route-re
 import { fuseMoves } from "./fusion";
 import { EnemyGrid } from "./grid";
 import { checkPlayable, generateMap, MapGenError, stageBodies } from "./mapgen/index";
-import { createRng, type Rng } from "./rng";
-import { decay, drainRate } from "./status";
+import { createRng, mixSeed, type Rng } from "./rng";
+import { cureBondStatus, decay, drainRate } from "./status";
 import { DRAIN_FLOOR } from "./content/params/combat";
-import { currentStats, earnStardust, NO_LAB, playerStats, refreshStats, xpForLevel } from "./stats";
+import {
+  currentAbility,
+  currentStats,
+  earnStardust,
+  NO_LAB,
+  playerStats,
+  refreshStats,
+  xpForLevel,
+} from "./stats";
 import { fireUltimate, newUltState, updateUltimate } from "./ultimates/index";
 import { updatePartners } from "./partners";
 import { updateShield } from "./hurt";
+import { activeWeather } from "./content/weather";
 import { fire } from "./triggers/index";
 import { forget, interact, placeStations } from "./stations";
 import { STATION_REACH } from "./content/params/stations";
 import { SITE } from "./content/params/sites";
 import { sites as siteDefs } from "./content/sites";
-import { fieldRng, sweepClearedField, interactInZone, withFieldSeed, zoneSeed } from "./zones";
-import { applyChoice, banishKey, newMoveState, offerKey, rollRewardChoices } from "./upgrades";
+import {
+  expireTrades,
+  fieldRng,
+  sweepClearedField,
+  interactInZone,
+  interactTrade,
+  withFieldSeed,
+  zoneSeed,
+} from "./zones";
+import {
+  applyChoice,
+  banishKey,
+  megaMoveToLearn,
+  newMoveState,
+  offerKey,
+  rollRewardChoices,
+} from "./upgrades";
 import { TICK, type World } from "./state/world";
 import type { Command } from "./state/commands";
 import type { LabBonuses, Pickup, Player } from "./state/entities";
 import { scheduleField } from "./field-events";
-import { updateWeather } from "./weather";
+import { tryMegaEvolution } from "./evolution";
+import { setDrought, updateWeather } from "./weather";
 import { updateEncounters } from "./encounters";
 import { interactSite, placeSites, updateSites } from "./sites/index";
 import { hypot } from "./math";
@@ -49,18 +81,35 @@ import { applyMovementCommand, movePlayer, rechargeDash } from "./player-movemen
  * 背包 items owned from the start at level 1. Omitted means none.
  */
 export interface Loadout {
+  unlocks?: readonly UnlockId[];
   archive?: readonly ItemId[];
   backpack?: readonly ItemId[];
 }
 
 export interface RunConfig {
+  /** Shared content uses the host’s unlocks; each seat carries its own in its loadout. */
+  unlocks?: readonly UnlockId[];
+  mode: World["mode"];
+  rules: readonly RuleId[];
   stage: StageId;
   /** Non-forest fixtures and tools provide the entered-map prefix explicitly. */
   route?: readonly StageId[];
   seed: number;
   difficulty: Difficulty;
-  /** Each peer's lab bonuses and loadout travel with the config; omitted means none. */
-  players: readonly ({ starter: StarterId; shiny: boolean; lab?: LabBonuses } & Loadout)[];
+  /** Each peer's lab bonuses, bond and loadout travel with the config; omitted means none. */
+  players: readonly ({
+    trainer: TrainerId;
+    starter: StarterId;
+    shiny: boolean;
+    lab?: LabBonuses;
+  } & Loadout &
+    BondSetup)[];
+}
+
+interface BondSetup {
+  bond?: number;
+  /** Bought levels of the selected partner's node. */
+  bondLab?: number;
 }
 
 /** Shared scratch grid; stepWorld is synchronous, so two worlds never use it at once. */
@@ -71,11 +120,17 @@ export function createPlayer(
   starter: StarterId,
   x: number,
   lab: LabBonuses = NO_LAB,
-  loadout?: Loadout & { rng: Rng },
+  loadout?: Loadout & BondSetup & { trainer: TrainerId; rng: Rng },
 ): Player {
   const def = starters[starter];
+  const { bond = 0, bondLab = 0 } = loadout ?? {};
+  const carriedStone = loadout?.backpack?.find((id) => megaStones.has(id));
+  if (carriedStone) throw new Error(`${items[carriedStone].name} 只能从本局的守卫奖杯获得。`);
   const player: Player = {
     id,
+    trainer: loadout ? loadout.trainer : DEFAULT_TRAINER,
+    assistReady: 0,
+    assistBuffs: {},
     starter,
     x,
     z: 0,
@@ -90,12 +145,16 @@ export function createPlayer(
     vx: 0,
     vz: 0,
     stage: 0,
+    mega: null,
+    abilitySlot: 0,
+    lightningRodTime: 0,
     hp: 0, // max HP, set below once the carried items are on
     shield: 0,
     lastHurt: 0,
     alive: true,
     choosing: true,
     rescue: null,
+    tradeRequest: null,
     level: 1,
     xp: 0,
     xpNext: xpForLevel(1),
@@ -119,7 +178,13 @@ export function createPlayer(
     banished: (loadout?.archive ?? []).map(offerKey.item),
     revives: lab.rules.revives ?? 0,
     stardust: 0,
-    lab,
+    lab:
+      bond >= BOND_LAB_LEVEL && bondLab > 0
+        ? { ...lab, modifiers: [...lab.modifiers, bondLabModifier(starter, bondLab)] }
+        : lab,
+    bond,
+    bondEndure: bond >= BOND_ENDURE_LEVEL,
+    bondCure: bond >= BOND_CURE_LEVEL,
     training: { dmg: 0, hp: 0, speed: 0, area: 0, cd: 0 },
     tradeHp: 1,
     ult: newUltState(),
@@ -163,6 +228,12 @@ export function createWorldFromSeeds(
 export function createWorld(config: RunConfig): World {
   if (config.players.length === 0) throw new Error("至少需要一名玩家。");
   if (config.players.length > COOP_SCALING.length) throw new Error("最多支持四名玩家。");
+  if (config.mode === "tower") {
+    const stage = towerMap(config.seed, 1);
+    return withFieldSeed(mixSeed(config.seed, 1), (draw) =>
+      buildWorld({ ...config, stage }, [stage], draw, fieldRng(draw)),
+    );
+  }
   const route = initialRoute(config.stage, config.route);
   if (config.stage === "forest")
     return buildWorld(config, route, config.seed, createRng(config.seed));
@@ -174,6 +245,7 @@ export function createWorld(config: RunConfig): World {
 function buildWorld(config: RunConfig, route: StageId[], draw: number, rng: Rng): World {
   const built = generateMap(draw, stageDefs[config.stage].map);
   const world: World = {
+    mode: config.mode,
     stage: config.stage,
     route,
     marker: null,
@@ -181,6 +253,9 @@ function buildWorld(config: RunConfig, route: StageId[], draw: number, rng: Rng)
     seed: config.seed,
     rng,
     difficulty: config.difficulty,
+    rules: [...config.rules],
+    unlocks: [...(config.unlocks ?? config.players[0]!.unlocks ?? [])],
+    playerUnlocks: config.players.map((entry) => [...(entry.unlocks ?? [])]),
     time: 0,
     tick: 0,
     paused: false,
@@ -199,6 +274,9 @@ function buildWorld(config: RunConfig, route: StageId[], draw: number, rng: Rng)
     sites: [],
     eventsUsed: [],
     weather: null,
+    weatherSetAt: 0,
+    pledgeHits: [],
+    rainbowUntil: 0,
     silphScope: false,
     spawn: {
       credit: 0,
@@ -218,6 +296,7 @@ function buildWorld(config: RunConfig, route: StageId[], draw: number, rng: Rng)
   world.players = config.players.map((entry, index) =>
     createPlayer(index, entry.starter, spawnX(index, config.players.length), entry.lab, {
       ...entry,
+      backpack: world.rules.includes("no-items") ? [] : entry.backpack,
       rng: world.rng,
     }),
   );
@@ -299,6 +378,11 @@ export function applyCommand(
   }
   if (!player.alive) return;
   if (
+    (player.pending[0]?.source === "ability" || player.pending[0]?.source === "mega-move") &&
+    (command.t === "reroll" || command.t === "skip" || command.t === "banish")
+  )
+    return;
+  if (
     player.pending[0]?.offer?.kind === "deal" &&
     (command.t === "reroll" ||
       command.t === "banish" ||
@@ -308,6 +392,9 @@ export function applyCommand(
     return;
 
   switch (command.t) {
+    case "assist":
+      if (world.outcome === "playing" && !isFrozen(world)) activateAssist(world, player);
+      return;
     case "ult":
       if (!isFrozen(world)) {
         player.rescue = null;
@@ -342,7 +429,10 @@ export function applyCommand(
         index: command.index,
       });
       applyChoice(player, choice);
-      if (choice.kind === "item") pickEffects(world, player, choice.item);
+      if (choice.kind === "item") {
+        pickEffects(world, player, choice.item);
+        if (megaStones.has(choice.item)) settleMega(world, player);
+      }
       nextCard(world, player);
       return;
     }
@@ -426,6 +516,7 @@ export function applyCommand(
         return;
       }
       interact(world, player);
+      if (!player.dialog) interactTrade(world, player, isSeatPresent);
       return;
     case "reroll": {
       const pending = player.pending[0];
@@ -489,6 +580,8 @@ function step(
   updatePartners(ctx, dt);
   const remotePositions = shared ? world.players.slice(1).map(({ x, z }) => ({ x, z })) : [];
   updateHazards(world, dt);
+  // Enemies and hazards apply statuses after players act; settle them before publishing the tick.
+  for (const player of world.players) cureBondStatus(world, player);
   // Terrain/hazard health effects stay shared; remote owners already applied their displacement.
   if (shared)
     world.players
@@ -499,13 +592,21 @@ function step(
   // After pickups: a level-up this tick queues its card first, and the station waits for it.
 
   for (const player of world.players)
-    if (!player.alive && player.revives > 0) revive(world, player);
+    if (!player.alive && player.revives > 0 && !world.rules.includes("nuzlocke"))
+      revive(world, player);
   updateRescues(world, dt);
+  expireTrades(world);
   // A guardian falling on the tick the last player does still loses the run.
   if (world.players.every((player) => !player.alive)) world.outcome = "defeat";
   else sweepClearedField(world);
-  for (const player of world.players)
+  for (const player of world.players) {
+    decayAssistBuffs(player, dt);
     player.ult.protection = Math.max(0, Math.round((player.ult.protection - dt) / TICK) * TICK);
+  }
+}
+
+function settleMega(world: World, player: Player): void {
+  if (tryMegaEvolution(world, player) && currentAbility(player) === "drought") setDrought(world);
 }
 
 function updatePlayer(ctx: Ctx, player: Player, dt: number): void {
@@ -515,9 +616,16 @@ function updatePlayer(ctx: Ctx, player: Player, dt: number): void {
     player.pz = player.z;
   }
   if (!player.alive) return;
-  const stats = currentStats(player);
+  if (player.cardHold > 0) {
+    player.cardHold = Math.max(0, player.cardHold - dt);
+    if (player.cardHold === 0) {
+      if (!player.mega) settleMega(ctx.world, player);
+      else if (megaMoveToLearn(player)) queueCard(ctx.world, player, "mega-move");
+    }
+  }
+  const stats = currentStats(player, activeWeather(ctx.world));
+  player.lightningRodTime = Math.max(0, player.lightningRodTime - dt);
   player.invulnerable = Math.max(0, player.invulnerable - dt);
-  player.cardHold = Math.max(0, player.cardHold - dt);
   player.hurt = Math.max(0, player.hurt - dt);
   // Drains act on the tick their status was alive at the start of; the slow on what is left.
   const drain = drainRate(player, ctx.world.time);
@@ -572,7 +680,7 @@ function updatePickups(world: World, dt: number): void {
     const dx = player.x - pickup.x;
     const dz = player.z - pickup.z;
     const distance = hypot(dx, dz);
-    const stats = currentStats(player);
+    const stats = currentStats(player, activeWeather(world));
     if (pickup.kind !== "chest" && distance < stats.pickup) pickup.magnet = true;
     if (pickup.magnet && distance > 0.01) {
       // Clear rewards visibly converge even from the far edge; never credit them before arrival.
@@ -605,7 +713,9 @@ function collectPickup(world: World, pickup: Pickup, player: Player): void {
         gainXp(
           world,
           recipient,
-          pickup.value * currentStats(recipient).xp * coopScaling(teamSize(world)).xp,
+          pickup.value *
+            currentStats(recipient, activeWeather(world)).xp *
+            coopScaling(teamSize(world)).xp,
         );
       break;
     case "berry":

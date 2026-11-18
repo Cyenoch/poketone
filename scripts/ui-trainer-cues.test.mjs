@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { TrainerCues } from "../src/run/trainer-cues.ts";
 import { parsePick, validPick } from "../src/lobbyPick.ts";
 import { emptyProgress, parseProgress, recordRun } from "../src/run/progress.ts";
-import { trainerUnlocked } from "../src/trainers.ts";
+import { trainerTier, trainerUnlocked } from "../src/trainers.ts";
 
 const cue = (kind, local = true, trainer = "chengxi") => ({
   kind,
@@ -16,6 +16,7 @@ const cue = (kind, local = true, trainer = "chengxi") => ({
 
 test("trainer preference survives independent partner picks and rejects unknown identities", () => {
   const parsed = parsePick({
+    mode: "expedition",
     trainer: "yewei",
     starter: "squirtle",
     difficulty: 0,
@@ -39,11 +40,19 @@ test("simultaneous remote ultimates cannot replace the local trainer or stack a 
 
 test("Xiaqing unlocks on banked lifetime kills and follows imported progress", () => {
   const before = { ...emptyProgress(), kills: 4999, stardust: 200 };
-  const pick = { trainer: "xiaqing", starter: "squirtle", difficulty: 0, stage: "forest" };
+  const pick = {
+    mode: "expedition",
+    trainer: "xiaqing",
+    starter: "squirtle",
+    difficulty: 0,
+    stage: "forest",
+  };
   assert.equal(trainerUnlocked(before, "xiaqing"), false);
   assert.equal(validPick(before, pick).trainer, "chengxi", "a stored pick cannot bypass the lock");
   for (const outcome of ["victory", "defeat"]) {
     const after = recordRun(before, {
+      zones: outcome === "victory" ? 4 : 0,
+      danger: 0,
       outcome,
       starter: "squirtle",
       difficulty: 0,
@@ -87,4 +96,43 @@ test("a danger notice keeps the player's own ultimate and drops chatter and team
   cues.suppress("blocked");
   assert.equal(cues.read(10), null);
   assert.equal(cues.show(cue("deploy"), 20), true, "the opening plays under its own cover");
+});
+
+test("the player's own item call shows under danger and gives way to their ultimate", () => {
+  const cues = new TrainerCues();
+  cues.suppress("danger");
+  assert.equal(cues.show(cue("assist", false), 0), false, "a teammate's item waits out danger");
+  assert.equal(cues.show(cue("assist"), 0), true);
+  assert.equal(cues.show(cue("dialogue"), 10), false, "chatter never cuts the call");
+  assert.equal(cues.show(cue("ultimate"), 20), true);
+  assert.equal(cues.read(30).kind, "ultimate");
+});
+
+test("in-run lines grow closer with the partner's bond", () => {
+  assert.deepEqual([0, 1, 2, 3, 4, 5].map(trainerTier), [
+    "low",
+    "low",
+    "low",
+    "mid",
+    "mid",
+    "high",
+  ]);
+});
+
+test("an item thrown during an ultimate band shows beside it and never replaces or drops it", () => {
+  const cues = new TrainerCues();
+  cues.show(cue("ultimate"), 0);
+  assert.equal(cues.show(cue("assist"), 100), true);
+  assert.equal(cues.read(200).kind, "ultimate", "the ultimate band stays whole");
+  assert.equal(cues.aside(200).kind, "assist");
+  assert.equal(
+    cues.show(cue("assist", false), 300),
+    false,
+    "a teammate's item keeps off the player's call",
+  );
+  assert.equal(cues.aside(300).local, true);
+  assert.equal(cues.aside(1500), null, "the call ends after its own time");
+  cues.show(cue("assist", false), 2900);
+  assert.equal(cues.aside(2950).local, false);
+  assert.equal(cues.aside(3000), null, "and never outlives the band");
 });

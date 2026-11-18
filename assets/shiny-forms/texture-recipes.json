@@ -65,6 +65,25 @@
         [247, 156]
       ]
     },
+    "charizard-x": {
+      "skinValue": 1,
+      "keepSide": [
+        [260, 358],
+        [302, 358],
+        [302, 378],
+        [260, 378]
+      ]
+    },
+    "charizard-y": {
+      "skinValue": 1,
+      "keepSide": [
+        [0, 0],
+        [85, 0],
+        [85, 296],
+        [70, 301],
+        [0, 301]
+      ]
+    },
     "wartortle": {
       "shellSide": [
         [163, 361],
@@ -324,6 +343,25 @@
       ],
       "hueSelection": "Original H < 55° or H > 325° inside the polygon",
       "reason": "Brown irises in the existing illustrated portrait overlap shell hues. Restore them after applying the same model palette."
+    },
+    "charizard-y": {
+      "keepPortrait": [
+        [264, 150],
+        [270, 152],
+        [270, 170],
+        [275, 178],
+        [275, 196],
+        [268, 204],
+        [262, 209],
+        [256, 207],
+        [248, 200],
+        [246, 188],
+        [254, 182],
+        [258, 170],
+        [262, 158]
+      ],
+      "hueSelection": "Original H < 55° or H > 325° inside the polygon",
+      "reason": "The tail flame shares the body's orange hue. Keep its flame colours while the body turns purple."
     }
   }
 }

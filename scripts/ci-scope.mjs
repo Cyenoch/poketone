@@ -17,7 +17,11 @@ const files = full
       .filter(Boolean);
 const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 const simTests = pkg.scripts["test:sim"].match(/scripts\/[^\s]+\.mjs/g);
-const viewTests = ["scripts/view.test.mjs", "scripts/ultimate-fire-vfx.test.mjs"];
+const viewTests = [
+  "scripts/view.test.mjs",
+  "scripts/ultimate-fire-vfx.test.mjs",
+  "scripts/deep-build-vfx.test.mjs",
+];
 const deterministic = (file) =>
   /^(src\/run\/(sim\/|balance\/|lab\.ts$|createRun\.ts$)|scripts\/golden\.|package\.json$|bun\.lock$|tsconfig|patches\/)/.test(
     file,
@@ -33,7 +37,9 @@ const view =
     (file) =>
       /^(assets\/|public\/(art|models|textures)\/|src\/(run\/view\/|rendering\/|game\/models\/))/.test(
         file,
-      ) || /^scripts\/(view.*|ultimate-fire-vfx)\.test\.mjs$/.test(file),
+      ) ||
+      viewTests.includes(file) ||
+      /^scripts\/view.*\.test\.mjs$/.test(file),
   );
 appendFileSync(process.env.GITHUB_OUTPUT, `sim=${sim}\nview=${view}\n`);
 console.log(`Simulation tests: ${sim}; view tests: ${view}`);

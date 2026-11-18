@@ -1,9 +1,11 @@
+import type { AssistItem, TrainerId } from "../content/trainers";
 import type { AreaKind } from "../archetypes/index";
+import type { AbilityId } from "../content/abilities";
 import type { Archetype, MoveId, UpgradeStat } from "../content/moves";
 import type { ElementType } from "../content/elements";
 import type { HazardKind } from "../hazards";
 import type { EnemyId } from "../content/enemies";
-import type { Stage, StarterId } from "../content/lines/index";
+import type { MegaId, Stage, StarterId } from "../content/lines/index";
 import type { Modifier } from "../content/effects";
 import type { ItemId } from "../content/items";
 import type { EnemyStatusId, PlayerStatusId, StatusId } from "../content/statuses";
@@ -42,16 +44,19 @@ export interface ItemState {
 export type Rarity = 0 | 1 | 2 | 3;
 
 export type Choice =
-  | { kind: "move"; move: MoveId }
+  | { kind: "ability"; slot: 0 | 1; ability: AbilityId }
+  | { kind: "move"; move: MoveId; replace?: MoveId }
+  | { kind: "decline" }
   | {
       kind: "upgrade";
       move: MoveId;
       rarity: Rarity;
       rolls: { stat: UpgradeStat; value: number }[];
     }
-  | { kind: "item"; item: ItemId }
+  | { kind: "item"; item: ItemId; drop?: ItemId }
   /** 招式学习器盒: a rare chest card (params/cards.ts `TM_CASE`). */
   | { kind: "tm-case" }
+  | { kind: "stardust" }
   /** 训练: offered only when no move, upgrade or item is left (params/cards.ts `TRAIN`). */
   | { kind: "train"; stat: TrainStat };
 
@@ -98,7 +103,7 @@ export type RunRule =
   | "partners";
 
 /**
- * Account-wide lab (研究所) bonuses, as plain data so a host can receive them from each peer in
+ * Lab (研究所) bonuses, as plain data so a host can receive them from each peer in
  * `RunConfig`; the sim never reads the local save. Stat bonuses fold with every other source
  * (stats.ts); a rule missing from `rules` gets no bonus.
  */
@@ -110,13 +115,13 @@ export interface LabBonuses {
 export interface PendingChoice {
   /** Pick and reroll commands name the card they answer, so a repeated input cannot hit the next one. */
   id: number;
-  source: "level" | "chest";
+  source: "level" | "chest" | "ability" | "mega-move";
   /** Rolled when the card reaches the front of the queue; empty while it waits behind another. */
   options: Choice[];
   /** Event chests retain their rarity floor across queueing and rerolls. */
   minRarity?: Rarity;
   /** Special rewards keep the existing card UI and command identity. */
-  offer?: { kind: "trophy" } | { kind: "deal"; site: number };
+  offer?: { kind: "trophy"; megaStones?: true } | { kind: "deal"; site: number };
 }
 
 /** One status on a body (sim/status.ts); present only while `time` > 0. */
@@ -134,9 +139,17 @@ export interface ActiveStatus<Id extends StatusId = StatusId> {
 
 export interface Player {
   id: PlayerId;
-  /** The evolution line; the current form is `stageForm(starter, stage)`. */
+  trainer: TrainerId;
+  /** World time at which this seat can use its trainer item again. */
+  assistReady: number;
+  /** Remaining seconds, host-owned (unlike owner-side item trigger timers in fx). */
+  assistBuffs: Partial<Record<Exclude<AssistItem, "superPotion">, number>>;
+  /** The permanent branch overlays the final ordinary stage. */
   starter: StarterId;
   stage: Stage;
+  mega: MegaId | null;
+  abilitySlot: 0 | 1 | "hidden";
+  lightningRodTime: number;
   x: number;
   z: number;
   px: number;
@@ -164,6 +177,7 @@ export interface Player {
   /** Solo preference: cards open by the interact key, as in co-op. */
   manualCards?: true;
   rescue: { target: PlayerId; elapsed: number } | null;
+  tradeRequest: { target: PlayerId; expiresAtTick: number } | null;
   level: number;
   xp: number;
   xpNext: number;
@@ -191,6 +205,10 @@ export interface Player {
   /** 星星沙子 earned this run (fractional; banked rounded down). */
   stardust: number;
   lab: LabBonuses;
+  bond: number;
+  /** 挺住 lasts once per run; 自己治好 re-arms at the next field commit. */
+  bondEndure: boolean;
+  bondCure: boolean;
   /** 训练 cards taken, per stat. */
   training: Record<TrainStat, number>;
   /** Permanent for this run; each accepted Gengar trade multiplies the remaining max HP. */
@@ -274,6 +292,8 @@ export interface Enemy {
 }
 
 export interface Projectile {
+  /** All lanes of one 闪焰冲锋 share a recoil charge until their first contact. */
+  recoilCast?: number;
   id: number;
   owner: PlayerId;
   move: MoveId;
@@ -305,6 +325,7 @@ export interface Projectile {
 }
 
 export interface Area {
+  pledgeField?: "sea-of-fire" | "swamp";
   id: number;
   owner: PlayerId;
   move: MoveId | null;
@@ -388,6 +409,8 @@ export interface Hazard {
   rise: number;
   /** Enemy whose wind-up this is (-1: none); a caster killed or put to sleep before it lands cancels it. */
   caster: number;
+  /** Enemy that dealt the damage, retained after a wind-up detaches from its caster. */
+  source?: number;
 }
 
 export interface Pickup {

@@ -3,6 +3,7 @@ import type { TerrainUniforms } from "../terrain";
 import type { Decals } from "./decals";
 import type { Ribbons } from "./ribbons";
 import type { Sprites, SpriteSpec } from "./sprites";
+import { flame } from "./gl";
 import { compact } from "./pool";
 import type { Volumes } from "./volumes";
 
@@ -115,6 +116,8 @@ export interface Echo {
   c: number;
   seed: number;
   points: readonly number[];
+  /** Added in Mega Charizard X's blue flames: drawn in them for its whole life. */
+  blue: boolean;
 }
 
 const NO_POINTS: readonly number[] = [];
@@ -144,7 +147,7 @@ export class Echoes {
     if (this.live >= this.capacity) return;
     let echo = this.items[this.live];
     if (!echo) {
-      echo = { draw, age: 0, life, x, y, z, a, b, c, seed: 0, points };
+      echo = { draw, age: 0, life, x, y, z, a, b, c, seed: 0, points, blue: false };
       this.items.push(echo);
     }
     this.live++;
@@ -159,15 +162,19 @@ export class Echoes {
     echo.c = c;
     echo.seed = Math.random() * 100;
     echo.points = points;
+    echo.blue = flame.blue;
   }
 
   update(fx: Fx): void {
     this.step = fx.dt;
     this.live = compact(this.items, this.live, this.grow);
+    const was = flame.blue;
     for (let i = 0; i < this.live; i++) {
       const echo = this.items[i]!;
+      flame.blue = echo.blue;
       echo.draw(fx, echo, echo.age / echo.life);
     }
+    flame.blue = was;
   }
 
   private readonly grow = (echo: Echo): boolean => (echo.age += this.step) < echo.life;

@@ -10,13 +10,18 @@ import {
   type StatusDef,
   type StatusId,
 } from "./content/statuses";
-import type { ActiveStatus, Enemy } from "./state/entities";
+import { foldPhase } from "./content/params/tower";
+import { ABILITY_PARAMS } from "./content/abilities";
+import { currentAbility } from "./stats";
+import type { ActiveStatus, Enemy, Player } from "./state/entities";
+import type { World } from "./state/world";
 import { sin } from "./math";
 import { staggered } from "./poise";
 
 interface Holder<Id extends StatusId> {
   statuses: ActiveStatus<Id>[];
   ult?: { protection: number };
+  assistBuffs?: Player["assistBuffs"];
 }
 
 const def = (id: StatusId): StatusDef => statuses[id];
@@ -45,6 +50,15 @@ export function has<Id extends StatusId>(holder: Holder<Id>, id: NoInfer<Id>): b
  * Applies `time` seconds at `power` under the status' stacking rule; a `builds` status also counts a
  * charge per application (`inflict` turns it into its `into` status at `count`).
  */
+/** An ultimate's protection shrugs off control; Inner Focus (精神力) shrugs off a player's slow. */
+function shrugs(holder: Holder<StatusId>, id: StatusId): boolean {
+  if (holder.assistBuffs?.fullHeal) return true;
+  if ((holder.ult?.protection ?? 0) > 0 && control(id)) return true;
+  return (
+    id === "slow" && "abilitySlot" in holder && currentAbility(holder as Player) === "inner-focus"
+  );
+}
+
 export function apply<Id extends StatusId>(
   holder: Holder<Id>,
   id: NoInfer<Id>,
@@ -52,7 +66,7 @@ export function apply<Id extends StatusId>(
   power: number,
   source: number,
 ): void {
-  if ((holder.ult?.protection ?? 0) > 0 && control(id)) return;
+  if (shrugs(holder, id)) return;
   const { builds, stacking } = def(id);
   const active = find(holder, id);
   if (!active) {
@@ -84,7 +98,7 @@ export function sustain<Id extends StatusId>(
   time: number,
   source: number,
 ): void {
-  if ((holder.ult?.protection ?? 0) > 0 && control(id)) return;
+  if (shrugs(holder, id)) return;
   const active = find(holder, id);
   if (active) active.time = Math.max(active.time, time);
   else holder.statuses.push({ id, time, power: 0, source });
@@ -146,6 +160,14 @@ export function decay(holder: Holder<StatusId>, dt: number): void {
   holder.statuses.length = kept;
 }
 
+/** Player statuses are in application order; sustained fields can reapply on the next step. */
+export function cureBondStatus(world: World, player: Player): void {
+  if (!player.bondCure || !player.alive || player.statuses.length === 0) return;
+  player.statuses.shift();
+  player.bondCure = false;
+  world.events.push({ t: "bond-cure", player: player.id });
+}
+
 /** Enemy damage per second from DoT statuses (burn, poison). */
 export function dotRate(holder: Holder<StatusId>): number {
   let rate = 0;
@@ -177,9 +199,17 @@ export function drainAt(status: StatusDef, time: number): number {
 }
 
 /** Player HP lost per second to drain statuses at `time`. */
-export function drainRate(holder: Holder<StatusId>, time: number): number {
+export function drainRate(player: Player, time: number): number {
   let rate = 0;
-  for (const id of statusIds) if (def(id).drain && has(holder, id)) rate += drainAt(def(id), time);
+  for (const status of player.statuses) {
+    const d = def(status.id);
+    if (!d.drain) continue;
+    const ability = currentAbility(player);
+    if (ability === "magic-guard") continue;
+    const factor =
+      ability === "shed-skin" && status.id === "poison" ? ABILITY_PARAMS.shedSkinPoisonFactor : 1;
+    rate += drainAt(d, time) * factor;
+  }
   return rate;
 }
 
@@ -190,7 +220,7 @@ export function slowed(holder: Holder<StatusId>, speed: number, time: number, id
     const move = def(status).move;
     if (!move || move.kind === "stop" || !has(holder, status)) continue;
     if (move.kind === "factor") speed *= move.factor;
-    else speed *= sin(time * move.rate + id) > move.above ? 0 : move.factor;
+    else speed *= sin(foldPhase(time * move.rate + id)) > move.above ? 0 : move.factor;
   }
   return speed;
 }

@@ -7,7 +7,7 @@ import {
   PlaneGeometry,
   type ShaderMaterial,
 } from "three";
-import { FX_GLSL, fxMaterial, uploadRange, type FxUniforms, type Rgb } from "./gl";
+import { flame as caster, FX_GLSL, fxMaterial, uploadRange, type FxUniforms, type Rgb } from "./gl";
 import { compact } from "./pool";
 
 /** Procedural sprite silhouettes, drawn in the fragment shader (no textures). */
@@ -104,7 +104,12 @@ interface Particle {
   spin: number;
   spinSpeed: number;
   seed: number;
+  /** Written in Mega Charizard X's blue flames (`flame.blue` when emitted). */
+  blue: boolean;
 }
+
+/** Added to the shape slot of a sprite in blue flames; shapes stay below it. */
+const BLUE_SHAPE = 32;
 
 const STRIDE = 20;
 
@@ -403,7 +408,7 @@ vec4 spiral(vec2 p) {
 }
 
 void main() {
-  float shape = vMeta.x;
+  float shape = mod(vMeta.x, ${BLUE_SHAPE}.0);
   float age = vMeta.y;
   float seed = vMeta.z;
   float add = vAccent.a;
@@ -433,6 +438,7 @@ void main() {
   else if (shape < 21.5) c = gem(p, add);
   else c = spiral(p);
   c *= vBody.a;
+  if (vMeta.x > ${BLUE_SHAPE - 0.5}) c.rgb = blueFlame(c.rgb);
   if (c.r + c.g + c.b + c.a < 0.004) discard;
   gl_FragColor = c;
 }
@@ -523,6 +529,7 @@ export class Sprites {
         spin: 0,
         spinSpeed: 0,
         seed: 0,
+        blue: false,
       };
       this.pool.push(p);
     }
@@ -541,6 +548,7 @@ export class Sprites {
     p.spin = Math.random() * Math.PI * 2;
     p.spinSpeed = (Math.random() - 0.5) * 2 * spec.spin;
     p.seed = Math.random();
+    p.blue = caster.blue;
   }
 
   /**
@@ -576,6 +584,7 @@ export class Sprites {
       alpha * spec.alpha,
       age,
       seed,
+      caster.blue,
     );
   }
 
@@ -637,6 +646,7 @@ export class Sprites {
       alpha,
       t,
       p.seed,
+      p.blue,
     );
     return true;
   };
@@ -662,6 +672,7 @@ function write(
   alpha: number,
   age: number,
   seed: number,
+  blue: boolean,
 ): void {
   const { from, to, accent } = spec;
   data[o] = x;
@@ -673,7 +684,7 @@ function write(
   data[o + 6] = size;
   data[o + 7] = spec.stretch;
   data[o + 8] = spin;
-  data[o + 9] = spec.shape;
+  data[o + 9] = spec.shape + (blue ? BLUE_SHAPE : 0);
   data[o + 10] = from[0] + (to[0] - from[0]) * age;
   data[o + 11] = from[1] + (to[1] - from[1]) * age;
   data[o + 12] = from[2] + (to[2] - from[2]) * age;

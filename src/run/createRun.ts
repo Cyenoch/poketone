@@ -1,11 +1,22 @@
+import { settlementDex } from "./sim/encounters";
 import type { MultiplayerRun } from "../network/run";
+import { challengePayout, seatOutcome } from "./sim/challenge-result";
+import { snapshotWorld } from "./sim/snapshot";
+import type { RuleId } from "./sim/content/rules";
 import type { ActionInput, GameplayAction } from "../platform/input";
 import { Matrix4, Texture, type Material, type Object3D, type WebGLRenderer } from "three";
 import type { AppRenderer } from "../rendering/app-renderer";
 import type { GpuRunHud } from "../ui/gpu/run-hud";
 import type { UiInsets } from "../ui/gpu/viewport";
-import { moves, type MoveId } from "./sim/content/moves";
-import { starters, stageForm, type FormId, type StarterId } from "./sim/content/lines/index";
+import { isWeatherMove, moves, weatherMoves, type MoveId } from "./sim/content/moves";
+import {
+  megaStones,
+  starters,
+  stageForm,
+  type FormId,
+  type Stage,
+  type StarterId,
+} from "./sim/content/lines/index";
 import type { Difficulty } from "./sim/content/difficulties";
 import type { ElementType } from "./sim/content/elements";
 import { items, type ItemId } from "./sim/content/items";
@@ -21,13 +32,14 @@ import { archetypes } from "./sim/archetypes/index";
 import { playerStats, statBreakdown, type StatBreakdown } from "./sim/stats";
 import { TICK, type World } from "./sim/state/world";
 import { stageDefs } from "./sim/content/stages/index";
-import { nextField, routeStep } from "./sim/content/campaign";
+import { nextField, passedTowerFloors, routeStep } from "./sim/content/campaign";
 import type { ZoneExit } from "./sim/state/route";
 import type { Command } from "./sim/state/commands";
 import type {
   LabBonuses,
   MoveState,
   PendingChoice,
+  Player,
   PlayerId,
   StationKind,
 } from "./sim/state/entities";
@@ -35,19 +47,20 @@ import type { RunEvent } from "./sim/state/events";
 import { itemSlots, moveSlots } from "./sim/upgrades";
 import { fusionStatus, type FusionPart } from "./sim/fusion";
 import { rescueTarget } from "./sim/rescue";
-import { trainers, type TrainerId } from "../trainers";
+import { trainers, trainerTier, type TrainerId } from "../trainers";
 import {
   deployCall,
   ultimateCall,
+  assistCall,
   RELEASE as ULT_RELEASE_CUE,
   type TrainerCue,
 } from "./trainer-cues";
 import { DEPLOYMENT_MS } from "./view/deployment";
 import { COOP } from "./sim/content/params/coop";
 import { DASH_COOLDOWN } from "./sim/content/params/player";
-import { forgetRefund, stationHere } from "./sim/stations";
-import { nearestExit, zoneDef, zoneTime } from "./sim/currentZone";
-import { canLeave, enterZone, zoneAction, prepareZone } from "./sim/zones";
+import { forgetRefund, forgettableItem, stationHere } from "./sim/stations";
+import { nearestExit, zoneDef, zoneTime, zoneTimeLimit } from "./sim/currentZone";
+import { canLeave, enterZone, prepareZone, tradeAction, zoneAction } from "./sim/zones";
 import {
   cardShown,
   createWorldFromSeeds,
@@ -73,6 +86,7 @@ import { debugLayers, layerLegend, type DebugLayer } from "./dev/layers";
 import { createDevReadout } from "./dev/readout";
 import { createRunLog } from "./dev/runLog";
 import { createRunView, type RunView } from "./view/createRunView";
+import type { AssistItem } from "./sim/content/trainers";
 
 export const RUN_NOTICE_MS = { info: 900, danger: 2600, reward: 2600 };
 const dangerLabels = {
@@ -109,6 +123,11 @@ export interface TeamMate {
 }
 
 export interface RunSnapshot {
+  floor?: number;
+  trainer: TrainerId;
+  assistReady: number;
+  abilitySlot: Player["abilitySlot"];
+  rules: readonly RuleId[];
   stage: StageId;
   routeStep: number;
   exit: ZoneExit | null;
@@ -137,9 +156,17 @@ export interface RunSnapshot {
   pendingCount: number;
   rescueProgress: number | null;
   siteProgress: number | null;
-  weather: { id: WeatherId; phase: "forecast" | "active"; remaining: number } | null;
+  /** `seconds`: the active weather's full length (cast weather is shorter than field weather). */
+  weather: {
+    id: WeatherId;
+    phase: "forecast" | "active";
+    remaining: number;
+    seconds: number;
+  } | null;
   /** The level the front level-up card is for: one card per level, so later ones queue behind it. */
   cardLevel: number;
+  /** Evolution stage index, for ability cards. */
+  evolution: number;
   rerolls: number;
   skips: number;
   banishes: number;
@@ -161,7 +188,7 @@ export interface RunSnapshot {
     count: number;
     phase: World["zone"]["phase"];
     time: number;
-    finalSwarm: number;
+    finalSwarm: number | null;
   };
   outcome: World["outcome"];
   tmCase: boolean;
@@ -173,7 +200,16 @@ export interface RunSnapshot {
 }
 
 /** A station's prompt, the landmark's summon, or the exit the fallen guardian opened. */
-export type InteractPrompt = StationKind | SiteKind | "summon" | "leave" | "choices" | "rescue";
+export type InteractPrompt =
+  | StationKind
+  | SiteKind
+  | "summon"
+  | "leave"
+  | "choices"
+  | "rescue"
+  | "trade"
+  | "trade-accept"
+  | "trade-wait";
 
 function interactPrompt(
   world: World,
@@ -189,7 +225,7 @@ function interactPrompt(
   if (site) return site.kind;
   if (manualCards(world, player) && player.pending.length > 0) return "choices";
   const station = stationHere(world, player);
-  return station ? station.kind : null;
+  return station ? station.kind : tradeAction(world, player, isSeatPresent);
 }
 
 /** What an open station dialog shows; refunds already include the stardust-gain stat. */
@@ -218,16 +254,21 @@ function stationView(world: World, playerId: PlayerId): StationView | null {
     moves: player.moves.map((m) => ({
       id: m.id,
       level: m.level,
-      refund: Math.floor(forgetRefund(m, "move") * gain),
+      refund: Math.floor(forgetRefund(player, m, "move") * gain),
     })),
-    items: player.items.map((item) => ({
+    items: player.items.filter(forgettableItem).map((item) => ({
       ...item,
-      refund: Math.floor(forgetRefund(item, "item") * gain),
+      refund: Math.floor(forgetRefund(player, item, "item") * gain),
     })),
   };
 }
 
 export interface RunResult {
+  /** Floors actually passed in a tower run. Absent for expeditions. */
+  floor?: number;
+  /** Maps cleared, including the current one once its exit opens. */
+  zones: number;
+  danger: number;
   outcome: "victory" | "defeat";
   starter: StarterId;
   difficulty: Difficulty;
@@ -240,6 +281,51 @@ export interface RunResult {
   moves: { id: MoveId; level: number; damage: number }[];
   /** Items held at the end, the backpack's candidates. */
   items: ItemId[];
+}
+
+export function resultFor(world: World, seat: PlayerId): RunResult {
+  const player = world.players[seat]!;
+  const outcome = seatOutcome(world, player);
+  if (outcome === "playing") throw new Error(`席位 ${seat + 1} 尚未结算。`);
+  return {
+    outcome,
+    zones: world.route.length - Number(world.zone.phase === "active"),
+    ...(world.mode === "tower" ? { floor: passedTowerFloors(world) } : {}),
+    starter: player.starter,
+    difficulty: world.difficulty,
+    time: world.time,
+    level: player.level,
+    kills: player.kills,
+    dex: settlementDex(player),
+    ...challengePayout(world, player),
+    moves: player.moves.map(({ id, level, damage }) => ({ id, level, damage })),
+    // Backpack candidates: mega stones come only from this run's guardian trophy.
+    items: player.items.map((item) => item.id).filter((id) => !megaStones.has(id)),
+  };
+}
+
+/** A guest leaving between frames needs the same authoritative result as at the team's end. */
+export function bindCoopSettlement(
+  network: MultiplayerRun,
+  world: World,
+  report: (result: RunResult) => void,
+) {
+  if (network.host) {
+    network.session.departureTerminal = () => {
+      network.restoreHost(world);
+      const snapshot = snapshotWorld(world);
+      if (snapshot.outcome === "playing") snapshot.outcome = "defeat";
+      snapshot.events = [];
+      return { t: "terminal", map: world.map, snapshot, events: world.players.map(() => []) };
+    };
+  } else {
+    network.session.onQuitConfirmed = () => {
+      // A terminal from a later field need not warm a scene the player is leaving.
+      const next = network.takeMap();
+      if (!next) network.apply(world, 0);
+      report({ ...resultFor(next ?? world, network.player), outcome: "defeat" });
+    };
+  }
 }
 
 export interface RunCallbacks {
@@ -302,6 +388,12 @@ export interface RunHandle {
 const TELL_EARSHOT = 14;
 /** The heal ring is clearly out by this many ms after its pulse (view/vfx/zoneSkills.ts `mendRing`). */
 const HEAL_KEY_MS = 120;
+const ASSIST_SOUND: Record<AssistItem, SfxName> = {
+  xSpeed: "assist-x-speed",
+  superPotion: "assist-super-potion",
+  direHit: "assist-dire-hit",
+  fullHeal: "assist-full-heal",
+};
 const MAX_STEPS_PER_FRAME = 5;
 /** After a natural end the view plays on this long (the faint, the guardian's fall) before the
  *  result is reported; the sim is already ended and input is ignored. */
@@ -341,6 +433,33 @@ const CAST_SOUND: Partial<Record<ElementType, SfxName>> = {
   ground: "cast-ground",
 };
 
+/** Weather and pledge casts have their own sound instead of their element's generic cast. */
+const MOVE_CAST_SOUND: Partial<Record<MoveId, SfxName>> = {
+  "sunny-day": "cast-sunny-day",
+  "rain-dance": "cast-rain-dance",
+  sandstorm: "cast-sandstorm",
+  "grass-pledge": "cast-grass-pledge",
+  "fire-pledge": "cast-fire-pledge",
+  "water-pledge": "cast-water-pledge",
+  "flare-blitz": "flare-blitz",
+};
+/** A formed combo's cue by result. */
+const PLEDGE_FIELD_SOUND = {
+  "sea-of-fire": "field-sea-of-fire",
+  rainbow: "field-rainbow",
+  swamp: "field-swamp",
+} as const satisfies Record<Extract<RunEvent, { t: "pledge" }>["result"], SfxName>;
+/** A formation older than the cue (late network delivery) is old news: it stays silent. */
+const PLEDGE_CUE_WINDOW_MS = 600;
+/** The evolve light column opens after the 0.3 s freeze, about 90 ms into its life. */
+const EVOLVE_KEY_MS = 390;
+
+/** The stage the evolve event reached needs a trade (a confirmed swap or a spent linking cord). */
+function isTradeEvolution(starter: StarterId, stage: Stage): boolean {
+  const reached = starters[starter].stages[stage]!;
+  return reached.kind === "evolve" && reached.needs === "trade";
+}
+
 /** A move's slot reading: waiting for a target is ready (its 0.2 s retry is not a cooldown). */
 function moveReadiness(move: MoveState, cd: number): { ready: number; cd: number } {
   return { ready: move.waiting ? 1 : 1 - Math.max(0, move.cooldown) / cd, cd };
@@ -353,7 +472,7 @@ function snapshot(
   isSeatPresent?: (id: number) => boolean,
 ): RunSnapshot {
   const player = world.players[playerId]!;
-  const stats = playerStats(player);
+  const stats = playerStats(player, activeWeather(world));
   const boss = world.enemies.find((enemy) => enemy.id === world.bossId);
   const channel = world.sites.find(
     (site) =>
@@ -364,6 +483,7 @@ function snapshot(
   const channelRule = channel && siteDefs[channel.kind].interact;
   return {
     time: world.time,
+    rules: world.rules,
     hp: player.hp,
     maxHp: stats.maxHp,
     shield: player.shield,
@@ -378,6 +498,8 @@ function snapshot(
       ...moveReadiness(move, moveParams(move, stats, activeWeather(world)).cd),
     })),
     items: player.items.map((item) => ({ ...item })),
+    trainer: player.trainer,
+    assistReady: player.assistReady,
     dash: 1 - player.dashCooldown / DASH_COOLDOWN,
     dashes: player.dashes,
     dashMax: stats.dashCharges,
@@ -401,8 +523,10 @@ function snapshot(
               (world.time < world.weather.from ? world.weather.from : world.weather.until) -
                 world.time,
             ),
+            seconds: world.weather.until - world.weather.from,
           }
         : null,
+    evolution: player.stage,
     cardLevel: player.level + 1 - player.pending.filter((card) => card.source === "level").length,
     rerolls: player.rerolls,
     skips: player.skips,
@@ -415,6 +539,7 @@ function snapshot(
     ultWindup: player.ult.elapsed < 0 ? 0 : Math.max(0, ULT_WINDUP - player.ult.elapsed),
     ultProtection: player.ult.protection,
     form: formOf(player).id,
+    abilitySlot: player.abilitySlot,
     shiny: seatLooks[playerId]!,
     rampage: world.rampage,
     zone: {
@@ -422,12 +547,13 @@ function snapshot(
       count: stageDefs[world.stage].zones.length,
       phase: world.zone.phase,
       time: zoneTime(world),
-      finalSwarm: stageDefs[world.stage].duration,
+      finalSwarm: zoneTimeLimit(world),
     },
     stage: world.stage,
     routeStep: routeStep(world),
+    ...(world.mode === "tower" ? { floor: world.route.length } : {}),
     exit: nearestExit(world, player),
-    outcome: world.outcome,
+    outcome: seatOutcome(world, player),
     tmCase: player.tmCase,
     dialog: stationView(world, playerId),
     prompt: interactPrompt(world, player, isSeatPresent),
@@ -439,7 +565,7 @@ function snapshot(
         shiny: seatLooks[mate.id]!,
         level: mate.level,
         hp: Math.max(0, mate.hp),
-        maxHp: playerStats(mate).maxHp,
+        maxHp: playerStats(mate, activeWeather(world)).maxHp,
         alive: mate.alive,
       })),
   };
@@ -453,14 +579,18 @@ export function createRun(
   app: AppRenderer,
   hud: GpuRunHud,
   config: {
+    mode: World["mode"];
     /** The lobby starts a fresh run in the forest. */
     stage: StageId;
     route?: readonly StageId[];
+    rules: readonly RuleId[];
     starter: StarterId;
     shiny: boolean;
     trainer: TrainerId;
     difficulty: Difficulty;
     lab: LabBonuses;
+    bond: number;
+    bondLab: number;
     loadout: Loadout;
     sound: boolean;
     /** Developer mode: hitboxes, nav mask, flow arrows and a stats panel. */
@@ -605,8 +735,7 @@ export function createRun(
   let deployment: { elapsed: number; done: () => void; cue?: TrainerCue } | undefined;
   let nextDialogue = 45;
   let dialogueIndex = 0;
-  const trainerFor = (player: PlayerId): TrainerId =>
-    network ? network.config.players[player]!.trainer : config.trainer;
+  const trainerFor = (player: PlayerId): TrainerId => world.players[player]!.trainer;
   /** The cue fields that name who speaks: their trainer, partner type and seat. */
   const speaker = (player: PlayerId) => ({
     trainer: trainerFor(player),
@@ -645,7 +774,8 @@ export function createRun(
     touchTurn = 0;
     stick.x = stick.z = 0;
     for (let i = queue.length - 1; i >= 0; i--)
-      if (["move", "view", "dash", "ult", "interact"].includes(queue[i]!.t)) queue.splice(i, 1);
+      if (["move", "view", "dash", "ult", "assist", "interact"].includes(queue[i]!.t))
+        queue.splice(i, 1);
     if (network && !network.host && started && !disposed)
       network.submit([{ t: "move", player: PLAYER, x: 0, z: 0 }]);
   };
@@ -712,8 +842,8 @@ export function createRun(
       !world.players[PLAYER]?.dialog
     )
       callbacks.onPauseRequest("toggle");
-    else if (["dash", "ult", "interact"].includes(action) && !isFrozen(world))
-      queue.push({ t: action as "dash" | "ult" | "interact", player: PLAYER });
+    else if (["dash", "ult", "assist", "interact"].includes(action) && !isFrozen(world))
+      queue.push({ t: action as "dash" | "ult" | "assist" | "interact", player: PLAYER });
   }
   const blur = () => {
     cancelInput();
@@ -753,10 +883,18 @@ export function createRun(
   function drain(events: RunEvent[]): void {
     const fieldVisible = app.available && !menuPaused && !mapOpen && !callbacks.inputBlocked();
     const fieldSounds = new Set<SfxName>();
+    // The weather this player's own cast just set brings the cast sound; its onset cue would double it.
+    const castWeathers = new Set<WeatherId>(
+      events.flatMap((e) =>
+        e.t === "cast" && e.player === PLAYER && isWeatherMove(e.move)
+          ? [weatherMoves[e.move].weather]
+          : [],
+      ),
+    );
     if (fieldVisible)
       for (const event of events)
         if (
-          event.t === "weather" ||
+          (event.t === "weather" && !(event.phase === "start" && castWeathers.has(event.id))) ||
           event.t === "site" ||
           event.t === "shiny" ||
           event.t === "shiny-caught"
@@ -944,9 +1082,20 @@ export function createRun(
           if (event.player !== PLAYER) break;
           // Heavy beat without a pause: a short freeze, the banner and the new model.
           hitStop(0.3, 0.05);
-          // The light column opens after the 0.3 s freeze, about 90 ms into its life.
-          audio.sfx("evolve", { keyMs: 390 });
+          audio.sfx(
+            isTradeEvolution(world.players[PLAYER]!.starter, event.stage)
+              ? "trade-evolve"
+              : "evolve",
+            { keyMs: EVOLVE_KEY_MS },
+          );
           notify(event, evolveBanner(world.players[PLAYER]!.starter, event.stage), "reward");
+          speak(trainers[trainerFor(PLAYER)].evolve, network?.eventAgeMs(event) ?? 0);
+          break;
+        case "mega":
+          if (event.player !== PLAYER) break;
+          // Freezes like evolving; the sound waits for the shell to break (after the view's frame).
+          hitStop(0.3, 0.05);
+          notify(event, `超级进化！${formOf(world.players[PLAYER]!).name}`, "reward");
           speak(trainers[trainerFor(PLAYER)].evolve, network?.eventAgeMs(event) ?? 0);
           break;
         case "ult":
@@ -959,6 +1108,13 @@ export function createRun(
                   : ultimateCall(event.line, event.stage),
               ...speaker(event.player),
             },
+            network?.eventAgeMs(event) ?? 0,
+          );
+          break;
+        case "assist":
+          // Its sound starts where the throw is drawn popping (`view.assistPops`, below).
+          hud.trainers.show(
+            { kind: "assist", text: assistCall(event.item), ...speaker(event.player) },
             network?.eventAgeMs(event) ?? 0,
           );
           break;
@@ -1001,6 +1157,12 @@ export function createRun(
           speak(trainers[trainerFor(PLAYER)].revive, network?.eventAgeMs(event) ?? 0);
           hitStop(0.3, 0.1);
           break;
+        case "bond-endure":
+          if (event.player === PLAYER) notify(event, "挺住！", "reward");
+          break;
+        case "bond-cure":
+          if (event.player === PLAYER) notify(event, "自己治好！", "reward");
+          break;
         case "down": {
           // Reliable playback can arrive after a team revive or departure.
           const downed = world.players[event.player]!;
@@ -1014,10 +1176,19 @@ export function createRun(
           audio.sfx("hurt");
           flashHurt();
           break;
+        case "pledge": {
+          const ageMs = network?.eventAgeMs(event) ?? 0;
+          if (ageMs < PLEDGE_CUE_WINDOW_MS)
+            audio.sfx(PLEDGE_FIELD_SOUND[event.result], {
+              keyMs: -ageMs,
+              maxMs: PLEDGE_CUE_WINDOW_MS - ageMs,
+            });
+          break;
+        }
         case "cast": {
           if (event.player !== PLAYER) break;
           const move = moves[event.move];
-          const name = CAST_SOUND[move.type];
+          const name = MOVE_CAST_SOUND[event.move] ?? CAST_SOUND[move.type];
           if (!name || !archetypes[move.archetype].heavy) break;
           // The sound follows the shot or strike, not the cast.
           audio.sfx(name, { keyMs: event.windup * 1000 });
@@ -1151,7 +1322,7 @@ export function createRun(
     runLog?.observe(world, events);
     drain(events);
     if (!isFrozen(world) && world.outcome === "playing" && world.time >= nextDialogue) {
-      const lines = trainers[trainerFor(PLAYER)].lines;
+      const lines = trainers[trainerFor(PLAYER)].lines[trainerTier(world.players[PLAYER]!.bond)];
       speak(lines[dialogueIndex++ % lines.length]!);
       nextDialogue = world.time + 55;
     }
@@ -1169,20 +1340,27 @@ export function createRun(
     const remotePlayerSpeeds = network?.host ? network.presentHost(world) : undefined;
     if (ended && holdLeftMs > 0) {
       holdLeftMs -= deltaMs;
-      if (holdLeftMs <= 0) report();
+      if (holdLeftMs <= 0) report(resultFor(world, PLAYER));
     }
     // An ended run plays its end out, then holds its last picture under the result window, as a
     // paused one does.
     const frozen = isFrozen(world) || (world.outcome !== "playing" && holdLeftMs <= 0);
     const alpha = frozen ? 1 : network && !network.host ? network.alpha() : accumulator / TICK;
     const viewStart = performance.now();
-    view.frame(alpha, frozen ? 0 : simDt, events, yaw, remotePlayerSpeeds);
+    const subjectId = view.frame(alpha, frozen ? 0 : simDt, events, yaw, remotePlayerSpeeds);
+    if (view.megaShatters.includes(PLAYER)) audio.sfx("mega-evolve");
+    // Heard by the thrower and by whoever the sim says it reached, hitting on the drawn pop.
+    for (const pop of view.assistPops)
+      if (pop.player === PLAYER || pop.to.includes(PLAYER))
+        audio.sfx(ASSIST_SOUND[pop.item], { keyMs: -pop.late * 1000 });
     const self = world.players[PLAYER]!;
-    boundary?.update(self.x, self.z, frozen ? 0 : dt);
+    const subject = world.players[subjectId]!;
+    const viewYaw = subject === self ? yaw : subject.viewYaw;
+    boundary?.update(subject.x, subject.z, frozen ? 0 : dt);
     debug?.update(world);
     healthBars?.update(world, alpha, frozen ? 0 : simDt);
-    minimap?.update(world, alpha, yaw, frozen ? 0 : dt);
-    compass?.update(world, alpha, yaw, frozen ? 0 : dt);
+    minimap?.update(world, alpha, viewYaw, frozen ? 0 : dt, subjectId);
+    compass?.update(world, alpha, viewYaw, frozen ? 0 : dt, subjectId);
     hud.updateIndicators(world, PLAYER, view.camera, alpha, dt);
     const viewMs = performance.now() - viewStart;
     const still = view.camera.matrixWorld.equals(drawnCamera);
@@ -1248,39 +1426,22 @@ export function createRun(
       audio.music.play(null);
       // The guardian's fall freezes the screen for 0.35 s; the victory sting lands after the freeze,
       // not on the elite-kill sound (whose tail still overlaps its start).
-      audio.sfx(world.outcome === "victory" ? "victory" : "defeat", {
-        keyMs: world.outcome === "victory" ? 350 : 250,
+      const won = seatOutcome(world, world.players[PLAYER]!) === "victory";
+      audio.sfx(won ? "victory" : "defeat", {
+        keyMs: won ? 350 : 250,
       });
       holdLeftMs = hold ? END_HOLD_MS : 0;
     }
     if (!hold) {
       holdLeftMs = 0;
-      report();
+      report(resultFor(world, PLAYER));
     }
   }
 
-  function report(outcome = world.outcome): void {
+  function report(result: RunResult): void {
     if (reported || disposed) return;
     reported = true;
-    if (outcome !== "playing") {
-      const player = world.players[PLAYER]!;
-      callbacks.onEnd({
-        outcome,
-        starter: config.starter,
-        difficulty: config.difficulty,
-        time: world.time,
-        level: player.level,
-        kills: player.kills,
-        dex: structuredClone(player.dex),
-        stardust: Math.floor(player.stardust),
-        moves: player.moves.map((move) => ({
-          id: move.id,
-          level: move.level,
-          damage: move.damage,
-        })),
-        items: player.items.map((item) => item.id),
-      });
-    }
+    callbacks.onEnd(result);
   }
 
   // Every player's forms load with the run (loadRunAssets), so evolving never waits on the network.
@@ -1314,13 +1475,19 @@ export function createRun(
           : createWorldFromSeeds(
               {
                 stage: config.stage,
+                mode: network?.config.mode ?? config.mode,
+                rules: network?.config.rules ?? config.rules,
+                unlocks: network?.config.unlocks ?? config.loadout.unlocks,
                 route: network?.config.route ?? config.route,
                 difficulty: config.difficulty,
                 players: network?.config.players ?? [
                   {
                     starter: config.starter,
+                    trainer: config.trainer,
                     shiny: config.shiny,
                     lab: config.lab,
+                    bond: config.bond,
+                    bondLab: config.bondLab,
                     ...config.loadout,
                   },
                 ],
@@ -1328,6 +1495,7 @@ export function createRun(
               () => crypto.getRandomValues(new Uint32Array(1))[0]!,
             );
       if (disposed) return;
+      if (network) bindCoopSettlement(network, world, report);
       callbacks.onLoadStage?.(world.stage);
       callbacks.onLoadProgress?.(0.05);
       network?.loading(world);
@@ -1574,7 +1742,12 @@ export function createRun(
     },
     send(command) {
       if (failed || disposed) return;
-      if (command.t === "dash" || command.t === "ult" || command.t === "interact") {
+      if (
+        command.t === "dash" ||
+        command.t === "ult" ||
+        command.t === "assist" ||
+        command.t === "interact"
+      ) {
         actions.press(command.t);
         return;
       }
@@ -1584,7 +1757,6 @@ export function createRun(
         if (!started || disposed) return;
         if (network && !network.host) {
           network.quit();
-          report("defeat");
           return;
         }
         stepWorld(world, [command]);
@@ -1615,9 +1787,9 @@ export function createRun(
     },
     stats(): PlayerSheet {
       const player = world.players[PLAYER]!;
-      const stats = playerStats(player);
+      const stats = playerStats(player, activeWeather(world));
       return {
-        sheet: statBreakdown(player),
+        sheet: statBreakdown(player, activeWeather(world)),
         time: world.time,
         kills: player.kills,
         stardust: Math.floor(player.stardust),
@@ -1662,6 +1834,8 @@ export function createRun(
       if (import.meta.env.DEV) Reflect.deleteProperty(window, "__poketoneWorld");
       abort.abort();
       if (network && network.onError === fail) {
+        network.session.departureTerminal = undefined;
+        network.session.onQuitConfirmed = undefined;
         network.onError = () => {};
         network.resetInput = () => {};
         network.onPacket = () => {};

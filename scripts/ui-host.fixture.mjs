@@ -42,7 +42,7 @@ class Screen {
   setFullscreenAction() {}
   setCovered() {}
   setRevealed() {}
-  showSection() {}
+  showPlace() {}
   pointerDown() {}
   pointerMove() {}
   pointerUp() {
@@ -459,9 +459,9 @@ try {
   } else if (scenario === "settings-save-input") {
     s.host.registerScreen(new Screen());
     await images().uploaded();
+    s.press("south"); // Claim the pad on the screen below; the settings tree starts clean.
     s.update({ settingsOpen: true });
     s.host.sampleInput();
-    s.press("south"); // Claim the pad; this press is consumed.
     const settings = s.host.inspect().dialog;
     const ready = deferred();
     s.save.stage.wait = ready.promise;

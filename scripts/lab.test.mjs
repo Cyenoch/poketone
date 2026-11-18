@@ -1,3 +1,4 @@
+import { unlockIds } from "../src/run/sim/content/unlocks.ts";
 import assert from "node:assert/strict";
 import { routeTo, selectTestExit } from "./fixtures/route.mjs";
 import test from "node:test";
@@ -56,10 +57,12 @@ Object.defineProperty(globalThis, "localStorage", {
 
 const world = (lab) =>
   createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 7,
     difficulty: 0,
-    players: [{ starter: "charmander", lab }],
+    players: [{ trainer: "chengxi", starter: "charmander", lab }],
   });
 
 test("lab bonuses change the stats they name, and area still saturates through areaGrowth", () => {
@@ -266,11 +269,13 @@ test("a stardust pickup is credited once, scaled by stardust gain", () => {
 
 test("the last guardian reward and remaining ground stardust are carried out exactly once", () => {
   const w = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "tower",
     route: routeTo("tower"),
     seed: 7,
     difficulty: 0,
-    players: [{ starter: "charmander" }],
+    players: [{ trainer: "chengxi", starter: "charmander" }],
   });
   const player = w.players[0];
   w.pickups.push({ id: 9002, kind: "stardust", value: 5, x: 40, z: 40, magnet: false });
@@ -328,6 +333,8 @@ test("活力碎片 revives once at a share of max HP with invulnerability", () =
 });
 
 const result = (kills, stardust, items = []) => ({
+  zones: 0,
+  danger: 0,
   outcome: "defeat",
   starter: "charmander",
   difficulty: 0,
@@ -346,10 +353,19 @@ test("archived items never roll on level-up or chest cards, owned or not", () =>
   const progress = setArchive({ ...emptyProgress(), lab: { archive: 6 } }, archive);
   assert.throws(() => setArchive(progress, [...archive, "leftovers"]), /已满/);
   const w = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 5,
     difficulty: 0,
-    players: [{ starter: "charmander", archive: progress.archive, backpack: ["life-orb"] }],
+    players: [
+      {
+        trainer: "chengxi",
+        starter: "charmander",
+        archive: progress.archive,
+        backpack: ["life-orb"],
+      },
+    ],
   });
   const player = w.players[0];
   player.level = 12;
@@ -379,7 +395,13 @@ test("研究 speeds unlock progress: Pikachu joins after 2,500 / 1.5 kills at le
   assert.equal(starterUnlocked(recordRun(emptyProgress(), result(1667, 0)), "pikachu"), false);
 });
 
-const win = (starter, difficulty) => ({ ...result(0, 0), outcome: "victory", starter, difficulty });
+const win = (starter, difficulty) => ({
+  ...result(0, 0),
+  zones: 4,
+  outcome: "victory",
+  starter,
+  difficulty,
+});
 
 test("a research partner joins at its points: Geodude at 8,000, the lock line counting toward it", () => {
   const short = { ...emptyProgress(), research: 7999 };
@@ -439,10 +461,12 @@ test("the backpack saves up to its slots and the next run starts with its items 
   );
   const carried = progress.backpack;
   const w = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 5,
     difficulty: 0,
-    players: [{ starter: "charmander", backpack: carried }],
+    players: [{ trainer: "chengxi", starter: "charmander", backpack: carried }],
   });
   const player = w.players[0];
   assert.deepEqual(player.items, [
@@ -475,10 +499,16 @@ test("a carried Loaded Dice rolls this run's first level, fills HP, and keeps th
   ]);
   saveProgress(progress);
   const config = {
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 8,
+    unlocks: unlockIds,
     difficulty: 0,
-    players: [{ starter: "charmander" }, { starter: "squirtle" }],
+    players: [
+      { trainer: "chengxi", starter: "charmander" },
+      { trainer: "chengxi", starter: "squirtle" },
+    ],
   };
   const carried = createWorld({
     ...config,
@@ -530,10 +560,14 @@ test("a carried Loaded Dice rolls this run's first level, fills HP, and keeps th
 
 test("carried Rare Candy does not replay its card's immediate level grants", () => {
   const w = createWorld({
+    mode: "expedition",
+    rules: [],
     stage: "forest",
     seed: 7,
     difficulty: 0,
-    players: [{ starter: "charmander", backpack: ["rare-candy", "loaded-dice"] }],
+    players: [
+      { trainer: "chengxi", starter: "charmander", backpack: ["rare-candy", "loaded-dice"] },
+    ],
   });
   assert.equal(w.players[0].level, 1);
   assert.equal(w.players[0].pending.length, 0);
@@ -546,7 +580,7 @@ test("recordRun banks a run's stardust, win or lose, with lifetime kills; crossi
   assert.equal(progress.stardust, 210);
   assert.equal(starterUnlocked(progress, "pikachu"), false);
   assert.equal(starterUnlocked(progress, "charmander"), true);
-  progress = recordRun(progress, { ...result(1200, 150), outcome: "victory" });
+  progress = recordRun(progress, { ...result(1200, 150), zones: 4, outcome: "victory" });
   saveProgress(progress);
   assert.equal(progress.stardust, 360);
   assert.equal(progress.kills, 2500);

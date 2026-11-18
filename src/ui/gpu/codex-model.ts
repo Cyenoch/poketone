@@ -2,6 +2,7 @@ import { Content } from "@pmndrs/uikit";
 import {
   AnimationMixer,
   Box3,
+  Color,
   DataTexture,
   DirectionalLight,
   Group,
@@ -32,6 +33,7 @@ import {
   yawFor,
 } from "../../run/view/assets";
 import { shinyLook } from "../../run/view/shiny";
+import { ui } from "./tokens";
 import type { EnemyId } from "../../run/sim/content/enemies";
 
 /** Idle turn (rad/s), the pause after the player turns it, and the turn per arrow key / pixel. */
@@ -204,7 +206,8 @@ function frame(camera: PerspectiveCamera, radius: number, aspect: number): void 
  * Shows a picture of an opaque model over a clear background, which is premultiplied. The window
  * fades it through `opacity`; the inherited UIKit text colour must not tint it.
  */
-function pictureMaterial(name: string, map: Texture): MeshBasicMaterial {
+/** `silhouette`: the picture's shape only, in ink (a species never met). */
+function pictureMaterial(name: string, map: Texture, silhouette = false): MeshBasicMaterial {
   const material = new MeshBasicMaterial({
     map,
     transparent: true,
@@ -216,11 +219,17 @@ function pictureMaterial(name: string, map: Texture): MeshBasicMaterial {
     shader.fragmentShader = shader.fragmentShader.replace(
       "#include <map_fragment>",
       `vec4 shot=texture2D(map,vMapUv);
-      diffuseColor=vec4(shot.a>0.?shot.rgb/shot.a:vec3(0.),shot.a*opacity);`,
+      diffuseColor=vec4(${silhouette ? SILHOUETTE_INK : "shot.a>0.?shot.rgb/shot.a:vec3(0.)"},shot.a*opacity);`,
     );
   };
   return material;
 }
+
+/** The ink (`ui.ink`) as linear RGB: the picture shader writes linear colour. */
+const SILHOUETTE_INK = (() => {
+  const c = new Color(ui.ink);
+  return `vec3(${c.r.toFixed(4)},${c.g.toFixed(4)},${c.b.toFixed(4)})`;
+})();
 
 function pictureContent(mesh: Mesh): Content {
   const content = new Content({
@@ -499,11 +508,15 @@ export class CodexThumbs {
   }
 
   /** A layout node that fills its parent with the model's picture once it exists. */
-  mount(model: CodexModel): Content {
+  mount(model: CodexModel, silhouette = false): Content {
     const key = pictureKey(model);
     let thumb = this.thumbs.get(key);
     if (!thumb) this.thumbs.set(key, (thumb = { meshes: new Set(), queued: false }));
-    const material = pictureMaterial("thumb", thumb.texture ?? this.empty);
+    const material = pictureMaterial(
+      silhouette ? "thumb-silhouette" : "thumb",
+      thumb.texture ?? this.empty,
+      silhouette,
+    );
     const mesh = new Mesh(this.geometry, material);
     mesh.visible = !!thumb.texture;
     const content = pictureContent(mesh);

@@ -2,6 +2,7 @@
 // build scenarios, move / item power budgets and advisory warnings.
 // bun run balance:model [difficulty=0] [lab=none] [campaign|stage] [step=0] [summonSeconds] [--json]
 // Campaign: four separate continuous routes. --json: average-profile calibration, no budget tables.
+// 对战塔 50 层使用 bun run balance:tower；单图 tower 3 指紫苑塔。
 import {
   clock,
   FUSION_TIME,
@@ -15,6 +16,14 @@ import {
   starterKits,
   warnings,
 } from "../src/run/balance/budget.ts";
+import { abilities } from "../src/run/sim/content/abilities.ts";
+import {
+  projectedAbility,
+  DEEP_LIMITS,
+  DEEP_PARAMETERS,
+  validateDeepBuild,
+  type DeepBuild,
+} from "../src/run/balance/deep-builds.ts";
 import { BUILD_SAMPLES, runModel, type RunModel } from "../src/run/balance/model.ts";
 import { labBonuses } from "../src/run/lab.ts";
 import { type LabLevels } from "../src/run/sim/content/lab.ts";
@@ -38,24 +47,55 @@ import {
 } from "../src/run/sim/content/params/campaign.ts";
 import { GUARDIAN_REFERENCE_SECONDS } from "../src/run/sim/content/params/pacing.ts";
 import type { EntryWindow } from "../src/run/balance/entry-windows.ts";
+import {
+  CHALLENGE_MODEL_LIMITS,
+  CHALLENGE_PARAMETERS,
+  parseModelRules,
+} from "../src/run/balance/challenge-rules.ts";
+import { rules as ruleDefs } from "../src/run/sim/content/rules.ts";
 import { FIELD_MODEL_LIMITS } from "../src/run/balance/field-events.ts";
+import { printBondComparison } from "./balance-bond.ts";
+import { printTrainerComparison } from "./balance-trainer.ts";
+import { megaGrant, printMegaComparison } from "./balance-mega.ts";
+
+const json = process.argv.includes("--json");
+const bondReport = process.argv.includes("--bond");
+const trainerReport = process.argv.includes("--trainer");
+const args = process.argv.filter((arg) => !["--json", "--bond", "--trainer"].includes(arg));
+if (args.includes("--help")) {
+  console.log(
+    "用法：bun run balance:model [难度] [研究所] [campaign|地图] [路线位置] [召唤秒数] [--json] [--bond] [--trainer]\n" +
+      "  --bond / --trainer 追加羁绊、训练师对照（很慢；也可单独运行 scripts/balance-bond.ts、balance-trainer.ts）\n" +
+      "对战塔 50 层：bun run balance:tower [样本数] [种子] [--json]\n" +
+      "紫苑塔单图：bun run balance:model 0 none tower 3",
+  );
+  process.exit(0);
+}
+if (args[4] === "tower50" || (args[4] === "tower" && args[5] === undefined))
+  throw new Error("对战塔 50 层请用 bun run balance:tower；紫苑塔单图请显式传入 tower 3。");
 
 // Optional reduced diagnostic scope; defaults retain the full model and build sample count.
 const samples = process.env.BALANCE_SAMPLES ? Number(process.env.BALANCE_SAMPLES) : undefined;
 const fieldEvents = process.env.BALANCE_FIELD_EVENTS !== "0";
+// BALANCE_RULES=none|all|level-cap,alpha-elites
+const rules = parseModelRules(process.env.BALANCE_RULES);
 if (samples !== undefined && (!Number.isInteger(samples) || samples < 1))
   throw new Error("BALANCE_SAMPLES must be a positive integer.");
 const selectedStarters = process.env.BALANCE_STARTERS?.split(",") ?? starterOrder;
 if (selectedStarters.some((id) => !starterOrder.includes(id as (typeof starterOrder)[number])))
   throw new Error(`Unknown BALANCE_STARTERS: ${selectedStarters.join(",")}`);
 const roster = starterOrder.filter((id) => selectedStarters.includes(id));
+// BALANCE_DEEP_BUILD='{"slot":"hidden","weather":"sun","weatherRock":true}'
+const deepBuild: DeepBuild | undefined =
+  process.env.BALANCE_DEEP_BUILD === undefined
+    ? undefined
+    : JSON.parse(process.env.BALANCE_DEEP_BUILD);
+if (deepBuild !== undefined) for (const line of roster) validateDeepBuild(line, deepBuild);
 const entryCell = (w: EntryWindow | null) =>
   w
     ? `${w.complete}/${w.samples} full, ${fixed(w.seconds)}s, mass ${fixed(w.weight, 2)} · stock ${fixed(w.living, 1)} (incl. ${fixed(w.elites, 1)} elites; ${fixed(w.fill, 2)} cap), backlog ${fixed(w.backlog, 1)}s · cap/in ${fixed(w.pressure, 2)} · landed ${fixed(w.landed * 100, 3)}% HP/s, loss ${fixed(w.lost, 2)} HP · field raw ${fixed(w.fieldRaw * 100, 3)}% HP/s · HP ${pct(w.frac)}, survive ${w.survive === null ? "censored" : pct(w.survive)} · partners ${fixed(w.partnerDps)} HP/s`
     : "not observed";
 
-const json = process.argv.includes("--json");
-const args = process.argv.filter((arg) => arg !== "--json");
 const difficulty = Number(args[2] ?? 0) as Difficulty;
 if (!difficulties[difficulty]) throw new Error(`未知难度 ${process.argv[2]}（0/1/2）。`);
 /** Lab presets: mid = 10 levels; slots4 = four move slots and one extra item slot. */
@@ -101,7 +141,16 @@ const fightAt = (run: RunModel, field: number) => {
 };
 
 const routes = campaign ? ALL_ROUTES : [null];
-const options = { difficulty, lab, summonSeconds, samples, fieldEvents, routeElites };
+const options = {
+  difficulty,
+  lab,
+  summonSeconds,
+  samples,
+  fieldEvents,
+  routeElites,
+  rules,
+  deepBuild,
+};
 if (json) {
   const rows = routes.flatMap((route) =>
     roster.map((starter) => {
@@ -116,6 +165,17 @@ if (json) {
         route,
         starter,
         zoneClears: run.zoneClears,
+        challenge: run.challenge,
+        buildFields: run.buildFields,
+        ...(deepBuild
+          ? {
+              abilities: starters[starter].stages.map(
+                (_, i) => abilities[projectedAbility(starter, i, deepBuild.slot)].name,
+              ),
+              tradeWait: run.tradeWait,
+              pledgePair: run.pledgePair,
+            }
+          : {}),
         evolutions: run.evolutions,
         outcome: run.outcome,
         fights: run.fights,
@@ -136,15 +196,20 @@ if (json) {
       fieldEvents,
       routeElites,
       summonSeconds,
+      ...(deepBuild ? { deepBuild, parameters: DEEP_PARAMETERS, deepLimits: DEEP_LIMITS } : {}),
       growth: ROUTE_GROWTH,
       entryClock: ROUTE_ENTRY_CLOCK,
       ramp: ENTRY_RAMP_SECONDS,
       limits: FIELD_MODEL_LIMITS,
+      ...(rules
+        ? { challengeParameters: CHALLENGE_PARAMETERS, challengeLimits: CHALLENGE_MODEL_LIMITS }
+        : {}),
       rows,
     }),
   );
   process.exit(0);
 }
+if (deepBuild) console.log(JSON.stringify(deepBuild), ...DEEP_LIMITS);
 const budgets = moveBudgets(step, stage, difficulty, average);
 const values = itemValues(step, stage, difficulty, average);
 const fusions = fusionBudgets(step, stage, difficulty, average);
@@ -171,6 +236,7 @@ for (const route of routes) {
     `Route elite rates ${routeElites ? "enabled" : "neutral control"}. Field mechanisms: ${fieldEvents ? "enabled, rewards consumed during progression" : "disabled for paired comparison"}; main beats use the shared seeded window scheduler.`,
   );
 
+  if (rules) console.log(`挑战规则 ${rules.map((id) => ruleDefs[id].name).join(" / ") || "无"}`);
   const all: RunModel[] = [];
   for (const starter of roster) {
     const runs = profiles.map((skill) =>
@@ -211,6 +277,22 @@ for (const route of routes) {
         ].join(" "),
       );
     }
+    if (mid.challenge) {
+      const { danger, multiplier, stardust, pressure, fields: ledger } = mid.challenge;
+      console.log(
+        `  危险度 ${danger} · 星沙 ${fixed(mid.stardust, 1)} × ${fixed(multiplier, 2)} = ${fixed(stardust, 1)}（average）`,
+      );
+      for (const [index, field] of fields.entries()) {
+        const { entry, preSummon } = pressure[index]!;
+        const { cappedXp, capStardust, replacedItems, itemStardust } = ledger[index]!;
+        console.log(
+          `    ${stageDefs[field.stage].name} · 入图 ${entryCell(entry)} · 召唤前 ${entryCell(preSummon)}`,
+        );
+        console.log(
+          `    溢出经验 ${fixed(cappedXp, 1)} → 星沙 ${fixed(capStardust, 1)} · 道具 ${fixed(replacedItems, 2)} → 星沙 ${fixed(itemStardust, 1)}`,
+        );
+      }
+    }
     const reached = (run: RunModel, level: number) => {
       const t = run.levelAt[level];
       return t === undefined ? "—" : clock(t);
@@ -222,8 +304,17 @@ for (const route of routes) {
       `  pacing: ${[4, 8, 16].map((level) => `L${level} ${band(runs, (r) => reached(r, level))}`).join(" · ")} · level ${[60, 180, 300, 480].map((t) => `@${clock(t)} ${band(runs, (r) => levelAt(r, t))}`).join(" ")}`,
     );
     console.log(
-      `  evolution/maturity (cumulative time, reached samples): ${evolutions.map((st) => `${st.kind === "evolve" ? st.form.name : "成熟"} L${st.at} ${band(runs, (r) => reached(r, st.at))}`).join(" · ")}`,
+      `  evolution/maturity level eligibility (cumulative time, reached samples): ${evolutions.map((st) => `${st.kind === "evolve" ? st.form.name : "成熟"} L${st.at} ${band(runs, (r) => reached(r, st.at))}`).join(" · ")}`,
     );
+    if (deepBuild) {
+      for (const field of mid.buildFields)
+        console.log(
+          `    ${field.stage} 存活加权场均 群体 ${fixed(field.swarmDps, 1)} HP/s · 单守卫 ${fixed(field.guardianDps, 1)} HP/s · 自施天气 ${fixed(field.selfWeatherShare === null ? null : 100 * field.selfWeatherShare, 1)}%`,
+        );
+      if (mid.tradeWait.length)
+        console.log("    通信达标样本等待秒数", JSON.stringify(mid.tradeWait));
+      if (mid.pledgePair) console.log("    两席誓约解析估算", JSON.stringify(mid.pledgePair));
+    }
     for (const e of mid.evolutions)
       console.log(
         `    L${e.level} (average; build counts and mean local times): ${fields
@@ -456,5 +547,26 @@ console.log(
 console.log(
   "Analytical estimates, not measured playthroughs; completed-only guardian costs have survivor bias, and incomplete fights cannot establish ease.",
 );
+// Mega branch of the Charmander line: no mega / Ｘ / Ｙ on the same routes (balance-mega.ts).
+if (campaign && roster.includes("charmander"))
+  printMegaComparison(
+    { difficulty, lab, summonSeconds, samples, fieldEvents, routeElites, rules },
+    routes as (typeof ALL_ROUTES)[number][],
+    megaGrant(),
+  );
+// Opt-in and slow: partner bond and trainer support comparisons on the same routes (balance-bond.ts, balance-trainer.ts).
+if (campaign && bondReport)
+  printBondComparison(
+    { difficulty, summonSeconds, samples, fieldEvents },
+    roster,
+    labName === "none" || labName === "mid" ? [labName] : ["none"],
+  );
+if (campaign && trainerReport)
+  printTrainerComparison(
+    { difficulty, summonSeconds, samples, fieldEvents },
+    roster,
+    labName === "none" || labName === "mid" ? labName : "mid",
+  );
 console.log(`${(performance.now() - started).toFixed(0)} ms`);
 for (const limit of FIELD_MODEL_LIMITS) console.log(`Field model: ${limit}`);
+if (rules) for (const limit of CHALLENGE_MODEL_LIMITS) console.log(`挑战模型 · ${limit}`);

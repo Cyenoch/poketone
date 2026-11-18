@@ -3,7 +3,7 @@ import { ENEMY_HAZARD, ACID, EGG } from "../content/params/enemy-skills";
 // egg bomb is the same lob, but it blasts its ring once on landing and leaves nothing; Exeggutor throws
 // three at once, one on the target and one to each side.
 
-import { damagePlayer } from "../hurt";
+import { damageFromHazard } from "./kit";
 import { sustain } from "../status";
 import { lineOfFire, stopAtCover } from "../sight";
 import { heightAt } from "../terrain";
@@ -24,6 +24,7 @@ function lob(
   toX: number,
   toZ: number,
   dmg: number,
+  source: number,
 ): void {
   const ground = heightAt(world.map.terrain, toX, toZ);
   const look = kind === "acid" ? ACID : EGG;
@@ -39,6 +40,7 @@ function lob(
     life: t,
     radius: look.radius,
     dmg,
+    source,
   });
 }
 
@@ -51,8 +53,9 @@ export function lobAcid(
   toX: number,
   toZ: number,
   dmg: number,
+  source: number,
 ): void {
-  lob(world, "acid", x, y, z, toX, toZ, dmg);
+  lob(world, "acid", x, y, z, toX, toZ, dmg, source);
 }
 
 /** The glob's flight time is the telegraph (the landing ring). */
@@ -66,6 +69,7 @@ function spit(world: World, enemy: Enemy, target: Player): void {
     target.x,
     target.z,
     enemy.dmg * ACID.splash,
+    enemy.id,
   );
 }
 
@@ -80,10 +84,10 @@ function eggs(spots: 1 | 3) {
     // Sideways from the line to the target.
     const sx = (-dz / distance) * EGG.side;
     const sz = (dx / distance) * EGG.side;
-    lob(world, "egg", enemy.x, y, enemy.z, target.x, target.z, dmg);
+    lob(world, "egg", enemy.x, y, enemy.z, target.x, target.z, dmg, enemy.id);
     if (spots === 3) {
-      lob(world, "egg", enemy.x, y, enemy.z, target.x + sx, target.z + sz, dmg);
-      lob(world, "egg", enemy.x, y, enemy.z, target.x - sx, target.z - sz, dmg);
+      lob(world, "egg", enemy.x, y, enemy.z, target.x + sx, target.z + sz, dmg, enemy.id);
+      lob(world, "egg", enemy.x, y, enemy.z, target.x - sx, target.z - sz, dmg, enemy.id);
     }
   };
 }
@@ -124,7 +128,7 @@ function land(world: World, glob: Hazard): void {
     radius: ACID.pool,
   });
   for (const player of world.players)
-    if (inPatch(world, pool, player, ground) && damagePlayer(world, player, glob.dmg, glob.element))
+    if (inPatch(world, pool, player, ground) && damageFromHazard(world, player, glob))
       sustain(player, "poison", ACID.poison, -1);
 }
 
@@ -153,7 +157,7 @@ function blast(world: World, egg: Hazard): void {
         player.z,
       )
     )
-      damagePlayer(world, player, egg.dmg, egg.element);
+      damageFromHazard(world, player, egg);
 }
 
 export const hazards = {

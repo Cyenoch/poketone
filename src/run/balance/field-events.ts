@@ -4,14 +4,17 @@ import { FIELD_EVENTS, SHINY, WEATHER } from "../sim/content/params/field-events
 import { SITE } from "../sim/content/params/sites";
 import { BERRY, LOOT, STARDUST } from "../sim/content/params/economy";
 import { ELITE } from "../sim/content/params/pacing";
+import { CHALLENGE_ALPHA } from "../sim/content/params/rules";
 import { MIN_UPGRADE_RARITY } from "../sim/content/params/cards";
 import { stageDefs, type StageId } from "../sim/content/stages/index";
 import { weatherDefs } from "../sim/content/weather";
 import { sites } from "../sim/content/sites";
 import type { ElementType } from "../sim/content/elements";
+import type { RuleId } from "../sim/content/rules";
 import type { ItemId } from "../sim/content/items";
 import type { Player, Rarity } from "../sim/state/entities";
 import type { FieldEventId, ScheduledBeat, SiteKind, WeatherId } from "../sim/state/field";
+import { unlockIds } from "../sim/content/unlocks";
 import type { World } from "../sim/state/world";
 import { scheduleField } from "../sim/field-events";
 import { chance, next, pick, range, type Rng } from "../sim/rng";
@@ -65,8 +68,11 @@ export function modelFieldSchedule(
   zone: number,
   rng: Rng,
   eventsUsed: FieldEventId[],
+  rules: readonly RuleId[] = [],
 ): ScheduledBeat[] {
   const projection = {
+    unlocks: unlockIds,
+    rules,
     stage,
     rng,
     eventsUsed,
@@ -167,8 +173,9 @@ export function newModelFieldEvents(
   rng: Rng,
   used: FieldEventId[],
   skill: SkillProfile,
+  rules: readonly RuleId[] = [],
 ): ModelFieldEvents {
-  const schedule = modelFieldSchedule(stage, zone, rng, used);
+  const schedule = modelFieldSchedule(stage, zone, rng, used, rules);
   const def = stageDefs[stage];
   const available = [...def.zones[zone]!.sites];
   const profile = fieldProfile(skill);
@@ -349,6 +356,7 @@ export interface SiteStepContext {
   weather: WeatherId | null;
   outbreak: EnemyId | null;
   berryMultiplier: number;
+  alphaElites?: boolean;
   focusedDps: (species: EnemyId, hp: number) => number;
 }
 
@@ -356,11 +364,14 @@ function siteEncounter(site: ModelSite, context: SiteStepContext, elite = true):
   const species = site.species!;
   const def = enemies[species];
   const ordinary = def.encounter ?? def;
+  const eliteHp =
+    elite && context.alphaElites ? CHALLENGE_ALPHA.hp : site.kind === "raid-den" ? SITE.raid.hp : 1;
   const hp =
     ordinary.hp *
     context.hpScale *
     (elite ? ELITE.hp : 1) *
-    (site.kind === "snorlax" ? SITE.snorlaxHp : site.kind === "raid-den" ? SITE.raid.hp : 1);
+    (site.kind === "snorlax" ? SITE.snorlaxHp : 1) *
+    eliteHp;
   const xp =
     ordinary.xp *
     context.xpScale *
@@ -395,6 +406,7 @@ function fightEncounter(
     ordinary.dmg *
     context.dmgScale *
     (encounter.elite ? ELITE.dmg : 1) *
+    (encounter.elite && context.alphaElites ? CHALLENGE_ALPHA.damage : 1) *
     fieldProfile(context.skill).hitRate *
     context.seconds;
   const weather = Math.min(

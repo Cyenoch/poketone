@@ -15,12 +15,13 @@ export const smite: ArchetypeDef = {
     const { world } = ctx;
     const targets = acquire(world, player, p.count, SMITE.range);
     if (targets.length === 0) return false;
+    const delay = p.immediate ? 0 : p.dur;
     for (const target of targets)
       area(world, player, def, p, "smite", {
         x: target.x,
         z: target.z,
-        delay: p.dur,
-        life: p.dur + SMITE_LINGER,
+        delay,
+        life: delay + SMITE_LINGER,
       });
     return true;
   },

@@ -1,6 +1,12 @@
+import { contentAvailable, knownUnlocks, type UnlockId } from "./sim/content/unlocks";
+import { unlockStatus } from "./unlocks";
 import { items, type ItemId } from "./sim/content/items";
-import { lineForms, starterOrder, type StarterId } from "./sim/content/lines/index";
+import { badgeIds, badges, badgeScore, type BadgeId } from "./sim/content/badges";
+import { knownRules, ruleIds, type RuleId } from "./sim/content/rules";
+import { lineForms, megaStones, starterOrder, type StarterId } from "./sim/content/lines/index";
 import type { Difficulty } from "./sim/content/difficulties";
+import { bondLabId, bondLevel, earnedBondPoints, MAX_BOND_LEVEL } from "./sim/content/bonds";
+import { BOND_LAB_LEVEL } from "./sim/content/params/bonds";
 import { labDefinitions, type LabId, type LabLevels } from "./sim/content/lab";
 import {
   BACKPACK_BASE,
@@ -10,7 +16,7 @@ import {
 import type { RunResult } from "./createRun";
 import { labItem, metaBonuses, nextCost } from "./lab";
 import { enemies, type EnemyId } from "./sim/content/enemies";
-import { isTrainerId, type TrainerId } from "../trainers";
+import { isTrainerId, type TrainerId } from "./sim/content/trainers";
 import { parseProgressV4, type ProgressV4 } from "./progress-v4";
 
 export const PROGRESS_STORAGE_KEY = "poketone.progress.v4";
@@ -41,9 +47,9 @@ export interface Progress {
   backpack: ItemId[];
   dex: Partial<Record<EnemyId, { seen: number; defeated: number; shiny: number }>>;
   looks: { owned: StarterId[]; worn: StarterId[] };
-  badges: string[];
-  rules: string[];
-  unlocks: string[];
+  badges: BadgeId[];
+  rules: RuleId[];
+  unlocks: UnlockId[];
   bonds: Partial<Record<StarterId, number>>;
   tower: Partial<Record<StarterId, { floor: number; difficulty: Difficulty }>>;
   seeds: SeedRecord[];
@@ -205,11 +211,14 @@ export function parseProgress(value: unknown): Progress {
   const owned = starterList(looks.owned, "拥有的异色外观");
   const worn = starterList(looks.worn, "穿戴的异色外观");
   if (worn.some((id) => !owned.includes(id))) throw new Error("未拥有的异色外观不能穿戴。");
-  // shortcut: these content tables land in their feature changes; until then only empty sets exist.
-  for (const field of ["badges", "rules", "unlocks"] as const) {
-    if (!Array.isArray(record[field]) || record[field].length !== 0)
-      throw new Error(`${field} 记录含未知 ID 或格式无效。`);
-  }
+  if (!knownRules(record.rules)) throw new Error("rules 记录含未知 ID 或格式无效。");
+  if (
+    !Array.isArray(record.badges) ||
+    !Array.from(record.badges).every((id) => badgeIds.includes(id)) ||
+    new Set(record.badges).size !== record.badges.length
+  )
+    throw new Error("badges 记录含未知 ID 或格式无效。");
+  if (!knownUnlocks(record.unlocks)) throw new Error("unlocks 记录含未知 ID 或格式无效。");
   const bonds: Progress["bonds"] = {};
   for (const [id, points] of Object.entries(objectRecord(record.bonds, "伙伴羁绊"))) {
     if (!starterOrder.includes(id as StarterId) || !isCount(points))
@@ -273,12 +282,12 @@ export function parseProgress(value: unknown): Progress {
     stardust: record.stardust,
     lab,
     archive: itemList(record.archive, "档案库"),
-    backpack: itemList(record.backpack, "背包"),
+    backpack: itemList(record.backpack, "背包", megaStones),
     dex,
     looks: { owned, worn },
-    badges: [],
-    rules: [],
-    unlocks: [],
+    badges: [...record.badges],
+    rules: [...record.rules],
+    unlocks: [...record.unlocks],
     bonds,
     tower,
     seeds,
@@ -288,10 +297,12 @@ export function parseProgress(value: unknown): Progress {
   return progress;
 }
 
-function itemList(value: unknown, name: string): ItemId[] {
+function itemList(value: unknown, name: string, excluded?: ReadonlySet<ItemId>): ItemId[] {
   if (
     !Array.isArray(value) ||
-    !Array.from(value).every((id) => typeof id === "string" && Object.hasOwn(items, id)) ||
+    !Array.from(value).every(
+      (id) => typeof id === "string" && Object.hasOwn(items, id) && !excluded?.has(id as ItemId),
+    ) ||
     new Set(value).size !== value.length
   )
     throw new Error(`${name}记录无效。`);
@@ -369,8 +380,20 @@ export function researchedKills(progress: Progress, kills: number): number {
   return kills * (1 + metaBonuses(progress.lab).research);
 }
 
+/** The selected partner's progression as plain run setup data. */
+export function partnerBondSetup(progress: Progress, starter: StarterId) {
+  const bond = bondLevel(progress.bonds[starter] ?? 0);
+  const bondLab = bond >= BOND_LAB_LEVEL ? (progress.lab[bondLabId(starter)] ?? 0) : 0;
+  return { bond, bondLab };
+}
+
 /** Records the run and banks its 星星沙子; the host commits the returned progress. */
 export function recordRun(progress: Progress, result: RunResult): Progress {
+  const { starter, zones, difficulty } = result;
+  const points = progress.bonds[starter] ?? 0;
+  const earned = earnedBondPoints(zones, result.outcome === "victory", difficulty);
+  const reachedMax =
+    bondLevel(points) < MAX_BOND_LEVEL && bondLevel(points + earned) === MAX_BOND_LEVEL;
   const shinySpecies = new Set(
     Object.entries(result.dex)
       .filter(([, entry]) => entry.shiny > 0)
@@ -379,17 +402,27 @@ export function recordRun(progress: Progress, result: RunResult): Progress {
   const gained = starterOrder.filter(
     (line) =>
       !progress.looks.owned.includes(line) &&
-      lineForms(line).some((form) => shinySpecies.has(form.id)),
+      ((line === starter && reachedMax) ||
+        lineForms(line).some((form) => shinySpecies.has(form.id))),
   );
   const next: Progress = {
     ...progress,
     runs: progress.runs + 1,
     clears: [...progress.clears],
     best: { ...progress.best },
+    badges:
+      result.outcome === "victory"
+        ? badgeIds.filter(
+            (id) =>
+              progress.badges.includes(id) ||
+              badges[id].score <= badgeScore(result.difficulty, result.danger),
+          )
+        : progress.badges,
     kills: progress.kills + result.kills,
     research: progress.research + Math.floor(researchedKills(progress, result.kills)),
     stardust: progress.stardust + result.stardust,
     dex: { ...progress.dex },
+    bonds: earned > 0 ? { ...progress.bonds, [starter]: points + earned } : progress.bonds,
     looks: gained.length
       ? { ...progress.looks, owned: [...progress.looks.owned, ...gained] }
       : progress.looks,
@@ -410,7 +443,22 @@ export function recordRun(progress: Progress, result: RunResult): Progress {
     time: result.time,
     kills: result.kills,
   };
-  if (better(record, progress.best[result.starter])) next.best[result.starter] = record;
+  if (result.floor !== undefined) {
+    const previous = progress.tower[result.starter];
+    if (
+      !previous ||
+      result.floor > previous.floor ||
+      (result.floor === previous.floor && result.difficulty > previous.difficulty)
+    ) {
+      next.tower = {
+        ...progress.tower,
+        [result.starter]: { floor: result.floor, difficulty: result.difficulty },
+      };
+    }
+  } else if (better(record, progress.best[result.starter])) next.best[result.starter] = record;
+  next.unlocks = unlockStatus(next)
+    .filter((entry) => entry.unlocked || entry.met)
+    .map((entry) => entry.id);
   return next;
 }
 
@@ -426,10 +474,28 @@ export function setShinyLook(progress: Progress, line: StarterId, worn: boolean)
   };
 }
 
+export function ruleAvailable(progress: Progress, id: RuleId): boolean {
+  return (
+    progress.clears[0] > 0 &&
+    ruleIds.includes(id) &&
+    contentAvailable(progress.unlocks, { rule: id })
+  );
+}
+
+export function availableSelection(
+  progress: Progress,
+  selected: readonly RuleId[] = progress.rules,
+): RuleId[] {
+  return ruleIds.filter((id) => selected.includes(id) && ruleAvailable(progress, id));
+}
+
 /** Buys the next level of a lab item; throws when maxed or unaffordable. */
 export function buyLab(progress: Progress, id: LabId): Progress {
+  const item = labItem(id);
+  if (item.starter && bondLevel(progress.bonds[item.starter] ?? 0) < BOND_LAB_LEVEL)
+    throw new Error(`羁绊需达到 Lv.${BOND_LAB_LEVEL}。`);
   const level = progress.lab[id] ?? 0;
-  const cost = nextCost(labItem(id), level);
+  const cost = nextCost(item, level);
   if (cost === null) throw new Error("已满级。");
   if (progress.stardust < cost) throw new Error("星星沙子不足。");
   const next: Progress = {

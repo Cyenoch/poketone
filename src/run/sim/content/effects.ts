@@ -69,7 +69,7 @@ export type StatId = (typeof statIds)[number];
 /** How a stat combines its modifiers: (base + Σadd) × (1 + Σpct) × Πmul ÷ Πdiv + Σextra. */
 export type ModifierOp = "add" | "pct" | "mul" | "div" | "extra";
 
-/** Blaze and Torrent Shell's low-HP bonus turns on below this share of max HP. */
+/** Starter abilities' low-HP bonuses turn on below this share of max HP. */
 export const LOW_HP = 0.4;
 
 /**
@@ -80,6 +80,8 @@ export const LOW_HP = 0.4;
 export type HitCondition =
   | ElementType
   | MoveCategory
+  /** Only a named move (not an item, partner or ultimate hit). */
+  | "move"
   | "elite"
   | "superEffective"
   /** The target is held: a `control` status or a stagger (Binding Band). */
@@ -94,9 +96,20 @@ export const PER_STATUS_CAP = 5;
  * A modifier that only holds some of the time: below `LOW_HP`, while the line can still evolve
  * (Eviolite), or on some hits (`HitCondition`).
  */
-export type Condition = "lowHp" | "canEvolve" | HitCondition;
-
-export const playerConditions = ["lowHp", "canEvolve"] as const satisfies readonly Condition[];
+export const playerConditions = [
+  "lowHp",
+  "fullHp",
+  "canEvolve",
+  "pikachu",
+  "sun",
+  "rain",
+  "sandstorm",
+  "poisoned",
+  "slowed",
+  "charged",
+] as const;
+export type PlayerCondition = (typeof playerConditions)[number];
+export type Condition = PlayerCondition | HitCondition;
 export const isHitCondition = (when: Condition): when is HitCondition =>
   !(playerConditions as readonly Condition[]).includes(when);
 
@@ -110,11 +123,7 @@ export type ModifierSource =
   | { kind: "train"; count: number };
 
 /** One change to one stat, as the fold applies it: `value` is the operand (+0.1, ×0.93, ÷1.04). */
-export interface Modifier {
-  stat: StatId;
-  op: ModifierOp;
-  value: number;
-  when?: Condition;
+export interface Modifier extends ModifierDef<number> {
   source: ModifierSource;
 }
 
@@ -124,6 +133,8 @@ export interface ModifierDef<V> {
   op: ModifierOp;
   value: V;
   when?: Condition;
+  /** An additional owner condition for a hit factor (e.g. low HP AND a grass hit). */
+  requires?: PlayerCondition;
 }
 
 /** Indexed by `Player.stage`. */
@@ -180,12 +191,22 @@ const statWords: Record<StatId, { name: string; percent?: true }> = {
 
 const conditionWords = {
   lowHp: `HP 低于 ${LOW_HP * 100}% 时`,
+  fullHp: "满 HP 时",
   canEvolve: "还能进化时",
+  pikachu: "皮卡丘的",
+  sun: "大晴天时",
+  rain: "下雨时",
+  sandstorm: "沙暴时",
+  poisoned: "中毒时",
+  slowed: "减速时",
+  charged: "吸收电弹后",
+  move: "招式",
   ...(Object.fromEntries(
     Object.entries(typeNames).map(([type, name]) => [type, `${name}属性`]),
   ) as Record<ElementType, string>),
   physical: "物理招式",
   special: "特殊招式",
+  status: "变化招式",
   elite: "对精英与首领",
   superEffective: "效果绝佳时",
   held: "对被控制的敌人",
@@ -209,11 +230,11 @@ const signed = (value: number, text: (magnitude: number) => string) =>
   `${value < 0 ? "-" : "+"}${text(Math.abs(value))}`;
 
 /** "伤害 +10%", "冷却 -7%", "HP 低于 40% 时伤害 +40%". */
-export function modifierText({ stat, op, value, when }: ModifierDef<number>): string {
+export function modifierText({ stat, op, value, when, requires }: ModifierDef<number>): string {
   const words = statWords[stat];
   const amount =
     op === "add" || op === "extra"
       ? signed(value, words.percent ? percent : number)
       : signed(op === "pct" ? value : op === "mul" ? value - 1 : 1 / value - 1, percent);
-  return `${when ? conditionWords[when] : ""}${words.name} ${amount}`;
+  return `${requires ? conditionWords[requires] : ""}${when ? conditionWords[when] : ""}${words.name} ${amount}`;
 }

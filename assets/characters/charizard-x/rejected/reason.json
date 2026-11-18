@@ -1,0 +1,8 @@
+{
+  "reason": "X: reversed left/right reference profiles caused duplicated head/torso and tail. Y: front/back tail on same image side caused a tail wrapping through the belly.",
+  "taskId": "bc2306fb-3420-4922-9bcb-fb5b95094f45",
+  "credits": 40,
+  "source": "generation-1/tripo-out/model.glb",
+  "replacement": "../generation-v2",
+  "notPublished": true
+}

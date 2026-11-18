@@ -7,6 +7,8 @@ import { snapshotWorld } from "../src/run/sim/snapshot.ts";
 import { createWorld, stepWorld } from "../src/run/sim/world.ts";
 
 const result = (dex) => ({
+  zones: 0,
+  danger: 0,
   outcome: "defeat",
   starter: "charmander",
   difficulty: 0,
@@ -48,10 +50,12 @@ test("未拥有的异色外观不能穿戴", () => {
 test("同种子、同操作的普通与异色伙伴产生相同世界摘要", () => {
   const digest = (shiny) => {
     const world = createWorld({
+      mode: "expedition",
+      rules: [],
       seed: 7,
       stage: "forest",
       difficulty: 0,
-      players: [{ starter: "gastly", shiny }],
+      players: [{ trainer: "chengxi", starter: "gastly", shiny }],
     });
     const hash = createHash("sha256").update(encode(snapshotWorld(world)));
     for (let tick = 0; tick < 240; tick++)

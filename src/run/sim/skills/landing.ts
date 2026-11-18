@@ -7,7 +7,7 @@ import { ENEMY_HAZARD, ENEMY_SKILL_RELOAD, LANDING } from "../content/params/ene
 import { predictTarget } from "../enemy-aim";
 import { enemies as enemyDefs } from "../content/enemies";
 import { STAGGER } from "../content/params/combat";
-import { damagePlayer } from "../hurt";
+import { damageFromHazard } from "./kit";
 import { bodyFits, hasWalkableLine } from "../nav/index";
 import { range } from "../rng";
 import { lineOfFire } from "../sight";
@@ -72,7 +72,7 @@ export function landingHit(world: World, circle: Hazard): void {
         player.z,
       )
     )
-      damagePlayer(world, player, circle.dmg, circle.element);
+      damageFromHazard(world, player, circle);
   circle.dmg = 0;
   circle.life = LANDING_RESIDUE;
 }

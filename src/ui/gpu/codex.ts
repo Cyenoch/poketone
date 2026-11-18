@@ -9,9 +9,10 @@ import { getAudio } from "../../audio/engine";
 import {
   codexEntry,
   codexSections,
-  dexBlock,
   formKey,
   hasShinyRecord,
+  researchedEntry,
+  researchView,
   type CodexBlock,
   type CodexEntry,
   type CodexRef,
@@ -46,6 +47,7 @@ import { SlantPlate } from "./slant-plate";
 import { UiStage } from "./stage";
 import { HARD_SHADOW, RADIUS, RADIUS_INNER, slantOf, ui } from "./tokens";
 import { GpuTooltip } from "./tooltip";
+import { researchTasks } from "./research-parts";
 import { balanceLines, breakLines, type GlyphWidths } from "./line-break";
 import type { UiInsets } from "./viewport";
 
@@ -55,6 +57,8 @@ export interface CodexOptions {
   onClose(): void;
   /** Outside a run the 图鉴 is a page on the paper ground (the shared top line), not a window. */
   page?: { settings(): void };
+  /** The page to open on (the 研究所's research shelf opens a species' page). */
+  entry?: string;
 }
 
 /** Each partner form's page, by the line it belongs to. */
@@ -340,7 +344,15 @@ export class GpuCodex {
     this.stage.root.add(this.panel);
     this.tooltip = new GpuTooltip(this.stage);
     this.focused = this.tabs[0]!;
-    this.showSection(0, true);
+    const opening = options.entry ? codexEntry(options.entry) : undefined;
+    this.showSection(
+      opening ? this.sections.indexOf(opening.section) : 0,
+      true,
+      opening?.entry.key,
+    );
+    // Opened on an entry: its row holds focus, so the list scrolls to it.
+    const row = opening && this.entries.find((candidate) => candidate.key === opening.entry.key);
+    if (row) this.focus(this.controls.indexOf(row), false);
     // A page comes in under the scene curtain; a window rises over what it covers.
     if (this.frame) {
       this.applyEnter();
@@ -514,7 +526,12 @@ export class GpuCodex {
   }
 
   private entryRow(entry: CodexEntry, owned: { dispose(): void }[]): Container {
-    const row = new CodexRow(this.stage, entry, this.thumbs, !!this.lock(entry));
+    const row = new CodexRow(
+      this.stage,
+      this.shown(entry),
+      this.thumbs,
+      !!this.lock(entry) || this.unseen(entry),
+    );
     row.fitTouch(this.stage.viewport.minTarget);
     owned.push(row);
     this.entries.push({
@@ -531,7 +548,7 @@ export class GpuCodex {
     if (key === this.selectedKey) return;
     this.selectedKey = key;
     if (this.controls.length) this.paintFocus();
-    const entry = codexEntry(key)!.entry;
+    const entry = this.shown(codexEntry(key)!.entry);
     this.disposePart(this.detail);
     this.details = [];
     this.modelNote = undefined;
@@ -553,14 +570,14 @@ export class GpuCodex {
     // Another page, or a record no longer there (imported progress), starts in its own colours.
     if (this.shinyOf !== key || !this.shinyRecord(entry)) this.shinyOf = undefined;
     root.add(this.hero(entry, lock, owned));
-    for (const block of this.pageBlocks(entry))
+    for (const block of entry.blocks)
       if (!lock || LOCKED_BLOCKS.has(block.title)) root.add(this.block(block, entry, owned));
     this.detail = { root, owned, wraps: this.building };
     this.building = [];
     this.detailPane.add(root);
     this.detailPane.scrollPosition.value = [0, 0];
-    // A partner not yet unlocked shows its portrait's silhouette, not its model.
-    this.model.show(lock ? undefined : this.picture(entry));
+    // A partner not yet unlocked, or a species never met, shows a silhouette, not its model.
+    this.model.show(lock || this.unseen(entry) ? undefined : this.picture(entry));
     this.paintModelNote();
     if (this.controls.length) this.rebuildControls();
     const plate = this.namePlate as SlantPlate | undefined;
@@ -583,12 +600,26 @@ export class GpuCodex {
     );
   }
 
-  /** An enemy's page carries the player's record of it after its numbers. */
-  private pageBlocks(entry: CodexEntry): readonly CodexBlock[] {
+  /** An enemy's page as far as the player has researched it (`researchedEntry`). */
+  private shown(entry: CodexEntry): CodexEntry {
     const model = entry.model;
-    if (model?.kind !== "enemy") return entry.blocks;
-    const [numbers, ...rest] = entry.blocks;
-    return [numbers!, dexBlock(this.options.progress.dex, model.id), ...rest];
+    return model?.kind === "enemy"
+      ? researchedEntry(this.options.progress.dex, entry, model.id)
+      : entry;
+  }
+
+  /** A species never met: its silhouette only. */
+  private unseen(entry: CodexEntry): boolean {
+    const model = entry.model;
+    return (
+      model?.kind === "enemy" && researchView(this.options.progress.dex, model.id) === "unseen"
+    );
+  }
+
+  /** A species whose research is complete: its page carries the done stamp. */
+  private researched(entry: CodexEntry): boolean {
+    const model = entry.model;
+    return model?.kind === "enemy" && researchView(this.options.progress.dex, model.id) === "done";
   }
 
   /** An enemy once a shiny of it has been defeated; a partner's form once its line's shiny look
@@ -756,7 +787,8 @@ export class GpuCodex {
       owned.push(ground);
       picture.add(ground.content);
     } else picture.setProperties({ backgroundColor: ui.mist });
-    if (entry.model && !lock) {
+    const hidden = !!lock || this.unseen(entry);
+    if (entry.model && !hidden) {
       picture.add(stack(this.model.mount(), 1));
       this.modelNote = new Text({ text: "", fontSize: 13, fontWeight: 800, color: ui.ink });
       picture.add(stack(this.modelNote, 2));
@@ -772,7 +804,7 @@ export class GpuCodex {
       });
     } else {
       const size = pokemon ? (compact ? 104 : 150) : compact ? 64 : 96;
-      const art = createArt(entry, size, this.thumbs, !!lock);
+      const art = createArt(entry, size, this.thumbs, hidden);
       owned.push(art);
       if (pokemon) art.root.setProperties({ marginBottom: compact ? 18 : 26 });
       picture.add(stack(art.root, 1));
@@ -841,9 +873,14 @@ export class GpuCodex {
       owned.push(chip);
       tags.add(chip.tag);
     }
-    if (entry.types.length || entry.tags.length) copy.add(stack(tags, 1));
+    if (this.researched(entry)) {
+      const stamp = slantTag("研究完成", { face: ui.ball, ink: ui.white, size: compact ? 13 : 14 });
+      owned.push(stamp);
+      tags.add(stamp.tag);
+    }
+    if (tags.children.length) copy.add(stack(tags, 1));
     // After the model's control, so focus reads stage → palette → the page's links.
-    if (entry.model && !lock && this.shinyRecord(entry))
+    if (entry.model && !hidden && this.shinyRecord(entry))
       copy.add(stack(this.palettePicker(entry, owned), 1));
     hero.add(copy);
     return hero;
@@ -931,7 +968,8 @@ export class GpuCodex {
     } else if (block.kind === "rolls") {
       body.setProperties({ alignItems: "flex-start" });
       body.add(...this.rolls(block));
-    } else for (const ref of block.refs) body.add(this.refChip(ref, entry, owned));
+    } else if (block.kind === "research") body.add(...researchTasks(block, owned));
+    else for (const ref of block.refs) body.add(this.refChip(ref, entry, owned));
     root.add(body);
     return root;
   }
@@ -1019,16 +1057,18 @@ export class GpuCodex {
   }
 
   private refChip(ref: CodexRef, from: CodexEntry, owned: { dispose(): void }[]): Container {
-    const target = ref.key ? codexEntry(ref.key)!.entry : undefined;
+    const target = ref.key ? this.shown(codexEntry(ref.key)!.entry) : undefined;
     const self = target?.key === from.key;
+    // A link's note tells what that species does (毒针扇射): kept until its research is done.
+    const masked = target?.model?.kind === "enemy" && !this.researched(target);
     const chip = new CodexChip(
       this.stage,
       target,
       target?.name ?? ref.label ?? "",
-      ref.note,
+      masked ? undefined : ref.note,
       self,
       this.thumbs,
-      !!target && !!this.lock(target),
+      !!target && (!!this.lock(target) || this.unseen(target)),
     );
     chip.fitTouch(this.stage.viewport.minTarget);
     owned.push(chip);
@@ -1664,9 +1704,11 @@ export class GpuCodexPage implements GpuScreen {
     fonts: FontFamilies,
     progress: Progress,
     callbacks: { back(): void; settings(): void },
+    entry?: string,
   ) {
     this.codex = new GpuCodex(fonts, {
       progress,
+      entry,
       onClose: () => {
         getAudio().sfx("ui-back");
         callbacks.back();

@@ -1,9 +1,10 @@
 import type { LineDef } from "./index";
 
+const traits = { normal: ["synchronize", "inner-focus"], hidden: "magic-guard" } as const;
+
 export const abra = {
   id: "abra",
   role: "念力控场",
-  ability: "synchronize",
   ultimate: "psychic-field",
   kit: ["confusion", "hypnosis", "psybeam", "psychic"],
   evolutionMoves: ["future-sight", "psyshock"],
@@ -13,6 +14,7 @@ export const abra = {
       at: 1,
       form: {
         id: "abra",
+        abilities: traits,
         name: "凯西",
         types: ["psychic"],
         hp: 85,
@@ -27,6 +29,7 @@ export const abra = {
       at: 28,
       form: {
         id: "kadabra",
+        abilities: traits,
         name: "勇基拉",
         types: ["psychic"],
         hp: 108,
@@ -39,8 +42,10 @@ export const abra = {
     {
       kind: "evolve",
       at: 54,
+      needs: "trade",
       form: {
         id: "alakazam",
+        abilities: traits,
         name: "胡地",
         types: ["psychic"],
         hp: 126,

@@ -168,7 +168,13 @@ function playRun(starter: StarterId, difficulty: Difficulty, seed: number, party
   let next = seed;
   const lab = party ? labBonuses({ party: 1 }) : undefined;
   const world = createWorldFromSeeds(
-    { stage: "forest", difficulty, players: [{ starter, lab }] },
+    {
+      mode: "expedition",
+      rules: [],
+      stage: "forest",
+      difficulty,
+      players: [{ trainer: "chengxi", starter, shiny: false, lab }],
+    },
     () => next++,
   );
   /** Second each move was learned, for its damage per second. */

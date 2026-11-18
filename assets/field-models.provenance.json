@@ -2,8 +2,8 @@
   "date": "2026-11-17",
   "generator": "Tripo CLI 0.8.1 / Blender 5.3.0",
   "rights": "Pokémon characters and official artwork belong to Nintendo / Game Freak / Creatures / The Pokémon Company. Noncommercial fan project; no asset sublicence implied. Scripted field prop geometry follows repository code licence.",
-  "creditsConsumed": 160,
-  "imageCost": "Connector returned no monetary quote. Four inherited field multiview sheets retained; no additional image generation in this field split. Mega image calls belong to add-mega-evolution.",
+  "creditsConsumed": 410,
+  "imageCost": "Connector returned no monetary quote. Six inherited sheets plus three new image calls (X new+correction, Y new). No duplicate Tripo generation.",
   "models": {
     "heracross": {
       "source": "assets/enemies/heracross/generation/tripo-out/model.glb",
@@ -94,6 +94,162 @@
         "z": 0.8943248987197876
       },
       "preparedSourceSha256": "8ed5043c64fa1d873eac74e71c15c4d4fe84f80ac6ea66d95c7d9b4b2fde658c"
+    },
+    "charizard-x": {
+      "source": "assets/characters/charizard-x/generation-v2/tripo-out/model.glb",
+      "artwork": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10034.png",
+      "sheetModel": "openrouter/google/gemini-nano-banana-2.1",
+      "references": "assets/characters/charizard-x/generation-v2",
+      "build": ["characters/charizard-x/blender/model.glb", "charizard-x.glb", null, 1024],
+      "status": "prepared-player",
+      "forward": "+X",
+      "facingYaw": -1.5707963267948966,
+      "rejected": [
+        {
+          "source": "assets/characters/charizard-x/rejected/generation-1/tripo-out/model.glb",
+          "generation": {
+            "taskId": "bc2306fb-3420-4922-9bcb-fb5b95094f45",
+            "model": "tripo-v3.1",
+            "smart_low_poly": true,
+            "face_limit": 1500,
+            "credits": 40
+          },
+          "reason": "X: reversed left/right reference profiles caused duplicated head/torso and tail. Y: front/back tail on same image side caused a tail wrapping through the belly."
+        }
+      ],
+      "generation": {
+        "taskId": "d0f5e4b4-ac2d-4161-8ac1-c63ecc660950",
+        "model": "tripo-v3.1",
+        "smart_low_poly": true,
+        "face_limit": 1500,
+        "credits": 40
+      },
+      "sourceSha256": "07957048a09f308898e874cbe639e21e1b8db0134880bc4d65bbaa39bdc834a6",
+      "sheet": "generation-v2/sheet-corrected.jpg",
+      "preparation": "assets/characters/charizard-x/prepare-megas.py: four skin influences, symmetrise(.25), open_arms(.5), pin_idle_feet; no additional FIXES in shared publisher",
+      "rig-check": {
+        "taskId": "d222ff3c-b918-4633-89c8-b37aa0b8902d",
+        "credits": 0
+      },
+      "rig": {
+        "taskId": "7f582257-95c3-401d-a632-fa2b26c29c2e",
+        "credits": 25
+      },
+      "animations": {
+        "taskId": "c1c0435c-d763-4ad4-9ada-d37156846a68",
+        "credits": 20
+      },
+      "formModel": {
+        "url": "/models/charizard-x.glb",
+        "runClipSpeed": 1.678,
+        "runCycles": 2,
+        "lift": {
+          "run": 0.161,
+          "idle": 0
+        },
+        "trail": "prints",
+        "tail": {
+          "parent": "Pelvis",
+          "carriers": ["Pelvis"],
+          "points": [
+            [0.02, 0.14, 0],
+            [-0.1, 0.11, 0],
+            [-0.25, 0.14, 0],
+            [-0.36, 0.28, 0],
+            [-0.45, 0.5, 0]
+          ],
+          "radius": 0.1
+        }
+      },
+      "measuredAtHeight": 1.6,
+      "preparedSourceSha256": "99613275d5d6d2ea794097a9fa89797b240ca3426243d5c7e18d7c48c85eb0da",
+      "output": "public/models/charizard-x.glb",
+      "outputSha256": "9a2c851aa5724c1afc153ff399f71dfe1c8ae36383a8c6b955639059b8e4f2e6",
+      "bytes": 922684,
+      "triangles": 3558,
+      "dimensions": {
+        "x": 0.9804219007492065,
+        "y": 0.7455976009368896,
+        "z": 1.0000009536743164
+      }
+    },
+    "charizard-y": {
+      "source": "assets/characters/charizard-y/generation-v2/tripo-out/model.glb",
+      "artwork": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10035.png",
+      "sheetModel": "openrouter/google/gemini-nano-banana-2.1",
+      "references": "assets/characters/charizard-y/generation-v2",
+      "build": ["characters/charizard-y/blender/model.glb", "charizard-y.glb", null, 1024],
+      "status": "prepared-player",
+      "forward": "+X",
+      "facingYaw": -1.5707963267948966,
+      "rejected": [
+        {
+          "source": "assets/characters/charizard-y/rejected/generation-1/tripo-out/model.glb",
+          "generation": {
+            "taskId": "442ad8d8-6d30-48f5-befb-e3c70be52f35",
+            "model": "tripo-v3.1",
+            "smart_low_poly": true,
+            "face_limit": 1500,
+            "credits": 40
+          },
+          "reason": "Front/back reference tail side was inconsistent; generated tail wraps across the abdomen. Mega Y silhouette also lacked the central horn/forearm winglets."
+        }
+      ],
+      "generation": {
+        "taskId": "867330f1-3ac1-47e9-a490-618f89e460e6",
+        "model": "tripo-v3.1",
+        "smart_low_poly": true,
+        "face_limit": 1500,
+        "credits": 40
+      },
+      "sourceSha256": "0c1a69fa6911c1824c31cabb0a3b82fd1aadecc4e4deb725d604e257f112cbec",
+      "sheet": "generation-v2/sheet.jpg",
+      "preparation": "assets/characters/charizard-x/prepare-megas.py: four skin influences, symmetrise(.25), open_arms(.5), pin_idle_feet; no additional FIXES in shared publisher",
+      "rig-check": {
+        "taskId": "59a3a59d-57df-43fd-a950-baa46135d3a2",
+        "credits": 0
+      },
+      "rig": {
+        "taskId": "5cca2fbb-ada1-4a93-b8e5-13c6da1e0c50",
+        "credits": 25
+      },
+      "animations": {
+        "taskId": "88daf9bb-f9a6-4aad-b65e-17a6131310cf",
+        "credits": 20
+      },
+      "formModel": {
+        "url": "/models/charizard-y.glb",
+        "runClipSpeed": 1.866,
+        "runCycles": 2,
+        "lift": {
+          "run": 0.14,
+          "idle": 0
+        },
+        "trail": "prints",
+        "tail": {
+          "parent": "Pelvis",
+          "carriers": ["Pelvis"],
+          "points": [
+            [0.03, 0.14, -0.04],
+            [-0.1, 0.09, -0.03],
+            [-0.25, 0.1, -0.18],
+            [-0.38, 0.25, -0.33],
+            [-0.42, 0.5, -0.33]
+          ],
+          "radius": 0.1
+        }
+      },
+      "measuredAtHeight": 1.6,
+      "preparedSourceSha256": "190d7d360b21b83f722d6fe4943a02b559aaa2d99a09c8077d6af0320c8e2a10",
+      "output": "public/models/charizard-y.glb",
+      "outputSha256": "09d627c6c933eae0174782efdcd2cb9defd9042f5650c8a82692737b83092cc8",
+      "bytes": 846048,
+      "triangles": 2732,
+      "dimensions": {
+        "x": 0.9060660600662231,
+        "y": 0.8395313024520874,
+        "z": 1.0000008344650269
+      }
     },
     "gengar-altar": {
       "source": "assets/field-sites/gengar-altar/generation/tripo-out/model.glb",
@@ -313,6 +469,11 @@
       "reason": "Existing published species reused unchanged; provenance remains in public/models/game-models.provenance.json"
     }
   },
+  "budget": {
+    "initialEstimate": 330,
+    "additionalCreditsAuthorized": 1000,
+    "note": "330 was a historical estimate, not a user budget cap. Lead authorized sheet/model corrections and subsequent rig/animations."
+  },
   "tasksIncrement": [
     {
       "asset": "enemies/heracross",
@@ -345,6 +506,46 @@
       "note": "Source and image references preserved alongside the asset."
     },
     {
+      "asset": "characters/charizard-x",
+      "step": "generation",
+      "taskId": "d0f5e4b4-ac2d-4161-8ac1-c63ecc660950",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-17",
+      "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
+      "note": "Source and image references preserved alongside the asset."
+    },
+    {
+      "asset": "characters/charizard-x",
+      "step": "generation-rejected",
+      "taskId": "bc2306fb-3420-4922-9bcb-fb5b95094f45",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-17",
+      "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
+      "note": "Preserved rejected source; see rejected/reason.json"
+    },
+    {
+      "asset": "characters/charizard-y",
+      "step": "generation",
+      "taskId": "867330f1-3ac1-47e9-a490-618f89e460e6",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-17",
+      "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
+      "note": "Source and image references preserved alongside the asset."
+    },
+    {
+      "asset": "characters/charizard-y",
+      "step": "generation-rejected",
+      "taskId": "442ad8d8-6d30-48f5-befb-e3c70be52f35",
+      "type": "multiview_to_model",
+      "credits": 40,
+      "date": "2026-11-17",
+      "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
+      "note": "Preserved rejected source; see rejected/reason.json"
+    },
+    {
       "asset": "field-sites/gengar-altar",
       "step": "generation",
       "taskId": "02fda21a-b58c-4b6c-9deb-79510e879914",
@@ -353,7 +554,61 @@
       "date": "2026-11-17",
       "workflow": "Official artwork -> openrouter/google/gemini-nano-banana-2.1 sheet -> split-sheet.py -> Tripo v3.1 smart_low_poly",
       "note": "Source and image references preserved alongside the asset."
+    },
+    {
+      "asset": "characters/charizard-x",
+      "step": "rig-check",
+      "taskId": "d222ff3c-b918-4633-89c8-b37aa0b8902d",
+      "type": "animate_prerigcheck",
+      "credits": 0,
+      "date": "2026-11-17",
+      "workflow": "Free prerig check confirmed biped riggable"
+    },
+    {
+      "asset": "characters/charizard-x",
+      "step": "rig",
+      "taskId": "7f582257-95c3-401d-a632-fa2b26c29c2e",
+      "type": "animate_rig",
+      "credits": 25,
+      "date": "2026-11-17",
+      "workflow": "rig-v3.0 biped; idle and run in place"
+    },
+    {
+      "asset": "characters/charizard-x",
+      "step": "animations",
+      "taskId": "c1c0435c-d763-4ad4-9ada-d37156846a68",
+      "type": "animate_retarget",
+      "credits": 20,
+      "date": "2026-11-17",
+      "workflow": "rig-v3.0 biped; idle and run in place"
+    },
+    {
+      "asset": "characters/charizard-y",
+      "step": "rig-check",
+      "taskId": "59a3a59d-57df-43fd-a950-baa46135d3a2",
+      "type": "animate_prerigcheck",
+      "credits": 0,
+      "date": "2026-11-17",
+      "workflow": "Free prerig check confirmed biped riggable"
+    },
+    {
+      "asset": "characters/charizard-y",
+      "step": "rig",
+      "taskId": "5cca2fbb-ada1-4a93-b8e5-13c6da1e0c50",
+      "type": "animate_rig",
+      "credits": 25,
+      "date": "2026-11-17",
+      "workflow": "rig-v3.0 biped; idle and run in place"
+    },
+    {
+      "asset": "characters/charizard-y",
+      "step": "animations",
+      "taskId": "88daf9bb-f9a6-4aad-b65e-17a6131310cf",
+      "type": "animate_retarget",
+      "credits": 20,
+      "date": "2026-11-17",
+      "workflow": "rig-v3.0 biped; idle and run in place"
     }
   ],
-  "integration": "Field-only add-field-events records. Append tasksIncrement once to public/models/game-models.provenance.json and increase creditsTotal by creditsConsumed; register models[name].build in MODELS and weldDecimationSeams in SEAM_REPAIRS. The 250-credit Mega generation/rejected/rig/animation records and shared authorization remain in the unsplit source for add-mega-evolution."
+  "integration": "Append tasksIncrement once to public/models/game-models.provenance.json and increase creditsTotal by creditsConsumed; register each models[name].build in MODELS, add models with weldDecimationSeams to SEAM_REPAIRS. Prepared Mega sources already include symmetry/contact fixes."
 }

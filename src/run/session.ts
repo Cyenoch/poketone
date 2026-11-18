@@ -1,4 +1,6 @@
 import type { MultiplayerRun } from "../network/run";
+import type { RuleId } from "./sim/content/rules";
+import type { BadgeId } from "./sim/content/badges";
 import {
   createRun,
   RUN_NOTICE_MS,
@@ -16,6 +18,7 @@ import type { Loadout } from "./sim/world";
 import { formatTime } from "./labels";
 import { GpuRunHud, type RunHudNotice } from "../ui/gpu/run-hud";
 import { GpuRunOverlays, type RunOverlayState } from "../ui/gpu/run-overlays";
+import type { BondGain } from "../ui/gpu/run-overlays-result";
 import type { FontFamilies } from "@pmndrs/uikit";
 import type { AppRenderer } from "../rendering/app-renderer";
 import { getAudio } from "../audio/engine";
@@ -30,6 +33,8 @@ export interface RunUiHost {
 }
 
 export interface RunSessionOptions {
+  mode: "expedition" | "tower";
+  rules: readonly RuleId[];
   multiplayer?: MultiplayerRun;
   stage: StageId;
   starter: StarterId;
@@ -37,6 +42,8 @@ export interface RunSessionOptions {
   trainer: TrainerId;
   difficulty: Difficulty;
   lab: LabBonuses;
+  bond: number;
+  bondLab: number;
   loadout: Loadout;
   backpack: { size: number; onKeep: (items: ItemId[]) => boolean } | null;
   onStarted: () => boolean;
@@ -47,7 +54,11 @@ export interface RunSessionOptions {
   devMode: boolean;
   pauseOnBlur: boolean;
   autoOpenCards: boolean;
-  onFinish: (result: RunResult) => { ok: true; note: string | null } | { ok: false; error: string };
+  onFinish: (
+    result: RunResult,
+  ) =>
+    | { ok: true; note: string | null; badges: BadgeId[]; bond: BondGain }
+    | { ok: false; error: string };
   /** `note`: what the ended run unlocked, when it ends without its result window. */
   onRetry: (note?: string | null) => void;
   /** Back to the lobby; `note` as for `onRetry`. */
@@ -83,7 +94,13 @@ export function createRunSession(options: RunSessionOptions) {
   let quitting = false;
   let leaving: "retry" | "lobby" | null = null;
   let stats: PlayerSheet | null = null;
-  let result: { result: RunResult; note: string | null; saved: boolean } | null = null;
+  let result: {
+    result: RunResult;
+    note: string | null;
+    badges: BadgeId[];
+    bond: BondGain | null;
+    saved: boolean;
+  } | null = null;
   let notice: RunHudNotice | null = null;
   let banishing: number | null = null;
   let mapOpen = false;
@@ -130,6 +147,7 @@ export function createRunSession(options: RunSessionOptions) {
         pending,
         dealKey: `${pending.id}:${JSON.stringify(pending.options)}`,
         level: snap!.cardLevel,
+        evolution: snap!.evolution,
         rerolls: snap!.rerolls,
         skips: (lab.rules.skips ?? 0) > 0 ? snap!.skips : null,
         banishes: (lab.rules.banishes ?? 0) > 0 ? snap!.banishes : null,
@@ -141,7 +159,9 @@ export function createRunSession(options: RunSessionOptions) {
         kind: "stats",
         starter,
         form: snap.form,
+        abilitySlot: snap.abilitySlot,
         shiny: snap.shiny,
+        rules: snap.rules,
         level: snap.level,
         build: stats,
         theme,
@@ -156,6 +176,7 @@ export function createRunSession(options: RunSessionOptions) {
         theme,
       };
     else if (snap?.dialog) overlay = { kind: "station", view: snap.dialog, theme };
+    overlays.setActionReach(hud.actionReach);
     overlays.update(overlay);
     covered = overlay?.kind === "loading";
     reportCover();
@@ -198,6 +219,9 @@ export function createRunSession(options: RunSessionOptions) {
       }
       result.saved = true;
       result.note = saved.note;
+      result.badges = saved.badges;
+      result.bond = saved.bond;
+      if (saved.badges.length) getAudio().sfx("badge", { keyMs: 0 });
     }
     if (leaving === "retry") options.onRetry(result.note);
     else if (leaving === "lobby") options.onLobby(result.note);
@@ -221,6 +245,7 @@ export function createRunSession(options: RunSessionOptions) {
       stats: () => run.action("stats"),
       dash: () => run.send({ t: "dash" }),
       ultimate: () => run.send({ t: "ult" }),
+      assist: () => run.send({ t: "assist" }),
       interact() {
         getAudio().sfx("ui-confirm");
         run.send({ t: "interact" });
@@ -276,11 +301,15 @@ export function createRunSession(options: RunSessionOptions) {
     hud,
     {
       stage,
+      mode: options.mode,
       starter,
       shiny: options.shiny,
+      rules: options.rules,
       trainer: options.trainer,
       difficulty,
       lab,
+      bond: options.bond,
+      bondLab: options.bondLab,
       loadout,
       sound,
       devMode,
@@ -362,7 +391,7 @@ export function createRunSession(options: RunSessionOptions) {
       onEnd(end) {
         hud.trainers.clear();
         clearNotice();
-        result = { result: end, note: null, saved: false };
+        result = { result: end, note: null, badges: [], bond: null, saved: false };
         saveResult();
       },
     },

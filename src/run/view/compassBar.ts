@@ -26,7 +26,7 @@ const CARDINALS = [
 ] as const;
 export interface CompassBar {
   resize(width: number, height: number, scale: number, safeArea: UiInsets): void;
-  update(world: World, alpha: number, yaw: number, dt: number): void;
+  update(world: World, alpha: number, yaw: number, dt: number, subject?: PlayerId): void;
   afterLayout(): void;
   restore(): void;
   releaseUploads(): void;
@@ -173,6 +173,7 @@ export function createCompassBar(
     height = 36,
     markSize = 26,
     lastWorld = world,
+    subject = local,
     lastAlpha = 0,
     lastYaw = 0,
     lastTick = -1,
@@ -183,7 +184,7 @@ export function createCompassBar(
       width = size[0];
       height = size[1];
     }
-    const player = findPlayer(value, local),
+    const player = findPlayer(value, subject),
       px = player.px + (player.x - player.px) * alpha,
       pz = player.pz + (player.z - player.pz) * alpha;
     const [fx, fz] = cameraForward(yaw),
@@ -314,7 +315,9 @@ export function createCompassBar(
       dirty = true;
       stage.invalidate();
     },
-    update(value, alpha, yaw, _dt) {
+    update(value, alpha, yaw, _dt, nextSubject = local) {
+      if (subject !== nextSubject) dirty = true;
+      subject = nextSubject;
       // A paused world (open window) hands over the same frame again; redrawing it would keep the
       // UI canvas drawing every frame for nothing.
       const same =

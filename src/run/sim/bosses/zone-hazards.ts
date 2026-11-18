@@ -1,6 +1,7 @@
 import { ENEMY_HAZARD } from "../content/params/enemy-skills";
 import { ERUPTION, ZONE_ATTACK as N, ZONE_GUARDIAN as Z } from "../content/params/late-zones";
-import { damagePlayer } from "../hurt";
+import { damageFromHazard } from "../skills/kit";
+import { absorbLightningRod } from "../hurt";
 import { formOf, hazardRadius } from "../evolution";
 import { stopAtCover, coverHit, lineOfFire } from "../sight";
 import { sustain } from "../status";
@@ -16,7 +17,7 @@ import { viewClearance } from "../viewFootprint";
 
 /** Element and phase are data so the view draws exactly the damaging shape. */
 function hit(world: World, hazard: Hazard, player: Player): boolean {
-  if (!damagePlayer(world, player, hazard.dmg, hazard.element)) return false;
+  if (!damageFromHazard(world, player, hazard)) return false;
   if (hazard.slow) sustain(player, "slow", hazard.slow, -1);
   if (hazard.poison) sustain(player, "poison", hazard.poison, -1);
   return true;
@@ -34,6 +35,7 @@ export function leavePool(world: World, h: Hazard): void {
   if (!h.pool) return;
   addHazard(world, {
     kind: h.pool === "fire" ? "burning-pool" : "acid-pool",
+    source: h.source ?? h.caster,
     x: h.x,
     y: heightAt(world.map.terrain, h.x, h.z),
     z: h.z,
@@ -135,6 +137,10 @@ export const zoneHazards = {
         if (!p.alive || hypot(p.x - h.x, p.z - h.z) > h.radius + hazardRadius(p)) continue;
         const feet = heightAt(world.map.terrain, p.x, p.z);
         if (h.y < feet - h.radius || h.y > feet + formOf(p).height + h.radius) continue;
+        if (absorbLightningRod(p, h)) {
+          h.life = 0;
+          break;
+        }
         if (hit(world, h, p)) {
           h.life = 0;
           leavePool(world, h);

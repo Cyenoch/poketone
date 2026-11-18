@@ -1,17 +1,20 @@
 import { pack, unpack } from "./wire";
 import {
   PROTOCOL_VERSION,
+  knownBond,
   knownMission,
   knownStarter,
+  sameRules,
   type ClientMessage,
   type Mission,
+  type PartnerSetup,
   type PlayerSetup,
   type MultiplayerConfig,
   type Room,
   type RoomErrorCode,
   type ServerMessage,
 } from "./protocol";
-import { isTrainerId } from "../trainers";
+import { isTrainerId } from "../run/sim/content/trainers";
 import type { DirectPeer, DirectPeerFactory, IceServer, PeerSignal } from "../platform/direct-peer";
 
 declare const __GAME_BUILD__: string;
@@ -76,7 +79,8 @@ function knownPlayers(players: readonly PlayerSetup[]) {
     (player) =>
       knownStarter(player.starter) &&
       isTrainerId(player.trainer) &&
-      typeof player.shiny === "boolean",
+      typeof player.shiny === "boolean" &&
+      knownBond(player.bond, player.bondLab),
   );
 }
 
@@ -106,6 +110,10 @@ export class MultiplayerSession {
   onPath: (peer: number, reachable: boolean) => void = () => {};
   /** Host only: a guest left the started run for good. */
   onDeparted: (peer: number) => void = () => {};
+  /** Host: capture the seat's terminal before removing it from the shared world. */
+  departureTerminal?: () => unknown;
+  /** Guest: its requested exit can now use the accepted host terminal, even without a render tick. */
+  onQuitConfirmed?: () => void;
   readonly restored: boolean;
   private readonly rejoin?: RejoinTicket;
   private socket!: WebSocket;
@@ -122,9 +130,11 @@ export class MultiplayerSession {
   private readonly abort = () => this.close(false);
   private connectTimer?: ReturnType<typeof setTimeout>;
   private closed = false;
+  private pendingMission?: { revision: number; rules: Mission["rules"] };
   private playing = false;
   private ended = false;
   private quitting = false;
+  private departureTerminals = new Map<number, string>();
   private terminal?: string;
   private leaving = false;
   private receiver?: (packet: unknown, from: number) => void;
@@ -142,7 +152,7 @@ export class MultiplayerSession {
       build: __GAME_BUILD__,
       code,
       player,
-      ...(!code && options.mission ? { mission: options.mission } : {}),
+      ...(!code && options.mission !== undefined ? { mission: options.mission } : {}),
     };
     this.open();
     this.heartbeat = setInterval(() => {
@@ -249,6 +259,7 @@ export class MultiplayerSession {
       this.state.self === 0 &&
       !this.playing &&
       !this.state.starting &&
+      !this.pendingMission &&
       !!room &&
       !room.started &&
       room.players.length >= 2 &&
@@ -319,16 +330,37 @@ export class MultiplayerSession {
       case "pong":
         this.lastPong = Date.now();
         break;
+      case "quit": {
+        if (this.ended || !this.departureTerminal) break;
+        let data = this.departureTerminals.get(message.from);
+        if (!data) {
+          data = pack(this.departureTerminal());
+          this.departureTerminals.set(message.from, data);
+          this.onDeparted(message.from);
+        }
+        this.signal({ t: "terminal", to: message.from, data });
+        break;
+      }
       case "terminal":
         if (this.ended) this.finish();
-        else this.deliver(unpack(message.data), 0);
+        else {
+          // The quitting seat will not play any more frames from the separate direct channel.
+          if (message.personal || this.quitting) this.deliver({ t: "terminal-barrier" }, 0);
+          this.deliver(unpack(message.data), 0);
+        }
         break;
       case "room": {
-        if (!knownPlayers(message.room.players) || !knownMission(message.room.mission))
+        if (
+          !knownPlayers(message.room.players) ||
+          !knownMission(message.room.mission) ||
+          !Number.isSafeInteger(message.room.missionRevision) ||
+          message.room.missionRevision < 0
+        )
           throw new Error("房间选择无效。");
         clearTimeout(this.connectTimer);
         this.token = message.token;
         this.iceServers = message.iceServers;
+        const reconnected = this.attempts > 0;
         this.attempts = 0;
         const previous = this.state.room;
         if (message.removed !== undefined && this.state.self === 0) {
@@ -341,8 +373,15 @@ export class MultiplayerSession {
         }
         this.state.room = message.room;
         this.state.self = message.self;
+        if (this.pendingMission && message.room.missionRevision >= this.pendingMission.revision)
+          this.pendingMission = undefined;
         for (const id of message.room.players.keys()) {
-          if (id === this.state.self || (this.state.self !== 0 && id !== 0) || this.links.has(id))
+          if (
+            id === this.state.self ||
+            (this.state.self !== 0 && id !== 0) ||
+            this.links.has(id) ||
+            message.room.departed.includes(id)
+          )
             continue;
           this.links.set(id, {
             mode: this.playing ? "relay" : "connecting",
@@ -355,9 +394,13 @@ export class MultiplayerSession {
           });
           if (!message.room.started && !this.playing) this.connectPeer(id);
         }
+        // On a resumed host socket, deliver earlier seat decisions before any later team result.
+        if (reconnected)
+          for (const [to, data] of this.departureTerminals)
+            if (!message.room.departed.includes(to)) this.signal({ t: "terminal", to, data });
         if (this.terminal) this.signal({ t: "terminal", data: this.terminal });
         else if (this.ended) this.signal({ t: "terminal-ack" });
-        else if (this.quitting) this.signal({ t: "quit" });
+        else if (reconnected && this.quitting) this.signal({ t: "quit" });
         if (this.leaving) {
           this.close();
           break;
@@ -369,6 +412,7 @@ export class MultiplayerSession {
               clearTimeout(link.retry);
               this.resetPeer(id);
               this.links.delete(id);
+              this.departureTerminals.delete(id);
               this.onDeparted(id);
             }
         if (this.playing) this.updatePaths();
@@ -417,7 +461,8 @@ export class MultiplayerSession {
         this.fail(new Error(message.message));
         break;
       case "left":
-        if (this.ended || this.quitting) this.close(false);
+        if (this.ended || this.leaving) this.close(false);
+        else if (this.quitting) this.fail(new Error("房间已关闭，未收到放弃结算。"));
         else this.fail(new Error(this.state.self === 0 ? "房间已关闭" : "房主已离开"));
         break;
     }
@@ -568,12 +613,33 @@ export class MultiplayerSession {
     this.changed();
   }
   /** Before the start only; Harbor's next room carries the change to every seat. */
-  setup(starter: PlayerSetup["starter"], trainer: PlayerSetup["trainer"], shiny: boolean) {
-    if (this.inLobby()) this.signal({ t: "setup", starter, trainer, shiny });
+  setup(partner: PartnerSetup) {
+    if (this.inLobby()) this.signal({ t: "setup", ...partner });
   }
   /** Host only, before the start. */
   mission(mission: Mission) {
-    if (this.inLobby() && this.state.self === 0) this.signal({ t: "mission", ...mission });
+    if (!this.inLobby() || this.state.self !== 0) return;
+    const room = this.state.room!;
+    const rulesChanged = !sameRules(
+      this.pendingMission?.rules ?? room.mission.rules,
+      mission.rules,
+    );
+    if (rulesChanged) {
+      // Block start while Harbor still reports readiness for the previous rules.
+      this.pendingMission = {
+        revision: (this.pendingMission?.revision ?? room.missionRevision) + 1,
+        rules: [...mission.rules],
+      };
+    }
+    this.signal({ t: "mission", ...mission });
+    if (rulesChanged) this.changed();
+  }
+  /** The guest accepts the current rules after a host edit. */
+  confirmMission() {
+    if (!this.inLobby() || this.state.self === 0) return;
+    const room = this.state.room!;
+    if (!room.started && !room.ready.includes(this.state.self))
+      this.signal({ t: "mission-ready", revision: room.missionRevision });
   }
   private inLobby() {
     return (
@@ -598,19 +664,27 @@ export class MultiplayerSession {
   }
   /** A guest leaves the started run; the host and the other guests keep playing. */
   quit() {
+    if (this.quitting) return;
     this.quitting = true;
-    if (this.socketOpen()) this.signal({ t: "quit" });
+    if (this.ended) this.onQuitConfirmed?.();
+    else {
+      // A team terminal might already be waiting for its direct-channel barrier.
+      this.deliver({ t: "terminal-barrier" }, 0);
+      if (!this.ended && this.socketOpen()) this.signal({ t: "quit" });
+    }
   }
   /** Harbor retains the host result and acknowledges delivery independently of render ticks. */
   finish(terminal?: unknown) {
     if (terminal && !this.terminal) this.terminal = pack(terminal);
-    if (!this.ended) this.saveTicket(null);
+    const first = !this.ended;
+    if (first) this.saveTicket(null);
     this.ended = true;
     if (this.socketOpen()) {
       if (this.terminal) this.signal({ t: "terminal", data: this.terminal });
       else if (this.state.self !== 0) this.signal({ t: "terminal-ack" });
       if (this.leaving) this.signal({ t: "leave-room" });
     }
+    if (first && this.quitting) this.onQuitConfirmed?.();
   }
   /** Replaceable packets are skipped under congestion so latency stays bounded; reliable ones queue. */
   send(packet: unknown, replaceable = false, target?: number): boolean {
@@ -662,6 +736,7 @@ export class MultiplayerSession {
     ) {
       // Keep only the transport alive until the intentional departure reaches Harbor.
       this.leaving = true;
+      if (this.quitting && !this.ended && this.onQuitConfirmed) return;
       this.onPath = () => {};
       this.onChange = () => {};
       this.onFailure = () => {};

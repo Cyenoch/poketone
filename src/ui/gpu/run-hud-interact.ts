@@ -27,6 +27,9 @@ const landmarkNames: Record<LandmarkPrompt, string> = {
   leave: "前往下一区域",
   choices: "选择构筑",
   rescue: "救援",
+  trade: "交换",
+  "trade-accept": "接受交换",
+  "trade-wait": "等待交换",
 };
 
 const HEIGHT = 48;

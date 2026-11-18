@@ -1,0 +1,49 @@
+{
+  "createdAt": "2026-11-18",
+  "generator": "Magpie generate_image, ash/gpt-image-2.5-sunburst",
+  "requests": [
+    {
+      "id": "image-99512-1",
+      "source": "assets/icons/source/items-sheet-builds-mega.png",
+      "sha256": "37a0caec1320254291330b1c00ae6cd6171638a16bee20130f63e01bb0e35d9a",
+      "requestedSize": "1536x1024",
+      "reference_images": ["assets/icons/source/items-sheet-3.png"],
+      "prompt": "A production sprite sheet of exactly SIX separate inventory item illustrations in a perfectly even THREE columns by TWO rows grid of equal square cells, wide uniform empty gutters. One icon per cell, centered in the middle 70 percent of its cell with every edge fully visible on a uniform flat warm off-white (#f5f1e8) background. No grid lines. Use the reference for rendering style and weight only: upper-left lighting, smooth clean navy outer contours, simple graphic shadow shapes; do not copy its subjects. From LEFT to RIGHT in the TOP row: 1. Light Ball: a single round luminous lemon-yellow glass ball, golden facets around a bright square yellow central glint, a small cream highlight high left; purely yellow/light gold, no pedestal or external sparks. 2. Ability Patch: one small slim elongated oval medicinal patch in its white peel-back backing, tilted diagonally in three-quarter view; a broad aqua blue iridescent face, pale cyan reflection and a tiny yellow shine, with the short white backing curling up at the left end. Low and broad, not a capsule bottle or bandage cross. 3. Heat Rock: a squat rough taupe-brown mineral whose exposed sharp pink / coral crystals point UP from the top of the rock, one tall and two shorter spikes, wide angular stony base. From LEFT to RIGHT in the BOTTOM row: 4. Damp Rock: a chunky wet greenish-teal worn rock with a flat pale aquamarine cap and darker cyan ridges hanging DOWN as uneven rock prongs underneath, one wet reflective edge; standing solid stone, no water puddle. 5. Charizardite X: a polished round glass marble, a broad twisting near-black S-shaped mineral stripe embedded between a deep cobalt half and a bright cyan half; one small white glass reflection upper left; no mount. 6. Charizardite Y: a matching polished round glass marble with a vivid scarlet twisting S-shaped mineral stripe embedded between an orange-red side and a golden yellow side; same size, tilt, light and reflection as the blue marble. No scenery, no type badges, no labels, no printed X or Y, no halo, no loose shadows. Each subject must read at inventory size. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject.",
+      "cutX": [0, 512, 1024, 1536],
+      "cutY": [0, 512, 1024],
+      "cells": [
+        "light-ball",
+        "ability-patch",
+        "heat-rock",
+        "damp-rock",
+        "charizardite-x",
+        "charizardite-y"
+      ],
+      "output": "public/art/icons/items/<cell>.webp",
+      "identityReference": "https://raw.githubusercontent.com/PokeAPI/sprites/c0542f7c51215d9672439012838c99f520596cbd/sprites/items/<cell>.png (只查看道具形状和配色，未用作模型输入或发布像素)"
+    },
+    {
+      "id": "image-99512-2",
+      "source": "assets/icons/source/moves-sheet-builds-mega.png",
+      "sha256": "5391b937055340929929dc870114ee035f9214b9820d9982863dd3d2098f44fd",
+      "requestedSize": "1536x1024",
+      "reference_images": ["assets/icons/source/moves-sheet.png"],
+      "prompt": "A production sprite sheet of SEVEN game move icons and a completely EMPTY spare cell, exactly FOUR columns by TWO rows, perfectly even grid, one icon centered in the middle 70% of each cell with wide uniform blank gutters all around. Uniform flat warm off-white (#f5f1e8) background, no grid lines or panels. Match the outlined two-to-three tone action art, rhythm and visual weight of the reference image; do not copy its subjects. Row by row, left to right. TOP ROW: 1 Sunny Day: a brilliant golden sun disk surrounded by eight thick, short, flared orange-gold sun rays; no face/cloud, readable as clear sunny weather. 2 Rain Dance: one compact rounded blue-grey rain cloud over exactly three bold slanting blue raindrops; a short curling blue motion arc suggests the dance; rain, never lightning. 3 Sandstorm: a sweeping ochre sand funnel composed of two thick sandy ochre/caramel ribbons curling horizontally, broad cloud head, tapering curling base and a few solid sand chips. 4 Flare Blitz: a crouched compact horned dragon-head silhouette in side profile surging hard to the RIGHT with a forceful shoulder-first charge, enclosed in a low pointed fiery red-orange and golden envelope with three long flame-shaped speed streaks sweeping back to the left. Clear physical tackle silhouette, no floating fireball, no fire breath or projectile from its mouth. BOTTOM ROW: the three Pledge moves form a matched set, strongly VERTICAL energy pillars surging out of matching small oval ground ripples. 5 Grass Pledge: tall column of overlapping pointed green LEAVES thrusting straight up from its earth ripple, leaf veins and two side leaves. 6 Fire Pledge: tall upright column of red-orange flame thrusting straight up from its ground ripple, sharp yellow flame core. 7 Water Pledge: tall upright blue water geyser thrusting straight up from its ground ripple into two curling white foam crests and two droplets. 8 bottom right: EMPTY plain background. Distinguish three weather silhouettes, the horizontal charging attack and the three vertical elemental pillars. All shapes fully inside their own cell; no scenery, horizon, badges, loose glow or grain. Bright clean cartoon game art for a low-poly Pokémon-style adventure. Chunky simple shapes, flat cel shading with two or three tones, soft rim light, thick rounded dark navy (#142f50) outline. Saturated but not neon colours, friendly and readable at 48 px. No text, no letters, no numbers, no logos, no borders, no drop shadows outside the subject.",
+      "cutX": [0, 444, 887, 1312, 1774],
+      "cutY": [0, 444, 887],
+      "cells": [
+        "sunny-day",
+        "rain-dance",
+        "sandstorm",
+        "flare-blitz",
+        "grass-pledge",
+        "fire-pledge",
+        "water-pledge",
+        null
+      ],
+      "output": "public/art/icons/moves/<cell>.webp"
+    }
+  ],
+  "processing": "两张原始 PNG 均保留。以左上为原点，按 cutX / cutY 的相邻坐标裁整格，cells 从左到右逐行，null 不发布。RGBA 合成到 #f5f1e8；招式图另以原 alpha < 10 置零，其余置 255，保留图形内部镂空。按 assets/icons/prepare-psychic-rock.py 的整格做法调用 assets/icons/slice-sheet.py 的 cut：边缘漫填容差 38、按 alpha 裁紧、正方形边长加 8%、居中、Lanczos 到 128×128。Pillow 13.0.0 / libwebp 1.6.0，WebP quality=88。每个 WebP 的 XMP 记录 ID、源图与裁切坐标（xywh）及本记录路径。",
+  "rights": "为非商业宝可梦同人项目生成；宝可梦、道具及招式设计与商标归各自权利人。此记录不授予独立素材许可。"
+}

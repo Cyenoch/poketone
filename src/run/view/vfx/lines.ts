@@ -50,6 +50,7 @@ import {
   twister,
 } from "./dragon";
 import { combo, focusBlast, focusBurst, lowSweep, seismicBarrage, seismicToss } from "./fighting";
+import { pledgePillars } from "./pledge";
 
 export const lineShotLooks: Partial<Record<MoveId, ShotLook>> = {
   confusion,
@@ -90,6 +91,7 @@ export const lineAreaLooks: Partial<Record<MoveId, AreaLook>> = {
   "hundred-fists": combo,
   "low-sweep": lowSweep,
   "seismic-toss": seismicToss,
+  ...pledgePillars,
 };
 
 export const lineBurstLooks: Partial<Record<MoveId, AreaLook>> = {

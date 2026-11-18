@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { starters } from "../src/run/sim/content/lines/index.ts";
 import { spawnEnemy } from "../src/run/sim/director.ts";
-import { evolve, formOf } from "../src/run/sim/evolution.ts";
+import { evolve, evolveInWorld, formOf, stageFor } from "../src/run/sim/evolution.ts";
 import { EnemyGrid } from "../src/run/sim/grid.ts";
 import { damagePlayer } from "../src/run/sim/hurt.ts";
 import { DASH_COOLDOWN, DASH_TIME } from "../src/run/sim/content/params/player.ts";
@@ -13,18 +13,38 @@ import { fireUltimate, timeline, updateUltimate } from "../src/run/sim/ultimates
 import { ULT_WINDUP } from "../src/run/sim/content/params/ultimates.ts";
 import { items } from "../src/run/sim/content/items.ts";
 import { createRng } from "../src/run/sim/rng.ts";
+import { snapshotWorld, restoreWorld } from "../src/run/sim/snapshot.ts";
+import { gainXp } from "../src/run/sim/progression.ts";
+import { collectRoutePickup } from "../src/run/sim/route-rewards.ts";
+import { selectTestExit } from "./fixtures/route.mjs";
+import { prepareZone, enterZone, tradeAction } from "../src/run/sim/zones.ts";
 import {
   applyChoice,
+  itemEligible,
   itemSlots,
   moveSlots,
   newMoveState,
+  offerKey,
   rollChoices,
 } from "../src/run/sim/upgrades.ts";
 import { MAX_MOVE_LEVEL } from "../src/run/sim/content/params/cards.ts";
-import { createWorld, stepWorld } from "../src/run/sim/world.ts";
+import {
+  applyCommand,
+  createPlayer,
+  createWorld,
+  stepSharedWorld,
+  stepWorld,
+} from "../src/run/sim/world.ts";
 
 const world = (starter = "charmander") =>
-  createWorld({ stage: "forest", seed: 5, difficulty: 0, players: [{ starter }] });
+  createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed: 5,
+    difficulty: 0,
+    players: [{ trainer: "chengxi", starter }],
+  });
 
 /** Feeds enough XP to reach `level`, answering every card with its first option. */
 function levelTo(w, level) {
@@ -49,6 +69,7 @@ const [, stage1, stage2] = starters.charmander.stages;
 test("evolving at the level threshold keeps moves and levels and changes stats and types", () => {
   const w = world("charmander");
   const player = w.players[0];
+  player.banished.push(offerKey.item("everstone"));
   player.moves[0].level = 3;
   player.moves[0].damage = 1234;
   player.moves[0].mods.dmg = 0.4;
@@ -71,18 +92,130 @@ test("evolving at the level threshold keeps moves and levels and changes stats a
   assert.deepEqual(formOf(player).types, ["fire", "flying"]);
 });
 
-test("maturity raises the stage but keeps the form; the next stage evolves", () => {
+test("不变之石不妨碍皮卡丘成熟；成为雷丘仍需雷之石，进化后道具保留", () => {
   const w = world("pikachu");
   const player = w.players[0];
   const [, mature, raichu] = starters.pikachu.stages;
-  assert.equal(mature.kind, "mature");
-  levelTo(w, mature.at);
+  applyChoice(player, { kind: "item", item: "everstone" });
+  player.level = mature.at;
+  evolveInWorld(w, player);
   assert.equal(player.stage, 1);
   assert.equal(formOf(player).id, "pikachu");
   assert.ok(w.events.some((e) => e.t === "evolve" && e.stage === 1 && e.form === "pikachu"));
-  levelTo(w, raichu.at);
-  assert.equal(player.stage, 2);
+
+  player.items = [];
+  player.level = raichu.at;
+  evolveInWorld(w, player, "trade");
+  assert.equal(formOf(player).id, "pikachu");
+  const id = w.nextId++;
+  player.pending.push({ id, source: "level", options: [{ kind: "item", item: "thunder-stone" }] });
+  applyCommand(w, { t: "pick", player: player.id, card: id, index: 0 });
+  assert.ok(player.items.some((item) => item.id === "thunder-stone"));
   assert.equal(formOf(player).id, "raichu");
+});
+
+test("不变之石阻止等级进化，进化奇石仍提高最大生命和护甲", () => {
+  const player = createPlayer(0, "charmander", 0);
+  player.level = stage2.at;
+  applyChoice(player, { kind: "item", item: "everstone" });
+  const bare = playerStats(player);
+  applyChoice(player, { kind: "item", item: "eviolite" });
+  assert.equal(evolve(player), false);
+  assert.equal(formOf(player).id, "charmander");
+  const held = playerStats(player);
+  assert.ok(held.maxHp > bare.maxHp && held.armor > bare.armor);
+});
+
+test("四条通信线不能预存低等级的交换；达标后本次交换立即进化", () => {
+  for (const starter of ["machop", "gastly", "abra", "geodude"]) {
+    const player = createPlayer(0, starter, 0);
+    const [, middle, final] = starters[starter].stages;
+    player.level = final.at - 1;
+    evolve(player);
+    assert.equal(formOf(player).id, middle.form.id);
+    assert.equal(evolve(player, "trade"), false);
+
+    player.level = final.at;
+    assert.equal(evolve(player), false, starter);
+    assert.ok(evolve(player, "trade"), starter);
+    assert.equal(formOf(player).id, final.form.id);
+  }
+});
+
+test("交换邀请跨快照保留，超时或分开后需要重新双向确认", () => {
+  const w = createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed: 5,
+    difficulty: 0,
+    players: [
+      { trainer: "chengxi", starter: "machop" },
+      { trainer: "chengxi", starter: "gastly" },
+    ],
+  });
+  const interact = (world, player) => applyCommand(world, { t: "interact", player });
+  for (const p of w.players) Object.assign(p, { x: 0, z: 0, level: 80, stage: 1 });
+  assert.deepEqual(
+    w.players.map((p) => tradeAction(w, p)),
+    ["trade", "trade"],
+  );
+  interact(w, 0);
+  assert.equal(w.players[0].tradeRequest.target, 1);
+  assert.deepEqual(
+    w.players.map((p) => tradeAction(w, p)),
+    ["trade-wait", "trade-accept"],
+  );
+  const restored = restoreWorld(w.map, snapshotWorld(w));
+  interact(restored, 1);
+  assert.deepEqual(
+    restored.players.map((p) => formOf(p).id),
+    ["machamp", "gengar"],
+  );
+  w.players[1].x = 4;
+  stepWorld(w, []);
+  assert.equal(w.players[0].tradeRequest, null);
+  w.players[1].x = 0;
+  interact(w, 1);
+  for (let i = 0; i <= 5 / TICK; i++) stepWorld(w, []);
+  assert.equal(w.players[1].tradeRequest, null);
+  assert.deepEqual(
+    w.players.map((p) => formOf(p).id),
+    ["machoke", "haunter"],
+  );
+});
+
+test("联系绳只在通信进化时腾出栏位，只补一次新增生命并播放一次演出", () => {
+  const w = world("machop");
+  const player = w.players[0];
+  const [, machoke, machamp] = starters.machop.stages;
+  player.items = [
+    { id: "linking-cord", level: 1 },
+    { id: "hp-up", level: 2 },
+  ];
+  player.level = machoke.at;
+  evolveInWorld(w, player);
+  assert.equal(formOf(player).id, "machoke");
+
+  applyChoice(player, { kind: "item", item: "everstone" });
+  player.level = machamp.at;
+  w.events.length = 0;
+  player.invulnerable = player.cardHold = 0;
+  evolveInWorld(w, player, "trade");
+  assert.equal(formOf(player).id, "machoke");
+  assert.ok(!w.events.some((e) => e.t === "evolve"));
+  player.items = player.items.filter((item) => item.id !== "everstone");
+
+  const before = playerStats(player).maxHp;
+  player.hp = 10;
+  assert.equal(stageFor(player), 2);
+  evolveInWorld(w, player);
+  evolveInWorld(w, player);
+  assert.equal(formOf(player).id, "machamp");
+  assert.deepEqual(player.items, [{ id: "hp-up", level: 2 }]);
+  assert.equal(player.hp, 10 + (playerStats(player).maxHp - before));
+  assert.ok(player.invulnerable > 0 && player.cardHold > 0);
+  assert.equal(w.events.filter((e) => e.t === "evolve" && e.form === "machamp").length, 1);
 });
 
 test("new player lines keep their build through both evolutions and can finish each ultimate tier", () => {
@@ -98,7 +231,7 @@ test("new player lines keep their build through both evolutions and can finish e
     const build = structuredClone(player.moves);
     for (const stage of starters[starter].stages) {
       player.level = stage.at;
-      evolve(player);
+      evolve(player, stage.needs === "trade" ? "trade" : undefined);
       assert.equal(formOf(player).id, stage.form.id);
       assert.deepEqual(player.moves, build, `${starter} keeps learned upgrades`);
       const hp = target.hp;
@@ -160,8 +293,9 @@ test("psychic and rock cards respect kit levels and both evolution stages", () =
     player.level = 40;
     expectMoves([...kit.slice(1), evolutionMoves[0]]);
     player.level = stages[2].at;
+    evolve(player);
     expectMoves([...kit.slice(1), evolutionMoves[0]]);
-    assert.ok(evolve(player));
+    assert.ok(evolve(player, "trade"));
     expectMoves([...kit.slice(1), ...evolutionMoves]);
     applyChoice(player, { kind: "move", move: evolutionMoves[1] });
     expectMoves([...kit.slice(1), evolutionMoves[0]]);
@@ -208,7 +342,7 @@ test("Abra evolutions preserve spent dashes and Alakazam's extra charge joins th
     while (player.dashes > 0) stepWorld(w, [dash]);
     const cooldown = player.dashCooldown;
     player.level = stage.at;
-    assert.ok(evolve(player));
+    assert.ok(evolve(player, stage.needs === "trade" ? "trade" : undefined));
     assert.equal(player.dashes, 0, "evolving does not refund spent charges");
     assert.equal(player.dashCooldown, cooldown, "the running recharge is preserved");
     const capacity = player.stage === 1 ? 2 : 3;
@@ -359,10 +493,19 @@ test("ultimates obey cover: a rock shelters an enemy from a root lane, a cliff f
 test("a run with evolutions and ultimates is deterministic", () => {
   const run = () => {
     const w = createWorld({
+      mode: "expedition",
+      rules: [],
       stage: "forest",
       seed: 21,
       difficulty: 0,
-      players: [{ starter: "pikachu" }],
+      players: [
+        {
+          trainer: "chengxi",
+          starter: "pikachu",
+          backpack: ["thunder-stone"],
+          archive: ["everstone"],
+        },
+      ],
     });
     const player = w.players[0];
     let ults = 0;
@@ -395,4 +538,223 @@ test("a run with evolutions and ultimates is deterministic", () => {
     return JSON.stringify({ players: w.players, enemies: w.enemies, kills: w.kills, ults });
   };
   assert.equal(run(), run());
+});
+
+test("火恐龙先完成普通进化，连续升级不会截断演出；超级进化只补生命增量", () => {
+  const w = createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed: 5,
+    difficulty: 0,
+    players: [
+      { trainer: "chengxi", starter: "squirtle" },
+      { trainer: "chengxi", starter: "charmander" },
+    ],
+  });
+  const p = w.players[1];
+  Object.assign(p, { stage: 1, level: 54, hp: 15 });
+  applyChoice(p, { kind: "item", item: "charizardite-x" });
+  gainXp(w, p, p.xpNext);
+  assert.equal(formOf(p).id, "charizard");
+  const hold = p.cardHold;
+  gainXp(w, p, p.xpNext);
+  assert.ok(hold > 0 && p.cardHold === hold);
+  const hp = p.hp,
+    max = playerStats(p).maxHp;
+  for (let i = 0; i < Math.ceil(hold / TICK) + 1 && !p.mega; i++) {
+    const remaining = p.cardHold;
+    stepSharedWorld(w, []);
+    if (remaining > TICK) assert.equal(p.mega, null);
+  }
+  assert.equal(formOf(p).id, "charizard-x");
+  assert.equal(p.hp - hp, playerStats(p).maxHp - max);
+  assert.ok(p.cardHold > 0 && p.invulnerable > 0);
+  assert.deepEqual(
+    w.events.filter((e) => e.t === "evolve" || e.t === "mega").map((e) => e.form),
+    ["charizard", "charizard-x"],
+  );
+});
+
+test("不变之石阻止进化石；过期奖杯不提交，下一份合格奖杯仍提供两块石", () => {
+  const w = world(),
+    p = w.players[0];
+  function trophy() {
+    collectRoutePickup(w, { kind: "trophy", owner: p.id, x: p.x, z: p.z }, p);
+    return p.pending[0];
+  }
+  const stones = (card) =>
+    card.options.filter((c) => c.item?.startsWith("charizardite-")).map((c) => c.item);
+  assert.deepEqual(stones(trophy()), []);
+  p.pending = [];
+  selectTestExit(w, "coast");
+  enterZone(w, prepareZone(w));
+  let card = trophy();
+  assert.deepEqual(stones(card), ["charizardite-x", "charizardite-y"]);
+  p.items.push({ id: "everstone", level: 1 });
+  const token = card.id;
+  applyCommand(w, {
+    t: "pick",
+    card: token,
+    player: 0,
+    index: card.options.findIndex((c) => c.item === "charizardite-x"),
+  });
+  assert.notEqual(card.id, token);
+  assert.deepEqual(stones(card), []);
+  assert.equal(p.items.length, 1);
+  p.pending = [];
+  p.items = [];
+  card = trophy();
+  assert.deepEqual(stones(card), ["charizardite-x", "charizardite-y"]);
+});
+
+test("满道具栏的奖杯标出最早获得的最低级道具，变更后需重新确认", () => {
+  const w = world(),
+    p = w.players[0];
+  selectTestExit(w, "coast");
+  enterZone(w, prepareZone(w));
+  p.items = ["magnet", "hp-up", "quick-claw", "lucky-egg", "scope-lens"].map((id, i) => ({
+    id,
+    level: i === 0 ? 3 : 1,
+  }));
+  p.hp = playerStats(p).maxHp;
+  collectRoutePickup(w, { kind: "trophy", owner: 0, x: p.x, z: p.z }, p);
+  const card = p.pending[0];
+  const options = () => card.options.filter((c) => c.item?.startsWith("charizardite-"));
+  assert.deepEqual(
+    options().map((c) => [c.item, c.drop]),
+    [
+      ["charizardite-x", "hp-up"],
+      ["charizardite-y", "hp-up"],
+    ],
+  );
+  p.items[1].level++;
+  const old = card.id;
+  const pick = () =>
+    applyCommand(w, {
+      t: "pick",
+      card: card.id,
+      player: 0,
+      index: card.options.indexOf(options()[1]),
+    });
+  pick();
+  assert.notEqual(card.id, old);
+  assert.equal(p.items[2].id, "quick-claw");
+  assert.deepEqual(
+    options().map((c) => c.drop),
+    ["quick-claw", "quick-claw"],
+  );
+  pick();
+  assert.deepEqual(
+    p.items.map((i) => i.id),
+    ["magnet", "hp-up", "lucky-egg", "scope-lens", "charizardite-y"],
+  );
+});
+
+function megaGuest(branch, known) {
+  const w = createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed: 5,
+    difficulty: 0,
+    players: [
+      { trainer: "chengxi", starter: "squirtle" },
+      { trainer: "chengxi", starter: "charmander" },
+    ],
+  });
+  selectTestExit(w, "coast");
+  enterZone(w, prepareZone(w));
+  const p = w.players[1];
+  Object.assign(p, { level: stage2.at, stage: 2, moves: known.map(newMoveState) });
+  collectRoutePickup(w, { kind: "trophy", owner: p.id, x: p.x, z: p.z }, p);
+  const card = p.pending[0];
+  applyCommand(w, {
+    t: "pick",
+    card: card.id,
+    player: p.id,
+    index: card.options.findIndex((c) => c.item === `charizardite-${branch}`),
+  });
+  assert.equal(p.mega, `charizard-${branch}`);
+  const ticks = Math.ceil(p.cardHold / TICK) + 1;
+  for (let i = 0; i < ticks; i++) {
+    if (p.cardHold > 0) assert.equal(p.pending.length, 0);
+    stepSharedWorld(w, []);
+  }
+  return w;
+}
+
+test("超级喷火龙Ｘ满招后房主提供逐招替换；重连可拒学且不消耗跳过次数", () => {
+  const known = ["ember", "fire-spin", "flamethrower"];
+  const w = megaGuest("x", known);
+  const p = w.players[1],
+    card = p.pending[0];
+  assert.equal(card.source, "mega-move");
+  assert.deepEqual(card.options, [
+    ...known.map((replace) => ({ kind: "move", move: "flare-blitz", replace })),
+    { kind: "decline" },
+  ]);
+  const restored = restoreWorld(w.map, snapshotWorld(w));
+  applyCommand(w, { t: "pick", player: 1, card: card.id, index: 1 });
+  assert.deepEqual(
+    p.moves.map((m) => m.id),
+    ["ember", "flare-blitz", "flamethrower"],
+  );
+  assert.equal(p.moves[1].level, 1);
+  assert.equal(p.pending.length, 0);
+  const guest = restored.players[1],
+    before = structuredClone(guest.moves),
+    skips = guest.skips;
+  applyCommand(restored, { t: "pick", player: 1, card: card.id, index: known.length });
+  assert.deepEqual(guest.moves, before);
+  assert.equal(guest.skips, skips);
+  assert.equal(guest.pending.length, 0);
+});
+
+test("超级喷火龙Ｙ有空栏可直接学日光束；已经学会时没有学招卡", () => {
+  const w = megaGuest("y", ["ember"]),
+    p = w.players[1],
+    card = p.pending[0];
+  const index = card.options.findIndex(
+    (c) => c.kind === "move" && c.move === "solar-beam" && !c.replace,
+  );
+  applyCommand(w, { t: "pick", player: 1, card: card.id, index });
+  assert.deepEqual(
+    p.moves.map((m) => m.id),
+    ["ember", "solar-beam"],
+  );
+  assert.equal(megaGuest("y", ["ember", "solar-beam"]).players[1].pending.length, 0);
+});
+
+test("持有进化石不出现不变之石，联机进化为火恐龙后仍可立即打开升级卡", () => {
+  const w = createWorld({
+    mode: "expedition",
+    rules: [],
+    stage: "forest",
+    seed: 5,
+    difficulty: 0,
+    players: [
+      { trainer: "chengxi", starter: "squirtle" },
+      { trainer: "chengxi", starter: "charmander" },
+    ],
+  });
+  const p = w.players[1];
+  p.level = stage1.at - 1;
+  assert.ok(itemEligible(p, "everstone", [], true));
+  applyChoice(p, { kind: "item", item: "charizardite-x" });
+  assert.ok(!itemEligible(p, "everstone", [], true));
+  gainXp(w, p, p.xpNext);
+  assert.equal(formOf(p).id, "charmeleon");
+  assert.equal(p.cardHold, 0);
+});
+
+test("守卫奖杯的进化石不能从上局背包带入", () => {
+  assert.throws(
+    () =>
+      createPlayer(0, "charmander", 0, undefined, {
+        backpack: ["charizardite-x"],
+        rng: createRng(5),
+      }),
+    /本局的守卫奖杯/,
+  );
 });

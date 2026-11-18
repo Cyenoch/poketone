@@ -1,0 +1,20 @@
+{
+  "backdrop.webp": {
+    "asset": "public/art/lab/backdrop.webp",
+    "source": "public/art/lab/source/backdrop-lab.png",
+    "generator": "Magpie Image / ash/gpt-image-2.5-sunburst; requested 16:9, quality high, opaque, n=1; returned 1672x941 PNG",
+    "generationId": "image-56532-1",
+    "createdAt": "2026-11-18",
+    "references": [
+      "public/art/lobby/source/backdrop-coastal-overlook.png (the lobby backdrop: painting style, light and palette only)"
+    ],
+    "purpose": "研究所 scene (redesign-lab 3.2): a seaside research lab seen straight on. Its three places are the hotspots of src/ui/gpu/lab.ts: the binder shelf (left), the instrument bench with drawers (centre, sea window behind) and the eight-slot badge case (right). No UI, text or Pokémon baked in.",
+    "layout": "Cover-fit, centred. Hotspot rects in source UV (lab.ts `SPOTS`): shelf u 0–0.254 v 0.16–0.88; bench u 0.245–0.757 v 0.46–0.88; badge case u 0.757–0.987 v 0.22–0.51. Badge holes: u 0.812/0.856/0.900/0.945, v 0.321/0.409, diameter about 0.035 u. Top 12% is quiet wall and beam (top line), bottom 12% plain floor.",
+    "transform": "cwebp -q 90 -m 6 public/art/lab/source/backdrop-lab.png -o public/art/lab/backdrop.webp; no crop or upscale",
+    "prompt": "Paint a finished wide background for a Pokémon fan game's research lab screen, in exactly the same painting style, light and palette as the reference image (painterly anime, bright clean daylight, saturated but soft colours, cel-shaded planes). Interior of a cosy seaside Pokémon research laboratory seen straight on from the front at standing height, a single room. Composition in three clear vertical thirds with calm floor in front: LEFT THIRD: a tall wooden bookshelf filled with coloured research binders and folders with plain spines, a rolling ladder, a few rolled maps. CENTRE THIRD: a large lab workbench with brass instruments, glass flasks with teal liquid, a microscope, a small Poké Ball incubator machine with dials, and a wooden drawer cabinet underneath; a big window behind it shows the blue sea and sky. RIGHT THIRD: a wall-mounted glass display case with a dark navy velvet lining holding eight empty round badge slots in two rows of four, above a small wooden cabinet with a potted plant. The top 12% of the image is a quiet plain wall and ceiling beam; the bottom 15% is a plain light wooden floor with almost no detail. Warm, tidy, inviting. No people, no Pokémon, no text, letters, numbers or writing anywhere, no UI, no frame, no vignette.",
+    "sourceSha256": "6e2f6def49a0e30bea5b4079b64cf0c88b70b364a075cf1dc73d8364a69253dd",
+    "assetSha256": "363de0368f4bd8607da95ddd7de1c85835ae3adad75ed2b532a350cc3ef5fb7b",
+    "bytes": 178832,
+    "rights": "Generated for a noncommercial Pokémon fan project; no official artwork used as input; character designs belong to their rights holders; no endorsed affiliation."
+  }
+}

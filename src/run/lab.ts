@@ -1,4 +1,5 @@
 import { atLevel, type Modifier } from "./sim/content/effects";
+import type { BondLabId } from "./sim/content/bonds";
 import {
   labDefinitions,
   type LabDefinition,
@@ -28,25 +29,28 @@ const percent = (v: number) => `+${Number((v * 100).toFixed(1))}%`;
 const plus = (digits: number) => (v: number) => `+${v.toFixed(digits)}`;
 const total = (base: number) => (v: number) => String(base + v);
 
-export const labItems: readonly LabItem[] = labDefinitions.map(({ format, ...item }) => ({
+const allItems: readonly LabItem[] = labDefinitions.map(({ format, ...item }) => ({
   ...item,
-  cost: price(LAB_PRICES[item.id]),
+  cost: price(item.starter ? LAB_PRICES.bond : LAB_PRICES[item.id as Exclude<LabId, BondLabId>]),
   value:
     format === "percent" ? percent : "digits" in format ? plus(format.digits) : total(format.base),
 }));
 
-export const labItem = (id: LabId): LabItem => labItems.find((item) => item.id === id)!;
+export const labItems = allItems.filter((item) => item.starter === undefined);
+export const bondLabItems = allItems.filter((item) => item.starter !== undefined);
+export const labItem = (id: LabId): LabItem => allItems.find((item) => item.id === id)!;
 
 /** Price of the next level, or null when the item is maxed. */
 export function nextCost(item: LabItem, level: number): number | null {
   return level < item.max ? item.cost(level) : null;
 }
 
-/** What the sim receives in `RunConfig`. */
+/** General research only. A seat carries its current partner's bond research separately. */
 export function labBonuses(levels: LabLevels): LabBonuses {
   const modifiers: Modifier[] = [];
   const rules: LabBonuses["rules"] = {};
   for (const item of labDefinitions) {
+    if (item.starter !== undefined) continue;
     const level = levels[item.id] ?? 0;
     if (level === 0) continue;
     const { grants } = item;

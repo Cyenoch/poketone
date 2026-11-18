@@ -72,24 +72,27 @@ function pageTexts(codex) {
   });
   return out;
 }
-/** The record block's label / value pairs. */
+/** The research block's 见过 / 击败 / 异色 counts: a row's count is the number no `+points`
+ *  follows (a tier target is followed by its points). */
 function record(codex) {
   const texts = pageTexts(codex);
-  const at = texts.indexOf("记录");
-  assert.ok(at >= 0, `no 记录 on the page: ${texts.join(" ")}`);
-  return Object.fromEntries([1, 3, 5].map((i) => [texts[at + i], texts[at + i + 1]]));
+  const at = texts.indexOf("研究");
+  assert.ok(at >= 0, `no 研究 on the page: ${texts.join(" ")}`);
+  const rows = texts.slice(at + 2);
+  const counts = rows.filter((text, i) => !text.startsWith("+") && !rows[i + 1]?.startsWith("+"));
+  return Object.fromEntries(["见过", "击败", "异色"].map((label, i) => [label, counts[i]]));
 }
 const looks = (codex) => codex.details.filter((control) => control.region === "look");
 const shown = (codex) => codex.model.wanted ?? "";
 
-async function open(codex, key) {
-  const section = codexSections().findIndex((s) => s.id === "enemies");
+async function open(codex, key, id = "enemies") {
+  const section = codexSections().findIndex((s) => s.id === id);
   codex.activate(codex.controls.indexOf(codex.tabs[section]));
   codex.activate(codex.controls.indexOf(codex.entries.find((row) => row.key === key)));
   await settle(codex);
 }
 
-test("enemy pages show the player's record, and a defeated shiny can be viewed without saving anything", async () => {
+function install() {
   installRuntime({ createAudioDecoder: () => ({}), activateAudio() {} });
   setImageLoader(() => new Promise(() => {}));
   installResources({ read: () => new Promise(() => {}), createTexture: () => new Texture() });
@@ -101,6 +104,10 @@ test("enemy pages show the player's record, and a defeated shiny can be viewed w
     upload() {},
     resident: () => () => {},
   });
+}
+
+test("enemy pages show the player's record, and a defeated shiny can be viewed without saving anything", async () => {
+  install();
   try {
     for (const { width, height, dpr, safe } of [
       { width: 1280, height: 800, dpr: 1, safe: { left: 0, right: 0, top: 0, bottom: 0 } },
@@ -123,6 +130,7 @@ test("enemy pages show the player's record, and a defeated shiny can be viewed w
         const where = `${width}×${height}`;
 
         await open(codex, "enemy:heracross");
+        // An elite has no 异色 task; its defeated shiny is still on the record.
         assert.deepEqual(record(codex), { 见过: "3", 击败: "2", 异色: "1" }, where);
         assert.equal(looks(codex).length, 2, `${where}: 普通 / 异色 offered`);
         assert.doesNotMatch(shown(codex), /#shiny/, `${where}: opens in its own colours`);
@@ -160,6 +168,35 @@ test("enemy pages show the player's record, and a defeated shiny can be viewed w
         assert.doesNotMatch(shown(codex), /#shiny/, `${where}: coming back starts normal`);
 
         assert.deepEqual(progress, before, `${where}: browsing never writes progress`);
+      } finally {
+        codex.dispose();
+      }
+    }
+  } finally {
+    for (const texture of textures) texture.dispose();
+  }
+});
+
+test("a status page's link to a species keeps what it does hidden until its research is done", async () => {
+  install();
+  try {
+    setUiPixelRatio(3);
+    const noted = (progress) => {
+      const codex = new GpuCodex(fonts, { progress, onClose() {} });
+      codex.resize(844, 390, 1, { left: 47, right: 47, top: 0, bottom: 21 });
+      return codex;
+    };
+    for (const [dex, shown] of [
+      [{}, false],
+      [{ nidorina: { seen: 1, defeated: 0, shiny: 0 } }, false],
+      [{ nidorina: { seen: 9999, defeated: 9999, shiny: 0 } }, true],
+    ]) {
+      const codex = noted({ ...emptyProgress(), dex });
+      try {
+        await settle(codex);
+        await open(codex, "status:poison", "statuses");
+        const texts = pageTexts(codex).join(" ");
+        assert.equal(texts.includes("毒针扇射"), shown, `${JSON.stringify(dex)}: ${texts}`);
       } finally {
         codex.dispose();
       }

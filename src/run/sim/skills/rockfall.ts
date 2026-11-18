@@ -4,7 +4,7 @@ import { ROCKFALL } from "../content/params/enemy-skills";
 // cover stops them; a caster killed or put to sleep first calls them off. Aerodactyl's Rock Slide
 // drops the same circles while it keeps flying (bosses/aerodactyl.ts).
 
-import { damagePlayer } from "../hurt";
+import { damageFromHazard } from "./kit";
 import { range } from "../rng";
 import { heightAt } from "../terrain";
 import { TICK, type World } from "../state/world";
@@ -81,8 +81,7 @@ export const strikeCircle: HazardRule = {
       return;
     }
     for (const player of world.players)
-      if (inPatch(world, circle, player, circle.y))
-        damagePlayer(world, player, circle.dmg, circle.element);
+      if (inPatch(world, circle, player, circle.y)) damageFromHazard(world, player, circle);
     circle.dmg = 0;
   },
 };
